@@ -62,7 +62,7 @@ const METRICS = [
   { value: "<24h", label: "Target timeframe", sublabel: "from brief to delivery*" },
   { value: "\u221E", label: "Unlimited revisions,", sublabel: "no additional cost*" },
   { value: "100%", label: "Fixed prices only", sublabel: "" },
-  { value: "6", label: "Continents covered", sublabel: "" },
+  { value: "5", label: "Continents covered", sublabel: "" },
 ] as const;
 
 /* ---------- Value props row for hero ---------- */
