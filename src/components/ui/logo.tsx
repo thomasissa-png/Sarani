@@ -10,8 +10,8 @@ interface LogoProps {
 }
 
 /**
- * Sarani logo — SVG text with colored dots above certain letters.
- * Matches the V2 sarani.studio design.
+ * Sarani logo — SVG text with 3 colored dots (red, yellow, blue)
+ * clustered in a triangle above the "i", matching the official logo.
  */
 export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
   const textColor = variant === "dark" ? "#000000" : "#ffffff";
@@ -27,11 +27,10 @@ export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
       >
-        {/* Colored dots */}
-        <circle cx="58" cy="5" r="3" fill="#f1c217" />
-        <circle cx="72" cy="3" r="2.5" fill="#0babe8" />
-        <circle cx="85" cy="7" r="2" fill="#da5126" />
-        <circle cx="98" cy="4" r="2.5" fill="#f1c217" />
+        {/* 3 colored dots clustered above the "i" — triangle arrangement */}
+        <circle cx="105" cy="3" r="2.8" fill="#da5126" /> {/* Red — top right */}
+        <circle cx="98" cy="9" r="2.8" fill="#f1c217" />  {/* Yellow — bottom left */}
+        <circle cx="106" cy="9" r="2.8" fill="#0babe8" />  {/* Blue — bottom right */}
         {/* Text "sarani" */}
         <text
           x="2"
