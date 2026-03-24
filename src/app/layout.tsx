@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import localFont from "next/font/local";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import "./globals.css";
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+const outfit = localFont({
+  src: [
+    { path: "../../public/fonts/outfit-latin-400-normal.woff2", weight: "400", style: "normal" },
+    { path: "../../public/fonts/outfit-latin-500-normal.woff2", weight: "500", style: "normal" },
+    { path: "../../public/fonts/outfit-latin-700-normal.woff2", weight: "700", style: "normal" },
+  ],
   display: "swap",
   variable: "--font-outfit",
 });

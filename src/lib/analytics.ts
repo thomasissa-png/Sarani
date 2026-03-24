@@ -126,7 +126,7 @@ export function track<T extends EventName>(
 ): void {
   try {
     if (typeof window !== "undefined" && window.umami) {
-      window.umami.track(eventName, properties as Record<string, string>);
+      window.umami.track(eventName, properties as unknown as Record<string, string>);
     }
   } catch {
     // Silent failure — ad-blocker, script error, or SSR
