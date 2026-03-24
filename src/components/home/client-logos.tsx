@@ -5,8 +5,9 @@ import { motion, useReducedMotion } from "framer-motion";
 /* ------------------------------------------------------------------ */
 /*  Client SVG logos                                                   */
 /*  TikTok, Sony, Adidas: official paths from simple-icons             */
-/*  L'Oréal, GEODIS, PICO: SVG text wordmarks (replace with official  */
-/*  vectors when available)                                            */
+/*  L'Oréal: stylised wordmark with accent detail                     */
+/*  GEODIS: geometric wordmark                                        */
+/*  PICO: bold wordmark                                               */
 /* ------------------------------------------------------------------ */
 
 interface ClientLogo {
@@ -40,58 +41,79 @@ function AdidasLogo() {
   );
 }
 
-/* Text-based wordmarks for brands not in simple-icons — replace with official SVGs when available */
+/* L'Oreal — stylised serif wordmark as SVG path */
 function LOrealLogo() {
   return (
-    <svg viewBox="0 0 120 28" height={LOGO_HEIGHT} width={Math.round(LOGO_HEIGHT * 4.3)} aria-label="L'Oréal">
-      <text
-        x="0"
-        y="22"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontSize="24"
-        fontWeight="400"
-        fontStyle="italic"
-        fill="currentColor"
-        letterSpacing="1"
-      >
-        L&apos;Oréal
-      </text>
+    <svg
+      viewBox="0 0 200 40"
+      height={LOGO_HEIGHT}
+      width={Math.round(LOGO_HEIGHT * 5)}
+      fill="currentColor"
+      aria-label="L'Oreal"
+    >
+      {/* L */}
+      <path d="M4 6h6v22h14v6H4V6z" />
+      {/* apostrophe */}
+      <path d="M28 6h5v8l-3 4h-3l2-4V6z" />
+      {/* O */}
+      <path d="M46 5c9.4 0 14 6 14 15s-4.6 15-14 15-14-6-14-15 4.6-15 14-15zm0 6c-4.5 0-7.5 3.5-7.5 9s3 9 7.5 9 7.5-3.5 7.5-9-3-9-7.5-9z" />
+      {/* r */}
+      <path d="M66 14h5.5v4.5h.2c1.5-3 4-5.2 7.5-5.2 1.2 0 2.2.2 2.8.4v6c-.8-.3-2-.5-3.2-.5-4 0-7 2.5-7 7v8h-5.8V14z" />
+      {/* e-acute */}
+      <path d="M84 25c0-7.2 4.5-12 11.2-12 7 0 10.8 5 10.8 13H89.5c.5 4 3.2 6.5 7.2 6.5 3 0 5-1.2 6.2-3.5l4.8 2.5c-2 3.8-6 6-11.2 6C89 37.5 84 32.5 84 25zm5.5-2.5h10.5c-.3-3.5-2.5-5.5-5.2-5.5-3 0-4.8 2-5.3 5.5z" />
+      <path d="M96 2l-4 8h3.5l5-8H96z" />
+      {/* a */}
+      <path d="M112 25.5c0-7 4.5-12.2 10-12.2 3.5 0 6 1.5 7.5 4h.2V14h5.5v20h-5.5v-3.5h-.2c-1.5 2.5-4 4.2-7.5 4.2-5.5 0-10-5.2-10-9.2zm5.8 0c0 4 2.8 6.5 6 6.5s6-2.5 6-6.5-2.8-6.5-6-6.5-6 2.5-6 6.5z" />
+      {/* l */}
+      <path d="M141 6h5.8v28H141V6z" />
     </svg>
   );
 }
 
+/* GEODIS — bold geometric sans-serif wordmark */
 function GEODISLogo() {
   return (
-    <svg viewBox="0 0 120 28" height={LOGO_HEIGHT} width={Math.round(LOGO_HEIGHT * 4.3)} aria-label="GEODIS">
-      <text
-        x="0"
-        y="22"
-        fontFamily="var(--font-outfit), Outfit, Arial, sans-serif"
-        fontSize="24"
-        fontWeight="700"
-        fill="currentColor"
-        letterSpacing="2"
-      >
-        GEODIS
-      </text>
+    <svg
+      viewBox="0 0 220 40"
+      height={LOGO_HEIGHT}
+      width={Math.round(LOGO_HEIGHT * 5.5)}
+      fill="currentColor"
+      aria-label="GEODIS"
+    >
+      {/* G */}
+      <path d="M4 20c0-10 7-17 17-17 6 0 11 2.5 14 7l-6 4c-2-3-4.5-4.5-8-4.5-6 0-10.5 4.5-10.5 10.5S15 30.5 21 30.5c4 0 7-1.5 8.5-4.5V23H21v-6h15v16h-6v-2.5c-2.5 3-6.5 4.5-11 4.5C10 35 4 29 4 20z" />
+      {/* E */}
+      <path d="M42 4h24v6.5H49v7h15v6H49v7h18V37H42V4z" />
+      {/* O */}
+      <path d="M86 3c10 0 17.5 7 17.5 17s-7.5 17-17.5 17-17.5-7-17.5-17S76 3 86 3zm0 7c-6 0-10.5 4.5-10.5 10S80 30 86 30s10.5-4.5 10.5-10S92 10 86 10z" />
+      {/* D */}
+      <path d="M110 4h13c11 0 18 6.5 18 16.5S134 37 123 37h-13V4zm7 6.5v20h5.5c6.5 0 11-4 11-10s-4.5-10-11-10H117z" />
+      {/* I */}
+      <path d="M148 4h7v33h-7V4z" />
+      {/* S */}
+      <path d="M175 10.5c-2-2-5-3.5-8.5-3.5-3 0-5.5 1.5-5.5 4 0 3 3.5 3.8 7.5 5 5.5 1.5 11 3.5 11 10.5 0 7.5-6 11-13.5 11-5.5 0-10.5-2-14-5.5l5-5c2.5 2.5 5.5 4 9.5 4 3.5 0 6-1.5 6-4.5s-3.5-4-8-5.5C160 19.5 155 17 155 11c0-7 6-11 13-11 5 0 9 2 12 5l-5 5.5z" />
     </svg>
   );
 }
 
+/* PICO — bold geometric wordmark */
 function PICOLogo() {
   return (
-    <svg viewBox="0 0 80 28" height={LOGO_HEIGHT} width={Math.round(LOGO_HEIGHT * 2.9)} aria-label="PICO">
-      <text
-        x="0"
-        y="22"
-        fontFamily="var(--font-outfit), Outfit, Arial, sans-serif"
-        fontSize="24"
-        fontWeight="700"
-        fill="currentColor"
-        letterSpacing="3"
-      >
-        PICO
-      </text>
+    <svg
+      viewBox="0 0 160 40"
+      height={LOGO_HEIGHT}
+      width={Math.round(LOGO_HEIGHT * 4)}
+      fill="currentColor"
+      aria-label="PICO"
+    >
+      {/* P */}
+      <path d="M4 4h14c8 0 13 4.5 13 11.5S26 27 18 27h-7v10H4V4zm7 6.5v10h6c4 0 6.5-2 6.5-5s-2.5-5-6.5-5h-6z" />
+      {/* I */}
+      <path d="M38 4h7v33h-7V4z" />
+      {/* C */}
+      <path d="M72 3c6 0 10.5 2.5 13.5 7l-5.5 4c-2-3-4.5-4.5-8-4.5-6 0-10.5 4.5-10.5 10.5S66 30.5 72 30.5c3.5 0 6-1.5 8-4.5l5.5 4c-3 4.5-7.5 7-13.5 7-10 0-17.5-7-17.5-17S62 3 72 3z" />
+      {/* O */}
+      <path d="M107 3c10 0 17.5 7 17.5 17s-7.5 17-17.5 17-17.5-7-17.5-17S97 3 107 3zm0 7c-6 0-10.5 4.5-10.5 10S101 30 107 30s10.5-4.5 10.5-10S113 10 107 10z" />
     </svg>
   );
 }
@@ -101,14 +123,14 @@ const CLIENTS: ClientLogo[] = [
   { name: "Sony", svg: <SonyLogo /> },
   { name: "GEODIS", svg: <GEODISLogo /> },
   { name: "Adidas", svg: <AdidasLogo /> },
-  { name: "L'Oréal", svg: <LOrealLogo /> },
+  { name: "L'Oreal", svg: <LOrealLogo /> },
   { name: "PICO", svg: <PICOLogo /> },
 ];
 
 function ClientItem({ client }: { client: ClientLogo }) {
   return (
     <span
-      className="select-none text-neutral-400 transition-colors duration-200 hover:text-brand-black flex items-center"
+      className="flex items-center select-none opacity-40 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
       style={{ height: 40 }}
     >
       {client.svg}
@@ -133,11 +155,16 @@ export function ClientLogos() {
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
     >
+      {/* "Trusted by" label */}
+      <p className="mb-6 text-center text-xs font-medium uppercase tracking-widest text-neutral-400">
+        Trusted by
+      </p>
+
       {/* Fade edges on mobile */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-brand-white to-transparent md:hidden" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-brand-white to-transparent md:hidden" />
 
-      {/* Desktop: centered static row */}
+      {/* Desktop: centered static grid */}
       <div className="hidden md:flex items-center justify-center gap-14">
         {CLIENTS.map((client) => (
           <ClientItem key={client.name} client={client} />

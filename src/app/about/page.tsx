@@ -111,7 +111,7 @@ export default function AboutPage() {
             {TEAM_STATS.map((stat) => (
               <div key={stat.label}>
                 <p className="text-5xl font-bold text-brand-lemon">{stat.value}</p>
-                <p className="mt-2 text-lg text-neutral-400">{stat.label}</p>
+                <p className="mt-2 text-lg font-medium text-neutral-400">{stat.label}</p>
               </div>
             ))}
           </div>

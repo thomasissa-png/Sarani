@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,12 +13,14 @@ const NAV_LINKS = [
   { href: "/work", label: "Work" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
 ] as const;
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onScroll() {
@@ -40,6 +42,59 @@ export function Header() {
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
+
+  // Focus trap: cycle Tab/Shift+Tab within mobile menu, Escape to close
+  const handleMenuKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!mobileOpen || !mobileMenuRef.current) return;
+
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        return;
+      }
+
+      if (e.key !== "Tab") return;
+
+      const focusableEls = mobileMenuRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableEls.length === 0) return;
+
+      const first = focusableEls[0];
+      const last = focusableEls[focusableEls.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    },
+    [mobileOpen]
+  );
+
+  // Attach/detach focus trap listener and auto-focus first link on open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.addEventListener("keydown", handleMenuKeyDown);
+      // Focus the first nav link after the animation starts
+      const timer = setTimeout(() => {
+        const firstLink = mobileMenuRef.current?.querySelector<HTMLElement>("a[href]");
+        firstLink?.focus();
+      }, 100);
+      return () => {
+        document.removeEventListener("keydown", handleMenuKeyDown);
+        clearTimeout(timer);
+      };
+    } else {
+      document.removeEventListener("keydown", handleMenuKeyDown);
+    }
+  }, [mobileOpen, handleMenuKeyDown]);
 
   function handleNavClick(label: string) {
     track("nav_click", {
@@ -66,9 +121,9 @@ export function Header() {
         {/* Logo — dark variant on white bg */}
         <Logo variant="dark" width={120} />
 
-        {/* Desktop nav links */}
+        {/* Desktop nav links — show Work, Pricing, About (not Contact — that is the CTA) */}
         <ul className="hidden items-center gap-8 md:flex" role="list">
-          {NAV_LINKS.map((link) => (
+          {NAV_LINKS.filter((l) => l.href !== "/contact").map((link) => (
             <li key={link.href}>
               <Link
                 href={link.href}
@@ -143,6 +198,7 @@ export function Header() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
+            ref={mobileMenuRef}
             id="mobile-menu"
             className="fixed inset-0 top-0 z-[var(--z-overlay)] flex flex-col items-center justify-center bg-brand-white md:hidden"
             initial={{ y: "-100%", opacity: 0 }}

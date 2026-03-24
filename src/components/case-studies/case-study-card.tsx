@@ -39,7 +39,7 @@ export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProp
       <p className="mb-3 text-lg font-bold text-brand-black">
         {caseStudy.deliverable}
       </p>
-      <p className="mb-6 text-sm text-neutral-500">
+      <p className="mb-6 text-sm font-medium text-neutral-500">
         {caseStudy.outcome}
       </p>
 
