@@ -265,23 +265,157 @@ Exceptionnel. C'est la note la plus haute de l'audit. Sur l'ensemble des pages l
 **Warm** : Le formulaire contact ("No formal brief? A sentence... is enough."), le success state ("We'll respond within the hour."), le about ("When you wake up, it's done.") — la chaleur est là, discrète et humaine.
 
 La seule note mineure : le CTA "Let's chat" en header est légèrement en décalage avec le ton enterprise — "Discuss a project" ou "Start a project" serait plus aligné avec la cible Sophie/Marc qui n'est pas en mode "chat" quand elle évalue une agence pour un contrat-cadre. C'est une nuance, pas une faute.
-### 3.6 Impact émotionnel
-### 3.7 Storytelling
+### 3.6 Impact émotionnel — Note : 5/10
+
+C'est là que le site perd des points de manière significative. Pour une agence créative, l'impact émotionnel n'est pas optionnel — c'est le produit.
+
+Le design V2 (light-first, typo bold noire sur blanc, touches de brand-lemon/cerulean/flame) est propre et lisible. Mais propre n'est pas impressionnant. Lisible n'est pas mémorable.
+
+**Ce que le site produit comme émotion :** "Cette agence est sérieuse, organisée, directe." C'est bien. C'est insuffisant.
+
+**Ce que le site devrait produire :** "Ces gens-là ont du talent. Je veux travailler avec eux." C'est un saut qualitatif énorme que seuls des visuels créatifs de qualité peuvent opérer.
+
+**La règle non-négociable des agences créatives :** Votre site est votre premier projet client. Si votre site n'est pas époustouflant, vous avez déjà perdu la comparaison avec Superside (qui montre des animations Framer motion et une grille de travaux premium) avant même que Sophie lise un mot de votre copy.
+### 3.7 Storytelling — Note : 7.5/10
+
+La page About est le meilleur exercice de storytelling du site. La séquence narrative :
+
+1. "The traditional agency model was broken before anyone admitted it." — ouverture qui prend position
+2. "Every Head of Marketing we spoke to had the same story." — empathie et reconnaissance du persona
+3. "In 2020, Thomas and the founding team built Sarani..." — origine et mission
+4. "We built a different architecture." — la solution structurelle
+5. "We are the creative agency enterprises call when every other agency says two weeks. We say: tomorrow." — le manifeste en 2 phrases
+
+C'est du bon storytelling B2B. La mention de "Thomas" (le fondateur) est un détail humanisant — mais elle arrive et repart sans jamais être développée. On ne sait pas qui est Thomas, ce qui affaiblit légèrement l'aspect "partner, not vendor" que la brand platform défend.
+
+**Ce qui manque :** Une phrase sur l'origine de "Sarani" comme nom. Une photo de l'équipe ou du fondateur (même une seule). Quelque chose qui ancre l'histoire dans des visages, pas seulement dans des chiffres.
 
 ---
 
 ## 4. Recommandations prioritaires
 
-### Priorité 1 — Visuels (bloquant pour la crédibilité)
-### Priorité 2 — Hero upgrade
-### Priorité 3 — Cohérence des chiffres
-### Priorité 4 — Case Studies
-### Priorité 5 — Navigation
+### Priorité 1 — Intégrer des visuels réels (bloquant pour la crédibilité créative)
+
+**Problème :** Le site d'une agence créative sans visuels est une contradiction stratégique.
+
+**Actions concrètes :**
+
+1. **Remplacer les placeholders gris dans les case studies** par des captures d'écran réelles des livrables : bannières Sony, slides GEODIS, frames de vidéos TikTok. Si les clients ont des NDAs, demander des permissions limitées ou flouter partiellement.
+
+2. **Ajouter une section "Work" ou "Portfolio" en homepage** — pas un carousel (trop lent à charger), mais une grille statique de 6 à 9 thumbnails de livrables réels, cliquables vers les case studies.
+
+3. **Hero upgrade** : envisager un fond de vidéo ou d'images en loop lent derrière le H1, montrant des frames de productions TikTok, des bannières Sony, des slides GEODIS. Pas un élément distrayant — un fond de preuves.
+
+4. **Logos clients SVG** : remplacer les spans textuels dans `client-logos.tsx` par des SVG des logos officiels de TikTok, Sony, Adidas, GEODIS, L'Oréal, PICO. C'est un investissement d'une heure pour un impact de conversion majeur.
+
+**Responsable côté Sarani :** L'équipe créative interne dispose de tous ces assets. Ce n'est pas un problème de production — c'est un problème d'autorisation et d'intégration.
+### Priorité 2 — Hero upgrade : ajouter une métrique TikTok "vues"
+
+**Problème :** Les chiffres les plus impressionnants de Sarani (400M de vues, 300M de vues) sont absents du site.
+
+**Action concrète :** Ajouter une métrique dans la section "Our metrics" ou dans les ProofCards TikTok. Exemple de card enrichie :
+
+```
+TikTok
+1,500+ edits per month
+Campaigns: up to 400M views
+```
+
+Ou ajouter une 5e métrique dans la grille : `400M` / `Views. One campaign.` — c'est un chiffre qui s'impose dans n'importe quel esprit marketing.
+
+**Action secondaire :** Ajouter le ROI Air Corsica (29.9%) comme proof point dans une section dédiée ou comme 4e ProofCard. 29.9% ROI mesurable est un argument qui parle directement au persona Marc (Procurement).
+### Priorité 3 — Corriger "6 continents" en "5 continents" (1 ligne de code)
+
+**Problème :** Incohérence factuelle entre homepage metrics (6) et toute la documentation (5).
+
+**Action :** Dans `src/app/page.tsx`, ligne de la const METRICS :
+```
+{ value: "6", label: "Continents covered", sublabel: "" },
+```
+Corriger en `"5"`. Ou si Sarani opère désormais sur 6 continents, mettre à jour toute la documentation en conséquence.
+
+C'est 1 caractère à changer. Le laisser est une erreur de crédibilité.
+### Priorité 4 — Enrichir les case studies avec les données disponibles
+
+**Problème :** Les case studies ont une structure solide mais manquent de profondeur narrative et de visuels.
+
+**Actions concrètes :**
+
+1. Pour le case study TikTok : ajouter les chiffres de vues par campagne dans les Stats (51M, 94M, 200M, 300M, 400M). Ils sont dans la brand platform — il suffit de les passer dans les données `case-studies.ts`.
+
+2. Pour le case study Sony : mentionner les 15 langues de localisation vidéo et les 125 assets TV launch — ce sont des preuves de scale absentes du teaser.
+
+3. Ajouter Adidas (92 assets marathon), L'Oréal (TikTok sizzle), Air Corsica (ROI 29.9%) comme case studies complets — ils sont dans la brand platform mais semblent absents ou peu développés.
+
+4. Une section "What the client said" (quote client) dans chaque case study serait le proof point le plus puissant manquant. Si des témoignages existent — c'est une priorité absolue.
+### Priorité 5 — Navigation et micro-ajustements
+
+**Recommandations légères :**
+
+1. Envisager d'ajouter "Contact" dans le footer navigation column "Company" (il y est déjà — bien). Vérifier que Marc trouve l'email de contact sans avoir à parcourir le site.
+
+2. Réduire les occurrences de "First project satisfaction or no invoice" de 7 à 3-4 occurrences stratégiques (hero, pricing, formulaire). Introduire des variations pour maintenir l'impact.
+
+3. Dans le footer, les 4 liens "Services" pointent tous vers `/work` — ce sont des liens génériques. À terme, créer des landing pages par service (video production, branding, presentations) pour améliorer le SEO et adapter le message par intention.
+
+4. Envisager "Start a project" plutôt que "Let's chat" dans le header desktop — plus précis pour une cible enterprise B2B qui n'est pas en mode "chat informel".
 
 ---
 
 ## 5. Verdict final
 
+### Note globale : 7.2 / 10
+
+| Axe d'évaluation | Note |
+|---|---|
+| Alignement marque / site | 7/10 |
+| Parcours Sophie — 3 premières secondes | 6/10 |
+| Exploitation de la preuve sociale | 6/10 |
+| Différenciation vs concurrence | 8/10 |
+| Cohérence tonale | 9/10 |
+| Impact émotionnel | 5/10 |
+| Storytelling | 7.5/10 |
+| **Moyenne** | **6.9/10** |
+
+*Note finale ajustée à 7.2 en tenant compte de la qualité exceptionnelle de la copy et de la solidité de la structure stratégique — qui sont deux avantages rares.*
+
 ---
 
-*Hypothèses à valider*
+### Ce site a deux visages.
+
+**Le premier visage :** stratégiquement, c'est un des sites B2B les mieux écrits que j'aie audités dans ce secteur. La copy est directe, les preuves sont réelles, le ton est maîtrisé, la structure de conviction est logique. L'alignement entre la brand platform et le site est exceptionnel. Les décisions de copywriting (de la homepage au 404) montrent un niveau de discipline de marque que la plupart des agences n'atteignent pas après 5 ans.
+
+**Le second visage :** visuellement et émotionnellement, c'est un site de consulting, pas un site d'agence créative. Une agence qui revendique "Unlimited Creativity" et dont le site ne montre aucun travail créatif, aucun visuel de production, aucune image — c'est une contradiction que Sophie ressent en moins de 3 secondes, même si elle ne sait pas l'articuler.
+
+**La vérité inconfortable :** en l'état, Sarani a un meilleur site que la plupart de ses concurrents sur le plan stratégique et éditorial. Et un site moins impressionnant que n'importe quelle agence créative sérieuse sur le plan visuel. Ces deux réalités coexistent.
+
+**Le chemin vers 9/10 :** Ce site peut atteindre un niveau exceptionnel avec une seule catégorie de changements — intégrer le travail créatif réel. Logos SVG clients. Visuels de productions. Thumbnails de campagnes TikTok. Slides GEODIS. Bannières Sony. L'équipe Sarani a produit ces assets. Ils doivent apparaître sur le site. Ce n'est pas un projet de plusieurs mois — c'est une semaine de travail pour une équipe créative qui, par définition, livre en 24 heures.
+
+**Recommandation de priorité absolue :** Corriger "6 continents → 5" (1 minute). Intégrer les logos SVG clients (1 journée). Remplacer les placeholders gris dans les case studies par des visuels réels (3-5 jours). Ces trois actions seules feraient passer ce site de 7.2 à 8.5.
+
+---
+
+---
+
+## Hypothèses à valider
+
+- [HYPOTHÈSE] L'analyse visuelle est basée sur le code source (TSX, CSS, composants). L'apparence réelle dans un navigateur peut différer selon la qualité du rendu des polices (Outfit), les animations CSS non documentées dans le code lu, et les assets éventuellement servis via des CDN non référencés dans les fichiers audités.
+- [HYPOTHÈSE] La mention "6 Continents" dans `page.tsx` est traitée comme une erreur par rapport à "5 continents" présent dans toute la documentation. Si Sarani opère désormais réellement sur 6 continents (Amérique du Nord, Amérique du Sud, Europe, Afrique, Asie, Océanie/Australie), il faut mettre à jour la brand platform, le project-context.md et toute la documentation — pas seulement corriger le site.
+- [HYPOTHÈSE] L'absence de visuels dans les case studies est interprétée comme des placeholders non remplis (commentaires dans le code le confirment : `{/* Hero image placeholder */}`, `{/* Gallery placeholder */}`). Si c'est un choix délibéré pour des raisons de NDA, cela doit être documenté et une alternative (mockups, illustrations, frames floutés) doit être envisagée.
+
+---
+
+**Handoff → @orchestrator**
+
+- Fichier produit : `/home/user/Sarani/docs/reviews/creative-strategy-audit-v2.md`
+- Décisions clés de cet audit :
+  - Note globale 7.2/10 avec justification détaillée par axe
+  - Problème n°1 identifié : absence de visuels créatifs (critique, bloquant pour la crédibilité de la promesse "Unlimited Creativity")
+  - Incohérence factuelle identifiée : "6 continents" homepage vs "5 continents" partout ailleurs — correction urgente
+  - Copy et cohérence tonale : niveau exceptionnel (9/10), aucune action requise sur ce plan
+  - Garantie "First project satisfaction or no invoice" : répétée 7 fois, dilution de l'impact — réduire à 3-4 occurrences
+- Points d'attention pour les agents suivants :
+  - **@ux** : La priorité est l'intégration visuelle des assets créatifs (logos SVG, visuels case studies) — wireframes à produire pour la section portfolio homepage et les pages case study avec visuels
+  - **@fullstack** : Corriger "6" → "5" dans `src/app/page.tsx` METRICS (ligne immédiate). Prévoir le composant logos SVG pour remplacer `client-logos.tsx`
+  - **@copywriter** : Proposer des variations de la garantie pour les occurrences 4-7 (case studies, about closing CTA) afin d'éviter la dilution par répétition
+  - **@design** : Le design system V2 est solide. Le travail restant est d'ordre photographique et éditorial (assets créatifs), pas de redesign
