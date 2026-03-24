@@ -13,7 +13,7 @@ Never blame the user. State what happened. Tell them exactly what to do next.
 | Empty required field | "This field is required." | Neutral, factual | Highlight field border in red |
 | Invalid email format | "That doesn't look like a valid email address." | Warm, not accusatory | Inline, below field |
 | File exceeds 10MB | "This file is too large. Maximum size is 10MB." | Factual | Show file size limit before upload |
-| Server error (5xx) | "Something went wrong on our end. Try again — or email us directly at hello@sarani.agency." | Accountable, warm | Retry button + direct email link |
+| Server error (5xx) | "Something went wrong on our end. Try again — or email us directly at team@sarani.studio." | Accountable, warm | Retry button + direct email link |
 | Network error | "We lost the connection. Check your internet and try again." | Neutral | Retry button, form data preserved |
 | 404 Page not found | "This page doesn't exist — but your project can." | Assured, slightly warm | CTA: "Start a project" |
 | Rate limit (429) | "Too many requests. Give it a minute and try again." | Neutral, non-blaming | Auto-retry after 60s countdown |

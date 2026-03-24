@@ -133,7 +133,7 @@ Behavior:
 │                                                              │
 │  HERO — ABOUT                                                │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  <h1> (Galano Bold, 5xl, white):                      │  │
+│  │  <h1> (Outfit Bold, 5xl, white):                      │  │
 │  │  "We're the creative team enterprises call            │  │
 │  │   when every other agency says two weeks."            │  │
 │  │                                                       │  │
@@ -147,7 +147,7 @@ Behavior:
 │  │  "Built for the speed            │ │  ──────────────  │  │
 │  │   of enterprise."  </h2>         │ │  Founded: 2020   │  │
 │  │                                  │ │  Team: 35 experts│  │
-│  │  Body (Galano Regular, base,     │ │  Continents: 5   │  │
+│  │  Body (Outfit Regular, base,     │ │  Continents: 5   │  │
 │  │  neutral-200):                   │ │  Languages: 18   │  │
 │  │  "In 2020, Sarani was built on   │ │  Clients: 24/7   │  │
 │  │  one observation: the world's    │ │                  │  │
@@ -294,7 +294,7 @@ Any error scenario degrades gracefully:
 │  │  [Client Logo — white SVG, 48px height]               │  │
 │  │  aria-label="[Client Name] logo"                      │  │
 │  │                                                       │  │
-│  │  <h1> (Galano Bold, 4xl, white):                      │  │
+│  │  <h1> (Outfit Bold, 4xl, white):                      │  │
 │  │  "[Client] needed [X]. We delivered [Y]."             │  │
 │  │  (Formula 2 — Problem → Result)                       │  │
 │  │                                                       │  │
@@ -404,7 +404,7 @@ Fallback test: Playwright javaScriptEnabled:false →
 │  [Skip link] [Sticky nav]                                    │
 ├─────────────────────────────────────────────────────────────┤
 │  <main role="main" id="main-content">                        │
-│  <h1> (Galano Bold, 4xl): "Start a project."</h1>            │
+│  <h1> (Outfit Bold, 4xl): "Start a project."</h1>            │
 │  <p> (neutral-400, xl):                                      │
 │  "Tell us what you need. We'll come back within the hour."   │
 │                                                              │
@@ -496,12 +496,12 @@ Fallback test: Playwright javaScriptEnabled:false →
 │  <div role="alert" aria-live="assertive"                     │
 │       class="border border-flame text-flame p-4 rounded">   │
 │  "Something went wrong — your brief wasn't sent.            │
-│   Try again, or email us: hello@sarani.studio"               │
+│   Try again, or email us: team@sarani.studio"               │
 │  </div>                                                      │
 │                                                              │
 │  [Try again] ← re-enables submit, preserves form data        │
 │                                                              │
-│  Note: hello@sarani.studio is [HYPOTHESE] — validate before  │
+│  Note: team@sarani.studio is [HYPOTHESE] — validate before  │
 │  go-live (functional-specs.md §5 open hypothesis).           │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -518,7 +518,7 @@ Fallback test: Playwright javaScriptEnabled:false →
 │  [✓ icon — cerulean #0babe8, 48px, aria-hidden="true"]       │
 │                                                              │
 │  <h2 id="success-heading"> "Got it." </h2>                   │
-│  (Galano Bold, 3xl, white)                                   │
+│  (Outfit Bold, 3xl, white)                                   │
 │                                                              │
 │  <p> "Expect a response within the hour —                    │
 │   usually faster." </p>                                      │
@@ -634,7 +634,7 @@ Page renders normally in all network failure modes.
 │  <main role="main" id="main-content">                        │
 │                                                              │
 │  <h1> "This page doesn't exist." </h1>                       │
-│  (Galano Bold, 4xl, white)                                   │
+│  (Outfit Bold, 4xl, white)                                   │
 │                                                              │
 │  <p> "But we do. 35 experts ready to work on your            │
 │   next project." </p>                                        │
@@ -726,7 +726,7 @@ First focusable element on every page. Background: flame #da5126, text: black (c
 
 - [HYPOTHESE] About page copy — body text for "Built for enterprise speed" section references brand-story.md but Thomas's personal origin story is marked [HYPOTHESE] in that document. Version without personal origin story is viable for go-live.
 - [HYPOTHESE] World map visual on About page — decorative asset not confirmed as available. Fallback: text-only stat block (35 experts, 5 continents) if map SVG is not produced.
-- [HYPOTHESE] Contact form: email `hello@sarani.studio` used in error state — validate this address is operational before go-live (functional-specs.md open hypothesis).
+- [HYPOTHESE] Contact form: email `team@sarani.studio` used in error state — validate this address is operational before go-live (functional-specs.md open hypothesis).
 - [HYPOTHESE] Attachment field max size of 10MB — per functional-specs.md open hypothesis. Validate with Sarani team before W4.
 
 ---

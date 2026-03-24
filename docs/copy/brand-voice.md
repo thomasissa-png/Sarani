@@ -124,7 +124,7 @@ The voice (Assured, Direct, Warm, Evidence-first) is constant. The tone — the 
 | **Pricing page** | Clinical transparency. No softening, no excuses. Marc reads this page. Fixed numbers, clear scope, no asterisks. Warmth comes through the guarantee, not through adjectives. | "Simple banner: 155–470€. Full rebranding: 5,000€. First project satisfaction or no invoice." |
 | **Contact form** | Friction-minimizing, warm encouragement. Sophie is about to commit to a brief. Remove any obstacle. One CTA, no complexity, a human promise. | "Tell us what you need. We'll get back to you within the hour." |
 | **Success message (form submitted)** | Warmth + speed signal. Sophie just sent the brief. Her anxiety: will they respond fast? Immediately confirm the speed commitment. | "Got it. Expect a response within the hour — usually faster." |
-| **Error message** | Direct, non-apologetic, immediately actionable. Sophie has no patience for vague errors. Tell her what went wrong, tell her what to do. One sentence each. | "That didn't go through. Try again or email us directly: hello@sarani.studio" |
+| **Error message** | Direct, non-apologetic, immediately actionable. Sophie has no patience for vague errors. Tell her what went wrong, tell her what to do. One sentence each. | "That didn't go through. Try again or email us directly: team@sarani.studio" |
 | **LinkedIn post** | Peer-to-peer, case-study driven. Sophie reads LinkedIn on her commute. Write as if a colleague is sharing a result, not as a brand broadcasting. Lead with a number or a specific scene. Never sell in the first sentence. | "TikTok needed 300 videos edited in one week. We delivered 340. Here's how we structured it." |
 | **Email outreach** | Direct, short, one ask. Cold email to a Head of Marketing. Sentence 1: relevant proof. Sentence 2: the specific proposition. Sentence 3: one question or CTA. Nothing else. | "We edit 1,500 videos a month for TikTok's content team. If your production pipeline ever needs overflow capacity — we can start this week. Worth a 15-minute call?" |
 | **Onboarding (first project confirmation)** | Warm + operational. Sophie just said yes. Confirm the timeline, confirm the contact, confirm the guarantee. She needs to feel she made a safe choice. | "You're in. We'll have a first version ready by tomorrow, [DATE]. One contact, no handoffs: [NAME]. If it's not right, we iterate — no extra charge." |
@@ -282,7 +282,7 @@ You're in. We'll keep it useful.
 
 **Form submission failure (network/server error):**
 ```
-That didn't go through. Try again — or email us directly: hello@sarani.studio
+That didn't go through. Try again — or email us directly: team@sarani.studio
 ```
 
 **Required field missing:**
@@ -550,7 +550,7 @@ Any AI agent producing LinkedIn posts, SEO content, or email copy for Sarani MUS
 ---
 
 *Assumptions to validate:*
-- [HYPOTHÈSE] L'adresse email "hello@sarani.studio" utilisée dans les messages d'erreur est une hypothèse. Confirmer l'adresse de contact réelle avant le go-live.
+- [HYPOTHÈSE] L'adresse email "team@sarani.studio" utilisée dans les messages d'erreur est une hypothèse. Confirmer l'adresse de contact réelle avant le go-live.
 - [HYPOTHÈSE] La limite de taille de fichier "Max 10MB" dans le message d'erreur upload est une hypothèse technique. À confirmer avec @fullstack selon les contraintes d'hébergement Replit.
 
 ---

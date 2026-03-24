@@ -47,7 +47,7 @@ Then the logos of TikTok, Sony, GEODIS, and Adidas are visible in the viewport
 Given a visitor lands on the homepage (any viewport),
 When the hero section is rendered,
 Then the H1 headline contains at most 15 words,
-  AND the H1 text is rendered in Galano Grotesque Bold,
+  AND the H1 text is rendered in Outfit Bold,
   AND the font size is at minimum 3rem on desktop (>=1024px) and 2rem on mobile (<768px),
   AND the headline is visible in the viewport without scrolling on desktop.
 ```
@@ -106,11 +106,11 @@ Then a button with the exact text "Start a project" is visible in the viewport
 │                    HERO SECTION                              │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │                                                       │  │
-│  │  H1 (Galano Bold, 5xl/3rem, white, max 15 words):     │  │
+│  │  H1 (Outfit Bold, 5xl/3rem, white, max 15 words):     │  │
 │  │  "Enterprise-quality creative.                        │  │
 │  │   Delivered in 24 hours."                             │  │
 │  │                                                       │  │
-│  │  Subhead (Galano Regular, xl/1.25rem, neutral-400):   │  │
+│  │  Subhead (Outfit Regular, xl/1.25rem, neutral-400):   │  │
 │  │  "TikTok, Sony, Adidas trust us with theirs."         │  │
 │  │                                                       │  │
 │  │  [Start a project]  [See our work]                    │  │
@@ -166,7 +166,7 @@ Then a button with the exact text "Start a project" is visible in the viewport
 ├─────────────────────────────────────────────────────────────┤
 │  FOOTER                                                      │
 │  [Logo] | Work | Services | Pricing | About | Contact       │
-│  hello@sarani.studio  |  Legal & Privacy                    │
+│  team@sarani.studio  |  Legal & Privacy                    │
 │  © 2026 Sarani. All rights reserved.                        │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -180,7 +180,7 @@ Then a button with the exact text "Start a project" is visible in the viewport
 ├──────────────────────────────┤
 │  HERO                        │
 │                              │
-│  H1 (2rem, Galano Bold):     │
+│  H1 (2rem, Outfit Bold):     │
 │  "Enterprise-quality         │
 │   creative. Delivered        │
 │   in 24 hours."              │
@@ -357,7 +357,7 @@ If a CMS is introduced in a future phase, this state will be defined then.
 | Total page weight | < 1MB (initial load) | Webpack bundle analyzer |
 | Hero section text FCP | < 1.0s (SSR/SSG text visible before JS hydration) | Lighthouse CI |
 | Logo images (each) | < 30KB (WebP) or < 10KB (SVG) | Asset audit before deployment |
-| Web font (Galano Grotesque) | Subset to Latin + numbers only; preload in `<head>` | Font audit |
+| Web font (Outfit) | Subset to Latin + numbers only; preload in `<head>` | Font audit |
 
 ---
 
@@ -451,7 +451,7 @@ Then the layout does not break,
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  [Client Logo — white, 48px height]                   │  │
 │  │                                                       │  │
-│  │  H1 (Galano Bold, 4xl/2.25rem, white):                │  │
+│  │  H1 (Outfit Bold, 4xl/2.25rem, white):                │  │
 │  │  "GEODIS needed 350 presentations rebranded.          │  │
 │  │   We delivered 5,700 slides in 3 weeks."              │  │
 │  │  (Formula 2 — Problem → Result)                       │  │
@@ -515,7 +515,7 @@ Then the layout does not break,
 ├──────────────────────────────┤
 │  [Client Logo — 32px]        │
 │                              │
-│  H1 (1.875rem, Galano Bold): │
+│  H1 (1.875rem, Outfit Bold): │
 │  "GEODIS needed 350          │
 │   presentations. We          │
 │   delivered 5,700 slides."   │
@@ -605,7 +605,7 @@ Cards sorted by client importance: TikTok → Sony → GEODIS → Adidas → all
 **BR-102-4: Client logo rendering rules**
 - Logos rendered as white or neutral-200 (#f5f5f5) variant on dark backgrounds (#000000, #171717).
 - No color manipulation, no cropping of logo protected zones.
-- Fallback: if logo image is missing, render client name as text only (Galano Bold, white).
+- Fallback: if logo image is missing, render client name as text only (Outfit Bold, white).
 
 **BR-102-5: Scroll depth event deduplication**
 Each depth event (50%, 100%) fires only once per page load. Track using a React `useRef` boolean flag per depth level. Reset on page navigation.
@@ -789,8 +789,8 @@ Then Umami fires event "form_view",
 │  (sticky nav)                                                │
 ├─────────────────────────────────────────────────────────────┤
 │  PAGE HEADER                                                 │
-│  H1 (Galano Bold, 4xl): "Start a project"                   │
-│  Subhead (Galano Regular, xl, neutral-400):                  │
+│  H1 (Outfit Bold, 4xl): "Start a project"                   │
+│  Subhead (Outfit Regular, xl, neutral-400):                  │
 │  "Tell us what you need. We'll get back to you              │
 │   within the hour."                                          │
 │  (exact copy from brand-voice.md Tone Matrix — contact form) │
@@ -879,7 +879,7 @@ Then Umami fires event "form_view",
 │  │  "Got it. Expect a response within the hour —         │  │
 │  │   usually faster."                                    │  │
 │  │  (exact copy from brand-voice.md Section 4.4)         │  │
-│  │  (Galano Bold, 2xl, white)                            │  │
+│  │  (Outfit Bold, 2xl, white)                            │  │
 │  │                                                       │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                              │
@@ -899,7 +899,7 @@ Then Umami fires event "form_view",
 │  │  border-left: 4px #da5126 (semantic.error)            │  │
 │  │                                                       │  │
 │  │  "That didn't go through. Try again — or email us     │  │
-│  │   directly: hello@sarani.studio"                      │  │
+│  │   directly: team@sarani.studio"                      │  │
 │  │  (exact copy from brand-voice.md Section 4.5)         │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                              │
@@ -997,12 +997,12 @@ Then Umami fires event "form_view",
 - Form submitted via POST to a Next.js API route (`/api/contact`).
 - Server-side re-validation of all required fields (client-side validation is UX only — not security).
 - On success: send confirmation email to submitter (transactional email service — TBD by @fullstack).
-- On success: send notification email to Sarani team inbox (hello@sarani.studio — [HYPOTHESE: address to confirm with Sarani team]).
+- On success: send notification email to Sarani team inbox (team@sarani.studio — [HYPOTHESE: address to confirm with Sarani team]).
 - Store submission data: @fullstack to recommend storage solution (e.g., Resend + webhook to CRM, or direct CRM API).
 
 **BR-103-3: Rate limiting**
 - Max 3 submissions per IP per hour. On 4th attempt within 1 hour: return HTTP 429.
-- Display error: "That didn't go through. Try again — or email us directly: hello@sarani.studio"
+- Display error: "That didn't go through. Try again — or email us directly: team@sarani.studio"
 - No CAPTCHA required at Phase 1 (adds friction for Sophie; implement if spam becomes an issue post-launch).
 
 **BR-103-4: Duplicate submission prevention**
@@ -1034,7 +1034,7 @@ Then Umami fires event "form_view",
 
 **EC-103-2: Form submitted 10 times in 1 minute (spam / bot)**
 - After 3 submissions from same IP within 60 minutes: return HTTP 429.
-- Response shown to user: server error state ("That didn't go through. Try again — or email us directly: hello@sarani.studio").
+- Response shown to user: server error state ("That didn't go through. Try again — or email us directly: team@sarani.studio").
 - Do NOT reveal that the limit has been reached (no "too many attempts" message — avoids gaming).
 - Test: Submit form 4 times with rate-limited test IP → verify 4th submission returns 429 and error state renders.
 
@@ -1084,7 +1084,7 @@ Then Umami fires event "form_view",
 | Dependency | Type | Blocks | Status |
 |---|---|---|---|
 | Transactional email service (Resend or equivalent) | External | Confirmation email to prospect | @fullstack to select |
-| Sarani team notification email address | Configuration | Team alert on new submission | [HYPOTHESE: hello@sarani.studio — confirm] |
+| Sarani team notification email address | Configuration | Team alert on new submission | [HYPOTHESE: team@sarani.studio — confirm] |
 | Umami goal events configuration | Infrastructure | KPI tracking | Requires @infrastructure |
 | Rate limiting middleware | Code | Spam prevention | Requires @fullstack |
 | File storage solution (Replit-compatible) | Infrastructure | Attachment handling | Requires @infrastructure/@fullstack |
@@ -1179,7 +1179,7 @@ Then Umami fires a page_view event for path "/pricing",
 │  (sticky nav)                                                │
 ├─────────────────────────────────────────────────────────────┤
 │  PAGE HERO                                                   │
-│  H1 (Galano Bold, 4xl): "Fixed prices. Zero surprises."     │
+│  H1 (Outfit Bold, 4xl): "Fixed prices. Zero surprises."     │
 │  Subhead (xl, neutral-400):                                  │
 │  "No retainer. No minimum commitment.                        │
 │   Unlimited revisions. Up to 60% savings vs agencies."      │
@@ -1188,7 +1188,7 @@ Then Umami fires a page_view event for path "/pricing",
 │  GUARANTEE STRIP (bg: #171717, border: 1px #262626)          │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  "Not satisfied with your first project? No invoice." │  │
-│  │  (Galano Bold, white, centered)                       │  │
+│  │  (Outfit Bold, white, centered)                       │  │
 │  └───────────────────────────────────────────────────────┘  │
 ├─────────────────────────────────────────────────────────────┤
 │  PRICING GRID (3 columns, desktop)                           │
@@ -1438,7 +1438,7 @@ When they look for data processing agreement information,
 Then the page states that a Data Processing Agreement (DPA) is available
   on request via email,
   AND an email address for DPA requests is visible
-  (e.g., hello@sarani.studio — [HYPOTHESE: confirm with Sarani]).
+  (e.g., team@sarani.studio — [HYPOTHESE: confirm with Sarani]).
 ```
 
 **AC-105-4: Page linked from footer on all pages**
@@ -1472,7 +1472,7 @@ Then a sign-off note is added to the project-context.md interventions table
 │  (sticky nav)                                                │
 ├─────────────────────────────────────────────────────────────┤
 │  PAGE HEADER                                                 │
-│  H1 (Galano Bold, 4xl): "Legal & Privacy"                   │
+│  H1 (Outfit Bold, 4xl): "Legal & Privacy"                   │
 │  Updated: [date]                                             │
 ├─────────────────────────────────────────────────────────────┤
 │  TABLE OF CONTENTS (anchor links)                            │
@@ -1486,7 +1486,7 @@ Then a sign-off note is added to the project-context.md interventions table
 │  Legal name: [TBD — @legal to provide]                       │
 │  Registered address: [TBD]                                   │
 │  VAT number: [TBD]                                           │
-│  Contact: hello@sarani.studio [HYPOTHESE]                    │
+│  Contact: team@sarani.studio [HYPOTHESE]                    │
 ├─────────────────────────────────────────────────────────────┤
 │  SECTION 2 — Privacy policy                                  │
 │  What we collect, why, retention, transfers, rights          │
@@ -1494,7 +1494,7 @@ Then a sign-off note is added to the project-context.md interventions table
 ├─────────────────────────────────────────────────────────────┤
 │  SECTION 3 — Framework agreements & DPA                      │
 │  "Enterprise accounts: framework agreements and DPAs         │
-│   available on request. Contact: hello@sarani.studio"        │
+│   available on request. Contact: team@sarani.studio"        │
 ├─────────────────────────────────────────────────────────────┤
 │  FOOTER (standard with "Legal & Privacy" link highlighted)   │
 └─────────────────────────────────────────────────────────────┘
@@ -1532,7 +1532,7 @@ This page is a hard deployment blocker: @legal sign-off required before site go-
 ### 4. Edge Cases
 
 **EC-105-1: Legal data not yet provided**
-If Sarani team has not provided company registration details before W4, the page MUST display visible placeholder notices ("Legal information — coming soon. For immediate compliance queries, contact hello@sarani.studio") rather than blank sections or placeholders in production.
+If Sarani team has not provided company registration details before W4, the page MUST display visible placeholder notices ("Legal information — coming soon. For immediate compliance queries, contact team@sarani.studio") rather than blank sections or placeholders in production.
 
 **EC-105-2: Footer link missing from a page template**
 Test: Playwright visits every page route and checks for footer link to /legal.
@@ -1871,7 +1871,7 @@ All hypotheses explicitly marked in this document:
 
 | # | Hypothesis | Source | Status |
 |---|---|---|---|
-| H1 | Email address hello@sarani.studio is correct | brand-voice.md + specs | [HYPOTHESE — confirm with Sarani team] |
+| H1 | Email address team@sarani.studio is correct | brand-voice.md + specs | [HYPOTHESE — confirm with Sarani team] |
 | H2 | File attachment max size is 10MB (Replit constraint) | brand-voice.md | [HYPOTHESE — @fullstack to confirm] |
 | H3 | Legal company name, address, VAT to be provided | US-105 | [DATA MISSING — Sarani team must provide before W4] |
 | H4 | Sarani team notification email for new form submissions | US-103 | [HYPOTHESE — confirm with Sarani team] |

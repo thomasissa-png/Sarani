@@ -152,6 +152,27 @@
 - **Stack** : greenfield — on repart de zéro, peu importe le site actuel sarani.studio
 - **Page pricing** : ouverte (publique, pas behind a gate)
 - **Phase 3** : toutes les features ont la même priorité (agent traduction, deck generator, etc.)
+- **Email contact** : team@sarani.studio (confirmé — remplace l'hypothèse hello@sarani.studio)
+- **Histoire fondateur** : NE PAS individualiser — pas de storytelling Thomas sur la page About
+- **Police** : remplacer Galano Grotesque (commerciale) par **Outfit** (Google Fonts, géométrique, 18 styles, gratuite)
+
+### Données légales (source : societe.com + pappers.fr)
+
+- **Raison sociale** : SARANI
+- **Forme juridique** : SAS (Société par Actions Simplifiée)
+- **SIREN** : 881 687 503
+- **SIRET (siège)** : 881 687 503 00022
+- **TVA intracommunautaire** : FR76881687503
+- **Adresse siège** : 4 rue des Artisans, 25300 Arçon, France
+- **Date de création** : 18 février 2020
+- **Capital social** : 1 500 €
+- **Code NAF** : 7022Z — Conseil pour les affaires et autres conseils de gestion
+- **Dirigeant** : RD INVEST (président)
+
+### Réseaux sociaux (confirmés)
+
+- **LinkedIn** : https://www.linkedin.com/company/sarani-studio/
+- **Instagram** : https://www.instagram.com/sarani.studio
 
 ### Brand Assets (source : Sarani_Brand Board 2023.pdf + logos fournis)
 
@@ -163,8 +184,8 @@
 - Deep Lemon (yellow) : #f1c217
 
 **Typographie :**
-- Galano Grotesque Bold — titres et headings
-- Galano Grotesque Regular — sous-titres et body copy
+- ~~Galano Grotesque~~ → **Outfit** (Google Fonts) — Bold pour titres/headings, Regular pour body copy
+- Raison : Galano Grotesque est commerciale (licence Rene Bieder). Outfit est le meilleur équivalent géométrique gratuit.
 
 **Logos disponibles :**
 - `Sarani Logo_1000x1000.png` — logo principal (fond noir, texte blanc, 3 dots colorés)

@@ -117,13 +117,13 @@ Success green (`#16a34a`) is the only color not derived directly from the brand 
 
 ### 2.1 Font Family
 
-**Galano Grotesque** is Sarani's sole typeface — used for all headings and body copy. It communicates: modern, clean, confident, international. No serif, no second typeface, no system font fallback in visible UI.
+**Outfit** is Sarani's sole typeface — used for all headings and body copy. It communicates: modern, clean, confident, international. No serif, no second typeface, no system font fallback in visible UI.
 
 ```
-font-family: "Galano Grotesque", sans-serif;
+font-family: "Outfit", sans-serif;
 ```
 
-Galano Grotesque is a commercial font (Rene Bieder). @fullstack must ensure it is licensed and self-hosted or loaded via a font provider. **Do not fall back to system sans-serif in production.**
+Outfit is a free Google Font (OFL license). Load via `next/font/google` for optimal performance (self-hosted, no external request). **Do not fall back to system sans-serif in visible UI.**
 
 ### 2.2 Type Scale
 
@@ -146,14 +146,14 @@ All sizes use `rem` (base 16px = 1rem). The scale is modular — each step is ro
 ### 2.3 Typographic Rules
 
 **Headings (H1–H6)**
-- Always Galano Grotesque Bold (700)
+- Always Outfit Bold (700)
 - Color: white on dark backgrounds, black on light backgrounds
 - Flame, Cerulean, or Lemon can be used on individual words for emphasis (e.g., highlighting a proof point — but maximum 1 accent word per heading)
 - Never center-align beyond H3 — H4 and below are always left-aligned
 - Never use italic for headings
 
 **Body copy**
-- Always Galano Grotesque Regular (400)
+- Always Outfit Regular (400)
 - Maximum line length: 70 characters (ensures readability at all breakpoints)
 - Color: white (`#ffffff`) on dark surfaces, neutral-800 (`#262626`) on light surfaces
 - Minimum size: 16px (base) — never below 14px (sm) for functional text
@@ -568,8 +568,8 @@ theme.extend.colors:
   brand.lemon-dark = #c49a0f
 
 theme.extend.fontFamily:
-  heading = ["Galano Grotesque", "sans-serif"]
-  body = ["Galano Grotesque", "sans-serif"]
+  heading = ["Outfit", "sans-serif"]
+  body = ["Outfit", "sans-serif"]
 
 theme.extend.borderRadius:
   (map directly from borderRadius tokens)
@@ -587,7 +587,7 @@ Spacing, fontSize, lineHeight, letterSpacing, and breakpoints map 1:1 to Tailwin
 ## Handoff Notes for @fullstack
 
 **Critical implementation order:**
-1. Install and configure Galano Grotesque font before any other work — all visual decisions depend on it
+1. Install and configure Outfit font before any other work — all visual decisions depend on it
 2. Configure tailwind.config.ts with brand colors before building components
 3. Build the contact form first (US-103 critical path — see backlog.md)
 4. Build the navigation and hero next (Sophie's first impression)

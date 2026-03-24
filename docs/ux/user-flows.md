@@ -61,7 +61,7 @@ sarani.studio/                    ← Homepage (US-101)
 
 ```
 [Logo] | Work | Services | Pricing | About | Contact
-hello@sarani.studio  |  Legal  |  Privacy
+team@sarani.studio  |  Legal  |  Privacy
 © 2026 Sarani. All rights reserved.
 ```
 
@@ -403,7 +403,7 @@ Each case study page MUST contain (no homepage dependency):
 
 ## Assumptions to Validate
 
-- [HYPOTHESE] Email address `hello@sarani.studio` is operational and monitored 24/7 for the "response within the hour" promise — not confirmed in functional-specs.md.
+- [HYPOTHESE] Email address `team@sarani.studio` is operational and monitored 24/7 for the "response within the hour" promise — not confirmed in functional-specs.md.
 - [HYPOTHESE] Framework agreement documentation exists or is in preparation by @legal — referenced in Marc's flow but not yet a live document.
 - [HYPOTHESE] "How did you hear about us?" field options include: Google, LinkedIn, Colleague/client referral, Existing client, Other — to be confirmed with Sarani team before launch.
 - [HYPOTHESE] Post-submission response time of "within the hour" is operationally guaranteed by the 24/7 relay model — to validate with Sarani ops team.

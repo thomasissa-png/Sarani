@@ -46,8 +46,8 @@
   },
   "typography": {
     "fontFamily": {
-      "heading": "\"Galano Grotesque\", sans-serif",
-      "body": "\"Galano Grotesque\", sans-serif",
+      "heading": "\"Outfit\", sans-serif",
+      "body": "\"Outfit\", sans-serif",
       "mono": "\"JetBrains Mono\", \"Fira Code\", monospace"
     },
     "fontSize": {

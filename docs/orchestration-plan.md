@@ -92,12 +92,17 @@
 - [x] Phase 3 equal priority confirmed
 - [x] Current revenue baseline: 3.5M€
 
+### Blockers resolved (Session 1 continued):
+- [x] Font: Galano Grotesque → **Outfit** (Google Fonts, free, OFL license)
+- [x] Legal entity: SARANI SAS, SIREN 881687503, SIRET 88168750300022, TVA FR76881687503, 4 rue des Artisans 25300 Arçon
+- [x] Email: **team@sarani.studio** (confirmed)
+- [x] Founder story: NO individualization — About page focuses on team, not Thomas
+- [x] LinkedIn: https://www.linkedin.com/company/sarani-studio/
+- [x] Instagram: https://www.instagram.com/sarani.studio
+
 ### Blockers remaining:
-- [ ] Galano Grotesque font licensing (required before dev)
-- [ ] Sarani legal entity details (SIRET, address, VAT) for mentions légales
-- [ ] Email address confirmation (hello@sarani.studio — [HYPOTHESE])
-- [ ] Thomas founder story validation (for About page)
-- [ ] Social media handles confirmation (LinkedIn, Instagram URLs)
+- [ ] Twitter/X handle confirmation (for twitter:site meta tag)
+- [ ] Galano Grotesque → Outfit migration validated in brand-voice.md references
 
 ### Drift check: Persona aligned? YES. North Star aligned? YES.
 

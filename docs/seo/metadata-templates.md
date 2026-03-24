@@ -385,11 +385,11 @@ Implementation: `app/robots.ts` returning `MetadataRoute.Robots`.
 
 ## Hypotheses to Validate
 
+- [CONFIRMED] Instagram URL: `https://www.instagram.com/sarani.studio`
+- [CONFIRMED] LinkedIn URL: `https://www.linkedin.com/company/sarani-studio/`
+- [CONFIRMED] `foundingDate: 2020-02-18` (source: societe.com SIREN 881687503)
 - [HYPOTHESE] Twitter/X handle `@saranistudio` — confirm actual handle before populating `twitter:site` meta tag.
-- [HYPOTHESE] Instagram URL `instagram.com/sarani.studio` used in `sameAs` — confirm exact profile URL with Sarani team.
-- [HYPOTHESE] LinkedIn URL `linkedin.com/company/sarani-studio` — confirm slug matches actual company page.
 - [HYPOTHESE] Logo image path `https://sarani.studio/images/sarani-logo.png` — update with actual deployed asset path once @fullstack builds the file structure.
-- [HYPOTHESE] `foundingDate: 2020` used in schema — confirmed by project-context.md. Exact founding month unknown; using year only per schema.org best practice.
 
 ---
 

@@ -26,7 +26,7 @@ For each Phase 1 user story (US-101 to US-106), every acceptance criterion is ev
 | AC ID | Criterion Summary | Testable? | Tool | Problem | Reformulation |
 |-------|-------------------|-----------|------|---------|---------------|
 | AC-101-1 | Enterprise logos above fold on desktop | Yes | Playwright | -- | -- |
-| AC-101-2 | H1 max 15 words, correct font, min font-size | Yes | Playwright | Font-family check requires computed style assertion; fragile if font fails to load | Add fallback assertion: verify computed font-family includes "Galano" OR verify a known fallback scenario is documented |
+| AC-101-2 | H1 max 15 words, correct font, min font-size | Yes | Playwright | Font-family check requires computed style assertion; fragile if font fails to load | Add fallback assertion: verify computed font-family includes "Outfit" OR verify a known fallback scenario is documented |
 | AC-101-3 | D+1 claim + price anchor + client proof above fold | Yes | Playwright | -- | -- |
 | AC-101-4 | Core Web Vitals (LCP <2.5s, CLS <0.1, INP <200ms, Perf >=80) | Yes | Lighthouse CI | -- | -- |
 | AC-101-5 | Umami page_view fires, no console errors, no third-party cookies | Partially | Playwright | Cookie assertion is hard to make deterministic in CI (cookies may come from Replit infra, not Umami) | Reformulate: "No cookies with a domain matching the Umami tracker origin are set as third-party" |
@@ -156,7 +156,7 @@ These 3 scenarios map to the causal chain: Sophie/Marc enters the site -> builds
 | Step | User Action | Assertion |
 |------|-------------|-----------|
 | 1-9 | Same as happy path steps 1-9 | Same |
-| 10 | Sophie clicks "Send my brief" (API route intercepted, returns 500) | Button shows "Sending..." then error banner appears: "That didn't go through. Try again -- or email us directly: hello@sarani.studio". Form data is NOT cleared. Submit button re-enables. `form_submit` does NOT fire. `form_error { error_type: "server_error" }` fires. |
+| 10 | Sophie clicks "Send my brief" (API route intercepted, returns 500) | Button shows "Sending..." then error banner appears: "That didn't go through. Try again -- or email us directly: team@sarani.studio". Form data is NOT cleared. Submit button re-enables. `form_submit` does NOT fire. `form_error { error_type: "server_error" }` fires. |
 
 #### Unhappy Path 2: Validation Errors
 
