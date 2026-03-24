@@ -253,3 +253,282 @@ The pricing page must include a **side-by-side comparison table** to anchor valu
 Exception: Services with genuine variability (Production Day Packages, Website implementation, 2D/3D animation by duration) should display "On demand — contact us for a quote" with a clear explanation of why the price varies (duration, team size, complexity).
 
 ---
+
+## 4. Pricing Psychology
+
+### 4.1 Anchoring Strategy — High Value First
+
+**Recommendation: Open the pricing page with a trust signal, not with the lowest price.**
+
+The homepage already displays the 155€ Sony banner as an entry anchor. The pricing page serves a different function: it is visited by Marc (procurement) who is comparing total cost of ownership, and by Sophie who is calculating what a campaign would cost.
+
+Recommended anchoring sequence on the pricing page:
+1. **Top of page:** Trust header — "Used by TikTok, Sony, Adidas. First project satisfaction or no invoice." Sets the quality anchor before any price is seen.
+2. **Second block:** The comparison table (Section 3.4 above) — shows Sarani prices against traditional agency costs. This anchors 500–2,000€ as the reference point before 150€ is presented.
+3. **Main pricing grid:** Display from Graphic Design (150€) downward. The savings vs. agencies make even the higher prices (900€ sizzle video, 650€ landing page) feel compelling.
+
+**Do NOT start the page with the cheapest line item (15€ buttons/icons).** This creates a "cheap tool" perception that contradicts enterprise positioning. The right entry anchor is the banner (150€) — real money, real enterprise use case, proven with Sony.
+
+### 4.2 Price Endings — Are Sarani's Round Prices Optimal?
+
+Sarani's prices are currently round numbers: 135€, 250€, 500€, etc. (Note: USD prices are the same rounded structure.)
+
+**Assessment:** Round prices are correct for this positioning. The psychology of price endings works as follows:
+- **Charm pricing ($X.99)** signals budget/discount positioning — exactly what Sarani's brand must avoid. Never use €149 or €134 for an enterprise service.
+- **Round prices** signal confidence, quality, and clarity — aligned with "assured, direct, warm" brand tone. A client who pays 150€ for a banner feels they are working with a professional agency, not buying a Fiverr gig.
+- **Odd-but-specific prices** (e.g., $1,918 like Design Pickle) signal complexity and calculation — they create a "why this exact number?" cognitive friction that round prices avoid.
+
+**Verdict:** Keep the round price structure. It is optimal for the enterprise positioning.
+
+### 4.3 First-Contact Service Recommendation
+
+**The recommended "first project" for a new prospect is a Static Banner Master Asset (150€).**
+
+Rationale:
+- Low financial commitment (150€ vs. 10,000€ Superside minimum)
+- Clear deliverable (a specific banner for a specific campaign)
+- 1–2 day turnaround means the proof is in hand before the end of the week
+- Unlimited revisions means the client cannot be disappointed by a single round
+- "First project satisfaction or no invoice" guarantee means zero risk for the client
+- Directly referenced in the Sony case study — the most memorable proof point on the site
+
+**On the pricing page, highlight this path explicitly:** "Not sure where to start? 78% of our new enterprise clients begin with a banner. 150€. Delivered in 24 hours. No invoice if you're not satisfied." (Note: the 78% figure is [HYPOTHESE — to be validated with Sarani team data before publishing.])
+
+### 4.4 EUR vs. USD Display Strategy
+
+**Recommendation: Dual-currency display (EUR primary, USD secondary) with a currency toggle.**
+
+Rationale:
+- Sarani clients are international. The Excel pricing sheet already provides both EUR and USD prices.
+- Paris-based Sophie sees EUR. Dubai-based Sophie sees USD. London-based Sophie may prefer either.
+- Dual display eliminates any "what's this in my currency?" cognitive friction at the moment of price evaluation.
+
+**Implementation options (in order of priority):**
+1. **Static dual display:** Show both "150€ / $150" on all price items (simplest, no JS required, SEO-friendly)
+2. **Currency toggle:** A EUR/USD button at the top of the pricing page that switches all prices (requires minimal JS, better UX for long grids)
+3. **Geo-detection:** Detect user locale and display the appropriate currency by default (most sophisticated, adds latency risk — lower priority for V1)
+
+**Recommendation for V1 (Phase 1, W3):** Static dual display. Simple to implement, zero performance risk, covers both currencies at a glance.
+
+### 4.5 Communicating Unlimited Revisions as Value
+
+"Unlimited revisions" is a powerful differentiator — but only if communicated correctly. The risk is that it sounds like a discount ("we'll redo it as many times as you want = we're cheap"). It must be framed as a **confidence signal**, not a concession.
+
+**Recommended copy framing:**
+- Wrong: "Unlimited revisions included free"
+- Right: "Revisions are part of the process. Brief us once — we deliver until you're satisfied."
+- Right: "No revision fees. Ever. Because great work takes iteration, not invoices."
+
+Place this message in two locations:
+1. As a page-level callout at the top of the pricing grid (next to "No subscription" and "D+1 delivery")
+2. As a tooltip or footnote next to each line item in the pricing table
+
+---
+
+## 5. Service Packages — Optional Bundles
+
+*Bundles are optional. They exist to reduce the first-order cognitive load for new clients who don't yet know where to start, and to increase average order value (AOV) per first project.*
+
+*All bundles should be positioned as "most popular starting points" — not as mandatory purchases. Individual pricing remains available and visible.*
+
+### 5.1 "Discovery Sprint" Package — Entry Bundle
+
+**Target:** New enterprise client testing Sarani for the first time.
+**Designed for:** Sophie's typical "test with a real brief" scenario.
+
+| What's included | EUR | USD |
+|----------------|-----|-----|
+| 1 Static Banner Master Asset | 150€ | $150 |
+| 3 Banner Adaptations (3 sizes or 3 languages) | 105€ | $120 |
+| **Bundle price** | **220€** | **$240** |
+| *vs. individual price* | *255€ — saves 35€* | *$270 — saves $30* |
+
+**Delivery:** 2 days.
+**Rationale:** A banner master + 3 adaptations is the real-world minimum for any enterprise campaign (EN master + 2 localized versions, or desktop + mobile + square). The bundle removes the decision "what sizes?" from the first brief. Saves 14% vs. individual pricing.
+
+### 5.2 "Content Sprint" Package — Volume Bundle
+
+**Target:** Enterprise client launching a campaign across multiple channels.
+**Designed for:** Sophie's typical pre-launch content sprint.
+
+| What's included | EUR | USD |
+|----------------|-----|-----|
+| 1 Static Banner Master Asset | 150€ | $150 |
+| 5 Banner Adaptations | 175€ | $200 |
+| 1 Social Media Video (up to 30s) | 360€ | $390 |
+| 2 Presentation slides (for internal campaign brief) | 60€ | $70 |
+| **Bundle price** | **660€** | **$720** |
+| *vs. individual price* | *745€ — saves 85€* | *$810 — saves $90* |
+
+**Delivery:** 3 days.
+**Rationale:** This covers a minimum viable campaign launch package: display banners, a social video, and internal alignment slides. Saves 11% vs. individual pricing. AOV target: 660€ vs. 150€ for a single banner — 4.4x increase.
+
+### 5.3 "Enterprise Trial" — First-Project Guarantee Path
+
+This is not a discount bundle. It is a **risk-removal offer** for procurement-constrained clients.
+
+**Offer:** "Start with any project at standard rates. If you're not satisfied with the first delivery, you pay nothing."
+
+This is already Sarani's guarantee ("First project satisfaction or no invoice"). The "Enterprise Trial" framing makes it explicit on the pricing page as a zero-risk entry path — targeted at Marc (procurement) who needs to validate a new vendor without financial exposure.
+
+**Display on pricing page:** A dedicated callout box (not buried in footnotes):
+> "New to Sarani? Your first project is fully guaranteed. If the result doesn't meet your expectations, there's no invoice. Start from 150€."
+
+**Why this works better than a "free trial":**
+- A free trial cheapens the service and attracts non-enterprise prospects.
+- "First project satisfaction or no invoice" keeps the commitment real: both parties invest time and effort; Sarani carries the financial risk. This is a quality signal, not a discount.
+
+---
+
+## 6. Revenue Modeling
+
+### 6.1 Average Revenue Per Unit (ARPU) Estimation
+
+Based on the pricing grid, a typical enterprise client engagement yields the following transaction patterns:
+
+**Typical "Sophie" order composition per campaign:**
+- 2 banner masters: 300€
+- 6 banner adaptations: 210€
+- 1 social video (30s): 360€
+- 1 presentation (10 slides): 300€
+- 1 email design: 500€
+- **Estimated per-campaign order: ~1,670€**
+
+**Annual client engagement pattern (enterprise, active account):**
+- 4 campaign sprints per year: 4 × 1,670€ = 6,680€
+- 2 video productions (sizzle/promotional): 2 × 900€ = 1,800€
+- Ongoing translation (estimating 5,000 words/quarter × 4): 2,400€
+- Occasional presentation work: ~1,000€
+- **Estimated annual revenue per active enterprise account: ~11,880€**
+
+[HYPOTHESE : ces estimations sont basées sur la grille tarifaire et les patterns clients documentés (Sony, GEODIS, TikTok). Elles doivent être validées avec l'équipe Sarani contre les données de facturation Evoliz réelles avant d'être utilisées comme projections officielles.]
+
+**ARPU cible:**
+- Conservative (light client): 5,000€/year
+- Base (active client): 12,000€/year
+- Optimistic (strategic account, retainer): 40,000–120,000€/year (retainer structure)
+
+### 6.2 Monthly Recurring Revenue (MRR) Projection — 6 Months
+
+*Sarani's model is per-project, not subscription-based. "MRR" here means average monthly revenue, not contractually locked-in recurring revenue.*
+
+**Input assumptions (apply to all 3 scenarios):**
+- New enterprise accounts signed per month: varies by scenario
+- Average time-to-second-order: 4–6 weeks after first delivery
+- Average monthly spend per active account (ARPU / 12): 1,000€/month (conservative), 1,400€/month (base), 3,500€/month (optimistic strategic accounts)
+- Churn rate: 10%/month (conservative), 5%/month (base), 3%/month (optimistic) — [HYPOTHESE — à valider avec données historiques Sarani]
+- Starting active account base: [DATA NOT FOUND — Sarani team to provide current number of active billed accounts. Required for accurate MRR baseline.]
+
+**Scenario A — Conservative**
+- New accounts/month: 2 (below roadmap target of 5)
+- Average monthly spend/account: 1,000€
+- Monthly churn: 10%
+
+| Month | New Accounts | Total Active | Monthly Revenue |
+|-------|-------------|-------------|-----------------|
+| M1 | 2 | 2 | 2,000€ |
+| M2 | 2 | 4 | 4,000€ |
+| M3 | 2 | 6 | 6,000€ |
+| M4 | 2 | 7 | 7,000€ |
+| M5 | 2 | 8 | 8,000€ |
+| M6 | 2 | 9 | 9,000€ |
+
+*6-month cumulative: ~36,000€ — does not reflect existing revenue base.*
+
+**Scenario B — Base (roadmap target)**
+- New accounts/month: 5 (roadmap target: 5 new enterprise accounts/month)
+- Average monthly spend/account: 1,400€
+- Monthly churn: 5%
+
+| Month | New Accounts | Total Active | Monthly Revenue |
+|-------|-------------|-------------|-----------------|
+| M1 | 5 | 5 | 7,000€ |
+| M2 | 5 | 10 | 14,000€ |
+| M3 | 5 | 14 | 19,600€ |
+| M4 | 5 | 18 | 25,200€ |
+| M5 | 5 | 22 | 30,800€ |
+| M6 | 5 | 26 | 36,400€ |
+
+*6-month cumulative (new accounts only): ~133,000€ — does not reflect existing revenue base.*
+
+**Scenario C — Optimistic (strategic accounts + referral acceleration)**
+- New accounts/month: 8 (includes referral pipeline from existing TikTok/Sony network)
+- Average monthly spend/account: 3,500€ (mix of project + light retainer accounts)
+- Monthly churn: 3%
+
+| Month | New Accounts | Total Active | Monthly Revenue |
+|-------|-------------|-------------|-----------------|
+| M1 | 8 | 8 | 28,000€ |
+| M2 | 8 | 16 | 56,000€ |
+| M3 | 8 | 23 | 80,500€ |
+| M4 | 8 | 30 | 105,000€ |
+| M5 | 8 | 37 | 129,500€ |
+| M6 | 8 | 44 | 154,000€ |
+
+*6-month cumulative (new accounts only): ~553,000€*
+
+### 6.3 Link to North Star KPI (10M€ Annual Revenue)
+
+**10M€ annual revenue target = ~833,333€/month average MRR.**
+
+To reach 10M€/year from new accounts only (ignoring existing revenue base):
+- **Conservative (1,000€/account/month):** requires ~833 active accounts simultaneously — not achievable at 2 new accounts/month.
+- **Base (1,400€/account/month):** requires ~595 active accounts — achievable at 5/month over ~4 years (with low churn) but not at 6 months.
+- **Optimistic (3,500€/account/month):** requires ~238 active accounts — achievable at 8/month with referral acceleration, targeting 3–4 year horizon.
+
+**The 4M€ / 6-month objective is achievable under the following conditions:**
+[HYPOTHESE] Sarani already has an existing revenue base from current clients (not reflected in the new-account-only projections above). The 4M€ target at 6 months likely assumes:
+- Existing annual revenue base of ~3M€+ (current client portfolio)
+- New account acquisition adds ~1M€ incremental in the first 6 months
+- This requires confirmation of current revenue figures from Sarani team (DATA NOT FOUND — required to calibrate projections)
+
+**Priority action for revenue modeling accuracy:**
+1. Sarani team to provide: (a) current number of active billed accounts, (b) last 12-month revenue total, (c) average revenue per account from Evoliz data. These three numbers will allow accurate MRR projections.
+2. The 10M€ North Star is achievable with ~200–250 active enterprise accounts at 3,500–4,000€/month average spend — credible given the existing TikTok-scale reference (TikTok alone likely exceeds 15,000€/month in volume).
+
+---
+
+## Hypotheses to Validate
+
+- [HYPOTHESE : "78% of new clients begin with a banner" — to validate with Sarani historical order data from Evoliz before publishing on pricing page]
+- [HYPOTHESE : Average monthly spend per active account — 1,000€ (conservative), 1,400€ (base), 3,500€ (optimistic) — to calibrate against actual Evoliz billing data]
+- [HYPOTHESE : Monthly churn rates (10%/5%/3%) — no historical data available. Sarani team to confirm with client retention data]
+- [HYPOTHESE : Per-campaign order composition (~1,670€) — estimated from pricing grid and documented client patterns. To validate against actual invoices]
+- [HYPOTHESE : Traditional agency rates in comparison table (500–2,000€/banner, 2,000–8,000€/video) — based on Sarani commercial deck and client-stated data, not primary invoices. To validate before using in regulated advertising]
+- [HYPOTHESE : Current Sarani revenue base — DATA NOT FOUND. Required from Sarani team to calibrate 4M€ / 6-month target against existing portfolio]
+
+---
+
+**Handoff → @growth + @legal**
+
+Files produced: `/home/user/Sarani/docs/product/pricing-strategy.md`
+
+Decisions taken:
+- **Per-project model confirmed as primary pricing model** — subscription explicitly rejected for strategic reasons (Superside already owns premium subscription; SMB subscription players own low-end; per-project is the unoccupied enterprise space)
+- **Retainer positioned as upsell only** — never as the primary offer; not displayed on pricing page
+- **5 display categories** ordered: Graphic Design → Presentations → Video → Web → Copy+Marketing
+- **Fixed prices over "starting at"** — pricing transparency is a core differentiator; "starting at" undermines it
+- **Round price endings confirmed as correct** for enterprise positioning (charm pricing ruled out)
+- **150€ Static Banner identified as the recommended first-contact service** (lowest risk, highest proof value via Sony case study)
+- **Dual-currency display (EUR + USD static) recommended for V1** — geo-detection as Phase 2 upgrade
+- **3 optional bundles defined:** Discovery Sprint (220€), Content Sprint (660€), Enterprise Trial (guarantee framing)
+- **Revenue model built for 3 scenarios** — all figures marked as hypotheses pending Evoliz data validation
+- **Critical data gap identified:** Current Sarani revenue base (active accounts + LTM revenue) is required to calibrate 4M€/6-month target accurately
+
+Points of attention:
+- **@growth** — the per-project model creates specific acquisition funnel implications: the "first project" is the conversion event, not a subscription signup. Funnel must be optimized for "brief now, pay after delivery" rather than "subscribe." The Discovery Sprint (220€) and Content Sprint (660€) bundles are designed to increase AOV at first conversion — growth strategy should A/B test bundle offers vs. individual pricing CTAs.
+- **@legal** — the "First project satisfaction or no invoice" guarantee needs legal framing: what constitutes "satisfaction"? What is the dispute resolution process? What is the maximum project value covered by this guarantee? The pricing page will display this guarantee publicly — @legal must validate the wording before W3 deployment.
+- **@legal** — the comparison table against traditional agencies uses estimated figures. Before using these comparisons in any advertising context (not just the website), @legal should confirm this is not subject to comparative advertising regulations in key markets (France, UK, UAE).
+- **@copywriter** — the pricing page UX copy must implement the "unlimited revisions as confidence signal" framing from Section 4.5. The wrong framing ("unlimited revisions included free") actively hurts positioning.
+- **@fullstack** — the pricing page (US-104) requires: (1) dual currency display, (2) comparison table, (3) variable pricing unit explanations (€/word, %/spend examples), (4) guarantee callout block, (5) optional bundle display. All prices are now defined — no "TBD" items except "On demand" services.
+
+Sources used in this document:
+- [Superside Pricing 2026 — Designity](https://www.designity.com/blog/superside-pricing)
+- [Superside Pricing — G2](https://www.g2.com/products/superside/pricing)
+- [Design Pickle Pricing 2026 — Designity](https://www.designity.com/blog/design-pickle-pricing)
+- [Design Pickle Pricing — G2](https://www.g2.com/products/design-pickle/pricing)
+- [ManyPixels Pricing — official](https://www.manypixels.co/pricing)
+- [Penji Pricing 2026 — official](https://penji.co/pricing/)
+- [Penji Pricing — G2](https://www.g2.com/products/penji/pricing)
+- [99designs Pricing 2026 — hireinsouth](https://www.hireinsouth.com/post/99designs-pricing)
+- [Fiverr Pricing 2026 — hireinsouth](https://www.hireinsouth.com/post/fiverr-pricing)
