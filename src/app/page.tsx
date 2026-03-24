@@ -1,10 +1,12 @@
 import { Section } from "@/components/layout/section";
 import { ClientLogos } from "@/components/home/client-logos";
-import { ProofCards } from "@/components/home/proof-cards";
-import { CaseStudyTeasers } from "@/components/home/case-study-teasers";
+import { ProjectSlider } from "@/components/home/project-slider";
+import { Testimonials } from "@/components/home/testimonials";
+import { Faq } from "@/components/home/faq";
 import { TrackedCta } from "@/components/home/tracked-cta";
 import { ScrollTracker } from "@/components/home/scroll-tracker";
 import { Submark } from "@/components/ui/logo";
+import Link from "next/link";
 
 /* ---------- Decorative dots for hero ---------- */
 
@@ -24,24 +26,27 @@ function HeroDots() {
 /* ---------- Services list with dot separators ---------- */
 
 const SERVICES = [
-  "branding",
-  "graphic design",
-  "marketing assets",
-  "presentations",
-  "photos",
-  "social media",
-  "videos",
-  "web design",
+  { label: "branding", href: "/work?category=branding" },
+  { label: "graphic design", href: "/work?category=graphic-design" },
+  { label: "marketing assets", href: "/work?category=marketing-assets" },
+  { label: "presentations", href: "/work?category=presentations" },
+  { label: "photos", href: "/work?category=photos" },
+  { label: "social media", href: "/work?category=social-media" },
+  { label: "videos", href: "/work?category=videos" },
+  { label: "web design", href: "/work?category=web-design" },
 ] as const;
 
 function ServicesList() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2">
       {SERVICES.map((service, i) => (
-        <span key={service} className="flex items-center gap-2">
-          <span className="text-lg font-bold text-brand-black md:text-xl">
-            {service}
-          </span>
+        <span key={service.label} className="flex items-center gap-2">
+          <Link
+            href={service.href}
+            className="text-lg font-bold text-brand-black transition-colors hover:text-brand-flame md:text-xl"
+          >
+            {service.label}
+          </Link>
           {i < SERVICES.length - 1 && (
             <span className="inline-block h-2 w-2 rounded-full bg-brand-flame" aria-hidden="true" />
           )}
@@ -77,7 +82,7 @@ export default function HomePage() {
       {/* Scroll depth tracking sentinels */}
       <ScrollTracker />
 
-      {/* ── Section 1: Hero — White bg, massive typography ── */}
+      {/* ── Section 1: Hero ── */}
       <section
         aria-label="Hero"
         className="relative flex min-h-dvh flex-col items-center justify-center bg-brand-white pt-[72px]"
@@ -118,20 +123,30 @@ export default function HomePage() {
               Discover our prices
             </TrackedCta>
           </div>
-
-          <p className="mt-6 text-sm text-neutral-500">
-            First project satisfaction or no invoice.
-          </p>
         </div>
 
-        {/* Client logos — inside hero for above-fold */}
-        <div className="mx-auto mt-12 w-full max-w-screen-xl px-5 md:px-8">
-          <ClientLogos />
+        {/* Auto-scrolling project images slider */}
+        <div className="mt-12 w-full overflow-hidden">
+          <ProjectSlider />
         </div>
       </section>
 
-      {/* ── Section 2: What we do — White bg ── */}
-      <Section ariaLabel="What we do">
+      {/* ── Section 2: We are Sarani ── */}
+      <Section ariaLabel="We are Sarani">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mb-6 text-4xl font-bold text-brand-black md:text-5xl">
+            We are Sarani.
+          </h2>
+          <p className="text-lg leading-relaxed text-neutral-700">
+            We envision a world where every dream could take form, every brand could tell its
+            story, and every entrepreneur could paint their vision all without the traditional
+            barriers of high costs, slow turnaround times, and rigid processes.
+          </p>
+        </div>
+      </Section>
+
+      {/* ── Section 3: What we do ── */}
+      <Section ariaLabel="What we do" className="bg-surface-warm">
         <div className="text-center">
           <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
             What we do
@@ -140,7 +155,7 @@ export default function HomePage() {
         </div>
       </Section>
 
-      {/* ── Section 3: Our metrics — Black bg like V2 ── */}
+      {/* ── Section 4: Our metrics — Dark bg ── */}
       <section
         aria-label="Our metrics"
         className="w-full bg-brand-black py-16 md:py-24"
@@ -172,35 +187,71 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Section 4: Proof Points — White bg ── */}
-      <Section ariaLabel="Proof points">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
-            Real results. Real clients. Real prices.
+      {/* ── Section 5: Are you ready? — Mid-page CTA ── */}
+      <Section ariaLabel="Are you ready">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
+            Are you ready?
           </h2>
+          <TrackedCta
+            href="/contact"
+            variant="primary"
+            trackingLocation="mid_cta"
+            trackingLabel="yes_lets_talk"
+          >
+            Yes, let&apos;s talk!
+          </TrackedCta>
         </div>
-        <ProofCards />
       </Section>
 
-      {/* ── Section 5: Case Study Teasers ── */}
-      <Section ariaLabel="Case studies" className="bg-surface-elevated">
-        <div className="mb-12 text-center">
+      {/* ── Section 6: Our recent work ── */}
+      <Section ariaLabel="Our recent work" className="bg-surface-elevated">
+        <div className="mb-8 flex items-center justify-between">
           <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
-            See how we deliver
+            Our recent work
           </h2>
+          <Link
+            href="/work"
+            className="text-sm font-bold text-brand-flame transition-colors hover:text-brand-flame-light"
+          >
+            view all works &rarr;
+          </Link>
         </div>
-        <CaseStudyTeasers />
+        <ProjectSlider />
       </Section>
 
-      {/* ── Section 6: Footer CTA — Black bg ── */}
+      {/* ── Section 7: Testimonials — "With happiness comes trust" ── */}
+      <Section ariaLabel="Testimonials">
+        <div className="mb-12 text-center">
+          <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
+            With happiness comes trust
+          </h2>
+        </div>
+        <Testimonials />
+        {/* Client logos strip */}
+        <div className="mt-12">
+          <ClientLogos />
+        </div>
+      </Section>
+
+      {/* ── Section 8: FAQ ── */}
+      <Section ariaLabel="FAQ" className="bg-surface-warm">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-12 text-center text-3xl font-bold text-brand-black md:text-4xl">
+            Frequently asked questions
+          </h2>
+          <Faq />
+        </div>
+      </Section>
+
+      {/* ── Section 9: Final CTA — Dark bg ── */}
       <section
         aria-label="Get started"
-        className="w-full bg-brand-black py-16 md:py-24"
+        className="relative w-full bg-brand-black py-16 md:py-24"
       >
         <div className="mx-auto max-w-3xl px-5 text-center md:px-8">
-          <Submark size={12} className="mx-auto mb-6 justify-center" />
-          <h2 className="mb-8 text-3xl font-bold text-brand-white md:text-4xl">
-            The creative agency enterprises call when every other agency says two weeks.
+          <h2 className="mb-4 text-3xl font-bold text-brand-white md:text-4xl">
+            Ready to see transformative results?
           </h2>
           <TrackedCta
             href="/contact"
@@ -210,9 +261,10 @@ export default function HomePage() {
           >
             Let&apos;s chat
           </TrackedCta>
-          <p className="mt-4 text-sm text-neutral-400">
-            First project satisfaction or no invoice.
+          <p className="mt-6 text-sm text-neutral-400">
+            If you&apos;re not happy with our work, we&apos;ll refine it until it meets your standards.
           </p>
+          <Submark size={12} className="mx-auto mt-6 justify-center" />
         </div>
       </section>
     </div>
