@@ -28,6 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://sarani.studio"),
   openGraph: {
     type: "website",
+    url: "https://sarani.studio",
     siteName: "Sarani",
     locale: "en_US",
     images: [
@@ -42,6 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     site: "@saranistudio",
+    creator: "@saranistudio",
   },
   robots: {
     index: true,

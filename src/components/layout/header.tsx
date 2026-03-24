@@ -53,14 +53,14 @@ export function Header() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-[200] transition-all duration-250 ease-in-out",
+        "fixed top-0 left-0 right-0 z-[var(--z-header)] transition-all duration-250 ease-in-out",
         scrolled
           ? "bg-brand-white/90 backdrop-blur-[12px] border-b border-neutral-300"
           : "bg-transparent border-b border-transparent"
       )}
     >
       <nav
-        className="mx-auto flex h-[72px] max-w-screen-xl items-center justify-between px-5 md:px-8"
+        className="mx-auto flex h-[var(--header-height)] max-w-screen-xl items-center justify-between px-5 md:px-8"
         aria-label="Main navigation"
       >
         {/* Logo — dark variant on white bg */}
@@ -144,7 +144,7 @@ export function Header() {
         {mobileOpen && (
           <motion.div
             id="mobile-menu"
-            className="fixed inset-0 top-0 z-[300] flex flex-col items-center justify-center bg-brand-white md:hidden"
+            className="fixed inset-0 top-0 z-[var(--z-overlay)] flex flex-col items-center justify-center bg-brand-white md:hidden"
             initial={{ y: "-100%", opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "-100%", opacity: 0 }}

@@ -21,8 +21,8 @@ interface RateLimitEntry {
 
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
-const RATE_LIMIT_MAX = 3;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
@@ -46,6 +46,26 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
+/* ---------- Periodic cleanup of stale entries ---------- */
+
+let lastCleanup = Date.now();
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+
+function cleanupRateLimitMap() {
+  const now = Date.now();
+  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
+  lastCleanup = now;
+
+  for (const [ip, entry] of rateLimitMap) {
+    entry.timestamps = entry.timestamps.filter(
+      (ts) => now - ts < RATE_LIMIT_WINDOW_MS
+    );
+    if (entry.timestamps.length === 0) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}
+
 /* ---------- IP extraction ---------- */
 
 function getClientIp(request: NextRequest): string {
@@ -61,6 +81,7 @@ function getClientIp(request: NextRequest): string {
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request);
+    cleanupRateLimitMap();
 
     // Rate limit check (BR-103-3)
     if (isRateLimited(ip)) {

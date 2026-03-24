@@ -156,7 +156,7 @@ export default function PricingPage() {
                   >
                     {row.label}
                   </td>
-                  <td className="border border-neutral-300 bg-surface-elevated px-6 py-4 text-brand-cerulean">
+                  <td className="border border-neutral-300 bg-surface-elevated px-6 py-4 font-semibold text-brand-cerulean">
                     {row.sarani}
                   </td>
                   <td

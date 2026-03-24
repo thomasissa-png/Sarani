@@ -65,6 +65,14 @@
   --shadow-lemon-glow: 0 0 24px 0 rgb(250 202 21 / 0.2);
 }
 
+/* Layout & z-index custom properties */
+:root {
+  --header-height: 72px;
+  --z-header: 100;
+  --z-overlay: 200;
+  --z-modal: 300;
+}
+
 /* Base styles — light-first */
 html {
   scroll-behavior: smooth;

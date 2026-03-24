@@ -19,7 +19,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "How can you offer unlimited revisions without extra cost?",
-    answer: "Because we have trust in our work. Our structured team of 50+ experts works in a relay model across 6 continents, making revisions efficient and scalable. It's built into our operating model, not an afterthought.",
+    answer: "Because we have trust in our work. Our structured team of 50+ experts works in a relay model across 5 continents, making revisions efficient and scalable. It's built into our operating model, not an afterthought.",
   },
   {
     question: "How do you ensure quality assurance?",
@@ -51,10 +51,10 @@ const FAQ_ITEMS = [
   },
   {
     question: "How do you maintain quality with under 24h delivery?",
-    answer: "Our relay model across 6 continents means work doesn't stop. While other agencies need 2 weeks because they work 8 hours a day, we work 24. Speed doesn't compromise quality \u2014 it enables it.",
+    answer: "Our relay model across 5 continents means work doesn't stop. While other agencies need 2 weeks because they work 8 hours a day, we work 24. Speed doesn't compromise quality \u2014 it enables it.",
   },
   {
-    question: "You say you're present on 6 continents. How does that work?",
+    question: "You say you're present on 5 continents. How does that work?",
     answer: "We have 50+ in-house experts across Paris, London, Dubai, Buenos Aires, Manila, and more. This geographic spread creates a natural time-zone relay, ensuring 24/7 creative production without burnout.",
   },
   {

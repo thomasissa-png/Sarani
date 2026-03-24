@@ -38,10 +38,13 @@
       "info-light": "#e0f5fd"
     },
     "surface": {
-      "base": "#000000",
-      "elevated": "#171717",
-      "overlay": "#262626",
-      "inverse": "#ffffff"
+      "base": "#ffffff",
+      "elevated": "#f3f5f7",
+      "warm": "#faf9f5",
+      "overlay": "#e5e5e5",
+      "dark": "#000000",
+      "dark-elevated": "#1d1d1d",
+      "inverse": "#000000"
     }
   },
   "typography": {

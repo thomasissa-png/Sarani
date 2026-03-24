@@ -45,7 +45,7 @@ export default function HomePage() {
         <AnimatedSection className="mx-auto max-w-3xl text-center">
           <FadeInUp>
             <h2 className="mb-6 text-4xl font-bold text-brand-black md:text-5xl">
-              We are Sarani.
+              The agency that delivers tomorrow when every other agency says two weeks.
             </h2>
           </FadeInUp>
           <FadeInUp delay={0.15}>
@@ -63,7 +63,7 @@ export default function HomePage() {
         <div className="text-center">
           <FadeInUp>
             <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
-              What we do
+              8 disciplines, one team, no waiting.
             </h2>
           </FadeInUp>
           <AnimatedServicesList />
@@ -84,9 +84,7 @@ export default function HomePage() {
           <AnimatedMetrics />
           <FadeInUp delay={0.8}>
             <p className="mt-8 text-center text-xs text-neutral-500">
-              *Graphic design. Other work target from 48h to 96 hours based on brief.
-              <br />
-              *Because we have trust in our work!
+              *D+1 is our standard for graphic design. For larger scopes, delivery is confirmed at brief — typically 48 to 96 hours.
             </p>
           </FadeInUp>
         </div>
@@ -97,7 +95,7 @@ export default function HomePage() {
         <AnimatedSection className="mx-auto max-w-3xl text-center">
           <FadeInUp>
             <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
-              Are you ready?
+              One brief. 24 hours. Done.
             </h2>
           </FadeInUp>
           <FadeInUp delay={0.2}>
@@ -105,9 +103,9 @@ export default function HomePage() {
               href="/contact"
               variant="primary"
               trackingLocation="mid_cta"
-              trackingLabel="yes_lets_talk"
+              trackingLabel="start_a_project"
             >
-              Yes, let&apos;s talk!
+              Start a project
             </TrackedCta>
           </FadeInUp>
         </AnimatedSection>
@@ -136,7 +134,7 @@ export default function HomePage() {
         <FadeInUp>
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
-              With happiness comes trust
+              Trusted by global brands
             </h2>
           </div>
         </FadeInUp>

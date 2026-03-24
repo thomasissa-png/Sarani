@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://sarani.studio";
-  const lastModified = new Date();
+  const lastModified = "2026-03-24";
 
   return [
     { url: baseUrl, lastModified, changeFrequency: "weekly", priority: 1.0 },
