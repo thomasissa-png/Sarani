@@ -29,7 +29,7 @@ const CASE_STUDIES = [
 
 /**
  * Case study teaser cards with click tracking.
- * Links to /case-studies/[slug].
+ * V2 light design.
  */
 export function CaseStudyTeasers() {
   const handleClick = useCallback((client: string, slug: string) => {
@@ -50,12 +50,12 @@ export function CaseStudyTeasers() {
           key={study.slug}
           href={`/case-studies/${study.slug}`}
           onClick={() => handleClick(study.client, study.slug)}
-          className="group rounded-2xl border border-surface-overlay bg-surface-elevated p-8 transition-colors duration-200 hover:border-brand-flame/40"
+          className="group rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-all duration-200 hover:border-brand-lemon hover:shadow-md"
         >
           <p className="mb-2 text-sm font-bold uppercase tracking-wider text-brand-cerulean">
             {study.client}
           </p>
-          <p className="mb-3 text-xl font-bold text-brand-white">
+          <p className="mb-3 text-xl font-bold text-brand-black">
             {study.headline}
           </p>
           <p className="mb-6 text-sm text-neutral-500">

@@ -54,7 +54,7 @@ export function Header() {
       className={cn(
         "fixed top-0 left-0 right-0 z-[200] transition-all duration-250 ease-in-out",
         scrolled
-          ? "bg-brand-black/90 backdrop-blur-[12px] border-b border-neutral-800"
+          ? "bg-brand-white/90 backdrop-blur-[12px] border-b border-neutral-300"
           : "bg-transparent border-b border-transparent"
       )}
     >
@@ -62,8 +62,8 @@ export function Header() {
         className="mx-auto flex h-[72px] max-w-screen-xl items-center justify-between px-5 md:px-8"
         aria-label="Main navigation"
       >
-        {/* Logo */}
-        <Logo variant="white" width={120} />
+        {/* Logo — dark variant on white bg */}
+        <Logo variant="dark" width={120} />
 
         {/* Desktop nav links */}
         <ul className="hidden items-center gap-8 md:flex" role="list">
@@ -73,10 +73,9 @@ export function Header() {
                 href={link.href}
                 onClick={() => handleNavClick(link.label)}
                 className={cn(
-                  "text-sm font-normal uppercase tracking-wider text-brand-white transition-all duration-150",
-                  "hover:text-brand-flame hover:underline hover:decoration-brand-flame hover:decoration-2 hover:underline-offset-4",
-                  pathname === link.href &&
-                    "underline decoration-brand-flame decoration-2 underline-offset-4"
+                  "text-sm font-medium uppercase tracking-wider text-brand-black transition-all duration-150",
+                  "hover:text-brand-flame",
+                  pathname === link.href && "text-brand-flame"
                 )}
               >
                 {link.label}
@@ -93,13 +92,13 @@ export function Header() {
             className="hidden text-sm px-6 py-3 min-w-0 md:inline-flex"
             onClick={() => handleNavClick("start_a_project")}
           >
-            Start a project
+            Let&apos;s chat
           </Button>
 
-          {/* Hamburger button — mobile only */}
+          {/* Hamburger button — mobile only: blue circle like V2 */}
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-cerulean md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-expanded={mobileOpen}
             aria-controls="mobile-menu"
@@ -108,12 +107,12 @@ export function Header() {
             <span className="sr-only">{mobileOpen ? "Close menu" : "Open menu"}</span>
             {mobileOpen ? (
               <svg
-                width="24"
-                height="24"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+                stroke="white"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 aria-hidden="true"
               >
@@ -122,18 +121,17 @@ export function Header() {
               </svg>
             ) : (
               <svg
-                width="24"
-                height="24"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+                stroke="white"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 aria-hidden="true"
               >
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="17" x2="20" y2="17" />
               </svg>
             )}
           </button>
@@ -144,7 +142,7 @@ export function Header() {
       <div
         id="mobile-menu"
         className={cn(
-          "fixed inset-0 top-0 z-[300] flex flex-col items-center justify-center bg-brand-black transition-opacity duration-250 md:hidden",
+          "fixed inset-0 top-0 z-[300] flex flex-col items-center justify-center bg-brand-white transition-opacity duration-250 md:hidden",
           mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         aria-hidden={!mobileOpen}
@@ -152,17 +150,17 @@ export function Header() {
         {/* Close button */}
         <button
           type="button"
-          className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center text-brand-white"
+          className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full bg-brand-cerulean text-brand-white"
           onClick={() => setMobileOpen(false)}
           aria-label="Close menu"
         >
           <svg
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
             aria-hidden="true"
           >
@@ -177,7 +175,7 @@ export function Header() {
               <Link
                 href={link.href}
                 onClick={() => handleNavClick(link.label)}
-                className="text-2xl font-bold text-brand-white transition-colors duration-150 hover:text-brand-flame"
+                className="text-2xl font-bold text-brand-black transition-colors duration-150 hover:text-brand-flame"
               >
                 {link.label}
               </Link>
@@ -191,7 +189,7 @@ export function Header() {
             href="/contact"
             onClick={() => handleNavClick("start_a_project")}
           >
-            Start a project
+            Let&apos;s chat
           </Button>
         </div>
       </div>

@@ -13,10 +13,10 @@ export default function ContactPage() {
     <div className="pt-[72px]">
       <Section ariaLabel="Contact form">
         <div className="mx-auto max-w-[640px]">
-          <h1 className="mb-4 text-4xl font-bold text-brand-white sm:text-5xl">
+          <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">
             Start a project.
           </h1>
-          <p className="mb-10 text-lg text-neutral-400">
+          <p className="mb-10 text-lg text-neutral-600">
             Tell us what you need. We'll get back to you within the hour.
           </p>
 

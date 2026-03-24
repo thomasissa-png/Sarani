@@ -29,16 +29,16 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 }
 
 const inputStyles = [
-  "w-full rounded-lg border bg-surface-elevated px-4 py-3",
-  "text-brand-white placeholder:text-neutral-600",
-  "border-neutral-700 focus:border-brand-cerulean focus:outline-none focus:ring-1 focus:ring-brand-cerulean",
+  "w-full rounded-lg border bg-brand-white px-4 py-3",
+  "text-brand-black placeholder:text-neutral-400",
+  "border-neutral-300 focus:border-brand-cerulean focus:outline-none focus:ring-1 focus:ring-brand-cerulean",
   "transition-colors duration-150",
   "min-h-[44px]",
 ].join(" ");
 
 const inputErrorStyles = "border-error focus:border-error focus:ring-error";
 
-const labelStyles = "mb-1.5 block text-sm font-medium text-neutral-300";
+const labelStyles = "mb-1.5 block text-sm font-medium text-neutral-700";
 
 /* ---------- ContactForm ---------- */
 
@@ -213,7 +213,7 @@ export function ContactForm() {
     return (
       <div
         aria-live="polite"
-        className="rounded-lg border border-neutral-700 bg-surface-elevated p-8 text-center sm:p-12"
+        className="rounded-lg border border-neutral-300 bg-surface-elevated p-8 text-center sm:p-12"
       >
         <div className="mb-6 flex justify-center">
           <svg
@@ -231,10 +231,10 @@ export function ContactForm() {
             />
           </svg>
         </div>
-        <h2 className="mb-2 text-2xl font-bold text-brand-white">
+        <h2 className="mb-2 text-2xl font-bold text-brand-black">
           Brief received.
         </h2>
-        <p className="text-lg text-neutral-400">
+        <p className="text-lg text-neutral-600">
           We'll respond within the hour.
         </p>
       </div>
@@ -472,7 +472,7 @@ export function ContactForm() {
           aria-describedby={fileError ? "contact-file-error" : "contact-file-help"}
           disabled={isSubmitting}
           onChange={handleFileChange}
-          className="w-full text-sm text-neutral-500 file:mr-4 file:rounded-lg file:border-0 file:bg-surface-overlay file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-white hover:file:bg-neutral-700 file:cursor-pointer file:transition-colors"
+          className="w-full text-sm text-neutral-500 file:mr-4 file:rounded-lg file:border-0 file:bg-neutral-200 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-black hover:file:bg-neutral-300 file:cursor-pointer file:transition-colors"
         />
         {fileError ? (
           <p id="contact-file-error" role="alert" className="mt-1.5 text-sm text-error">
@@ -511,8 +511,8 @@ export function ContactForm() {
         className={[
           "w-full rounded-full py-4 text-base font-bold transition-all duration-150",
           isSubmitting
-            ? "cursor-not-allowed bg-brand-flame-dark text-brand-black/60"
-            : "cursor-pointer bg-brand-flame text-brand-black hover:bg-brand-flame-dark hover:scale-[1.02] active:scale-[0.98]",
+            ? "cursor-not-allowed bg-brand-lemon-dark text-brand-black/60"
+            : "cursor-pointer bg-brand-lemon text-brand-black hover:bg-brand-lemon-dark hover:scale-[1.02] active:scale-[0.98]",
           "focus-visible:outline-3 focus-visible:outline-brand-cerulean focus-visible:outline-offset-2",
         ].join(" ")}
       >
@@ -520,7 +520,7 @@ export function ContactForm() {
       </button>
 
       {/* Guarantee micro-reassurance */}
-      <p className="text-center text-sm text-neutral-500">
+      <p className="text-center text-sm text-neutral-400">
         First project satisfaction or no invoice.
       </p>
     </form>

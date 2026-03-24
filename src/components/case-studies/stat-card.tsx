@@ -4,8 +4,7 @@ interface StatCardProps {
 }
 
 /**
- * Stat card for case study results section.
- * bg surface-elevated, number in brand-flame.
+ * Stat card for case study results section — V2 light design.
  */
 export function StatCard({ label, value }: StatCardProps) {
   return (
@@ -13,7 +12,7 @@ export function StatCard({ label, value }: StatCardProps) {
       <p className="mb-2 text-4xl font-bold text-brand-flame sm:text-5xl">
         {value}
       </p>
-      <p className="text-sm font-medium uppercase tracking-wider text-neutral-400">
+      <p className="text-sm font-medium uppercase tracking-wider text-neutral-500">
         {label}
       </p>
     </div>

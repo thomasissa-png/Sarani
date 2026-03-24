@@ -19,10 +19,10 @@ export default function WorkPage() {
   return (
     <div className="pt-[72px]">
       <Section ariaLabel="Case studies">
-        <h1 className="mb-6 text-4xl font-bold text-brand-white sm:text-5xl">
+        <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl">
           Case Studies
         </h1>
-        <p className="mb-12 max-w-2xl text-lg text-neutral-400">
+        <p className="mb-12 max-w-2xl text-lg text-neutral-600">
           TikTok, Sony, GEODIS, Adidas, L&apos;Or&eacute;al. Real briefs. Real
           deadlines. Real results.
         </p>

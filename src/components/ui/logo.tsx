@@ -1,29 +1,50 @@
-import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
-  /** "primary" = white on black bg, "white" = transparent bg version */
-  variant?: "primary" | "white";
-  /** Width in px — height auto-calculated from aspect ratio */
+  /** "dark" = black text (for light bg), "light" = white text (for dark bg) */
+  variant?: "dark" | "light";
+  /** Width in px */
   width?: number;
   className?: string;
 }
 
-export function Logo({ variant = "primary", width = 120, className }: LogoProps) {
-  const src = variant === "primary" ? "/sarani-logo.png" : "/sarani-logo-white.png";
+/**
+ * Sarani logo — SVG text with colored dots above certain letters.
+ * Matches the V2 sarani.studio design.
+ */
+export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
+  const textColor = variant === "dark" ? "#000000" : "#ffffff";
+  const height = Math.round(width * 0.38);
 
   return (
     <Link href="/" aria-label="Sarani — Back to homepage" className={cn("block", className)}>
-      <Image
-        src={src}
-        alt="Sarani"
+      <svg
         width={width}
-        height={width}
-        className="h-auto object-contain"
-        style={{ width: `${width}px`, height: "auto" }}
-        priority
-      />
+        height={height}
+        viewBox="0 0 120 46"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        {/* Colored dots */}
+        <circle cx="58" cy="5" r="3" fill="#f1c217" />
+        <circle cx="72" cy="3" r="2.5" fill="#0babe8" />
+        <circle cx="85" cy="7" r="2" fill="#da5126" />
+        <circle cx="98" cy="4" r="2.5" fill="#f1c217" />
+        {/* Text "sarani" */}
+        <text
+          x="2"
+          y="38"
+          fontFamily="var(--font-outfit), Outfit, sans-serif"
+          fontSize="34"
+          fontWeight="700"
+          fill={textColor}
+          letterSpacing="-0.5"
+        >
+          sarani
+        </text>
+      </svg>
     </Link>
   );
 }

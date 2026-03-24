@@ -28,7 +28,7 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
     <li>
       <Link
         href={href}
-        className="text-sm text-neutral-500 transition-colors duration-150 hover:text-brand-white"
+        className="text-sm text-neutral-400 transition-colors duration-150 hover:text-brand-white"
       >
         {children}
       </Link>
@@ -45,7 +45,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Submark size={10} className="mb-4" />
             <p className="mb-2 text-sm font-bold text-brand-white">Unlimited Creativity</p>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-neutral-400">
               35 experts. 5 continents. 18 languages. 24/7.
             </p>
           </div>
@@ -117,7 +117,7 @@ export function Footer() {
             </div>
 
             {/* Email */}
-            <p className="mb-4 text-sm text-neutral-500">
+            <p className="mb-4 text-sm text-neutral-400">
               <a
                 href="mailto:team@sarani.studio"
                 className="transition-colors duration-150 hover:text-brand-white"
@@ -131,7 +131,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/legal"
-                  className="text-xs text-neutral-600 transition-colors duration-150 hover:text-neutral-400"
+                  className="text-xs text-neutral-500 transition-colors duration-150 hover:text-neutral-300"
                 >
                   Legal Notice
                 </Link>
@@ -139,7 +139,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/legal"
-                  className="text-xs text-neutral-600 transition-colors duration-150 hover:text-neutral-400"
+                  className="text-xs text-neutral-500 transition-colors duration-150 hover:text-neutral-300"
                 >
                   Privacy Policy
                 </Link>
@@ -150,7 +150,7 @@ export function Footer() {
 
         {/* Copyright */}
         <div className="mt-12 border-t border-neutral-800 pt-6">
-          <p className="text-xs text-neutral-600">
+          <p className="text-xs text-neutral-500">
             &copy; {new Date().getFullYear()} Sarani. All rights reserved.
           </p>
         </div>

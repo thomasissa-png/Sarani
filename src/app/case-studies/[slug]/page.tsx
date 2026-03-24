@@ -84,16 +84,16 @@ export default async function CaseStudyPage({ params }: PageProps) {
         <p className="mb-4 text-sm font-medium uppercase tracking-wider text-brand-flame">
           {cs.client}
         </p>
-        <h1 className="mb-8 max-w-3xl text-3xl font-bold leading-tight text-brand-white sm:text-4xl lg:text-5xl">
+        <h1 className="mb-8 max-w-3xl text-3xl font-bold leading-tight text-brand-black sm:text-4xl lg:text-5xl">
           {cs.headline}
         </h1>
         {/* Meta strip */}
-        <div className="flex flex-wrap gap-6 text-sm text-neutral-400">
+        <div className="flex flex-wrap gap-6 text-sm text-neutral-500">
           <div>
             <span className="block text-xs uppercase tracking-wider text-neutral-500">
               Deliverable
             </span>
-            <span className="font-medium text-brand-white">
+            <span className="font-medium text-brand-black">
               {cs.deliverable}
             </span>
           </div>
@@ -101,7 +101,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
             <span className="block text-xs uppercase tracking-wider text-neutral-500">
               Timeline
             </span>
-            <span className="font-medium text-brand-white">
+            <span className="font-medium text-brand-black">
               {cs.turnaround}
             </span>
           </div>
@@ -109,7 +109,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
             <span className="block text-xs uppercase tracking-wider text-neutral-500">
               Volume
             </span>
-            <span className="font-medium text-brand-white">{cs.volume}</span>
+            <span className="font-medium text-brand-black">{cs.volume}</span>
           </div>
         </div>
       </Section>
@@ -124,18 +124,18 @@ export default async function CaseStudyPage({ params }: PageProps) {
         <div className="grid gap-12 lg:grid-cols-12">
           {/* Content — 8 cols */}
           <div className="lg:col-span-8">
-            <h2 className="mb-6 text-2xl font-bold text-brand-white">
+            <h2 className="mb-6 text-2xl font-bold text-brand-black">
               The Brief
             </h2>
-            <p className="text-lg leading-relaxed text-neutral-300">
+            <p className="text-lg leading-relaxed text-neutral-600">
               {cs.brief}
             </p>
           </div>
 
           {/* At a Glance sidebar — 4 cols */}
           <aside className="lg:col-span-4">
-            <div className="sticky top-24 rounded-2xl border border-surface-overlay bg-surface-elevated p-8">
-              <h3 className="mb-6 text-lg font-bold text-brand-white">
+            <div className="sticky top-24 rounded-2xl border border-neutral-300 bg-surface-elevated p-8">
+              <h3 className="mb-6 text-lg font-bold text-brand-black">
                 At a Glance
               </h3>
               <dl className="space-y-4">
@@ -143,13 +143,13 @@ export default async function CaseStudyPage({ params }: PageProps) {
                   <dt className="text-xs uppercase tracking-wider text-neutral-500">
                     Client
                   </dt>
-                  <dd className="font-medium text-brand-white">{cs.client}</dd>
+                  <dd className="font-medium text-brand-black">{cs.client}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wider text-neutral-500">
                     Deliverable
                   </dt>
-                  <dd className="font-medium text-brand-white">
+                  <dd className="font-medium text-brand-black">
                     {cs.deliverable}
                   </dd>
                 </div>
@@ -157,13 +157,13 @@ export default async function CaseStudyPage({ params }: PageProps) {
                   <dt className="text-xs uppercase tracking-wider text-neutral-500">
                     Volume
                   </dt>
-                  <dd className="font-medium text-brand-white">{cs.volume}</dd>
+                  <dd className="font-medium text-brand-black">{cs.volume}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wider text-neutral-500">
                     Timeline
                   </dt>
-                  <dd className="font-medium text-brand-white">
+                  <dd className="font-medium text-brand-black">
                     {cs.turnaround}
                   </dd>
                 </div>
@@ -180,7 +180,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
 
       {/* Results */}
       <Section ariaLabel="Results" id="results">
-        <h2 className="mb-8 text-center text-2xl font-bold text-brand-white">
+        <h2 className="mb-8 text-center text-2xl font-bold text-brand-black">
           Results
         </h2>
         <div className="grid gap-6 sm:grid-cols-3">
@@ -188,7 +188,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
             <StatCard key={stat.label} label={stat.label} value={stat.value} />
           ))}
         </div>
-        <p className="mt-8 text-center text-lg font-medium text-neutral-300">
+        <p className="mt-8 text-center text-lg font-medium text-neutral-600">
           {cs.result}
         </p>
       </Section>
@@ -204,10 +204,10 @@ export default async function CaseStudyPage({ params }: PageProps) {
       {/* Closing CTA */}
       <Section ariaLabel="Start your project">
         <div className="text-center">
-          <h2 className="mb-4 text-3xl font-bold text-brand-white sm:text-4xl">
+          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
             Ready to start your first project?
           </h2>
-          <p className="mx-auto mb-8 max-w-xl text-neutral-400">
+          <p className="mx-auto mb-8 max-w-xl text-neutral-500">
             Fixed pricing. Unlimited revisions. First project satisfaction or no
             invoice.
           </p>
@@ -218,7 +218,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
       {/* Related case studies */}
       {related.length > 0 && (
         <Section ariaLabel="Related case studies" tight>
-          <h2 className="mb-8 text-2xl font-bold text-brand-white">
+          <h2 className="mb-8 text-2xl font-bold text-brand-black">
             More Case Studies
           </h2>
           <div className="grid gap-6 sm:grid-cols-2">

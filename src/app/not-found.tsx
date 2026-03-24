@@ -8,10 +8,10 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-5 text-center">
-      <h1 className="mb-4 text-4xl font-bold text-brand-white sm:text-5xl">
+      <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">
         This page doesn&apos;t exist.
       </h1>
-      <p className="mb-10 text-lg text-neutral-400">
+      <p className="mb-10 text-lg text-neutral-600">
         But we do. 35 experts ready to work on your next project.
       </p>
       <div className="flex flex-col items-center gap-4 sm:flex-row">
