@@ -12,7 +12,7 @@ const PILL_STYLES = [
   "bg-brand-lemon/10 text-brand-black",
   "bg-brand-cerulean/10 text-brand-black",
   "bg-brand-flame/10 text-brand-black",
-  "bg-neutral-100 text-brand-black",
+  "bg-brand-black/8 text-brand-black",
 ] as const;
 
 /* ---------- Animated Hero Dots (larger, min 12-20px) ---------- */
@@ -23,50 +23,39 @@ export function AnimatedHeroDots() {
       className="pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden="true"
     >
+      {/* Dots concentrated in the right half only */}
       <FloatingDot
-        className="absolute top-[18%] left-[42%] h-5 w-5 rounded-full bg-brand-lemon"
-        delay={0}
-        distance={14}
-      />
-      <FloatingDot
-        className="absolute top-[12%] right-[35%] h-4 w-4 rounded-full bg-brand-cerulean"
+        className="absolute top-[15%] right-[30%] h-4 w-4 rounded-full bg-brand-cerulean hidden lg:block"
         delay={0.5}
         distance={12}
       />
       <FloatingDot
-        className="absolute top-[55%] left-[48%] h-3.5 w-3.5 rounded-full bg-brand-flame"
+        className="absolute top-[35%] right-[12%] h-5 w-5 rounded-full bg-brand-lemon hidden lg:block"
+        delay={0}
+        distance={14}
+      />
+      <FloatingDot
+        className="absolute top-[50%] right-[25%] h-3.5 w-3.5 rounded-full bg-brand-flame hidden lg:block"
         delay={1}
         distance={10}
       />
       <FloatingDot
-        className="absolute top-[50%] right-[28%] h-5 w-5 rounded-full bg-brand-lemon"
-        delay={1.5}
-        distance={16}
-      />
-      <FloatingDot
-        className="absolute top-[30%] left-[22%] h-3 w-3 rounded-full bg-brand-flame"
-        delay={0.8}
-        distance={11}
-      />
-      <FloatingDot
-        className="absolute top-[40%] right-[18%] h-4 w-4 rounded-full bg-brand-cerulean"
-        delay={1.2}
-        distance={13}
-      />
-      {/* Extra large decorative dots */}
-      <FloatingDot
-        className="absolute top-[65%] left-[30%] h-6 w-6 rounded-full bg-brand-lemon/60"
-        delay={0.3}
-        distance={18}
-      />
-      <FloatingDot
-        className="absolute top-[25%] right-[12%] h-5 w-5 rounded-full bg-brand-cerulean/50"
+        className="absolute top-[25%] right-[18%] h-5 w-5 rounded-full bg-brand-cerulean/50 hidden lg:block"
         delay={1.8}
         distance={15}
+      />
+      <FloatingDot
+        className="absolute top-[65%] right-[15%] h-6 w-6 rounded-full bg-brand-lemon/60 hidden lg:block"
+        delay={0.3}
+        distance={18}
       />
     </div>
   );
 }
+
+/* ---------- Pre-headline ---------- */
+
+const PRE_HEADLINE = "THE ENTERPRISE CREATIVE PARTNER";
 
 /* ---------- Value props ---------- */
 
@@ -80,6 +69,14 @@ const VALUE_PROPS = [
   "Unlimited revisions",
 ] as const;
 
+/* ---------- Hero stats ---------- */
+
+const HERO_STATS = [
+  { value: "35+", label: "experts" },
+  { value: "5", label: "continents" },
+  { value: "18", label: "languages" },
+] as const;
+
 /* ---------- Animated Hero Content — split layout ---------- */
 
 export function AnimatedHeroContent() {
@@ -89,14 +86,26 @@ export function AnimatedHeroContent() {
     return (
       <div className="relative z-10 mx-auto w-full max-w-screen-xl px-5 md:px-8">
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          <span className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean">
+            {PRE_HEADLINE}
+          </span>
           <h1 className="mb-4 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
             Unlimited
             <br />
             Creativity
           </h1>
-          <p className="mb-8 max-w-2xl text-lg text-neutral-600 md:text-xl">
+          <p className="mb-6 max-w-2xl text-lg text-neutral-600 md:text-xl">
             {SUBTITLE}
           </p>
+          {/* Stats row */}
+          <div className="mb-8 flex items-center gap-8">
+            {HERO_STATS.map((stat) => (
+              <div key={stat.label} className="flex flex-col items-center lg:items-start">
+                <span className="text-2xl font-bold text-brand-black">{stat.value}</span>
+                <span className="text-xs uppercase tracking-wide text-neutral-500">{stat.label}</span>
+              </div>
+            ))}
+          </div>
           <div className="mb-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
             {VALUE_PROPS.map((prop, i) => (
               <span
@@ -133,6 +142,16 @@ export function AnimatedHeroContent() {
   return (
     <div className="relative z-10 mx-auto w-full max-w-screen-xl px-5 md:px-8">
       <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+        {/* Pre-headline tag */}
+        <motion.span
+          className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+        >
+          {PRE_HEADLINE}
+        </motion.span>
+
         {/* Title — staggered word slide-up */}
         <h1 className="mb-4 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
           <span className="block overflow-hidden">
@@ -167,7 +186,7 @@ export function AnimatedHeroContent() {
 
         {/* Subtitle — persona-focused value proposition */}
         <motion.p
-          className="mb-8 max-w-2xl text-lg text-neutral-600 md:text-xl"
+          className="mb-6 max-w-2xl text-lg text-neutral-600 md:text-xl"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
@@ -178,6 +197,25 @@ export function AnimatedHeroContent() {
         >
           {SUBTITLE}
         </motion.p>
+
+        {/* Stats row — social proof */}
+        <motion.div
+          className="mb-8 flex items-center gap-8"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.5,
+            delay: 0.7,
+            ease: [0.25, 0.1, 0.25, 1],
+          }}
+        >
+          {HERO_STATS.map((stat) => (
+            <div key={stat.label} className="flex flex-col items-center lg:items-start">
+              <span className="text-2xl font-bold text-brand-black">{stat.value}</span>
+              <span className="text-xs uppercase tracking-wide text-neutral-500">{stat.label}</span>
+            </div>
+          ))}
+        </motion.div>
 
         {/* 4 value props — pill badges with stagger fade-in */}
         <div className="mb-10 flex flex-wrap items-center justify-center gap-3 lg:justify-start">

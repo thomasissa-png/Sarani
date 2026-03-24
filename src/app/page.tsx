@@ -34,8 +34,13 @@ export default function HomePage() {
         <AnimatedHeroDots />
         <AnimatedHeroContent />
 
+        {/* Client logos — trust strip above the fold */}
+        <div className="w-full max-w-screen-xl mx-auto px-5 md:px-8">
+          <ClientLogos />
+        </div>
+
         {/* Auto-scrolling project images slider */}
-        <div className="mt-12 w-full overflow-hidden">
+        <div className="mt-4 w-full overflow-hidden">
           <ProjectSlider />
         </div>
       </section>
