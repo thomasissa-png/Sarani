@@ -189,7 +189,7 @@ export default function PricingPage() {
             Start a project
           </Button>
           <p className="mt-6 text-sm text-neutral-500">
-            First project satisfaction or no invoice.
+            Zero risk. Start today.
           </p>
         </div>
       </Section>

@@ -5,7 +5,7 @@ import { Testimonials } from "@/components/home/testimonials";
 import { Faq } from "@/components/home/faq";
 import { TrackedCta } from "@/components/home/tracked-cta";
 import { ScrollTracker } from "@/components/home/scroll-tracker";
-import { Submark } from "@/components/ui/logo";
+import { ProofCards } from "@/components/home/proof-cards";
 import {
   FadeInUp,
   StaggerChildren,
@@ -40,37 +40,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* -- Section 2: We are Sarani -- */}
-      <Section ariaLabel="We are Sarani">
-        <AnimatedSection className="mx-auto max-w-3xl text-center">
-          <FadeInUp>
-            <h2 className="mb-6 text-4xl font-bold text-brand-black md:text-5xl">
-              The agency that delivers tomorrow when every other agency says two weeks.
-            </h2>
-          </FadeInUp>
-          <FadeInUp delay={0.15}>
-            <p className="text-lg leading-relaxed text-neutral-700">
-              We envision a world where every dream could take form, every brand could tell its
-              story, and every entrepreneur could paint their vision all without the traditional
-              barriers of high costs, slow turnaround times, and rigid processes.
-            </p>
-          </FadeInUp>
-        </AnimatedSection>
-      </Section>
-
-      {/* -- Section 3: What we do -- */}
-      <Section ariaLabel="What we do" className="bg-surface-warm">
-        <div className="text-center">
-          <FadeInUp>
-            <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
-              8 disciplines, one team, no waiting.
-            </h2>
-          </FadeInUp>
-          <AnimatedServicesList />
-        </div>
-      </Section>
-
-      {/* -- Section 4: Our metrics -- Dark bg -- */}
+      {/* -- Section 2: Our metrics -- Dark bg -- */}
       <section
         aria-label="Our metrics"
         className="w-full bg-brand-black py-16 md:py-24"
@@ -90,8 +60,48 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* -- Section 5: Are you ready? -- Mid-page CTA -- */}
-      <Section ariaLabel="Are you ready">
+      {/* -- Section 3: What we do -- */}
+      <Section ariaLabel="What we do" className="bg-surface-warm">
+        <div className="text-center">
+          <FadeInUp>
+            <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
+              8 disciplines, one team, no waiting.
+            </h2>
+          </FadeInUp>
+          <AnimatedServicesList />
+        </div>
+      </Section>
+
+      {/* -- Section 4: Real results — Proof cards -- */}
+      <Section ariaLabel="Real results">
+        <FadeInUp>
+          <h2 className="mb-10 text-center text-3xl font-bold text-brand-black md:text-4xl">
+            Real results
+          </h2>
+        </FadeInUp>
+        <ProofCards />
+      </Section>
+
+      {/* -- Section 5: Our recent work -- */}
+      <Section ariaLabel="Our recent work" className="bg-surface-elevated">
+        <FadeInUp>
+          <div className="mb-8 flex items-center justify-between">
+            <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
+              Our recent work
+            </h2>
+            <Link
+              href="/work"
+              className="text-sm font-bold text-brand-flame transition-colors hover:text-brand-flame-light"
+            >
+              view all works &rarr;
+            </Link>
+          </div>
+        </FadeInUp>
+        <ProjectSlider />
+      </Section>
+
+      {/* -- Section 6: Mid-page CTA -- */}
+      <Section ariaLabel="Start a project">
         <AnimatedSection className="mx-auto max-w-3xl text-center">
           <FadeInUp>
             <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
@@ -111,26 +121,8 @@ export default function HomePage() {
         </AnimatedSection>
       </Section>
 
-      {/* -- Section 6: Our recent work -- */}
-      <Section ariaLabel="Our recent work" className="bg-surface-elevated">
-        <FadeInUp>
-          <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
-              Our recent work
-            </h2>
-            <Link
-              href="/work"
-              className="text-sm font-bold text-brand-flame transition-colors hover:text-brand-flame-light"
-            >
-              view all works &rarr;
-            </Link>
-          </div>
-        </FadeInUp>
-        <ProjectSlider />
-      </Section>
-
-      {/* -- Section 7: Testimonials -- "With happiness comes trust" -- */}
-      <Section ariaLabel="Testimonials">
+      {/* -- Section 7: Testimonials -- */}
+      <Section ariaLabel="Testimonials" className="bg-surface-elevated">
         <FadeInUp>
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
