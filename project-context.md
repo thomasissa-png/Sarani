@@ -4,6 +4,8 @@
 > Remplis chaque champ. Les champs vides bloquent les agents.
 > **ATTENTION** : ce fichier peut contenir des informations stratégiques (budget, pricing, concurrents). S'assurer que le repo est **privé** si des données confidentielles y sont renseignées.
 > Dernière mise à jour : 2026-03-24
+>
+> **LANGUE DES LIVRABLES : ANGLAIS.** Tous les livrables du projet (frontend, backend, code, contenus du site, copy, documentation technique) DOIVENT être rédigés en anglais. Sarani est une agence internationale — le site et tous ses composants sont en anglais. Seul ce fichier project-context.md et les échanges internes agents restent en français.
 
 ---
 
@@ -20,7 +22,7 @@
 - **Persona principal** : Sophie, 38 ans, Head of Marketing / Directrice Communication d'un grand groupe international (TikTok, Sony, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica, PICO). Basée dans une métropole (Paris, Londres, Dubaï). Gère des budgets com' de 500K€ à 5M€/an. Sous pression permanente pour livrer des campagnes multi-marchés dans des délais serrés. Frustrée par les agences traditionnelles : 1) Trop lentes (elle a besoin de bannières en 2h, pas en 2 semaines), 2) Trop rigides (chaque révision = un devis supplémentaire), 3) Déconnectées du terrain (ne comprennent pas le rythme des campagnes digitales 24/7). Ressent du stress face à son board quand les assets ne sont pas livrés à temps, et de la frustration d'être facturée pour chaque aller-retour.
 - **Problème principal** : Les agences de communication traditionnelles sont chères, lentes et ne comprennent pas les besoins des grands groupes — délais absurdes pour des révisions simples, interlocuteurs qui changent, devis opaques, et un décalage entre la promesse commerciale et l'exécution réelle. Exemples concrets : Sony avait besoin de bannières Black Friday livrées le jour même, TikTok avait besoin de 300-500 vidéos éditées par semaine, GEODIS avait besoin de 350 présentations rebrandées en 3 semaines — aucune agence traditionnelle ne peut tenir ce rythme.
 - **Alternative actuelle** : Travailler avec d'autres agences de communication (grandes agences réseau type Publicis, WPP, Havas ou agences indépendantes locales) — avec les frustrations décrites ci-dessus. Certains internalisent mais manquent de capacité et de diversité créative.
-- **Persona secondaire** : [À COMPLÉTER si pertinent — ex : Directeur Achats qui valide les contrats-cadres, ou CMO qui signe le budget annuel agence]
+- **Persona secondaire** : Marc, 45 ans, Directeur Achats / Procurement Director d'un grand groupe international (CA >500M€). Responsable de la sélection et du suivi des prestataires. Évalue les agences sur le rapport qualité-prix, la fiabilité des délais et la transparence tarifaire. Sensible à la réduction des coûts et à la simplification des processus de commande. Décisionnaire final sur les contrats-cadres et les renouvellements annuels.
 
 ---
 
@@ -28,7 +30,7 @@
 - **Promesse unique** : "Unlimited Creativity" — une agence créative internationale (35 experts, 5 continents, 18 langues) qui travaille 24h/24, livre tous les designs en D+1, offre des révisions illimitées, avec des prix fixes et transparents. Garantie satisfaction : "First project satisfaction or no invoice." Résultat prouvé : jusqu'à 60% d'économies par rapport aux agences traditionnelles, avec plus de vitesse et de qualité.
 - **Ton de marque** : Bienveillant, dynamique, motivé, référence (expert qui inspire confiance)
 - **3 mots qui DÉFINISSENT la marque** : Ultra-rapide, Ultra-serviable, Livre-toujours
-- **3 mots qui ne DÉFINISSENT PAS la marque** : [À COMPLÉTER — ex : Corporate, Rigide, Low-cost]
+- **3 mots qui ne DÉFINISSENT PAS la marque** : Cheap, Not-business-first, Slow
 - **Concurrent principal** : Grandes agences de communication réseau (Publicis, WPP, Havas, Dentsu) et agences indépendantes premium
 - **Notre différence clé vs lui** : Positionnement qualité-prix imbattable grâce à une ultra-agilité opérationnelle — service 24/7, livraison D+1, révisions illimitées, prix fixes transparents, équipe internationale sur 5 continents travaillant en relais jour/nuit. Les grands réseaux ne peuvent pas offrir ce rythme à cause de leur structure lourde. Preuve : bannières Sony Black Friday livrées le jour même (155€), 5700 slides GEODIS en 3 semaines (8500€), 1500+ vidéos TikTok/mois (20$/vidéo).
 
@@ -37,22 +39,22 @@
 ## Objectifs
 - **Objectif principal à 6 mois** : 4 millions d'euros de chiffre d'affaires
 - **KPI North Star** : 10 millions d'euros de chiffre d'affaires à 20% d'EBITDA
-- **Objectif secondaire** : [À COMPLÉTER — ex : signer 5 nouveaux grands comptes, atteindre 80% de taux de rétention client]
-- **Ce que le succès ressemble à 12 mois** : [À COMPLÉTER — ex : 10M€ CA, 15+ grands comptes actifs, équipe de 30 personnes, présence sur 3 continents]
+- **Objectif secondaire** : Signer 5 nouveaux grands comptes internationaux par mois (entreprises à >500M€ de CA)
+- **Ce que le succès ressemble à 12 mois** : 10M€ CA à 20% EBITDA, taux de satisfaction élevé sur les clients existants (mesurable via NPS ou CSAT), croissance soutenue du nombre de grands comptes actifs, forte rétention client
 
 ---
 
 ## Stack technique
-- **Frontend** : À définir
-- **Backend** : À définir
-- **Base de données** : À définir
-- **Authentification** : À définir
+- **Frontend** : À recommander par @fullstack (contrainte : site vitrine international, performance, SEO-friendly)
+- **Backend** : À recommander par @fullstack (contrainte : site vitrine, formulaire contact, intégration Umami)
+- **Base de données** : À recommander par @fullstack (besoin minimal : formulaire contact, éventuellement blog/case studies)
+- **Authentification** : Non requise (site vitrine public)
 - **Hébergement** : Replit
-- **Outils IA utilisés** : À définir
-- **Budget IA mensuel (tokens)** : À définir
+- **Outils IA utilisés** : À recommander par @ia (potentiel : chatbot, génération de contenu, automatisation)
+- **Budget IA mensuel (tokens)** : À définir après recommandation @ia
 - **Volume d'usage IA prévu** : À définir
 - **Latence IA cible** : Défauts framework
-- **Outils d'analytics** : [À COMPLÉTER — GA4 en place ? Aucun ?]
+- **Outils d'analytics** : Umami (self-hosted, privacy-first, à implémenter dans le projet)
 
 ---
 
@@ -66,7 +68,7 @@
 
 ## Contraintes
 - **Budget mensuel infrastructure** : Pas de limite
-- **Budget mensuel acquisition** : 500€ / mois
+- **Budget mensuel acquisition** : 500€ / mois (note : toute la croissance à ce jour s'est faite par referral — ce budget est un premier pas vers l'acquisition proactive)
 - **Budget analytics** : À recommander
 - **Timeline de lancement** : Le plus tôt possible (ASAP)
 - **Contraintes légales ou sectorielles** : Aucune contrainte spécifique identifiée
@@ -77,9 +79,9 @@
 ## Existant (projets en place uniquement)
 - **URL du site actuel** : https://sarani.studio
 - **Comptes sociaux existants** : Instagram (~4 000 abonnés), LinkedIn (~1 000 abonnés)
-- **Outils analytics en place** : [À COMPLÉTER — GA4, Hotjar, aucun ?]
+- **Outils analytics en place** : Aucun — Umami à implémenter dans ce projet
 - **Contenu existant** : Site web vitrine existant, base email clients (~1 000 contacts), deck de présentation commercial (96 slides, EN), portfolio de case studies (Sony, TikTok, Adidas, GEODIS, PICO, L'Oréal, Pernod Ricard, Air Corsica, France Chimie, GIE, ProcessOut, Avenir Actifs)
-- **Historique SEO** : [À COMPLÉTER — domaine sarani.studio indexé depuis quand ? Trafic organique approximatif ?]
+- **Historique SEO** : Repartir de zéro — pas de stratégie SEO en place, trafic organique non mesuré
 
 ---
 
@@ -93,6 +95,7 @@
 |-------|------|-----------------|----------------|----------------------------------|
 | @orchestrator | 2026-03-24 | project-context.md | Remplissage initial du contexte projet à partir du brief utilisateur. Persona "Sophie" créée comme archétype de la cible. Positionnement articulé autour de l'ultra-agilité. | Brief oral structuré en contexte exploitable. Persona nommée pour rendre la cible concrète (vs description générique). Site web inaccessible au scraping — positionnement basé uniquement sur les infos fournies par l'utilisateur. |
 | @orchestrator | 2026-03-24 | project-context.md (v2) | Enrichissement massif via le deck commercial PDF (96 slides). Ajout : clients référencés (TikTok, Sony, Adidas, GEODIS...), fourchettes de prix, équipe de 35 experts sur 5 continents, 4 piliers d'expertise, case studies avec résultats chiffrés (51M-400M views TikTok, ROI 29.9% Air Corsica). Date de fondation : 2020. | Le deck est la source de vérité la plus riche disponible. Il remplace les hypothèses précédentes par des données factuelles. Les prix et résultats clients sont des preuves sociales directement exploitables par @copywriter, @growth et @seo. |
+| @orchestrator | 2026-03-24 | project-context.md (v3) | Complétion des 7 champs restants. Règle ANGLAIS obligatoire pour tous les livrables projet. Persona secondaire : Achats. Objectif : 5 grands comptes/mois (>500M€ CA). Stack à recommander par agents. Umami choisi comme analytics. SEO from scratch. Croissance historique 100% referral. | Toutes les réponses viennent directement de l'utilisateur — aucune hypothèse. Le choix Umami vs GA4 est un choix délibéré privacy-first. La stack est déléguée aux agents car c'est un site vitrine sans contrainte technique legacy. |
 
 ---
 
@@ -117,8 +120,10 @@
 
 ## Notes libres
 
-- Sarani est une agence en croissance depuis 2020, pas une startup tech — le site vitrine est l'outil principal de conversion. La stack technique est à définir en fonction de ce besoin.
-- Le budget acquisition (500€/mois) est modeste par rapport à l'objectif de 4M€ CA — la stratégie devra s'appuyer fortement sur l'organique (SEO, GEO, social, referral).
+- **LANGUE : ANGLAIS pour tous les livrables projet** (frontend, backend, code, contenus du site, copy, documentation technique). Seul project-context.md et les échanges internes agents restent en français.
+- Sarani est une agence en croissance depuis 2020, pas une startup tech — le site vitrine est l'outil principal de conversion. La stack technique est à recommander par @fullstack.
+- Toute la croissance à ce jour s'est faite par **referral pur** (bouche-à-oreille clients). Le budget acquisition (500€/mois) est un premier pas vers l'acquisition proactive. La stratégie devra capitaliser sur ce referral existant tout en construisant l'organique (SEO, GEO, social).
+- **Umami** choisi comme outil analytics (self-hosted, privacy-first, RGPD-friendly, pas de cookies tiers). À intégrer dans le projet dès le développement du site.
 
 ### Données clés extraites du deck commercial (source : 2026_Sarani Deck_Introduction_EN_light.pdf)
 
