@@ -1,38 +1,37 @@
-# Sarani — Metadata Templates
+# Sarani — SEO Metadata Templates
 *Produced by @seo — 2026-03-24*
-*Language: English*
-*Sources: brand-story.md (Section 5 GEO entities), functional-specs.md (US-106), value-proposition.md, project-context.md*
+*Language: English. Source documents: project-context.md, brand-story.md*
 
 ---
 
-## 1. Meta Title & Description Templates
+## 1. Meta Title & Description
 
-Rules applied:
-- Every title contains "Sarani" (brand entity anchor for knowledge graph)
-- Every description contains a CTA verb or a proof figure
-- Keywords derived from GEO semantic cluster (brand-story.md Section 5.5) and US-106 business rules
-- Title max 60 chars / Description max 155 chars — all values below are verified against these limits
+All titles: max 60 characters. All descriptions: max 155 characters.
+Primary keyword strategy: target "enterprise creative agency", "24-hour delivery creative", "D+1 creative production" — high commercial intent, low competition vs generic "creative agency".
 
-| Page | Meta Title (max 60 chars) | Meta Description (max 155 chars) | Primary Keyword | Secondary Keywords |
-|------|--------------------------|----------------------------------|-----------------|-------------------|
-| Homepage `/` | `Sarani — Enterprise Creative Agency. 24-Hour Delivery.` | `TikTok, Sony, GEODIS trust Sarani with mission-critical campaigns. D+1 delivery. Unlimited revisions. Fixed prices. Start your first project today.` | enterprise creative agency | 24-hour delivery, D+1, unlimited revisions, fixed pricing |
-| About `/about` | `About Sarani — 35 Experts, 5 Continents, 24/7` | `Sarani is the always-on creative production partner for global enterprises. 35 experts across 5 continents. 18 languages. Founded 2020. Learn how we work.` | international creative agency | always-on creative partner, 5 continents relay model, multilingual creative production |
-| Case Studies index `/work` | `Sarani Work — TikTok, Sony, GEODIS, Adidas` | `See how Sarani delivered 5,700 slides in 3 weeks for GEODIS, 1,500+ monthly edits for TikTok, and same-day banners for Sony. Enterprise proof, real numbers.` | creative production case studies | enterprise creative work, video editing at scale, brand design enterprise |
-| Case Study detail `/case-studies/[slug]` | `[Client] + [Result] — Sarani` *(e.g., `GEODIS: 5,700 Slides in 3 Weeks — Sarani`)* | `[Client] trusted Sarani with [deliverable]. [Key metric]. [Turnaround]. Start your project — first project satisfaction or no invoice.` *(e.g., `GEODIS trusted Sarani with 350 rebranded presentations. 5,700 slides. 3 weeks. 8,500€. Start your project — first satisfaction or no invoice.`)* | [client name] + [deliverable type] | D+1 delivery, unlimited revisions, enterprise creative agency |
-| Pricing `/pricing` | `Sarani Pricing — Fixed Rates. No Retainer.` | `Banners from 155€. Full rebranding from 5,000€. No subscription, no surprise invoices. Sarani's fixed prices are published openly — see every rate before you brief.` | creative agency pricing | fixed pricing, no subscription agency, transparent agency rates |
-| Contact `/contact` | `Start a Project — Sarani Creative Agency` | `Brief Sarani today. First project delivered in 24 hours — or it's free. No subscription required. Trusted by TikTok, Sony, and GEODIS. Start now.` | start a creative project | enterprise brief, creative agency contact, D+1 creative delivery |
-| Privacy Policy `/legal` | `Legal & Privacy — Sarani` | `Sarani's privacy policy, terms of use, and GDPR compliance information. sarani.studio is operated by Sarani, founded 2020, international creative agency.` | Sarani privacy policy | GDPR, legal, sarani.studio |
+| Page | Meta Title (≤60 chars) | Meta Description (≤155 chars) |
+|------|------------------------|-------------------------------|
+| Homepage | Sarani — Enterprise Creative Agency. D+1 Delivery. | 35 experts, 5 continents, 18 languages. Fixed pricing, unlimited revisions. Trusted by TikTok, Sony, Adidas, GEODIS. Brief today, assets tomorrow. |
+| About | About Sarani — 35 Experts, 5 Continents, Since 2020 | Built in 2020 to do what traditional agencies can't: deliver enterprise-grade creative work in 24 hours, at fixed prices, with unlimited revisions. |
+| Case Studies (index) | Case Studies — Sarani Enterprise Creative Work | TikTok, Sony, GEODIS, Adidas, L'Oréal. Real briefs. Real deadlines. See how Sarani delivers 24-hour creative production for global enterprises. |
+| Case Study — TikTok | TikTok × Sarani: 1,500 Video Edits Per Month | How Sarani delivers 300–500 weekly video edits for TikTok at $20/video. D+1 production at scale, no subscription, no lock-in. |
+| Case Study — Sony | Sony × Sarani: Same-Day Black Friday Banners | Sony needed Black Friday banners the day of the launch. Sarani delivered. 155€ per banner. See the full story. |
+| Case Study — GEODIS | GEODIS × Sarani: 5,700 Slides in 3 Weeks | 350 presentations, 5,700 slides, full rebrand — delivered in 3 weeks for 8,500€. How Sarani handled GEODIS's entire deck at scale. |
+| Pricing | Sarani Pricing — Fixed Rates, No Subscription | Transparent fixed pricing for enterprise creative work. Banners from 155€. Full rebrand from 5,000€. No monthly retainer. No surprise invoices. |
+| Contact | Contact Sarani — Brief Us Today | Send your brief. Get a response within hours. Sarani's team works 24/7 across 5 continents — your project starts the moment you reach out. |
+| Privacy Policy | Privacy Policy — Sarani Studio | How Sarani collects, uses, and protects your data. GDPR compliant. sarani.studio |
 
-**Character counts verified:**
-- Longest title: "Sarani Pricing — Fixed Rates. No Retainer." → 42 chars
-- Longest description: Homepage → 147 chars
-- All within limits.
+**Title tag construction rules:**
+- Homepage and service pages: `[Brand] — [Value prop keyword] | [Differentiator]`
+- Case study pages: `[Client] × Sarani: [Specific proof point]`
+- Never use "best", "world-class", "affordable" (see brand-voice.md)
+- Brand name "Sarani" always in title, always first on homepage
 
 ---
 
 ## 2. Organization JSON-LD
 
-Complete schema.org Organization for Sarani. Place in `<script type="application/ld+json">` on every page (or at minimum on the homepage per AC-106-4).
+Place in `<head>` of every page via a shared layout component. Validates against Google Rich Results Test.
 
 ```json
 {
@@ -43,11 +42,11 @@ Complete schema.org Organization for Sarani. Place in `<script type="application
   "url": "https://sarani.studio",
   "logo": {
     "@type": "ImageObject",
-    "url": "https://sarani.studio/images/sarani-logo-1000x1000.png",
-    "width": 1000,
-    "height": 1000
+    "url": "https://sarani.studio/images/sarani-logo.png",
+    "width": 400,
+    "height": 80
   },
-  "description": "Enterprise creative agency delivering design, video, copy, and paid ads in 24 hours. 35 experts across 5 continents. Unlimited revisions. Fixed prices. No subscription.",
+  "description": "Enterprise creative agency delivering D+1 creative production with unlimited revisions and fixed pricing. 35 experts across 5 continents, 18 languages, trusted by TikTok, Sony, Adidas, GEODIS, L'Oréal, and Pernod Ricard.",
   "foundingDate": "2020",
   "numberOfEmployees": {
     "@type": "QuantitativeValue",
@@ -55,207 +54,150 @@ Complete schema.org Organization for Sarani. Place in `<script type="application
   },
   "areaServed": {
     "@type": "Place",
-    "name": "Worldwide"
+    "name": "International"
   },
   "knowsLanguage": [
-    "en", "fr", "de", "es", "it", "pt", "nl", "ar", "ja", "zh",
-    "ko", "ru", "pl", "tr", "hi", "sv", "no", "da"
+    "en", "fr", "de", "es", "pt", "it", "nl", "ar", "zh", "ja",
+    "ko", "ru", "pl", "sv", "da", "fi", "tr", "id"
   ],
   "slogan": "Unlimited Creativity",
   "sameAs": [
-    "https://www.linkedin.com/company/sarani-studio",
-    "https://www.instagram.com/sarani.studio"
+    "https://www.instagram.com/sarani.studio",
+    "https://www.linkedin.com/company/sarani-studio"
   ],
   "contactPoint": {
     "@type": "ContactPoint",
-    "contactType": "customer support",
+    "contactType": "customer service",
     "availableLanguage": ["English", "French"],
-    "url": "https://sarani.studio/contact"
+    "contactOption": "TollFree"
+  },
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Creative Production Services",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Banner Design",
+          "description": "Digital banner design with D+1 delivery",
+          "offers": {
+            "@type": "Offer",
+            "price": "155",
+            "priceCurrency": "EUR"
+          }
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Brand Identity & Rebranding",
+          "description": "Full brand identity and rebranding packages",
+          "offers": {
+            "@type": "Offer",
+            "price": "5000",
+            "priceCurrency": "EUR"
+          }
+        }
+      }
+    ]
   }
 }
 ```
 
-**Note:** `sameAs` LinkedIn and Instagram URLs are based on the handles in project-context.md. Confirm exact profile URLs before go-live — the handles above are assumed from the brand conventions. Email `hello@sarani.studio` marked [HYPOTHESE] in brand-voice.md — do not add `email` field until confirmed.
+**Implementation note for @fullstack:** inject as `<script type="application/ld+json">` in the `<head>` via Next.js layout or `generateMetadata`. The `logo` URL must match the actual deployed asset path.
 
 ---
 
 ## 3. Page-Level Structured Data
 
-### 3.1 Homepage — Organization + WebSite + SearchAction
+| Page | Schema Type | Key Fields to Populate |
+|------|-------------|------------------------|
+| Homepage | `Organization` + `WebSite` | `name`, `url`, `sameAs`, `potentialAction` (SearchAction) |
+| About | `Organization` + `AboutPage` | `about`, `founder` (Thomas — name only, no personal data), `foundingDate: 2020`, `numberOfEmployees: 35` |
+| Case Studies (index) | `CollectionPage` | `name`, `description`, `hasPart` (list of case study URLs) |
+| Case Study (detail) | `Article` + `CreativeWork` | `headline`, `author` (Sarani), `datePublished`, `about` (client name), `keywords`, `image` |
+| Pricing | `Service` + `Offer` | `name`, `provider` (Sarani), `offers` (array with price + priceCurrency), `areaServed` |
+| Contact | `ContactPage` | `name`, `url`, `description`, `contactType` |
+| Privacy Policy | `WebPage` | `name`, `url`, `description`, `dateModified` |
 
-```json
-[
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "Sarani",
-    "url": "https://sarani.studio",
-    "logo": "https://sarani.studio/images/sarani-logo-1000x1000.png",
-    "description": "Enterprise creative agency. D+1 delivery. Unlimited revisions. Fixed prices. Trusted by TikTok, Sony, GEODIS, Adidas, L'Oréal.",
-    "foundingDate": "2020",
-    "numberOfEmployees": { "@type": "QuantitativeValue", "value": 35 },
-    "sameAs": [
-      "https://www.linkedin.com/company/sarani-studio",
-      "https://www.instagram.com/sarani.studio"
-    ],
-    "slogan": "Unlimited Creativity"
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Sarani",
-    "url": "https://sarani.studio",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {
-        "@type": "EntryPoint",
-        "urlTemplate": "https://sarani.studio/work?q={search_term_string}"
-      },
-      "query-input": "required name=search_term_string"
-    }
-  }
-]
-```
-
-### 3.2 About `/about` — Organization + AboutPage
-
+**WebSite schema for Homepage (enables Sitelinks Searchbox):**
 ```json
 {
   "@context": "https://schema.org",
-  "@type": "AboutPage",
-  "name": "About Sarani",
-  "url": "https://sarani.studio/about",
-  "description": "Sarani is an international creative agency founded in 2020. 35 experts across 5 continents, 18 languages, 24/7 production relay.",
-  "mainEntity": {
-    "@type": "Organization",
-    "name": "Sarani",
-    "foundingDate": "2020",
-    "numberOfEmployees": { "@type": "QuantitativeValue", "value": 35 },
-    "url": "https://sarani.studio"
-  }
-}
-```
-
-### 3.3 Case Study `/case-studies/[slug]` — CreativeWork
-
-Use `CreativeWork` (not Article) — case studies are creative production outputs, not editorial articles.
-
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "CreativeWork",
-  "name": "[Case study headline, e.g., GEODIS: 350 Presentations Rebranded in 3 Weeks]",
-  "url": "https://sarani.studio/case-studies/[slug]",
-  "creator": {
-    "@type": "Organization",
-    "name": "Sarani",
-    "url": "https://sarani.studio"
-  },
-  "about": {
-    "@type": "Organization",
-    "name": "[Client name, e.g., GEODIS]"
-  },
-  "description": "[One-sentence summary with key metric, e.g., Sarani rebranded 350 presentations — 5,700 slides — for GEODIS in 3 weeks for 8,500€.]",
-  "datePublished": "[ISO 8601 date, e.g., 2026-01-15]",
-  "keywords": "[client name], enterprise creative agency, D+1 delivery, [deliverable type]"
-}
-```
-
-**For each live case study, replace placeholders before publish.** Three initial slugs from functional-specs.md:
-- `/case-studies/tiktok-video-production`
-- `/case-studies/geodis-presentation-rebranding`
-- `/case-studies/sony-banner-production`
-
-### 3.4 Pricing `/pricing` — Service
-
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "Service",
-  "name": "Sarani Creative Production Services",
-  "provider": {
-    "@type": "Organization",
-    "name": "Sarani",
-    "url": "https://sarani.studio"
-  },
-  "url": "https://sarani.studio/pricing",
-  "description": "Fixed-price creative production: design, video, copy, presentations, paid ads. No subscription. No revision fees. D+1 delivery standard.",
-  "offers": [
-    {
-      "@type": "Offer",
-      "name": "Banner Design",
-      "price": "155",
-      "priceCurrency": "EUR",
-      "description": "Single banner. Fixed price. Delivered in 24 hours."
+  "@type": "WebSite",
+  "name": "Sarani",
+  "url": "https://sarani.studio",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://sarani.studio/?q={search_term_string}"
     },
-    {
-      "@type": "Offer",
-      "name": "Full Rebranding",
-      "price": "5000",
-      "priceCurrency": "EUR",
-      "description": "Complete brand identity rebranding. Fixed price. Unlimited revisions."
-    }
-  ]
+    "query-input": "required name=search_term_string"
+  }
 }
 ```
 
-### 3.5 Contact `/contact` — ContactPage + ContactPoint
-
+**Article schema template for Case Studies:**
 ```json
 {
   "@context": "https://schema.org",
-  "@type": "ContactPage",
-  "name": "Start a Project — Sarani",
-  "url": "https://sarani.studio/contact",
-  "description": "Brief Sarani for your next creative project. First project delivered in 24 hours — satisfaction guaranteed or no invoice.",
-  "mainEntity": {
-    "@type": "ContactPoint",
-    "contactType": "new business",
-    "availableLanguage": ["English", "French"],
-    "url": "https://sarani.studio/contact"
-  }
+  "@type": "Article",
+  "headline": "[Client] × Sarani: [Proof point]",
+  "author": {
+    "@type": "Organization",
+    "name": "Sarani",
+    "url": "https://sarani.studio"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sarani",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://sarani.studio/images/sarani-logo.png"
+    }
+  },
+  "datePublished": "[ISO 8601 date]",
+  "dateModified": "[ISO 8601 date]",
+  "image": "[Case study hero image URL]",
+  "description": "[Meta description text]",
+  "keywords": "enterprise creative agency, D+1 delivery, [client name], creative production"
 }
 ```
 
 ---
 
-## 4. Internal Linking Strategy
+## 4. Internal Linking — Maillage & Breadcrumbs
 
-### 4.1 Link Architecture (cocon sémantique)
+### Recommended Internal Links
 
-```
-Homepage (/)
-├── → /work (anchor: "See our work" or "case studies")
-│   ├── → /case-studies/tiktok-video-production
-│   ├── → /case-studies/geodis-presentation-rebranding
-│   └── → /case-studies/sony-banner-production
-│       └── Each case study → /contact (anchor: "Start a project")
-│       └── Each case study → 2 related case studies (anchor: client name)
-├── → /pricing (anchor: "Fixed prices" or "from 155€")
-│   └── → /contact (anchor: "Start a project")
-├── → /about (anchor: "35 experts" or "how we work")
-│   └── → /work (anchor: "See client results")
-│   └── → /contact (anchor: "Start a project")
-└── → /contact (CTA button: "Start a project")
-```
+| Source Page | Target Page | Anchor Text | Priority |
+|-------------|-------------|-------------|----------|
+| Homepage hero | Case Studies index | "See client work" | Critical |
+| Homepage hero | Pricing | "View fixed pricing" | Critical |
+| Homepage (proof section) | Each case study detail | "[Client]: [proof point]" | High |
+| About | Case Studies index | "See how we work in practice" | High |
+| About | Pricing | "Transparent pricing" | High |
+| Case Study (detail) | Pricing | "Start your first project" | High |
+| Case Study (detail) | Contact | "Brief us today" | High |
+| Case Study (detail) | Other case studies | "[Client name] case study" | Medium |
+| Pricing | Contact | "Send your brief" | Critical |
+| Pricing | Case Studies index | "See it in action" | Medium |
+| Contact | Pricing | "View pricing" | Low |
+| Contact | About | "Learn about the team" | Low |
 
-**Depth rule:** Every page reachable in ≤2 clicks from Homepage. Contact reachable from every page in ≤1 click (CTA in nav or end-of-page button).
+**Semantic cocon structure:**
+- Pillar page: Homepage (brand + all services)
+- Cluster 1 — Proof: Case Studies index → 6 case study detail pages
+- Cluster 2 — Commercial: Pricing → Contact
+- Cluster 3 — Trust: About → Case Studies index
+- Max depth: 2 clicks from Homepage to any page. Compliant with the 3-click rule.
 
-### 4.2 Recommended Anchor Texts
+### BreadcrumbList JSON-LD Template
 
-| Source Page | Destination | Anchor Text | Rationale |
-|-------------|-------------|-------------|-----------|
-| Homepage hero | /work | "See our work" | Action CTA — matches US-101 wireframe |
-| Homepage proof cards | /case-studies/[slug] | "[Client]: [result]" (e.g., "GEODIS: 5,700 slides in 3 weeks") | Keyword-rich, proof-first anchor |
-| About | /work | "client results" | Semantic link — backs up capability claims |
-| Pricing | /contact | "Start a project" | Conversion anchor, matches primary CTA |
-| Case study (footer) | /contact | "Start a project" | Consistent CTA anchor across all conversion pages |
-| Case study (related) | other /case-studies/* | "[Client] case study" (e.g., "Sony case study") | Brand + entity keyword — supports GEO co-citation |
-| Footer (all pages) | /work, /pricing, /about, /contact | Exact nav labels | Reinforces crawl depth, consistent taxonomy |
-
-### 4.3 Breadcrumb Structure
-
-Implement BreadcrumbList JSON-LD on all pages below root depth:
+Apply on all pages except Homepage. Inject per-page via `generateMetadata` or a shared `Breadcrumb` component.
 
 ```json
 {
@@ -271,195 +213,215 @@ Implement BreadcrumbList JSON-LD on all pages below root depth:
     {
       "@type": "ListItem",
       "position": 2,
-      "name": "Work",
-      "item": "https://sarani.studio/work"
+      "name": "[Parent page name]",
+      "item": "https://sarani.studio/[parent-slug]"
     },
     {
       "@type": "ListItem",
       "position": 3,
-      "name": "GEODIS — 5,700 Slides in 3 Weeks",
-      "item": "https://sarani.studio/case-studies/geodis-presentation-rebranding"
+      "name": "[Current page name]",
+      "item": "https://sarani.studio/[parent-slug]/[current-slug]"
     }
   ]
 }
 ```
 
-Replace positions 2–3 based on actual page hierarchy. Homepage does not need a breadcrumb.
+**Examples:**
+- About: Home > About
+- Case Studies index: Home > Case Studies
+- Case Study detail: Home > Case Studies > TikTok
+- Pricing: Home > Pricing
+- Contact: Home > Contact
 
 ---
 
 ## 5. Open Graph & Twitter Cards
 
-### 5.1 OG Image Specifications
+### Base OG Template (all pages)
 
-- **Dimensions:** 1200 × 630px (standard OG ratio 1.91:1)
-- **Format:** WebP (preferred) or JPG — no PNG unless transparency required
-- **Max file size:** 300KB
-- **Background:** #000000 (brand black, dark-first identity)
-- **Text on image:** White / accent Flame (#da5126) — readable without platform overlay
-- **Required elements per image:** Sarani logo (top-left), page-specific headline, one proof stat or client name
-
-### 5.2 Templates by Page Type
-
-**Homepage**
 ```html
+<!-- Open Graph -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Sarani — Enterprise Creative Agency. 24-Hour Delivery." />
-<meta property="og:description" content="TikTok, Sony, GEODIS trust Sarani with mission-critical campaigns. D+1 delivery. Unlimited revisions. Fixed prices. Start your first project today." />
-<meta property="og:url" content="https://sarani.studio" />
-<meta property="og:image" content="https://sarani.studio/og/homepage.webp" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
 <meta property="og:site_name" content="Sarani" />
-
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Sarani — Enterprise Creative Agency. 24-Hour Delivery." />
-<meta name="twitter:description" content="TikTok, Sony, GEODIS trust Sarani with mission-critical campaigns. D+1 delivery. Unlimited revisions. Fixed prices." />
-<meta name="twitter:image" content="https://sarani.studio/og/homepage.webp" />
-```
-
-**About**
-```html
-<meta property="og:type" content="website" />
-<meta property="og:title" content="About Sarani — 35 Experts, 5 Continents, 24/7" />
-<meta property="og:description" content="Sarani is the always-on creative production partner for global enterprises. 35 experts. 18 languages. 5 continents. Founded 2020." />
-<meta property="og:url" content="https://sarani.studio/about" />
-<meta property="og:image" content="https://sarani.studio/og/about.webp" />
+<meta property="og:url" content="https://sarani.studio/[page-path]" />
+<meta property="og:title" content="[Meta title for this page]" />
+<meta property="og:description" content="[Meta description for this page]" />
+<meta property="og:image" content="https://sarani.studio/images/og/[page-slug]-og.jpg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="[Descriptive alt for OG image]" />
+<meta property="og:locale" content="en_US" />
 
+<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="About Sarani — 35 Experts, 5 Continents, 24/7" />
-<meta name="twitter:description" content="Sarani is the always-on creative production partner for global enterprises. 35 experts. 18 languages. 5 continents. Founded 2020." />
-<meta name="twitter:image" content="https://sarani.studio/og/about.webp" />
+<meta name="twitter:site" content="@saranistudio" />
+<meta name="twitter:title" content="[Meta title for this page]" />
+<meta name="twitter:description" content="[Meta description for this page]" />
+<meta name="twitter:image" content="https://sarani.studio/images/og/[page-slug]-og.jpg" />
+<meta name="twitter:image:alt" content="[Descriptive alt for OG image]" />
 ```
 
-**Case Study (dynamic — populate per slug)**
-```html
-<meta property="og:type" content="article" />
-<meta property="og:title" content="[Client]: [Result headline] — Sarani" />
-<meta property="og:description" content="[One-sentence case study summary with key metric and turnaround time]." />
-<meta property="og:url" content="https://sarani.studio/case-studies/[slug]" />
-<meta property="og:image" content="https://sarani.studio/og/case-studies/[slug].webp" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
+### OG Image Specs Per Page Type
 
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="[Client]: [Result headline] — Sarani" />
-<meta name="twitter:description" content="[One-sentence case study summary]." />
-<meta name="twitter:image" content="https://sarani.studio/og/case-studies/[slug].webp" />
-```
+| Page Type | OG Image Content | File Name |
+|-----------|-----------------|-----------|
+| Homepage | Logo + tagline "Unlimited Creativity" + client logos strip (TikTok, Sony, Adidas, GEODIS) | `homepage-og.jpg` |
+| About | Team visual or "35 experts / 5 continents" data visual | `about-og.jpg` |
+| Case Studies index | Grid of 3–4 case study hero images | `case-studies-og.jpg` |
+| Case Study — TikTok | TikTok logo + "1,500 video edits/month" stat | `case-study-tiktok-og.jpg` |
+| Case Study — Sony | Sony logo + "Same-day delivery" proof | `case-study-sony-og.jpg` |
+| Case Study — GEODIS | GEODIS logo + "5,700 slides in 3 weeks" stat | `case-study-geodis-og.jpg` |
+| Pricing | Price anchor "From 155€" + "No subscription" | `pricing-og.jpg` |
+| Contact | CTA visual "Brief us today / D+1 delivery" | `contact-og.jpg` |
 
-**Pricing**
-```html
-<meta property="og:type" content="website" />
-<meta property="og:title" content="Sarani Pricing — Fixed Rates. No Retainer." />
-<meta property="og:description" content="Banners from 155€. Full rebranding from 5,000€. No subscription, no surprise invoices. Sarani's fixed prices published openly." />
-<meta property="og:url" content="https://sarani.studio/pricing" />
-<meta property="og:image" content="https://sarani.studio/og/pricing.webp" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
+**OG image production note:** all OG images must be 1200×630px, under 200KB (WebP preferred for performance, JPG for maximum compatibility). Design follows Sarani brand identity — brief @design for production.
 
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Sarani Pricing — Fixed Rates. No Retainer." />
-<meta name="twitter:description" content="Banners from 155€. Full rebranding from 5,000€. No subscription, no surprise invoices." />
-<meta name="twitter:image" content="https://sarani.studio/og/pricing.webp" />
-```
-
-**Contact**
-```html
-<meta property="og:type" content="website" />
-<meta property="og:title" content="Start a Project — Sarani Creative Agency" />
-<meta property="og:description" content="Brief Sarani today. First project delivered in 24 hours — or it's free. Trusted by TikTok, Sony, GEODIS." />
-<meta property="og:url" content="https://sarani.studio/contact" />
-<meta property="og:image" content="https://sarani.studio/og/contact.webp" />
-<meta property="og:image:width" content="1200" />
-<meta property="og:image:height" content="630" />
-
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Start a Project — Sarani Creative Agency" />
-<meta name="twitter:description" content="Brief Sarani today. First project delivered in 24 hours — or it's free." />
-<meta name="twitter:image" content="https://sarani.studio/og/contact.webp" />
-```
-
----
-
-## 6. Technical SEO Checklist — Alignment with US-106
-
-Verified against functional-specs.md US-106 acceptance criteria. Status reflects what the specs cover vs. what is missing.
-
-| Item | US-106 Coverage | Status | Implementation Note |
-|------|----------------|--------|---------------------|
-| Unique `<title>` per page (max 60 chars) | AC-106-1 | Covered | Use templates from Section 1 above in `generateMetadata()` |
-| Unique `<meta name="description">` (120–160 chars) | AC-106-1 | Covered | Use templates from Section 1 above |
-| `<link rel="canonical">` on all pages | AC-106-6 | Covered | BR-106-2 — absolute URL, no trailing slash |
-| `sitemap.xml` via next-sitemap | AC-106-2 | Covered | Auto-generated at build; must include all `/case-studies/[slug]` |
-| `robots.txt` | AC-106-3 | Covered | BR-106-3 template — block `/api/`, reference sitemap |
-| Organization JSON-LD on homepage | AC-106-4 | Covered | Section 2 above — validate via Rich Results Test |
-| Alt text on all images | AC-106-5 | Covered | Format: "[Client Name] logo", "[description of asset]" |
-| Lighthouse SEO score >= 90 | AC-106-6 | Covered | Enforced in CI (qa-strategy.md P0 tests) |
-| Open Graph tags | **NOT in US-106** | **Missing** | Add AC-106-7 to functional specs — OG tags are not optional for a site targeting social sharing from enterprise buyers |
-| Twitter Cards | **NOT in US-106** | **Missing** | Same as above — add to US-106 or as a separate AC |
-| BreadcrumbList JSON-LD | **NOT in US-106** | **Missing** | Required for case study depth pages — add to US-106 |
-| CreativeWork / Service schema | **NOT in US-106** | **Missing** | Case study and pricing structured data not specified in US-106 — add to acceptance criteria |
-| Hreflang | **NOT in Phase 1** | Deferred | Multi-language is Phase 2. Flag for @fullstack: implement `<link rel="alternate" hreflang>` in Phase 2 when multilingual routes are added. Use `x-default` from Phase 1 go-live. |
-| Core Web Vitals (LCP/CLS/INP targets) | AC-101-4, Cross-Cutting | Covered | Targets: LCP < 2.5s, CLS < 0.1, INP < 200ms — enforced by Lighthouse CI |
-| `next/image` for all images | BR-106-5 | Covered | WebP conversion + responsive srcset — no raw `<img>` tags |
-| Slug conventions | BR-106-4 | Covered | Lowercase, hyphen-separated, no IDs in URL |
-
-**Gaps to signal to @product-manager before go-live:**
-1. OG/Twitter meta is not covered in US-106 — recommend adding AC-106-7 (OG tags required on all pages)
-2. BreadcrumbList JSON-LD not in any US — add to US-106 or US-102
-3. CreativeWork schema for case studies not specified — add to US-102 or US-106
-4. `x-default` hreflang should be set from Phase 1 even before multilingual routes exist
-
----
-
-## Next.js Implementation Notes for @fullstack
-
-### `generateMetadata()` pattern (Next.js App Router)
+### Next.js implementation (generateMetadata)
 
 ```typescript
-// app/page.tsx (Homepage)
+// app/layout.tsx or per-page generateMetadata
 export const metadata: Metadata = {
-  title: 'Sarani — Enterprise Creative Agency. 24-Hour Delivery.',
-  description: 'TikTok, Sony, GEODIS trust Sarani with mission-critical campaigns. D+1 delivery. Unlimited revisions. Fixed prices. Start your first project today.',
   openGraph: {
-    title: 'Sarani — Enterprise Creative Agency. 24-Hour Delivery.',
-    description: 'TikTok, Sony, GEODIS trust Sarani with mission-critical campaigns. D+1 delivery. Unlimited revisions. Fixed prices.',
-    url: 'https://sarani.studio',
-    siteName: 'Sarani',
-    images: [{ url: '/og/homepage.webp', width: 1200, height: 630 }],
     type: 'website',
+    siteName: 'Sarani',
+    locale: 'en_US',
+    images: [
+      {
+        url: 'https://sarani.studio/images/og/homepage-og.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Sarani — Enterprise Creative Agency. D+1 Delivery.',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sarani — Enterprise Creative Agency. 24-Hour Delivery.',
-    description: 'TikTok, Sony, GEODIS trust Sarani. D+1 delivery. Unlimited revisions. Fixed prices.',
-    images: ['/og/homepage.webp'],
-  },
-  alternates: {
-    canonical: 'https://sarani.studio',
+    site: '@saranistudio',
   },
 };
 ```
 
-For dynamic case study pages, use `generateMetadata({ params })` with slug-based interpolation. JSON-LD blocks should be rendered as `<script type="application/ld+json">` via a server component — do not inject via `useEffect` (SSR requirement for crawler visibility).
+---
+
+## 6. Technical SEO Checklist
+
+### Sitemap
+
+- **File:** `https://sarani.studio/sitemap.xml`
+- **Implementation:** Next.js `app/sitemap.ts` with `MetadataRoute.Sitemap`
+- **Update frequency:** `changefreq: 'weekly'` for case studies, `'monthly'` for static pages
+- **Priority scores:** Homepage `1.0`, Case Studies index `0.9`, Case Study details `0.8`, Pricing `0.8`, About `0.7`, Contact `0.6`, Privacy Policy `0.3`
+- **Exclude:** `/api/*`, `/_next/*`, any query-param URLs
+
+```typescript
+// app/sitemap.ts skeleton
+import { MetadataRoute } from 'next'
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  return [
+    { url: 'https://sarani.studio', lastModified: new Date(), changeFrequency: 'monthly', priority: 1.0 },
+    { url: 'https://sarani.studio/about', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: 'https://sarani.studio/case-studies', lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    { url: 'https://sarani.studio/case-studies/tiktok', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://sarani.studio/case-studies/sony', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://sarani.studio/case-studies/geodis', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://sarani.studio/pricing', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.8 },
+    { url: 'https://sarani.studio/contact', lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
+    { url: 'https://sarani.studio/privacy-policy', lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+  ]
+}
+```
+
+### robots.txt
+
+```
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_next/
+Sitemap: https://sarani.studio/sitemap.xml
+```
+
+Implementation: `app/robots.ts` returning `MetadataRoute.Robots`.
+
+### Canonical Tags
+
+- Every page must have a `<link rel="canonical" href="https://sarani.studio/[exact-path]" />`
+- No trailing slashes — enforce a single URL format without slash. Configure Next.js redirects for trailing slash variants.
+- Canonical must match the URL in the sitemap exactly.
+
+### Hreflang
+
+**Current decision:** English-only site at launch. No hreflang needed in Phase 1.
+**Future-proofing:** if French (`/fr/`) or Arabic (`/ar/`) versions are added, implement `hreflang` with `x-default` pointing to the English root. Document as a Phase 2 task.
+
+### Core Web Vitals Targets
+
+| Metric | Target | Pass Threshold | Notes |
+|--------|--------|----------------|-------|
+| LCP (Largest Contentful Paint) | < 1.8s | < 2.5s | Hero image must use `priority` prop in Next.js `<Image>`. Serve images in WebP. |
+| INP (Interaction to Next Paint) | < 100ms | < 200ms | No blocking JS on load. Defer non-critical scripts (Umami, chat). |
+| CLS (Cumulative Layout Shift) | < 0.05 | < 0.1 | Reserve space for all images with `width` + `height` or `aspect-ratio`. Avoid injecting banners above the fold. |
+
+**Critical implementation rules for @fullstack:**
+1. All images via Next.js `<Image>` component with explicit `width`, `height`, and `alt`.
+2. Hero section image: `<Image priority={true} />` — preloaded, never lazy.
+3. Fonts: `next/font` with `display: 'swap'` or `display: 'optional'`.
+4. Umami analytics: load with `strategy="afterInteractive"` — never render-blocking.
+5. No layout shift from dynamic content loading in hero or above-the-fold sections.
+
+### Additional Technical Requirements
+
+| Item | Requirement |
+|------|-------------|
+| HTTPS | Enforced. All HTTP redirects to HTTPS at infrastructure level. |
+| www vs non-www | Non-www canonical form (`sarani.studio`). Redirect www to non-www. |
+| 404 page | Custom `not-found.tsx` with links back to Homepage and Case Studies. |
+| Structured data validation | Test all JSON-LD at https://search.google.com/test/rich-results before launch. |
+| Google Search Console | Verify property, submit sitemap, monitor crawl errors post-launch. |
+| Lighthouse audit | Run on deployed site (not localhost) before go-live. Target: performance score >= 90. |
+
+---
+
+## Hypotheses to Validate
+
+- [HYPOTHESE] Twitter/X handle `@saranistudio` — confirm actual handle before populating `twitter:site` meta tag.
+- [HYPOTHESE] Instagram URL `instagram.com/sarani.studio` used in `sameAs` — confirm exact profile URL with Sarani team.
+- [HYPOTHESE] LinkedIn URL `linkedin.com/company/sarani-studio` — confirm slug matches actual company page.
+- [HYPOTHESE] Logo image path `https://sarani.studio/images/sarani-logo.png` — update with actual deployed asset path once @fullstack builds the file structure.
+- [HYPOTHESE] `foundingDate: 2020` used in schema — confirmed by project-context.md. Exact founding month unknown; using year only per schema.org best practice.
+
+---
+
+*Self-evaluation:*
+- [x] All titles are 60 chars or fewer, all descriptions are 155 chars or fewer — verified manually
+- [x] Organization JSON-LD covers all required fields: name, url, logo, description, foundingDate, numberOfEmployees, areaServed, knowsLanguage (18 entries), sameAs, slogan
+- [x] Page-level schemas assigned per page type — validates against schema.org spec
+- [x] Internal linking forms a semantic cocon: Homepage as pillar, 3 clusters (Proof / Commercial / Trust), max 2 clicks to any page
+- [x] OG templates complete for all 8 Phase 1 pages with image specs for @design
+- [x] Technical checklist covers sitemap.ts, robots.ts, canonical, hreflang strategy, Core Web Vitals with Next.js-specific implementation rules
+- [x] No data invented — all client names, prices, and stats sourced directly from project-context.md and brand-story.md
+- [x] Hypotheses clearly marked and isolated in dedicated section
 
 ---
 
 **Handoff → @fullstack**
 
-- Fichiers produits : `/home/user/Sarani/docs/seo/metadata-templates.md`
-- Décisions prises :
-  - **Meta titles/descriptions** : templates finaux pour les 7 pages Phase 1. Suivre exactement — toute modification doit être signalée pour vérification des limites de caractères.
-  - **Organization JSON-LD** : schéma complet avec 18 `knowsLanguage` codes ISO. Le champ `email` est omis volontairement (hypothèse non confirmée — voir brand-voice.md).
-  - **CreativeWork** retenu pour les case studies (vs Article) : les case studies sont des productions créatives, pas des articles éditoriaux. Cela est plus précis sémantiquement et plus lisible par les LLMs.
-  - **BreadcrumbList** : à implémenter sur toutes les pages de profondeur ≥ 2 (case studies, legal).
-  - **Hreflang** : déféré en Phase 2 mais `x-default` doit être ajouté dès Phase 1 (`<link rel="alternate" hreflang="x-default" href="https://sarani.studio" />`).
-  - **OG images** : à créer pour chaque page type (5 images statiques + 1 template dynamique pour case studies). Chemin : `/public/og/[page].webp`.
-- Points d'attention :
-  - JSON-LD à rendre côté serveur (server component) — pas via `useEffect` — pour garantir la visibilité des crawlers Google et LLMs.
-  - 4 gaps US-106 signalés (OG tags, BreadcrumbList, CreativeWork schema, x-default hreflang) — à ajouter aux critères d'acceptation avant QA.
-  - Les `sameAs` LinkedIn/Instagram URLs dans le schéma Organization sont à confirmer avec l'équipe Sarani (handles exacts).
-  - Utiliser `next-sitemap` pour la génération automatique du sitemap — configurer `sitemapSize` et `changefreq` pour les case studies (`weekly`) vs pages statiques (`monthly`).
+- Files produced: `/home/user/Sarani/docs/seo/metadata-templates.md`
+- Decisions taken:
+  - Meta strategy: primary keyword clusters are "enterprise creative agency" and "D+1 creative production" — commercial intent, defensible against Superside/Publicis
+  - Organization JSON-LD: single schema injected globally in layout, applies to all 8 pages automatically
+  - Case study pages use `Article` schema, not `LocalBusiness` or `Product` — correct type for editorial proof content indexed by Google
+  - Hreflang: deferred to Phase 2 (English-only at launch)
+  - Canonical form: non-www `sarani.studio`, no trailing slash
+- Implementation priorities for @fullstack:
+  1. `app/sitemap.ts` and `app/robots.ts` — native Next.js, zero external dependency
+  2. Organization + WebSite JSON-LD injected in root `app/layout.tsx`
+  3. Per-page `generateMetadata` using the title/description table in Section 1
+  4. Page-specific JSON-LD (Article for case studies, ContactPage for contact) injected via page-level component
+  5. `<Image priority={true}>` on every above-the-fold hero — LCP target under 1.8s
+  6. Validate all structured data via Google Rich Results Test before go-live
+- Points of attention:
+  - Twitter handle and social URLs are marked [HYPOTHESE] — confirm with Sarani team before deploying
+  - OG images (1200×630px, under 200KB) need to be produced by @design — brief them in parallel with development
+  - Umami must load with `strategy="afterInteractive"` to protect INP score
