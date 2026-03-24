@@ -162,9 +162,6 @@ export default function AboutPage() {
           <p className="text-lg font-semibold leading-relaxed text-brand-black">
             We say: tomorrow.
           </p>
-          <p className="mt-6 text-base italic text-neutral-500">
-            First project satisfaction or no invoice.
-          </p>
         </div>
       </Section>
 
@@ -172,10 +169,10 @@ export default function AboutPage() {
       <Section ariaLabel="Get started" className="bg-surface-elevated">
         <div className="mx-auto max-w-3xl text-center">
           <Button variant="primary" href="/contact">
-            Let&apos;s chat
+            Start a project
           </Button>
           <p className="mt-4 text-sm text-neutral-500">
-            First project satisfaction or no invoice.
+            Your first project, risk-free.
           </p>
         </div>
       </Section>

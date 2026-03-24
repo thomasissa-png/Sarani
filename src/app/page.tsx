@@ -29,7 +29,7 @@ export default function HomePage() {
       {/* -- Section 1: Hero -- */}
       <section
         aria-label="Hero"
-        className="relative flex min-h-dvh flex-col items-center justify-center bg-brand-white pt-[72px]"
+        className="relative flex min-h-dvh flex-col items-center justify-center bg-brand-white pt-[var(--header-height)]"
       >
         <AnimatedHeroDots />
         <AnimatedHeroContent />

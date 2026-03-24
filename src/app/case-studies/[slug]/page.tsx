@@ -208,8 +208,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
             Ready to start your first project?
           </h2>
           <p className="mx-auto mb-8 max-w-xl text-neutral-500">
-            Fixed pricing. Unlimited revisions. First project satisfaction or no
-            invoice.
+            Zero risk. Start today.
           </p>
           <CaseStudyCta client={cs.client} />
         </div>

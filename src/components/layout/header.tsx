@@ -93,7 +93,7 @@ export function Header() {
             className="hidden text-sm px-6 py-3 min-w-0 md:inline-flex"
             onClick={() => handleNavClick("start_a_project")}
           >
-            Let&apos;s chat
+            Start a project
           </Button>
 
           {/* Hamburger button — mobile only: blue circle like V2 */}
@@ -203,7 +203,7 @@ export function Header() {
                 href="/contact"
                 onClick={() => handleNavClick("start_a_project")}
               >
-                Let&apos;s chat
+                Start a project
               </Button>
             </motion.div>
           </motion.div>

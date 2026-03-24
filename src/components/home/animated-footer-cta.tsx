@@ -13,7 +13,7 @@ export function AnimatedFooterCta() {
       <div className="mx-auto max-w-3xl px-5 text-center md:px-8">
         <FadeInUp>
           <h2 className="mb-4 text-3xl font-bold text-brand-white md:text-4xl">
-            Ready to see transformative results?
+            Your next campaign. Delivered tomorrow.
           </h2>
         </FadeInUp>
         <FadeInUp delay={0.15}>
@@ -21,14 +21,14 @@ export function AnimatedFooterCta() {
             href="/contact"
             variant="primary"
             trackingLocation="footer_cta"
-            trackingLabel="lets_chat"
+            trackingLabel="send_brief"
           >
-            Let&apos;s chat
+            Send your brief
           </TrackedCta>
         </FadeInUp>
         <FadeInUp delay={0.25}>
           <p className="mt-6 text-sm text-neutral-400">
-            If you&apos;re not happy with our work, we&apos;ll refine it until it meets your standards.
+            No commitment required.
           </p>
         </FadeInUp>
         <FadeInUp delay={0.35}>

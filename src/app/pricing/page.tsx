@@ -89,7 +89,7 @@ const COMPARISON_ROWS: ComparisonRow[] = [
 
 export default function PricingPage() {
   return (
-    <div className="pt-[72px]">
+    <div className="pt-[var(--header-height)]">
       {/* Hero */}
       <Section ariaLabel="Pricing hero">
         <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl">

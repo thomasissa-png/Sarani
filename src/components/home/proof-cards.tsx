@@ -19,7 +19,7 @@ const PROOF_POINTS = [
     client: "TikTok",
     stat: "1,500+ edits per month",
     price: "300\u2013500/week",
-    detail: "Ongoing video production at scale, every single month.",
+    detail: "Campaigns reaching 400M+ views. Ongoing video production at scale, every single month.",
   },
 ] as const;
 

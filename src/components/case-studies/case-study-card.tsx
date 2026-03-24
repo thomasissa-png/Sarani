@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { track, getDevice, getReferrer } from "@/lib/analytics";
 import type { CaseStudy } from "@/data/case-studies";
 
@@ -11,6 +12,7 @@ interface CaseStudyCardProps {
 
 /**
  * Reusable case study card — V2 light design.
+ * Shows client, deliverable, key metric badge, read link, and a secondary CTA.
  */
 export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProps) {
   const handleClick = () => {
@@ -25,11 +27,12 @@ export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProp
   };
 
   return (
-    <a
-      href={`/case-studies/${caseStudy.slug}`}
-      onClick={handleClick}
-      className="group block rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-all duration-200 hover:border-brand-lemon hover:shadow-md"
-    >
+    <div className="group relative rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-all duration-200 hover:border-brand-lemon hover:shadow-md">
+      {/* Metric badge */}
+      <span className="mb-4 inline-block rounded-full bg-brand-black/5 px-3 py-1 text-xs font-bold text-brand-black">
+        {caseStudy.keyMetric}
+      </span>
+
       <p className="mb-1 text-sm font-medium uppercase tracking-wider text-brand-flame">
         {caseStudy.client}
       </p>
@@ -37,12 +40,27 @@ export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProp
         {caseStudy.deliverable}
       </p>
       <p className="mb-6 text-sm text-neutral-500">
-        {caseStudy.keyMetric}
+        {caseStudy.outcome}
       </p>
-      <span className="inline-flex items-center gap-1 text-sm font-bold text-brand-cerulean transition-all duration-150 group-hover:gap-2">
-        Read case study
-        <span aria-hidden="true">&rarr;</span>
-      </span>
-    </a>
+
+      <div className="flex flex-col gap-3">
+        <a
+          href={`/case-studies/${caseStudy.slug}`}
+          onClick={handleClick}
+          className="inline-flex items-center gap-1 text-sm font-bold text-brand-cerulean transition-all duration-150 group-hover:gap-2"
+        >
+          Read case study
+          <span aria-hidden="true">&rarr;</span>
+        </a>
+
+        <Link
+          href="/contact"
+          className="inline-flex items-center gap-1 text-sm font-medium text-neutral-500 transition-colors duration-150 hover:text-brand-flame"
+        >
+          Start a similar project
+          <span aria-hidden="true">&rarr;</span>
+        </Link>
+      </div>
+    </div>
   );
 }

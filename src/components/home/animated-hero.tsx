@@ -50,6 +50,9 @@ export function AnimatedHeroDots() {
 
 /* ---------- Animated Hero Content ---------- */
 
+const SUBTITLE =
+  "Enterprise creative shouldn\u2019t mean enterprise delays. 24-hour delivery. Fixed prices. Unlimited revisions.";
+
 const VALUE_PROPS = [
   "24/7 availability",
   "D+1 deliveries",
@@ -63,11 +66,14 @@ export function AnimatedHeroContent() {
   if (prefersReduced) {
     return (
       <div className="relative z-10 mx-auto max-w-screen-xl px-5 text-center md:px-8">
-        <h1 className="mb-10 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
+        <h1 className="mb-4 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
           Unlimited
           <br />
           Creativity
         </h1>
+        <p className="mx-auto mb-10 max-w-2xl text-lg text-neutral-600 md:text-xl">
+          {SUBTITLE}
+        </p>
         <div className="mb-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:gap-x-12">
           {VALUE_PROPS.map((prop) => (
             <p
@@ -103,7 +109,7 @@ export function AnimatedHeroContent() {
   return (
     <div className="relative z-10 mx-auto max-w-screen-xl px-5 text-center md:px-8">
       {/* Title — staggered word slide-up */}
-      <h1 className="mb-10 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
+      <h1 className="mb-4 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
         <span className="block overflow-hidden">
           <motion.span
             className="inline-block"
@@ -133,6 +139,20 @@ export function AnimatedHeroContent() {
           </motion.span>
         </span>
       </h1>
+
+      {/* Subtitle — persona-focused value proposition */}
+      <motion.p
+        className="mx-auto mb-10 max-w-2xl text-lg text-neutral-600 md:text-xl"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.6,
+          delay: 0.6,
+          ease: [0.25, 0.1, 0.25, 1],
+        }}
+      >
+        {SUBTITLE}
+      </motion.p>
 
       {/* 4 value props — stagger fade-in */}
       <div className="mb-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 md:gap-x-12">
