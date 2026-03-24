@@ -45,8 +45,8 @@
 ---
 
 ## Stack technique
-- **Frontend** : À recommander par @fullstack (contrainte : site vitrine international, performance, SEO-friendly)
-- **Backend** : À recommander par @fullstack (contrainte : site vitrine, formulaire contact, intégration Umami)
+- **Frontend** : À recommander par @fullstack (contrainte : site vitrine international, performance, SEO-friendly) — **greenfield**, on repart de zéro
+- **Backend** : À recommander par @fullstack (contrainte : site vitrine, formulaire contact, intégration Umami) — **greenfield**
 - **Base de données** : À recommander par @fullstack (besoin minimal : formulaire contact, éventuellement blog/case studies)
 - **Authentification** : Non requise (site vitrine public)
 - **Hébergement** : Replit
@@ -130,6 +130,31 @@
 - Sarani est une agence en croissance depuis 2020, pas une startup tech — le site vitrine est l'outil principal de conversion. La stack technique est à recommander par @fullstack.
 - Toute la croissance à ce jour s'est faite par **referral pur** (bouche-à-oreille clients). Le budget acquisition (500€/mois) est un premier pas vers l'acquisition proactive. La stratégie devra capitaliser sur ce referral existant tout en construisant l'organique (SEO, GEO, social).
 - **Umami** choisi comme outil analytics (self-hosted, privacy-first, RGPD-friendly, pas de cookies tiers). À intégrer dans le projet dès le développement du site.
+
+### Décisions utilisateur (2026-03-24)
+
+- **Logos clients** : autorisation confirmée pour utiliser les logos TikTok, Sony, GEODIS, Adidas, etc. sur le site → hard blocker US-102 levé
+- **Stack** : greenfield — on repart de zéro, peu importe le site actuel sarani.studio
+- **Page pricing** : ouverte (publique, pas behind a gate)
+- **Phase 3** : toutes les features ont la même priorité (agent traduction, deck generator, etc.)
+
+### Brand Assets (source : Sarani_Brand Board 2023.pdf + logos fournis)
+
+**Palette de couleurs :**
+- Black : #000000
+- White : #ffffff
+- Flame (orange) : #da5126
+- Vivid Cerulean (blue) : #0babe8
+- Deep Lemon (yellow) : #f1c217
+
+**Typographie :**
+- Galano Grotesque Bold — titres et headings
+- Galano Grotesque Regular — sous-titres et body copy
+
+**Logos disponibles :**
+- `Sarani Logo_1000x1000.png` — logo principal (fond noir, texte blanc, 3 dots colorés)
+- `Sarani Logo_WHT-01.png` — logo version blanche (transparent)
+- Submark : les 3 dots (flame, cerulean, lemon)
 
 ### Données clés extraites du deck commercial (source : 2026_Sarani Deck_Introduction_EN_light.pdf)
 
