@@ -19,12 +19,12 @@
 
 ### 1.1 Palette Overview
 
-Sarani's visual identity is built on a **dark-first** palette. The primary surface is black (#000000). Color is used sparingly — the three accent colors (Flame, Cerulean, Lemon) are signal colors, not fill colors. They carry meaning and attention. Overusing them kills their power.
+Sarani's visual identity is built on a **light-first** palette. The primary surface is white (#ffffff), with dark sections (black #000000) used for contrast and emphasis (metrics, footer, team stats). Color is used sparingly — the three accent colors (Flame, Cerulean, Lemon) are signal colors, not fill colors. They carry meaning and attention. Overusing them kills their power.
 
 | Token | Hex | Name | Role |
 |---|---|---|---|
-| `colors.primary.black` | `#000000` | Black | Primary background, dominant surface |
-| `colors.primary.white` | `#ffffff` | White | Primary text on dark, inverse surfaces |
+| `colors.primary.white` | `#ffffff` | White | Primary background, dominant surface |
+| `colors.primary.black` | `#000000` | Black | Contrast sections, footer, dark emphasis |
 | `colors.accent.flame` | `#da5126` | Flame | Primary CTA, error states, urgency, energy |
 | `colors.accent.cerulean` | `#0babe8` | Vivid Cerulean | Info, links, secondary interactive elements |
 | `colors.accent.lemon` | `#f1c217` | Deep Lemon | Warning, highlights, "speed" signifier |

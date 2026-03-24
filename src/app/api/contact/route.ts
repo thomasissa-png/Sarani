@@ -7,7 +7,7 @@ import { contactFormServerSchema } from "@/lib/validation";
  *
  * - Server-side Zod validation (BR-103-2)
  * - Honeypot check for spam (silent 200 on bot detection)
- * - In-memory rate limiting: 3 per IP per hour (BR-103-3)
+ * - In-memory rate limiting: 5 per IP per minute (BR-103-3)
  * - No PII in logs (tracking-plan.md privacy rule)
  *
  * Phase 1: console.log notification (email provider TBD)
