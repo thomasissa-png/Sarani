@@ -2,8 +2,8 @@ run = "npm run dev"
 [nix]
 channel = "stable-24_05"
 [deployment]
-run = ["sh", "-c", "npm run build && npm run start"]
-build = ["sh", "-c", "npm install"]
+run = ["sh", "-c", "PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js"]
+build = ["sh", "-c", "npm install && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/"]
 [[ports]]
 localPort = 3000
 externalPort = 80
