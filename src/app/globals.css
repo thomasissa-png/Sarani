@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/*
+ * Sarani Design System — Tailwind v4 Theme
+ * Source: docs/design/design-tokens.json
+ * Dark-first design — no light mode toggle in v1
+ */
+
+@theme inline {
+  /* Brand Colors */
+  --color-brand-black: #000000;
+  --color-brand-white: #ffffff;
+  --color-brand-flame: #da5126;
+  --color-brand-flame-light: #e8735a;
+  --color-brand-flame-dark: #b03d1c;
+  --color-brand-cerulean: #0babe8;
+  --color-brand-cerulean-light: #3dbfef;
+  --color-brand-cerulean-dark: #0888ba;
+  --color-brand-lemon: #f1c217;
+  --color-brand-lemon-light: #f5d04f;
+  --color-brand-lemon-dark: #c49a0f;
+
+  /* Neutral Scale */
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #f5f5f5;
+  --color-neutral-300: #e5e5e5;
+  --color-neutral-400: #d4d4d4;
+  --color-neutral-500: #a3a3a3;
+  --color-neutral-600: #737373;
+  --color-neutral-700: #525252;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #000000;
+
+  /* Semantic Colors */
+  --color-success: #16a34a;
+  --color-success-light: #dcfce7;
+  --color-warning: #f1c217;
+  --color-warning-light: #fef9c3;
+  --color-error: #da5126;
+  --color-error-light: #fde8e2;
+  --color-info: #0babe8;
+  --color-info-light: #e0f5fd;
+
+  /* Surface Colors */
+  --color-surface-base: #000000;
+  --color-surface-elevated: #171717;
+  --color-surface-overlay: #262626;
+  --color-surface-inverse: #ffffff;
+
+  /* Font Family */
+  --font-heading: var(--font-outfit), sans-serif;
+  --font-body: var(--font-outfit), sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-base: 0 2px 8px 0 rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 16px 0 rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 8px 32px 0 rgb(0 0 0 / 0.6);
+  --shadow-xl: 0 16px 48px 0 rgb(0 0 0 / 0.7);
+  --shadow-flame-glow: 0 0 24px 0 rgb(218 81 38 / 0.4);
+  --shadow-cerulean-glow: 0 0 24px 0 rgb(11 171 232 / 0.35);
+  --shadow-lemon-glow: 0 0 24px 0 rgb(241 194 23 / 0.35);
+}
+
+/* Base styles — dark-first */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #000000;
+  color: #ffffff;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Skip link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 9999;
+  padding: 12px 24px;
+  background-color: var(--color-brand-cerulean);
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 0 0 8px 8px;
+  text-decoration: none;
+  transition: top 150ms ease-in-out;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Focus outline utility */
+*:focus-visible {
+  outline: 3px solid var(--color-brand-cerulean);
+  outline-offset: 2px;
+}
