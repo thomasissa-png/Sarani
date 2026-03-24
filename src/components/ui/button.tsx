@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 import { type ButtonHTMLAttributes, type AnchorHTMLAttributes } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
@@ -24,14 +27,12 @@ type ButtonProps = ButtonAsButton | ButtonAsLink;
 const variantStyles: Record<ButtonVariant, string> = {
   primary: [
     "bg-brand-lemon text-brand-black",
-    "hover:bg-brand-lemon-dark hover:scale-[1.02]",
-    "active:scale-[0.98] active:bg-brand-lemon-dark",
-    "disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed disabled:hover:scale-100",
+    "hover:bg-brand-lemon-dark",
+    "disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed",
   ].join(" "),
   secondary: [
     "bg-transparent text-brand-black border-[1.5px] border-brand-black",
     "hover:bg-brand-black hover:text-brand-white",
-    "active:bg-neutral-800 active:text-brand-white",
   ].join(" "),
   ghost: [
     "bg-transparent text-brand-cerulean",
@@ -49,6 +50,12 @@ const baseStyles = [
   "cursor-pointer",
 ].join(" ");
 
+const springTransition = {
+  type: "spring" as const,
+  stiffness: 500,
+  damping: 20,
+};
+
 export function Button({
   variant = "primary",
   className,
@@ -60,15 +67,29 @@ export function Button({
   if ("href" in props && props.href) {
     const { href, ...rest } = props as ButtonAsLink;
     return (
-      <a href={href} className={classes} {...rest}>
-        {children}
-      </a>
+      <motion.div
+        className="inline-block"
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.96 }}
+        transition={springTransition}
+      >
+        <a href={href} className={classes} {...rest}>
+          {children}
+        </a>
+      </motion.div>
     );
   }
 
   return (
-    <button className={classes} {...(props as ButtonAsButton)}>
-      {children}
-    </button>
+    <motion.div
+      className="inline-block"
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.96 }}
+      transition={springTransition}
+    >
+      <button className={classes} {...(props as ButtonAsButton)}>
+        {children}
+      </button>
+    </motion.div>
   );
 }

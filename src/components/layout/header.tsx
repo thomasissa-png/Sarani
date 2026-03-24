@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
@@ -138,61 +139,76 @@ export function Header() {
         </div>
       </nav>
 
-      {/* Mobile overlay menu */}
-      <div
-        id="mobile-menu"
-        className={cn(
-          "fixed inset-0 top-0 z-[300] flex flex-col items-center justify-center bg-brand-white transition-opacity duration-250 md:hidden",
-          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        )}
-        aria-hidden={!mobileOpen}
-      >
-        {/* Close button */}
-        <button
-          type="button"
-          className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full bg-brand-cerulean text-brand-white"
-          onClick={() => setMobileOpen(false)}
-          aria-label="Close menu"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            aria-hidden="true"
+      {/* Mobile overlay menu — slide down from top */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            id="mobile-menu"
+            className="fixed inset-0 top-0 z-[300] flex flex-col items-center justify-center bg-brand-white md:hidden"
+            initial={{ y: "-100%", opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "-100%", opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+            aria-hidden={!mobileOpen}
           >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        <ul className="flex flex-col items-center gap-8" role="list">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                onClick={() => handleNavClick(link.label)}
-                className="text-2xl font-bold text-brand-black transition-colors duration-150 hover:text-brand-flame"
+            {/* Close button */}
+            <button
+              type="button"
+              className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full bg-brand-cerulean text-brand-white"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                aria-hidden="true"
               >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
 
-        <div className="mt-10">
-          <Button
-            variant="primary"
-            href="/contact"
-            onClick={() => handleNavClick("start_a_project")}
-          >
-            Let&apos;s chat
-          </Button>
-        </div>
-      </div>
+            <ul className="flex flex-col items-center gap-8" role="list">
+              {NAV_LINKS.map((link, i) => (
+                <motion.li
+                  key={link.href}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
+                >
+                  <Link
+                    href={link.href}
+                    onClick={() => handleNavClick(link.label)}
+                    className="text-2xl font-bold text-brand-black transition-colors duration-150 hover:text-brand-flame"
+                  >
+                    {link.label}
+                  </Link>
+                </motion.li>
+              ))}
+            </ul>
+
+            <motion.div
+              className="mt-10"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, duration: 0.4 }}
+            >
+              <Button
+                variant="primary"
+                href="/contact"
+                onClick={() => handleNavClick("start_a_project")}
+              >
+                Let&apos;s chat
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

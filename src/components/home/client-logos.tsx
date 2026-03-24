@@ -1,16 +1,25 @@
 "use client";
 
+import { motion, useReducedMotion } from "framer-motion";
+
 const CLIENTS = ["TikTok", "Sony", "GEODIS", "Adidas", "L'Oreal", "PICO"] as const;
 
 /**
  * Client logo strip — V2 light design.
  * Desktop: static row. Mobile: auto-scrolling marquee.
+ * Animated: fade-in on scroll.
  */
 export function ClientLogos() {
+  const prefersReduced = useReducedMotion();
+
   return (
-    <div
+    <motion.div
       aria-label="Trusted by leading enterprises"
       className="relative overflow-hidden py-8"
+      initial={prefersReduced ? {} : { opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
     >
       {/* Fade edges on mobile */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-brand-white to-transparent md:hidden" />
@@ -55,6 +64,6 @@ export function ClientLogos() {
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

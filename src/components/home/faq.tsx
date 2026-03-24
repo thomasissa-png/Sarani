@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 /**
  * FAQ accordion — matches V2 Webflow 14-question FAQ section.
+ * Animated: smooth height transition with framer-motion, + icon rotation.
  */
 
 const FAQ_ITEMS = [
   {
     question: "What is your pricing model? Are there any hidden costs?",
-    answer: "Our pricing is fully transparent with fixed rates published on our website. No hidden costs, no surprise invoices. You pay exactly what you see — whether it's a banner at 150€ or a complete branding package.",
+    answer: "Our pricing is fully transparent with fixed rates published on our website. No hidden costs, no surprise invoices. You pay exactly what you see — whether it's a banner at 150\u20AC or a complete branding package.",
   },
   {
     question: "How do feedback and revisions work?",
@@ -49,7 +51,7 @@ const FAQ_ITEMS = [
   },
   {
     question: "How do you maintain quality with under 24h delivery?",
-    answer: "Our relay model across 6 continents means work doesn't stop. While other agencies need 2 weeks because they work 8 hours a day, we work 24. Speed doesn't compromise quality — it enables it.",
+    answer: "Our relay model across 6 continents means work doesn't stop. While other agencies need 2 weeks because they work 8 hours a day, we work 24. Speed doesn't compromise quality \u2014 it enables it.",
   },
   {
     question: "You say you're present on 6 continents. How does that work?",
@@ -76,6 +78,8 @@ function FaqItem({
   isOpen: boolean;
   onToggle: () => void;
 }) {
+  const prefersReduced = useReducedMotion();
+
   return (
     <div className="border-b border-neutral-300">
       <button
@@ -87,27 +91,33 @@ function FaqItem({
         <span className="pr-4 text-base font-bold text-brand-black md:text-lg">
           {question}
         </span>
-        <span
-          className={`shrink-0 text-brand-black transition-transform duration-200 ${
-            isOpen ? "rotate-45" : ""
-          }`}
+        <motion.span
+          className="shrink-0 text-brand-black"
+          animate={{ rotate: isOpen ? 45 : 0 }}
+          transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
           aria-hidden="true"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-        </span>
+        </motion.span>
       </button>
-      <div
-        className={`overflow-hidden transition-all duration-300 ${
-          isOpen ? "max-h-[500px] pb-5" : "max-h-0"
-        }`}
-      >
-        <p className="text-sm leading-relaxed text-neutral-700 md:text-base">
-          {answer}
-        </p>
-      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={prefersReduced ? {} : { height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={prefersReduced ? {} : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            className="overflow-hidden"
+          >
+            <p className="pb-5 text-sm leading-relaxed text-neutral-700 md:text-base">
+              {answer}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 /**
  * Testimonials carousel — matches V2 "With happiness comes trust" section.
  * 6 testimonials with prev/next navigation.
+ * Animated: fade + slide transitions between quotes.
  */
 
 const TESTIMONIALS = [
@@ -48,32 +50,74 @@ const TESTIMONIALS = [
 
 export function Testimonials() {
   const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const prefersReduced = useReducedMotion();
 
   const prev = useCallback(() => {
+    setDirection(-1);
     setCurrent((c) => (c === 0 ? TESTIMONIALS.length - 1 : c - 1));
   }, []);
 
   const next = useCallback(() => {
+    setDirection(1);
     setCurrent((c) => (c === TESTIMONIALS.length - 1 ? 0 : c + 1));
   }, []);
 
   const t = TESTIMONIALS[current];
 
+  const slideVariants = {
+    enter: (dir: number) => ({
+      x: prefersReduced ? 0 : dir > 0 ? 60 : -60,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (dir: number) => ({
+      x: prefersReduced ? 0 : dir > 0 ? -60 : 60,
+      opacity: 0,
+    }),
+  };
+
   return (
     <div className="mx-auto max-w-2xl text-center">
-      {/* Quote */}
-      <blockquote className="mb-8">
-        <p className="text-xl leading-relaxed text-neutral-700 italic md:text-2xl">
-          &ldquo;{t.quote}&rdquo;
-        </p>
-      </blockquote>
+      {/* Quote with AnimatePresence for smooth transitions */}
+      <div className="relative min-h-[180px] md:min-h-[140px]">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.blockquote
+            key={current}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+            className="mb-8"
+          >
+            <p className="text-xl leading-relaxed text-neutral-700 italic md:text-2xl">
+              &ldquo;{t.quote}&rdquo;
+            </p>
+          </motion.blockquote>
+        </AnimatePresence>
+      </div>
 
-      {/* Attribution */}
-      <p className="text-base font-bold text-brand-black">{t.name}</p>
-      <p className="text-sm text-neutral-500">{t.role}</p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-wider text-brand-flame">
-        {t.service}
-      </p>
+      {/* Attribution — also animated */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current}
+          initial={prefersReduced ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={prefersReduced ? {} : { opacity: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <p className="text-base font-bold text-brand-black">{t.name}</p>
+          <p className="text-sm text-neutral-500">{t.role}</p>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wider text-brand-flame">
+            {t.service}
+          </p>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Navigation */}
       <div className="mt-8 flex items-center justify-center gap-4">
@@ -94,12 +138,21 @@ export function Testimonials() {
             <button
               key={i}
               type="button"
-              onClick={() => setCurrent(i)}
-              className={`h-2 w-2 rounded-full transition-colors ${
-                i === current ? "bg-brand-flame" : "bg-neutral-300"
-              }`}
+              onClick={() => {
+                setDirection(i > current ? 1 : -1);
+                setCurrent(i);
+              }}
+              className="relative h-2 w-2 rounded-full bg-neutral-300 transition-colors"
               aria-label={`Go to testimonial ${i + 1}`}
-            />
+            >
+              {i === current && (
+                <motion.span
+                  layoutId="testimonial-dot"
+                  className="absolute inset-0 rounded-full bg-brand-flame"
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                />
+              )}
+            </button>
           ))}
         </div>
 

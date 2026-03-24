@@ -345,3 +345,101 @@ export function AnimatedSection({
     </motion.div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/*  SlowSpin — continuous slow rotation (infinity symbol, etc.)       */
+/* ------------------------------------------------------------------ */
+
+export function SlowSpin({
+  children,
+  className,
+  duration = 8,
+}: {
+  children: ReactNode;
+  className?: string;
+  duration?: number;
+}) {
+  const prefersReduced = useReducedMotion();
+
+  if (prefersReduced) {
+    return <span className={className}>{children}</span>;
+  }
+
+  return (
+    <motion.span
+      className={className}
+      animate={{ rotate: [0, 360] }}
+      transition={{
+        duration,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+      style={{ display: "inline-block" }}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  PulseAnimation — continuous pulse for decorative elements         */
+/* ------------------------------------------------------------------ */
+
+export function PulseAnimation({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const prefersReduced = useReducedMotion();
+
+  if (prefersReduced) {
+    return <div className={className}>{children}</div>;
+  }
+
+  return (
+    <motion.div
+      className={className}
+      animate={{ scale: [1, 1.15, 1] }}
+      transition={{
+        duration: 2,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  AnimatePresenceWrapper — fade transition for swapping content      */
+/* ------------------------------------------------------------------ */
+
+export { AnimatePresence } from "framer-motion";
+
+export function FadeSwap({
+  children,
+  motionKey,
+  className,
+}: {
+  children: ReactNode;
+  motionKey: string | number;
+  className?: string;
+}) {
+  const prefersReduced = useReducedMotion();
+
+  return (
+    <motion.div
+      key={motionKey}
+      initial={prefersReduced ? false : { opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={prefersReduced ? {} : { opacity: 0, x: -20 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}

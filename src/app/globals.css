@@ -148,13 +148,14 @@ body {
   animation-play-state: paused;
 }
 
-/* FAQ accordion */
-.faq-answer {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 300ms ease-in-out, padding 300ms ease-in-out;
-}
-
-.faq-answer.open {
-  max-height: 500px;
+/* Respect reduced motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
