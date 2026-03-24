@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
+import { ClientLogos } from "@/components/home/client-logos";
 
 export const metadata: Metadata = {
   title: "Sarani Pricing — Fixed Rates, No Subscription",
@@ -19,6 +20,8 @@ type PricingItem = {
 
 type PricingCategory = {
   title: string;
+  emoji: string;
+  accent: string;
   items: PricingItem[];
   note?: string;
 };
@@ -26,6 +29,8 @@ type PricingCategory = {
 const PRICING_CATEGORIES: PricingCategory[] = [
   {
     title: "Content Creation",
+    emoji: "🎨",
+    accent: "border-t-brand-flame",
     items: [
       { name: "Static banner", price: "155\u00A0€" },
       { name: "Banner adaptation", price: "35\u00A0€/size" },
@@ -37,6 +42,8 @@ const PRICING_CATEGORIES: PricingCategory[] = [
   },
   {
     title: "Video Production",
+    emoji: "🎬",
+    accent: "border-t-brand-cerulean",
     items: [
       { name: "Basic video edit", price: "85\u00A0€" },
       { name: "Social media video (30s)", price: "360\u00A0€" },
@@ -46,6 +53,8 @@ const PRICING_CATEGORIES: PricingCategory[] = [
   },
   {
     title: "Presentations",
+    emoji: "📊",
+    accent: "border-t-brand-lemon",
     items: [
       { name: "Per slide", price: "30\u00A0€" },
       { name: "Full deck (reference)", price: "from 360\u00A0€" },
@@ -53,6 +62,8 @@ const PRICING_CATEGORIES: PricingCategory[] = [
   },
   {
     title: "Operations & Marketing",
+    emoji: "📈",
+    accent: "border-t-brand-flame",
     items: [
       { name: "LinkedIn management", price: "1,800–2,500\u00A0€/month" },
       { name: "Paid ads fee", price: "8% of budget" },
@@ -61,6 +72,8 @@ const PRICING_CATEGORIES: PricingCategory[] = [
   },
   {
     title: "On-Demand / Retainer",
+    emoji: "⚡",
+    accent: "border-t-brand-cerulean",
     items: [{ name: "Monthly pack", price: "custom quote" }],
     note: "Need regular volume? Ask us about retained partnerships.",
   },
@@ -74,13 +87,32 @@ type ComparisonRow = {
 
 const COMPARISON_ROWS: ComparisonRow[] = [
   { label: "Banner", sarani: "155–470\u00A0€", agency: "500–2,000\u00A0€" },
-  {
-    label: "Revisions",
-    sarani: "Included",
-    agency: "200–800\u00A0€ each",
-  },
+  { label: "Revisions", sarani: "Unlimited", agency: "200–800\u00A0€ each" },
   { label: "Turnaround", sarani: "24 hours", agency: "10–15 days" },
   { label: "Commitment", sarani: "None", agency: "Retainer required" },
+];
+
+const FAQ_ITEMS = [
+  {
+    q: "Are revisions really unlimited?",
+    a: "Yes. We iterate until you're 100% satisfied. No extra charge, no limit.",
+  },
+  {
+    q: "What does D+1 delivery mean?",
+    a: "For standard graphic design (banners, adaptations), we deliver within 24 hours of brief validation. Larger scopes (video, branding) are confirmed at brief — typically 48 to 96 hours.",
+  },
+  {
+    q: "Do I need a minimum commitment?",
+    a: "No. Order one banner or a thousand. No retainer, no contract lock-in. Pay per project.",
+  },
+  {
+    q: "What if I'm not satisfied with the first project?",
+    a: "You don't pay. Simple as that. We believe in earning trust through work, not contracts.",
+  },
+  {
+    q: "Can you handle volume?",
+    a: "Absolutely. We produce 1,500+ deliverables per month for clients like Sony, TikTok, and Adidas. Scale is what we do.",
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -90,22 +122,30 @@ const COMPARISON_ROWS: ComparisonRow[] = [
 export default function PricingPage() {
   return (
     <div className="pt-[var(--header-height)]">
-      {/* Hero */}
+      {/* Hero — bold, creative */}
       <Section ariaLabel="Pricing hero">
-        <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl">
-          Fixed prices. Zero surprises.
-        </h1>
-        <p className="max-w-2xl text-xl font-medium text-neutral-600">
-          No retainer. No minimum commitment. Unlimited revisions. Up to 60%
-          savings vs agencies.
-        </p>
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean">
+            Transparent pricing
+          </span>
+          <h1 className="mb-6 text-5xl font-bold tracking-tight text-brand-black sm:text-6xl lg:text-7xl">
+            Fixed prices.
+            <br />
+            <span className="text-brand-flame">Zero surprises.</span>
+          </h1>
+          <p className="mx-auto max-w-xl text-lg text-neutral-600">
+            No retainer. No minimum commitment. Unlimited revisions.
+            Up to 60% savings vs traditional agencies.
+          </p>
+        </div>
       </Section>
 
-      {/* Guarantee Strip */}
-      <div className="border-y border-neutral-300 bg-surface-elevated">
-        <div className="mx-auto max-w-screen-xl px-5 py-5 text-center md:px-8">
-          <p className="text-lg font-bold text-brand-black">
-            Not satisfied with your first project? No invoice.
+      {/* Guarantee Strip — high impact */}
+      <div className="bg-brand-black">
+        <div className="mx-auto max-w-screen-xl px-5 py-5 md:px-8">
+          <p className="text-center text-lg font-bold text-brand-white">
+            🛡️ Not satisfied with your first project?{" "}
+            <span className="text-brand-lemon">No invoice.</span>
           </p>
         </div>
       </div>
@@ -125,72 +165,105 @@ export default function PricingPage() {
             <PricingCard key={category.title} category={category} />
           ))}
         </div>
+
+        {/* VAT note — integrated */}
+        <p className="mt-8 text-center text-sm text-neutral-500">
+          All prices exclude VAT (HT). VAT is applied according to applicable regulations.
+        </p>
       </Section>
 
-      {/* Comparison Section */}
-      <Section ariaLabel="Pricing comparison">
-        <h2 className="mb-10 text-center text-3xl font-bold text-brand-black sm:text-4xl">
-          Up to 60% savings vs traditional agencies
-        </h2>
+      {/* Comparison Section — visual */}
+      <Section ariaLabel="Pricing comparison" className="bg-brand-black">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-3 text-center text-3xl font-bold text-brand-white sm:text-4xl">
+            Why pay more for less?
+          </h2>
+          <p className="mb-10 text-center text-neutral-400">
+            Same quality. Fraction of the cost. Here's the math.
+          </p>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[480px] border-collapse text-left">
-            <thead>
-              <tr>
-                <th className="rounded-tl-lg border border-neutral-300 bg-surface-elevated px-6 py-4 text-sm font-bold uppercase tracking-wider text-neutral-500">
-                  &nbsp;
-                </th>
-                <th className="border border-neutral-300 bg-brand-cerulean px-6 py-4 text-sm font-bold uppercase tracking-wider text-brand-black">
-                  Sarani
-                </th>
-                <th className="rounded-tr-lg border border-neutral-300 bg-surface-elevated px-6 py-4 text-sm font-bold uppercase tracking-wider text-neutral-500">
-                  Network Agency
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPARISON_ROWS.map((row, i) => (
-                <tr key={row.label}>
-                  <td
-                    className={`border border-neutral-300 bg-surface-elevated px-6 py-4 font-bold text-brand-black ${i === COMPARISON_ROWS.length - 1 ? "rounded-bl-lg" : ""}`}
-                  >
-                    {row.label}
-                  </td>
-                  <td className="border border-neutral-300 bg-surface-elevated px-6 py-4 font-semibold text-brand-cerulean">
-                    {row.sarani}
-                  </td>
-                  <td
-                    className={`border border-neutral-300 bg-surface-elevated px-6 py-4 text-neutral-500 ${i === COMPARISON_ROWS.length - 1 ? "rounded-br-lg" : ""}`}
-                  >
-                    {row.agency}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] border-collapse text-left">
+              <thead>
+                <tr>
+                  <th className="px-6 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
+                    &nbsp;
+                  </th>
+                  <th className="rounded-t-lg bg-brand-lemon/10 px-6 py-4 text-sm font-bold uppercase tracking-wider text-brand-lemon">
+                    Sarani
+                  </th>
+                  <th className="px-6 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
+                    Network Agency
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {COMPARISON_ROWS.map((row, i) => (
+                  <tr
+                    key={row.label}
+                    className={i < COMPARISON_ROWS.length - 1 ? "border-b border-neutral-800" : ""}
+                  >
+                    <td className="px-6 py-4 font-bold text-brand-white">
+                      {row.label}
+                    </td>
+                    <td className="bg-brand-lemon/10 px-6 py-4 font-bold text-brand-lemon">
+                      {row.sarani}
+                    </td>
+                    <td className="px-6 py-4 text-neutral-500 line-through decoration-neutral-700">
+                      {row.agency}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </Section>
 
-      {/* VAT Footnote */}
-      <div className="mx-auto max-w-screen-xl px-5 pb-2 text-center md:px-8">
-        <p className="text-sm text-neutral-500">
-          All prices exclude VAT (HT). VAT is applied according to applicable
-          regulations.
-        </p>
-      </div>
+      {/* Trust — client logos */}
+      <Section ariaLabel="Trusted by">
+        <ClientLogos />
+      </Section>
 
-      {/* Closing CTA */}
-      <Section ariaLabel="Call to action">
-        <div className="text-center">
-          <h2 className="mb-6 text-3xl font-bold text-brand-black sm:text-4xl">
-            Start your first project today.
+      {/* FAQ Pricing */}
+      <Section ariaLabel="Pricing FAQ" className="bg-surface-warm">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-10 text-center text-3xl font-bold text-brand-black sm:text-4xl">
+            Questions? Answered.
           </h2>
+          <div className="space-y-4">
+            {FAQ_ITEMS.map((faq) => (
+              <details
+                key={faq.q}
+                className="group rounded-xl border border-neutral-300 bg-brand-white px-6 py-5 transition-shadow hover:shadow-base"
+              >
+                <summary className="flex cursor-pointer items-center justify-between font-bold text-brand-black">
+                  {faq.q}
+                  <span className="ml-4 text-xl text-neutral-400 transition-transform duration-200 group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 text-neutral-600 leading-relaxed">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* Closing CTA — bold */}
+      <Section ariaLabel="Call to action" className="bg-brand-black">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="mb-4 text-4xl font-bold text-brand-white sm:text-5xl">
+            One brief.
+            <br />
+            <span className="text-brand-flame">24 hours. Done.</span>
+          </h2>
+          <p className="mb-8 text-neutral-400">
+            Zero risk. No commitment. Start with one project and see for yourself.
+          </p>
           <Button variant="primary" href="/contact">
             Start a project
           </Button>
-          <p className="mt-6 text-sm text-neutral-500">
-            Zero risk. Start today.
-          </p>
         </div>
       </Section>
     </div>
@@ -198,22 +271,29 @@ export default function PricingPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Pricing Card                                                       */
+/*  Pricing Card — with personality                                    */
 /* ------------------------------------------------------------------ */
 
 function PricingCard({ category }: { category: PricingCategory }) {
   return (
-    <div className="rounded-lg border border-neutral-300 bg-surface-elevated p-6 md:p-8">
-      <h3 className="mb-5 text-xl font-bold text-brand-black">
-        {category.title}
-      </h3>
+    <div
+      className={`rounded-xl border-t-4 ${category.accent} bg-brand-white p-6 shadow-base transition-all duration-200 hover:shadow-lg hover:-translate-y-1 md:p-8`}
+    >
+      <div className="mb-4 flex items-center gap-3">
+        <span className="text-2xl" role="img" aria-hidden="true">
+          {category.emoji}
+        </span>
+        <h3 className="text-xl font-bold text-brand-black">
+          {category.title}
+        </h3>
+      </div>
       <ul className="space-y-3">
         {category.items.map((item) => (
           <li
             key={item.name}
-            className="flex items-baseline justify-between gap-4"
+            className="flex items-baseline justify-between gap-4 border-b border-neutral-200 pb-3 last:border-0 last:pb-0"
           >
-            <span className="font-medium text-neutral-600">{item.name}</span>
+            <span className="text-neutral-600">{item.name}</span>
             <span className="shrink-0 font-bold text-brand-black">
               {item.price}
             </span>

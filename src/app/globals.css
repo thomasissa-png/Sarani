@@ -8,7 +8,7 @@
 
 @theme inline {
   /* Brand Colors — exact V2 Webflow values */
-  --color-brand-black: #111111;
+  --color-brand-black: #000000;
   --color-brand-white: #ffffff;
   --color-brand-flame: #e35019;
   --color-brand-flame-light: #e8735a;
@@ -30,7 +30,7 @@
   --color-neutral-700: #333333;
   --color-neutral-800: #1d1d1d;
   --color-neutral-900: #141413;
-  --color-neutral-950: #111111;
+  --color-neutral-950: #000000;
 
   /* Semantic Colors */
   --color-success: #16a34a;
