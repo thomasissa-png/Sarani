@@ -553,3 +553,85 @@ Any AI agent producing LinkedIn posts, SEO content, or email copy for Sarani MUS
 - [HYPOTHÈSE] L'adresse email "hello@sarani.studio" utilisée dans les messages d'erreur est une hypothèse. Confirmer l'adresse de contact réelle avant le go-live.
 - [HYPOTHÈSE] La limite de taille de fichier "Max 10MB" dans le message d'erreur upload est une hypothèse technique. À confirmer avec @fullstack selon les contraintes d'hébergement Replit.
 
+---
+
+## 8. Value Proposition Variants
+
+Three ready-to-use variants. Each is calibrated to its context and channel. Copy-paste without modification.
+
+---
+
+### 8.1 — Hero Landing Page
+
+**Headline (H1):**
+```
+Enterprise creative. Delivered in 24 hours. No surprises.
+```
+
+**Subheadline:**
+```
+TikTok sends us 1,500 video edits a month. Sony ordered Black Friday banners the same day they needed them. GEODIS rebranded 350 presentations in 3 weeks for 8,500€. Fixed prices. Unlimited revisions. First project satisfaction or no invoice.
+```
+
+**Primary CTA:**
+```
+Start a project
+```
+
+**Micro-reassurance (below CTA, small text):**
+```
+First project satisfaction or no invoice.
+```
+
+*Dark-first usage note: H1 white on black, subheadline at 70% opacity white. CTA button: white text on transparent border — not a filled button. Micro-reassurance in muted grey below.*
+
+---
+
+### 8.2 — Email Outreach Hook
+
+**Subject line:**
+```
+How TikTok gets 1,500 videos edited a month
+```
+
+**Opening line:**
+```
+You're managing campaigns across multiple markets — and your agency just quoted you two weeks for assets you needed yesterday.
+```
+
+**Body hook:**
+```
+We edit 1,500+ videos a month for TikTok's content team. Sony ordered Black Friday banners the same day they went live — 155€ per banner, delivered in hours. GEODIS rebranded 350 presentations in 3 weeks for 8,500€. Their traditional agency quoted 3 months and 80,000€.
+```
+
+**CTA:**
+```
+Worth seeing what we'd quote on your next brief?
+```
+
+---
+
+### 8.3 — Social Media Bios
+
+**LinkedIn company bio (158 characters):**
+```
+International creative agency. Design, video, copy, paid ads — delivered in 24h. TikTok, Sony, Adidas, GEODIS trust us. No retainer. Start at 155€.
+```
+
+**Instagram bio (148 characters):**
+```
+Enterprise creative in 24h.
+TikTok • Sony • Adidas • GEODIS
+35 experts, 5 continents, 18 languages.
+First project or no invoice. ↓ Start here
+```
+
+**Twitter/X bio (157 characters):**
+```
+Creative agency for enterprises that can't wait two weeks. TikTok, Sony, Adidas, GEODIS. D+1 delivery. Fixed prices. No retainer. Start at 155€.
+```
+
+*Usage note: All three bios contain the required three elements — what Sarani does, for whom, and a named proof point. Do not add hashtags to the LinkedIn or Twitter bios. The Instagram bio uses line breaks for scannability on mobile.*
+
+---
+
