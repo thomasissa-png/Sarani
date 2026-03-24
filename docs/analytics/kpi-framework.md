@@ -306,6 +306,140 @@ All [HYPOTHESIS] items from this document, consolidated for review:
 
 ---
 
+---
+
+## 6. Feature-KPI Mapping
+
+### 6.1 — Mapping Table
+
+| Phase | Feature / Story | KPI | Baseline | Target | Measurement Method |
+|-------|----------------|-----|----------|--------|--------------------|
+| 1 | **US-101 — Homepage enterprise positioning** | Site-to-lead conversion rate | TBD post-launch (Umami) | 1–2% [HYPOTHESIS] | Umami: sessions vs. `form_submit` goal completions |
+| 1 | **US-102 — Case study pages** | Case study engagement rate | TBD post-launch | >40% of sessions view ≥1 case study | Umami: `/case-studies/*` page views ÷ total sessions |
+| 1 | **US-102 — Case study pages** | Time on case study pages | TBD post-launch | >90 seconds avg | Umami: page-level session duration |
+| 1 | **US-103 — Contact / brief form** | Qualified inbound leads | 0 (pre-launch) | 5 enterprise form submissions/month | Umami: `form_submit` goal event + manual CRM review of company size |
+| 1 | **US-103 — Contact / brief form** | Contact form quality score | TBD post-launch | >50% submissions from companies >500M€ | Manual review of "Company size" dropdown field |
+| 1 | **US-103 — Contact / brief form** | Referral source attribution | TBD post-launch | >60% attributed to client referrals | "How did you first hear about Sarani?" field — manual CRM tagging |
+| 1 | **US-104 — Pricing transparency page** | Pricing page visit rate | TBD post-launch | >20% of sessions include pricing page visit | Umami: `/pricing` page views ÷ total sessions |
+| 1 | **US-105 — Legal & GDPR page** | Contact form quality score (proxy) | TBD post-launch | >50% enterprise submissions (ICP fit) | Indirect: enterprise buyers who find legal page self-serve are more likely to be Marc-type ICP |
+| 1 | **US-106 — SEO technical foundation** | Organic sessions/month | 0 (no SEO in place today) | Baseline set W5; growth curve defined at W10 | Umami: traffic source = organic search |
+| 2 | **US-201 — LinkedIn discovery** | Monthly organic leads from LinkedIn | 0 (pre-Phase 2) | 2–3 qualified leads/month at W14 [HYPOTHESIS] | Umami: UTM `utm_source=linkedin` on form submissions |
+| 2 | **US-202 — SEO blog article discovery** | Organic sessions/month | Baseline from Phase 1 | +20% organic sessions/month by W14 [HYPOTHESIS] | Umami: organic search sessions month-over-month |
+| 2 | **US-202 — SEO blog article discovery** | Case study engagement rate | Baseline from Phase 1 | Maintained >40% (blog readers also click case studies) | Umami: session paths from `/blog/*` → `/case-studies/*` |
+| 2 | **US-203 — Autonomous LinkedIn pipeline** | LinkedIn post frequency | 0 posts/week (current) | 3–5 posts/week published autonomously | LinkedIn Analytics: post count per week |
+| 2 | **US-203 — Autonomous LinkedIn pipeline** | LinkedIn engagement rate per post | TBD at first posts | >2% engagement rate (likes + comments ÷ impressions) [HYPOTHESIS] | LinkedIn Analytics: per-post metrics |
+| 2 | **US-204 — Autonomous SEO article pipeline** | SEO articles published/month | 0 (pre-Phase 2) | 2 articles/month (autonomous, no human writing) | Content calendar: published posts in Next.js blog section |
+| 2 | **US-204 — Autonomous SEO article pipeline** | Organic sessions/month | Baseline from Phase 1 | Compounding growth; exact curve TBD at W10 | Umami: organic source sessions |
+| 3 | **US-301 — ClickUp project dashboard** | Internal coordination time | Baseline survey pre-W11 | Reduction measurable at W22 | Pre/post survey to Sarani client managers |
+| 3 | **US-302 — Evoliz invoice sync** | Zero missed invoices/month | TBD (current invoice miss rate unknown) | 0 missed invoices/month | Evoliz API: overdue invoice count reconciliation monthly |
+| 3 | **US-303 — Translation review agent** | Translation review cycle time | TBD (current manual review time) | <1 hour per document review | Internal ops tracking: time from submission to reviewed output |
+| 3 | **US-304 — Creative strategist agent** | Internal coordination time | Baseline survey pre-W11 | Reduction measurable at W22 (shared KPI with US-301) | Pre/post survey; time from brief receipt to creative direction sent |
+| 3 | **US-305 — Deck generator** | Deck generation time | TBD (current manual deck build time) | <5 minutes from brief to shareable link | Internal ops tracking: timestamp brief input → shareable link generated |
+
+---
+
+### 6.2 — North Star Metric: Causal Link to Phase 1 Features
+
+**North Star:** 10M€ revenue at 20% EBITDA
+
+The Phase 1 features form the single causal chain that activates revenue:
+
+```
+Homepage (US-101) → Sophie understands the value proposition in <10 seconds
+        ↓ (does not bounce)
+Case Studies (US-102) → Sophie gains trust via quantified proof (Sony, GEODIS, TikTok)
+        ↓ (engagement confirmed: >90s on page, scroll to 100%)
+Contact Form (US-103) → Sophie submits a qualified brief (enterprise company size confirmed)
+        ↓ (qualified lead created)
+Proposal → Close → New enterprise account signed
+        ↓ (5 accounts/month × avg contract value)
+Monthly revenue → 833K€/month → 10M€/year
+```
+
+**Pricing page (US-104)** short-circuits the above chain for Marc: he can self-qualify Sarani's cost structure before entering the cycle. If pricing is hidden, Marc blocks Sophie's decision — the pricing page removes that friction.
+
+**SEO foundation (US-106)** is a multiplier, not the primary chain: it increases the number of Sophies who enter the funnel via search, but the conversion chain above must be intact first.
+
+**Consequence:** any Phase 1 feature failure has direct revenue impact. No Phase 1 feature is optional for the North Star.
+
+---
+
+### 6.3 — KPI Coverage Audit
+
+#### Features with KPI ✅
+
+| Feature / Story | KPI(s) assigned |
+|----------------|-----------------|
+| US-101 Homepage | Site-to-lead conversion rate |
+| US-102 Case studies | Case study engagement rate, Time on page |
+| US-103 Contact form | Qualified inbound leads, Form quality score, Referral attribution |
+| US-104 Pricing page | Pricing page visit rate |
+| US-105 Legal page | Contact form quality score (indirect proxy) |
+| US-106 SEO foundation | Organic sessions/month |
+| US-201 LinkedIn discovery | Monthly organic leads from LinkedIn |
+| US-202 SEO blog discovery | Organic sessions/month, Case study engagement rate |
+| US-203 LinkedIn pipeline | LinkedIn post frequency, LinkedIn engagement rate |
+| US-204 SEO article pipeline | Organic sessions/month, Articles published/month |
+| US-301 ClickUp dashboard | Internal coordination time |
+| US-302 Evoliz invoice sync | Zero missed invoices/month |
+| US-303 Translation agent | Translation review cycle time |
+| US-304 Creative strategist agent | Internal coordination time |
+| US-305 Deck generator | Deck generation time |
+
+#### Features orphelines (sans KPI mesurable) ⚠️
+
+None of the 15 user stories are orphaned — all have at least one assigned KPI.
+
+However, two measurement gaps exist that must be addressed before Phase 2 launch:
+
+| Gap | Issue | Recommendation |
+|-----|-------|---------------|
+| **US-203 LinkedIn engagement rate** | LinkedIn API access is an Open Question (backlog item #3). Without API access, engagement data cannot be pulled programmatically. | Track manually in LinkedIn Analytics weekly until API access confirmed. Set a hard baseline at Week 5 (first post published). |
+| **US-301 / US-304 Internal coordination time** | "Internal coordination time" is not currently measured. Without a pre-W11 baseline survey, there is no way to prove the back-office delivered ROI. | Deploy a 5-question survey to all Sarani client managers before W11. Questions: avg time to answer a client status query, avg time to generate a deck, avg time to complete a translation review. |
+
+#### User Stories without a KPI in the backlog (backlog coverage check)
+
+All 15 user stories in `backlog.md` have a "Linked KPI" field populated. Cross-referencing with `kpi-framework.md`:
+
+| Story | KPI in backlog | Status in kpi-framework.md |
+|-------|---------------|---------------------------|
+| US-101 | Site-to-lead conversion rate | Defined in Section 1 (Leading Indicators) ✅ |
+| US-102 | Case study engagement rate | Defined in Section 2.1 ✅ |
+| US-103 | Qualified inbound leads | Defined in Section 1 (Input Metrics) ✅ |
+| US-104 | Pricing page visit rate | Defined in Section 2.2 ✅ |
+| US-105 | Contact form quality score (proxy) | Defined in Section 1 (Leading Indicators) ✅ |
+| US-106 | Organic sessions/month | Implicitly in AARRR Acquisition phase (Section 4) ✅ |
+| US-201 | Monthly organic leads from LinkedIn | Referenced in Section 4 (AARRR) ✅ |
+| US-202 | Organic sessions/month | See US-106 ✅ |
+| US-203 | LinkedIn post frequency | New KPI — not previously in kpi-framework.md ⚠️ New |
+| US-204 | Organic sessions/month | See US-106 ✅ |
+| US-301 | Internal coordination time | New KPI — operational, not in kpi-framework.md ⚠️ New |
+| US-302 | Zero missed invoices/month | New KPI — operational, not in kpi-framework.md ⚠️ New |
+| US-303 | Translation review cycle time | New KPI — operational, not in kpi-framework.md ⚠️ New |
+| US-304 | Internal coordination time | See US-301 ✅ |
+| US-305 | Deck generation time | New KPI — operational, not in kpi-framework.md ⚠️ New |
+
+**4 new KPIs identified** (Phase 3 operational metrics not covered in the original AARRR framework):
+1. LinkedIn post frequency — measurable via LinkedIn Analytics
+2. Internal coordination time — measurable via pre/post survey
+3. Zero missed invoices/month — measurable via Evoliz API
+4. Translation review cycle time — measurable via internal ops tracking
+5. Deck generation time — measurable via internal ops tracking
+
+These operational KPIs are outside the AARRR acquisition/revenue funnel but are critical for Phase 3 ROI justification. They are formally added to this framework in this section.
+
+---
+
+### 6.4 — Recommendations
+
+1. **Instrument the Phase 1 critical path before go-live.** US-101, US-102, and US-103 share a single causal chain to revenue. All three Umami events (`page_view homepage`, `case_study_scroll_100`, `form_submit`) must be verified in production before site launch — not after.
+
+2. **Set the internal coordination time baseline before W11.** This is the only way to prove Phase 3 ROI. If the survey is not sent before back-office development starts, the "reduction" KPI has no denominator.
+
+3. **LinkedIn engagement rate is currently unmeasured.** US-203 will produce posts, but without a baseline engagement rate (Week 5), there is no way to evaluate whether autonomous AI posts perform as well as manually crafted ones. Manual weekly logging in a simple spreadsheet is sufficient for the first 8 weeks.
+
+4. **Organic sessions baseline must be set at W1 (Umami live), not W5.** The roadmap notes a baseline "set at W5" for organic leads — but Umami must be tracking from the day the site goes live (W4 milestone). Even with zero organic traffic at launch, the baseline is 0. Starting the clock at W5 loses 1 week of data.
+
 *Sources consulted for benchmarks:*
 - [B2B Conversion Rates by Industry 2026 — First Page Sage](https://firstpagesage.com/reports/b2b-conversion-rates-by-industry-fc/)
 - [B2B Attribution Modeling for Long Sales Cycles — House of MarTech](https://houseofmartech.com/blog/b2b-attribution-modeling-for-long-sales-cycles)
