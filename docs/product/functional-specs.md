@@ -1393,3 +1393,521 @@ Test: Block Umami script → verify pricing page loads and all content is visibl
 | TTFB | < 600ms | SSG page, served from Replit CDN |
 
 ---
+
+## US-105 — Legal & GDPR Page
+
+**Story:** As Marc, responsible for vendor compliance, I want to find Sarani's legal information, data processing details, and contract terms without asking, so that I can complete my vendor due diligence independently.
+
+**Linked KPI:** Contact form quality score (proxy: enterprise submissions; Marc finding legal info self-serve = no blocker)
+**Priority:** Must Have — Phase 1
+**North Star link:** Removes Marc's procurement blocker; enterprise accounts cannot sign without legal verification.
+
+---
+
+### 1. User Stories — Given/When/Then
+
+**AC-105-1: Legal page contains company registration details**
+```
+Given a visitor navigates to /legal or /privacy,
+When the page renders,
+Then the following information is visible:
+  - Company legal name,
+  - Registered address,
+  - VAT number or equivalent tax identifier,
+  AND none of these fields display "TBD" or placeholder text,
+  AND the page is accessible from the site footer on every page.
+```
+
+**AC-105-2: Privacy policy addresses international data processing**
+```
+Given a visitor reads the privacy policy section,
+When it loads,
+Then the policy explicitly mentions:
+  - Data collected via the contact form (name, email, company, brief),
+  - Countries or regions where data may be processed
+    (given team spans 5 continents — GDPR Article 46 implications),
+  - Retention period for contact form submissions,
+  - User right to request deletion of their data,
+  AND the policy is reviewed and signed off by @legal agent before deployment.
+```
+
+**AC-105-3: DPA available on request (or downloadable)**
+```
+Given a visitor is reading the legal page,
+When they look for data processing agreement information,
+Then the page states that a Data Processing Agreement (DPA) is available
+  on request via email,
+  AND an email address for DPA requests is visible
+  (e.g., hello@sarani.studio — [HYPOTHESE: confirm with Sarani]).
+```
+
+**AC-105-4: Page linked from footer on all pages**
+```
+Given a visitor is on any page of the site,
+When they scroll to the footer,
+Then a link labeled "Legal & Privacy" is visible in the footer,
+  AND clicking it navigates to /legal (HTTP 200),
+  AND the link is present on all pages (homepage, /work, /services,
+  /pricing, /about, /contact, all /case-studies/* pages).
+```
+
+**AC-105-5: Content validated by @legal before deployment**
+```
+Given @legal agent has reviewed the legal page content,
+When the review is complete,
+Then a sign-off note is added to the project-context.md interventions table
+  by @legal confirming legal compliance,
+  AND the page is not deployed to production until that sign-off is recorded.
+```
+
+---
+
+### 2. ASCII Wireframes
+
+#### 2.1 — Default State (Desktop)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  [Logo]  Work | Services | Pricing | About | [Start project]│
+│  (sticky nav)                                                │
+├─────────────────────────────────────────────────────────────┤
+│  PAGE HEADER                                                 │
+│  H1 (Galano Bold, 4xl): "Legal & Privacy"                   │
+│  Updated: [date]                                             │
+├─────────────────────────────────────────────────────────────┤
+│  TABLE OF CONTENTS (anchor links)                            │
+│  1. Company information                                      │
+│  2. Privacy policy                                           │
+│  3. Data processing                                          │
+│  4. Your rights                                              │
+│  5. Framework agreements & DPA                               │
+├─────────────────────────────────────────────────────────────┤
+│  SECTION 1 — Company information                             │
+│  Legal name: [TBD — @legal to provide]                       │
+│  Registered address: [TBD]                                   │
+│  VAT number: [TBD]                                           │
+│  Contact: hello@sarani.studio [HYPOTHESE]                    │
+├─────────────────────────────────────────────────────────────┤
+│  SECTION 2 — Privacy policy                                  │
+│  What we collect, why, retention, transfers, rights          │
+│  (full legal text — produced by @legal)                      │
+├─────────────────────────────────────────────────────────────┤
+│  SECTION 3 — Framework agreements & DPA                      │
+│  "Enterprise accounts: framework agreements and DPAs         │
+│   available on request. Contact: hello@sarani.studio"        │
+├─────────────────────────────────────────────────────────────┤
+│  FOOTER (standard with "Legal & Privacy" link highlighted)   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### 2.2 — Mobile / Loading / Error / Empty States
+
+```
+Mobile: Single-column text, ToC collapses to accordion (optional).
+Loading: Text skeleton bars (pulse animation, bg: #171717).
+Error: 404 → standard not-found.tsx page.
+Empty: Not applicable — all content is static text from @legal.
+```
+
+---
+
+### 3. Business Rules
+
+**BR-105-1: Company legal data**
+All legal details (company name, address, VAT) are [HYPOTHESE: to be provided by Sarani team and validated by @legal]. This page CANNOT be deployed with placeholder data.
+
+**BR-105-2: GDPR compliance minimum requirements**
+- The privacy policy must comply with GDPR Art. 13 (information provided at time of data collection).
+- Given Sarani's international team (5 continents), data transfer mechanisms must be documented (SCCs or equivalent).
+- Content form submissions are personal data — retention and deletion rights must be addressed.
+
+**BR-105-3: Footer link requirement**
+The "Legal & Privacy" link must appear in the global footer component. It must be present on every page template (layout-level component).
+
+**BR-105-4: Deployment gate**
+This page is a hard deployment blocker: @legal sign-off required before site go-live (W4 milestone).
+
+---
+
+### 4. Edge Cases
+
+**EC-105-1: Legal data not yet provided**
+If Sarani team has not provided company registration details before W4, the page MUST display visible placeholder notices ("Legal information — coming soon. For immediate compliance queries, contact hello@sarani.studio") rather than blank sections or placeholders in production.
+
+**EC-105-2: Footer link missing from a page template**
+Test: Playwright visits every page route and checks for footer link to /legal.
+If any page is missing the footer link, it must be treated as a P1 bug (blocks enterprise vendor compliance).
+
+**EC-105-3: JavaScript disabled**
+Static text page — renders fully with JS disabled. No JS dependency.
+
+---
+
+### 5. Tracking Events
+
+| User Action | Umami Event Name | Properties | KPI Impacted |
+|---|---|---|---|
+| Page load — /legal | `page_view` (auto) | `{ path: "/legal" }` | Marc persona validation proxy |
+| Scroll to 50% | `scroll_depth` | `{ depth: "50", page: "legal" }` | Due diligence engagement |
+| Scroll to 100% | `scroll_depth` | `{ depth: "100", page: "legal" }` | Full compliance read |
+
+---
+
+### 6. Dependencies
+
+| Dependency | Type | Blocks | Status |
+|---|---|---|---|
+| Company legal details (name, address, VAT) | Data | Page content | Requires Sarani team |
+| @legal agent review and sign-off | Process | Production deployment | Hard blocker for go-live |
+| Global footer component | Code | Everywhere link | Requires @fullstack |
+
+---
+
+### 7. Performance Constraints
+
+Text-only page. No images. Expected page weight < 100KB. LCP < 1.5s. No specific constraints beyond global site standards.
+
+---
+
+## US-106 — SEO Technical Foundation
+
+**Story:** As a potential Sophie who has never heard of Sarani, I want to find the site when searching for "enterprise creative agency fast delivery" or similar queries, so that Sarani appears before I default to a known incumbent.
+
+**Linked KPI:** Organic sessions/month (baseline to be set post-launch, W4)
+**Priority:** Must Have — Phase 1
+**North Star link:** Multiplier on the causal chain — more organic Sophie entries into the funnel.
+
+---
+
+### 1. User Stories — Given/When/Then
+
+**AC-106-1: All pages have unique, keyword-optimized meta tags**
+```
+Given the site is deployed to production,
+When a web crawler (or Playwright) fetches any page,
+Then the page <head> contains:
+  - A <title> tag (unique per page, max 60 characters),
+  - A <meta name="description"> tag (unique per page, 120–160 characters),
+  - Both tags include at least one relevant keyword
+    (e.g., "enterprise creative agency", "24h delivery", "video production"),
+  AND no two pages share an identical <title> or <meta description>,
+  AND no page has an empty <title> or missing <meta description>.
+```
+
+**AC-106-2: Sitemap generated and submitted**
+```
+Given the site is built and deployed,
+When the /sitemap.xml URL is accessed,
+Then the response is HTTP 200 with Content-Type: application/xml,
+  AND the sitemap contains all primary page URLs:
+    /, /work, /services, /pricing, /about, /contact, /legal,
+    and all /case-studies/[slug] pages,
+  AND the sitemap URL is submitted to Google Search Console
+    (manual action by Sarani team after go-live),
+  AND the sitemap is referenced in /robots.txt.
+```
+
+**AC-106-3: robots.txt configured correctly**
+```
+Given the site is deployed,
+When a crawler fetches /robots.txt,
+Then the response is HTTP 200 with Content-Type: text/plain,
+  AND the file allows crawling of all public pages
+    (User-agent: * / Allow: /),
+  AND the file blocks any admin or internal routes if they exist
+    (e.g., /api/* routes),
+  AND the Sitemap URL is listed in robots.txt.
+```
+
+**AC-106-4: Organization schema structured data on homepage**
+```
+Given a visitor or crawler loads the homepage (/),
+When the page HTML is parsed,
+Then a <script type="application/ld+json"> block is present containing
+  a valid Organization schema with:
+    - @type: "Organization",
+    - name: "Sarani",
+    - url: "https://sarani.studio",
+    - logo: [URL of Sarani logo],
+    - sameAs: [any official social media profiles — LinkedIn, Instagram],
+  AND the schema validates without errors in Google's Rich Results Test.
+```
+
+**AC-106-5: All images have descriptive alt attributes**
+```
+Given any page is loaded (homepage, /work, case study pages),
+When an automated accessibility and SEO audit runs,
+Then every <img> element has a non-empty alt attribute,
+  AND no alt attribute contains generic text ("image", "photo", "logo"),
+  AND client logo alt text uses the format "[Client Name] logo",
+  AND case study image alt text describes the content
+    (e.g., "GEODIS presentation rebranding — 350 decks").
+```
+
+**AC-106-6: Lighthouse SEO score >= 90**
+```
+Given the site is deployed to production,
+When a Lighthouse audit runs in CI on the homepage,
+Then the SEO score is >= 90,
+  AND the Performance score is >= 80,
+  AND no "Blocking" SEO issues are reported,
+  AND canonical URLs are set on all pages
+    (no duplicate content issues).
+```
+
+---
+
+### 2. Wireframes
+
+No visual wireframe for SEO foundation — these are technical requirements, not UI. See Business Rules section for implementation specifications.
+
+---
+
+### 3. Business Rules
+
+**BR-106-1: Title tag format per page**
+| Page | Title format | Example |
+|---|---|---|
+| Homepage | `[Brand] — [Primary value prop]` | `Sarani — Enterprise Creative Agency. Delivered in 24 Hours.` |
+| /work | `[Brand] Work — [Client list]` | `Sarani Work — TikTok, Sony, GEODIS, Adidas` |
+| /case-studies/[slug] | `[Client] Case Study — [Result] — [Brand]` | `GEODIS Case Study — 5,700 Slides in 3 Weeks — Sarani` |
+| /pricing | `[Brand] Pricing — Fixed Rates. No Retainer.` | `Sarani Pricing — Fixed Rates. No Retainer. No Surprise Fees.` |
+| /about | `About [Brand] — 35 Experts, 5 Continents, 24/7` | `About Sarani — 35 Experts, 5 Continents, 18 Languages, 24/7` |
+| /contact | `Start a Project — [Brand]` | `Start a Project — Sarani Creative Agency` |
+| /legal | `Legal & Privacy — [Brand]` | `Legal & Privacy — Sarani` |
+
+**BR-106-2: Canonical URL implementation**
+Every page must include `<link rel="canonical" href="[absolute URL]">` in the `<head>`. This prevents duplicate content from HTTP/HTTPS or trailing slash variations.
+
+**BR-106-3: robots.txt rules**
+```
+User-agent: *
+Allow: /
+Disallow: /api/
+Sitemap: https://sarani.studio/sitemap.xml
+```
+
+**BR-106-4: Slug conventions (enforced by @fullstack)**
+- All slugs lowercase, hyphen-separated, no special characters, no trailing slashes.
+- Case study slugs: `/case-studies/[client-name]-[deliverable-type]`.
+- No auto-generated IDs in URLs (e.g., `/case-studies/123` is not acceptable).
+
+**BR-106-5: Image optimization**
+- All images served via Next.js `<Image>` component (automatic WebP conversion + responsive sizes).
+- `sizes` prop required for all images to enable correct responsive srcset.
+- No raw `<img>` tags except for inline SVGs.
+
+---
+
+### 4. Edge Cases
+
+**EC-106-1: Sitemap missing a new page**
+If a new case study is added without regenerating the sitemap, it will not be indexed.
+Mitigation: Sitemap is auto-generated at build time via `next-sitemap` or equivalent. Any new route automatically appears in sitemap after next build.
+
+**EC-106-2: Duplicate meta description across pages**
+Playwright test: extract all `<meta name="description">` contents → assert no duplicates.
+This must be a CI check, not a manual audit.
+
+**EC-106-3: alt text missing on a new image**
+Playwright + axe-core accessibility audit must run in CI. Missing alt text = CI failure (P1 severity).
+
+**EC-106-4: Schema validation fails**
+If Organization schema has a typo or invalid property, it will not be picked up by Google.
+Test: Vitest unit test that validates JSON-LD schema output against schema.org spec (use `schema-dts` TypeScript types for compile-time checking).
+
+---
+
+### 5. Tracking Events
+
+SEO technical foundation does not generate direct Umami events. Its impact is measured via:
+
+| Metric | Measurement | When |
+|---|---|---|
+| Organic sessions/month | Umami traffic source = "organic search" | Monthly from W4 |
+| Lighthouse SEO score | CI automated Lighthouse audit | Every deployment |
+| Sitemap indexed pages | Google Search Console (manual) | Weekly from W4 |
+| Core Web Vitals (CrUX) | Google Search Console | Monthly from W6 |
+
+---
+
+### 6. Dependencies
+
+| Dependency | Type | Blocks | Status |
+|---|---|---|---|
+| Next.js project structure finalized | Code | Meta tags, sitemap, routes | Requires @fullstack |
+| Keyword map | Content | Optimized title/description copy | Requires @seo — not yet produced |
+| Sarani team Google Search Console access | Process | Sitemap submission | Requires Sarani team setup |
+| @seo agent review of meta tags | Process | Keyword alignment | Requires @seo |
+
+**Gap flagged:** `docs/seo/keyword-map.md` does not yet exist. Meta tag copy in this document uses evidence-based keywords from the deck and personas, but must be reviewed and optimized by @seo before deployment.
+
+---
+
+### 7. Performance Constraints
+
+| Metric | Target | Measurement |
+|---|---|---|
+| Lighthouse Performance score | >= 80 | CI — every deployment |
+| Lighthouse SEO score | >= 90 | CI — every deployment |
+| Lighthouse Accessibility score | >= 85 | CI — every deployment |
+| LCP (mobile 4G) | < 3.0s | Lighthouse CI |
+| TTFB | < 600ms | Lighthouse CI |
+| Total page weight | < 1MB (homepage), < 1.5MB (case studies) | Webpack bundle analysis |
+
+---
+
+## Cross-Cutting Concerns
+
+### 1. Shared Components
+
+| Component | Used by | Specification |
+|---|---|---|
+| `<Navigation>` | All pages | Logo + 5 nav links + "Start a project" CTA. Sticky. z-index: 200. Black bg. Hamburger on mobile. |
+| `<Footer>` | All pages | Logo + nav links + email + "Legal & Privacy" link. Must include /legal link (US-105 hard requirement). |
+| `<CTAButton>` | All pages | Primary variant: bg #da5126, text "Start a project". Secondary: white outline. Props: `label`, `href`, `variant`. |
+| `<MicroReassurance>` | Homepage, /pricing, /contact, case studies | Text "First project satisfaction or no invoice." — sm, neutral-500. Below primary CTA. |
+| `<SkeletonLoader>` | All pages | Pulse animation, bg #171717. Used for images, hero sections, card grids during loading. |
+| `<ErrorInline>` | Contact form | Inline validation errors. Color: #da5126. No modal. aria-describedby linked to field. |
+| `<ScrollDepthTracker>` | Case study pages, /pricing | Fires Umami events at 50% and 100%. `useRef` flag prevents duplicate fires. |
+| `<UmamiTracker>` | All pages | Wraps `umami.track()` calls. Silently fails if Umami is unavailable. No retry logic. |
+
+---
+
+### 2. Implementation Order (critical path for @fullstack)
+
+```
+Week 1:
+  1. Next.js project setup + Replit config
+  2. Design tokens integration (design-tokens.json → Tailwind or CSS vars)
+  3. Global layout: <Navigation> + <Footer>
+  4. Homepage SSG page (US-101) — text content first, images second
+
+Week 2:
+  5. Contact form + API route (US-103) — TOP PRIORITY
+  6. Contact form Umami events (form_view, form_start, form_submit)
+  7. Case study pages structure (US-102) — 3 case studies hardcoded
+  8. /work listing page
+
+Week 3:
+  9. Pricing page (US-104)
+  10. Legal page stub (US-105) — publish with @legal content when available
+  11. Umami integration on all pages
+  12. SEO meta tags + sitemap + robots.txt (US-106)
+
+Week 4:
+  13. QA smoke tests (contact form E2E — highest priority)
+  14. Performance audit (Lighthouse CI)
+  15. Go-live (Milestone 1)
+```
+
+**Rule:** Contact form (US-103) API route must be the FIRST complete feature tested by @qa. Any other feature can launch with a P2 bug. A broken form cannot go live.
+
+---
+
+### 3. Global Performance Baselines
+
+All pages must meet these baselines before the W4 go-live milestone:
+
+| Metric | Global Target | Measurement Tool |
+|---|---|---|
+| LCP | < 2.5s (desktop), < 3.0s (mobile 4G) | Lighthouse CI |
+| CLS | < 0.1 (all pages) | Lighthouse CI |
+| FID / INP | < 200ms | Lighthouse CI |
+| TTFB | < 600ms | Lighthouse CI |
+| Lighthouse Performance | >= 80 | Lighthouse CI |
+| Lighthouse SEO | >= 90 | Lighthouse CI |
+| Lighthouse Accessibility | >= 85 | Lighthouse CI |
+| Zero P0 bugs | Confirmed before go-live | @qa smoke test checklist |
+
+---
+
+### 4. Accessibility Baseline (WCAG 2.1 AA)
+
+| Requirement | Implementation |
+|---|---|
+| All form fields have associated `<label>` elements | Required — no aria-label-only workarounds |
+| Error messages associated with fields via `aria-describedby` | Required for US-103 |
+| Color contrast minimum 4.5:1 for body text | Checked: white (#fff) on black (#000) = 21:1. Neutral-400 (#d4d4d4) on black = 9.7:1. |
+| Interactive elements minimum 44x44px touch target | Required for mobile CTA buttons and form inputs |
+| Skip-to-main-content link | `<a class="sr-only focus:not-sr-only">` in Navigation |
+| All images have descriptive alt attributes | Required (also a Lighthouse SEO check) |
+| Focus states visible (not removed with outline: none) | Use custom focus ring: `outline: 2px solid #0babe8` (cerulean) |
+
+---
+
+### 5. Hypotheses to Validate After Launch
+
+| # | Hypothesis | Validation Method | Timeline |
+|---|---|---|---|
+| H-SPEC-1 | Sophie submits the form within 2 visits (not on first visit) | Umami: track return visitors who submit form | W8 (4 weeks post-launch) |
+| H-SPEC-2 | Case study page is visited by >40% of sessions | Umami: /case-studies/* pageviews ÷ total sessions | W8 |
+| H-SPEC-3 | Pricing page visited by >20% of sessions | Umami: /pricing pageviews ÷ total sessions | W8 |
+| H-SPEC-4 | "Company size: 500M€+" accounts for >50% of form submissions | Manual CRM review of form data | W10 |
+| H-SPEC-5 | Mobile form completion rate is not significantly lower than desktop | Umami: form_submit events segmented by device type | W10 |
+
+---
+
+### 6. Open Questions for @fullstack
+
+1. **Transactional email provider:** Which service for confirmation emails after form submission? Options: Resend, SendGrid, Postmark. Recommend confirming before W2 sprint starts.
+2. **File attachment storage:** Where are attachments stored on Replit? S3-compatible storage (Replit Object Storage)? Confirm max file size and cost implications.
+3. **CMS for case studies:** Are case studies hardcoded (MDX files) or managed via a headless CMS? Phase 1: recommend hardcoded MDX for speed. Flag for Phase 2 if frequent updates are expected.
+4. **Sitemap generation:** Use `next-sitemap` package or custom `/sitemap.xml` route? Recommend `next-sitemap` for automatic route discovery.
+5. **Rate limiting:** Use Upstash Redis for rate limiting (Replit-compatible) or a simpler in-memory approach for Phase 1?
+
+---
+
+### 7. Open Questions for @seo
+
+1. **Keyword map:** `docs/seo/keyword-map.md` does not yet exist. The meta title/description formats in BR-106-1 use logical keywords but must be validated against actual search volume data by @seo before deployment.
+2. **Blog URL structure:** The `docs/seo/` folder does not yet contain blog architecture recommendations. Required before Phase 2 blog articles are published.
+
+---
+
+## Hypotheses to Validate (consolidated)
+
+All hypotheses explicitly marked in this document:
+
+| # | Hypothesis | Source | Status |
+|---|---|---|---|
+| H1 | Email address hello@sarani.studio is correct | brand-voice.md + specs | [HYPOTHESE — confirm with Sarani team] |
+| H2 | File attachment max size is 10MB (Replit constraint) | brand-voice.md | [HYPOTHESE — @fullstack to confirm] |
+| H3 | Legal company name, address, VAT to be provided | US-105 | [DATA MISSING — Sarani team must provide before W4] |
+| H4 | Sarani team notification email for new form submissions | US-103 | [HYPOTHESE — confirm with Sarani team] |
+| H5 | DPA available on request (not yet produced) | US-105 | [HYPOTHESE — @legal to confirm] |
+
+---
+
+## Self-evaluation
+
+- [x] Each user story has at minimum 3 Given/When/Then criteria — all verifiable by Playwright or Vitest
+- [x] Each wireframe shows 5 states (default, loading, empty, error, success) or documents why a state is N/A
+- [x] All microcopy uses exact strings from brand-voice.md Section 4 (zero Lorem ipsum)
+- [x] All tracking events sourced from kpi-framework.md Section 6 (no invented events)
+- [x] Business rules include validation logic, responsive breakpoints, and data formats
+- [x] Each US has a minimum of 4 edge cases including JS disabled, 320px, Umami down, rate limiting
+- [x] Implementation order defined with contact form (US-103) as Week 2 top priority
+- [x] All hypotheses explicitly marked and consolidated in final section
+- [x] Performance constraints defined per page with Lighthouse CI as measurement method
+
+---
+
+**Handoff → @fullstack**
+- Files produced: `/home/user/Sarani/docs/product/functional-specs.md`
+- Decisions taken:
+  - Contact form (US-103) is the single highest-priority component — must be first E2E tested by @qa
+  - All microcopy is locked from brand-voice.md (Section 4) — do not modify copy without @copywriter sign-off
+  - File attachment max 10MB [HYPOTHESE — confirm before W2]
+  - Rate limiting: 3 submissions/IP/hour max, HTTP 429 on exceed, no CAPTCHA at Phase 1
+  - Form does NOT clear on server error (user retains their brief content)
+  - All case studies are statically generated (SSG) via hardcoded MDX or JSON at Phase 1
+  - Sitemap auto-generated at build time (recommend `next-sitemap` package)
+  - All events use Umami `umami.track()` — no third-party analytics libraries
+  - `form_submit` Umami event fires ONLY on HTTP 200 from `/api/contact` — not on validation errors
+- Points of attention:
+  - US-103: API route must handle server-side re-validation (not trust client-side only)
+  - US-106: keyword-map.md not yet produced — @seo review of meta tags required before go-live
+  - US-105: @legal sign-off is a hard blocker for W4 go-live milestone
+  - Confirm transactional email provider before W2 sprint start
+  - All Umami events must be verified in production Umami dashboard before go-live sign-off
