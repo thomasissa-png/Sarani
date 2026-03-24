@@ -37,6 +37,7 @@
 ---
 
 ## Objectifs
+- **CA actuel (2026)** : 3,5 millions d'euros (base existante clients récurrents)
 - **Objectif principal à 6 mois** : 4 millions d'euros de chiffre d'affaires
 - **KPI North Star** : 10 millions d'euros de chiffre d'affaires à 20% d'EBITDA
 - **Objectif secondaire** : Signer 5 nouveaux grands comptes internationaux par mois (entreprises à >500M€ de CA)
