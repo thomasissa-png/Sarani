@@ -171,6 +171,14 @@ export default function PricingPage() {
         </div>
       </Section>
 
+      {/* VAT Footnote */}
+      <div className="mx-auto max-w-screen-xl px-5 pb-2 text-center md:px-8">
+        <p className="text-sm text-neutral-500">
+          All prices exclude VAT (HT). VAT is applied according to applicable
+          regulations.
+        </p>
+      </div>
+
       {/* Closing CTA */}
       <Section ariaLabel="Call to action">
         <div className="text-center">

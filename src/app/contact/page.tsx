@@ -3,7 +3,7 @@ import { Section } from "@/components/layout/section";
 import { ContactForm } from "@/components/forms/contact-form";
 
 export const metadata: Metadata = {
-  title: "Contact Sarani \u2014 Brief Us Today",
+  title: "Start a Project — Sarani Creative Agency",
   description:
     "Send your brief. Get a response within hours. Sarani's team works 24/7 across 5 continents \u2014 your project starts the moment you reach out.",
 };

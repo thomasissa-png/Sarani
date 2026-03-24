@@ -490,6 +490,19 @@ export function ContactForm() {
         )}
       </div>
 
+      {/* Privacy notice */}
+      <p className="text-xs text-neutral-500">
+        By submitting this form, you acknowledge that Sarani will process your
+        data to respond to your inquiry. See our{" "}
+        <a
+          href="/legal"
+          className="text-brand-cerulean underline underline-offset-2 transition-colors hover:text-brand-cerulean-light"
+        >
+          Privacy Policy
+        </a>
+        .
+      </p>
+
       {/* Submit button */}
       <button
         type="submit"

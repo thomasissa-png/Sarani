@@ -8,21 +8,171 @@ export const metadata: Metadata = {
     "Built in 2020 to do what traditional agencies can't: deliver enterprise-grade creative work in 24 hours, at fixed prices, with unlimited revisions.",
 };
 
+/* ------------------------------------------------------------------ */
+/*  Stats Data                                                         */
+/* ------------------------------------------------------------------ */
+
+type Stat = {
+  value: string;
+  label: string;
+};
+
+const TEAM_STATS: Stat[] = [
+  { value: "35", label: "In-house experts" },
+  { value: "5", label: "Continents" },
+  { value: "18", label: "Languages" },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
+/* ------------------------------------------------------------------ */
+
 export default function AboutPage() {
   return (
     <div className="pt-[72px]">
-      <Section ariaLabel="About Sarani">
-        <h1 className="mb-6 text-4xl font-bold text-brand-white sm:text-5xl">
-          About
-        </h1>
-        <p className="mb-8 max-w-2xl text-lg text-neutral-400">
-          35 experts. 5 continents. 18 languages. 24/7. Built in 2020 to do what traditional
-          agencies can&apos;t.
-        </p>
-        {/* [PROVISOIRE — About page content will be implemented in Sprint 2 using docs/copy/brand-story-content.md] */}
-        <Button variant="primary" href="/contact">
-          Start a project
-        </Button>
+      {/* ── Section 1: Why Sarani exists ── */}
+      <Section ariaLabel="Why Sarani exists">
+        <div className="max-w-3xl">
+          <h1 className="mb-6 text-4xl font-bold text-brand-white sm:text-5xl">
+            Why Sarani exists
+          </h1>
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            The traditional agency model was broken before anyone admitted it.
+            Campaigns don&apos;t pause for weekly status meetings. Budgets
+            don&apos;t expand for revision invoices. And deadlines — real ones —
+            don&apos;t negotiate.
+          </p>
+          <p className="text-lg leading-relaxed text-neutral-400">
+            In 2020, Thomas and the founding team built Sarani not as a response
+            to the pandemic, but as a response to a structural failure. The
+            pandemic simply made it impossible to ignore.
+          </p>
+        </div>
+      </Section>
+
+      {/* ── The problem we saw ── */}
+      <Section ariaLabel="The problem we saw" className="bg-surface-elevated">
+        <div className="max-w-3xl">
+          <h2 className="mb-4 text-2xl font-bold text-brand-white">
+            The problem we saw
+          </h2>
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            Every Head of Marketing we spoke to had the same story. The brief
+            was ready. The budget was approved. The deadline was real. What she
+            couldn&apos;t find was an agency that treated the deadline as the
+            starting point, not a negotiating position.
+          </p>
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            Two weeks for a banner. A revision that triggers a scope change.
+            Five agencies for five language markets. A $10,000/month
+            subscription before a single asset is produced.
+          </p>
+          <p className="text-lg leading-relaxed text-neutral-400">
+            This is not a failure of individual agencies. It is what happens
+            when you build for a world where campaigns run for quarters, not
+            days — and then the world changes.
+          </p>
+        </div>
+      </Section>
+
+      {/* ── How we work differently ── */}
+      <Section ariaLabel="How we work differently">
+        <div className="max-w-3xl">
+          <h2 className="mb-4 text-2xl font-bold text-brand-white">
+            How we work differently
+          </h2>
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            We built a different architecture. 35 in-house experts across 5
+            continents work in time-zone relay, so your brief never waits for a
+            timezone to wake up. When your brief arrives at 6pm Paris time, your
+            team in Asia has already started. When you wake up, it&apos;s done.
+          </p>
+          <p className="text-lg leading-relaxed text-neutral-400">
+            Fixed prices, published on the website. Unlimited revisions,
+            included. D+1 delivery as the default — not a premium add-on. And
+            no subscription lock-in: you start with one project, at 155&#8364;,
+            and scale when it makes sense for you.
+          </p>
+        </div>
+      </Section>
+
+      {/* ── Section 2: Our team — Stats ── */}
+      <Section ariaLabel="Our team" className="bg-surface-elevated">
+        <div className="mb-12 text-center">
+          <h2 className="mb-4 text-2xl font-bold text-brand-white">
+            Our team
+          </h2>
+        </div>
+        <div className="mb-12 grid gap-10 text-center md:grid-cols-3">
+          {TEAM_STATS.map((stat) => (
+            <div key={stat.label}>
+              <p className="text-5xl font-bold text-brand-flame">{stat.value}</p>
+              <p className="mt-2 text-lg text-neutral-400">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="max-w-3xl">
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            Sarani is not a freelance marketplace. These are 35 in-house
+            experts — designers, video editors, copywriters, motion specialists,
+            paid ads strategists — working in a structured relay model that
+            makes 24/7 creative production structurally possible, not just a
+            claim.
+          </p>
+          <p className="text-lg leading-relaxed text-neutral-400">
+            18 languages means one brief, one contact, one invoice — for
+            campaigns running simultaneously in German, Japanese, Arabic, and
+            Spanish. No multi-agency coordination. No briefing three times for
+            three markets.
+          </p>
+        </div>
+      </Section>
+
+      {/* ── Section 3: What we believe ── */}
+      <Section ariaLabel="What we believe">
+        <div className="max-w-3xl">
+          <h2 className="mb-4 text-2xl font-bold text-brand-white">
+            What we believe
+          </h2>
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            We refuse to accept that fast and good are a trade-off.
+          </p>
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            TikTok trusted us with 1,500+ video edits a month. Sony called us
+            the day their Black Friday banners were needed — not the week
+            before, that day — and we delivered at 155&#8364; per banner. GEODIS
+            gave us 350 presentations to rebrand in 3 weeks. 5,700 slides.
+            8,500&#8364;. Every one delivered.
+          </p>
+          <p className="mb-6 text-lg leading-relaxed text-neutral-400">
+            Enterprise-quality creative should not require an enterprise-sized
+            commitment. A reliable creative partner should be earned project by
+            project — not locked in by contract before the relationship is
+            proven.
+          </p>
+          <p className="mb-6 text-lg font-semibold leading-relaxed text-brand-white">
+            We are the creative agency enterprises call when every other agency
+            says two weeks.
+          </p>
+          <p className="text-lg font-semibold leading-relaxed text-brand-white">
+            We say: tomorrow.
+          </p>
+          <p className="mt-6 text-base italic text-neutral-500">
+            First project satisfaction or no invoice.
+          </p>
+        </div>
+      </Section>
+
+      {/* ── Closing CTA ── */}
+      <Section ariaLabel="Get started" className="bg-surface-elevated">
+        <div className="mx-auto max-w-3xl text-center">
+          <Button variant="primary" href="/contact">
+            Start a project
+          </Button>
+          <p className="mt-4 text-sm text-neutral-500">
+            First project satisfaction or no invoice.
+          </p>
+        </div>
       </Section>
     </div>
   );
