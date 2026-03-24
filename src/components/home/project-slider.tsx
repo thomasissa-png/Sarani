@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 /**
  * Auto-scrolling horizontal slider of project images.
@@ -15,21 +16,29 @@ import { useEffect, useRef, useState } from "react";
  */
 
 const PROJECTS = [
-  { client: "Adidas", title: "World Athlete Championships", category: "Marketing Assets" },
-  { client: "IKEA", title: "Cooking Sessions", category: "Marketing Assets" },
-  { client: "Lego", title: "Le Grand Tournoi Des Champs", category: "Marketing Assets" },
-  { client: "IKEA", title: "Billythèque", category: "Marketing Assets" },
-  { client: "Sony", title: "2023 BRAVIA Launch", category: "Graphic Design" },
-  { client: "TikTok", title: "Ramadan 2023", category: "Marketing Assets" },
-  { client: "PICO", title: "Spring 2023 Promotion", category: "Marketing Assets" },
-  { client: "Air Corsica", title: "Route Launches", category: "Videos" },
+  { client: "Adidas", title: "The Sound of Superstar(s)", category: "Event Campaign", image: "/images/hero-adidas-arena.png" },
+  { client: "Lego", title: "Le Grand Tournoi Des Champs", category: "Marketing Assets", image: "/images/hero-lego.png" },
+  { client: "Sony", title: "ULT Power Sound", category: "Campaign", image: "/images/hero-sony-ult.png" },
+  { client: "TikTok", title: "Unlearn Beauty 3.0", category: "Marketing Assets", image: "/images/hero-tiktok-beauty.png" },
+  { client: "Bose", title: "Smart Ultra Soundbar", category: "Graphic Design", image: "/images/hero-bose.png" },
+  { client: "Air Corsica", title: "Route Launches", category: "Marketing Assets", image: "/images/hero-aircorsica.png" },
+  { client: "Sony", title: "ZV-E10 II Camera", category: "Graphic Design", image: "/images/hero-sony-camera.png" },
+  { client: "Adidas", title: "Superstar", category: "Campaign", image: "/images/hero-adidas-superstar.png" },
+  { client: "TikTok", title: "Creator Content", category: "Video Production", image: "/images/hero-tiktok-creator.png" },
 ] as const;
 
-function ProjectCard({ client, title, category }: (typeof PROJECTS)[number]) {
+function ProjectCard({ client, title, category, image }: (typeof PROJECTS)[number]) {
   return (
     <div className="group relative w-[320px] shrink-0 overflow-hidden rounded-2xl bg-surface-elevated sm:w-[400px]">
-      {/* Placeholder for project image */}
-      <div className="aspect-[4/3] w-full bg-neutral-300 transition-transform duration-300 group-hover:scale-105" />
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-200">
+        <Image
+          src={image}
+          alt={`${client} — ${title}`}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 640px) 320px, 400px"
+        />
+      </div>
       <div className="p-4">
         <p className="text-xs font-bold uppercase tracking-wider text-brand-flame">
           {client}
