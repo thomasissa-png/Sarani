@@ -635,3 +635,103 @@ Creative agency for enterprises that can't wait two weeks. TikTok, Sony, Adidas,
 
 ---
 
+## 9. Message Variants from Messaging Matrix
+
+Six priority cases from the messaging matrix. Each case has 2 distinct variants — different angle, not just reformulation — with a recommendation and rationale.
+
+---
+
+#### 9.1 — Sophie × Landing Page × Discovery (Hero)
+
+**Variant A — Evidence-first (Formula 1):**
+- H1: Every other agency said two weeks. We said tomorrow.
+- H2: TikTok trusts us with 1,500+ video edits a month. Sony gets Black Friday banners same-day for 155€. Enterprise-quality creative. Fixed prices. No retainer.
+
+**Variant B — Scale + speed signal (Formula 6 → 5):**
+- H1: Enterprise creative. 24 hours. TikTok, Sony, Adidas.
+- H2: GEODIS rebranded 350 presentations in 3 weeks for 8,500€. Their previous agency quoted 80,000€ and 3 months. Fixed prices. Unlimited revisions. First project satisfaction or no invoice.
+
+*Recommended: B — because the H1 leads with three named clients immediately, removing the 3-second credibility gap. Variant A is stronger for retargeting (where Sophie already knows Sarani), but weaker as a cold first impression.*
+
+---
+
+#### 9.2 — Sophie × Email × Discovery (Cold outreach)
+
+**Variant A — Named client anchor (TikTok volume):**
+- Subject: How TikTok gets 1,500 videos edited a month
+- Opening: Your agency just quoted two weeks. TikTok sends us 300–500 videos a week — we return 1,500+ edits a month, on time, every month.
+
+**Variant B — Cost shock anchor (GEODIS comparison):**
+- Subject: GEODIS cut agency costs 90% on 350 presentations
+- Opening: Their previous agency quoted 80,000€ and 3 months. We delivered 5,700 slides in 3 weeks for 8,500€. Fixed price, no surprises.
+
+*Recommended: B — because the cost delta (8,500€ vs. 80,000€) is a harder stop-the-scroll fact than volume. Sophie's core pain at Discovery is speed AND cost. Variant A alone only answers speed. Test A for Sophie profiles with high content volume mandates.*
+
+---
+
+#### 9.3 — Sophie × Paid Ads × Consideration (LinkedIn Ad)
+
+**Variant A — Direct pricing comparison:**
+- Hook: Superside starts at $10,000/month. Sarani starts at 155€.
+- Body: No retainer. No minimum commitment. Same D+1 delivery. Same enterprise clients — TikTok, Sony, Adidas. Unlimited revisions included. Pay per project, benchmark every time. First project satisfaction or no invoice.
+
+**Variant B — Feature framing (quality parity first):**
+- Hook: Enterprise creative quality. Without the enterprise retainer.
+- Body: Superside locks you in at $10,000/month before a single asset ships. Sarani: from 155€ per project, no subscription, no lock-in. Sony got Black Friday banners same-day. GEODIS rebranded 350 presentations in 3 weeks. First project satisfaction or no invoice.
+
+*Recommended: A — because naming the $10,000 figure in the hook creates immediate competitive contrast before Sophie has processed a single word of body copy. Note: naming Superside explicitly is a strategic decision — validate with Sarani before paid activation per messaging-matrix.md Priority 3.*
+
+---
+
+#### 9.4 — Marc × Landing Page × Consideration (Pricing page)
+
+**Variant A — Procurement language, direct cost comparison:**
+- H1: Published pricing. No retainer. 60% savings vs traditional agencies.
+- H2: Banner: 155–470€. Full rebranding: 5,000€. GEODIS paid 8,500€ for 350 presentations — their previous quote was 80,000€+. Every price is fixed. No hidden fees. No revision surcharges.
+
+**Variant B — Qualification frame (Marc's evaluation lens):**
+- H1: Everything procurement needs to qualify a creative agency.
+- H2: Published pricing from 155€ per asset. D+1 delivery SLA. Named references: GEODIS, Sony, TikTok. No minimum commitment. No auto-renewal. First project satisfaction or no invoice — documented.
+
+*Recommended: B — because Marc lands on this page to qualify Sarani, not to be sold to. Leading with "Everything procurement needs" mirrors his exact mental task. Variant A is stronger as a retargeting unit or a comparison ad, not as a page headline.*
+
+---
+
+#### 9.5 — Sophie × LinkedIn × Discovery (Post opening line)
+
+**GEODIS post — 2 opening variants:**
+
+**Variant A:**
+GEODIS needed 350 presentations rebranded. 5,700 slides. 3 weeks. 8,500€.
+
+**Variant B:**
+Their agency quoted 3 months and 80,000€. We delivered in 3 weeks for 8,500€.
+
+*Recommended for GEODIS post: B — the contrast structure (their quote vs. our delivery) creates a stronger scroll-stop because it sets up a tension in one line. Variant A is better as a case study title or a standalone stat post.*
+
+**TikTok post — 2 opening variants:**
+
+**Variant A:**
+TikTok sends us 300–500 videos a week. We return 1,500+ edits a month.
+
+**Variant B:**
+1,500 video edits a month. One client. Every month for 3 years.
+
+*Recommended for TikTok post: A — the send/return dynamic shows the operational relationship, not just a volume number. Variant B is stronger for a post about consistency or retention, not discovery.*
+
+---
+
+#### 9.6 — Sophie × Landing Page × Decision (Guarantee block)
+
+**Variant A — Warmth-forward (Formula 7):**
+- Headline: Not satisfied with your first project? No invoice.
+- Supporting copy: The financial risk is entirely ours. You brief, we deliver, you decide. If the first project isn't right, you don't pay — no questions, no negotiation. First project satisfaction or no invoice.
+
+**Variant B — Challenger / stakes-raising:**
+- Headline: We take the risk so you don't have to.
+- Supporting copy: No other creative agency offers this in writing: first project satisfaction or no invoice. No fine print. No 15-day window. If you're not satisfied, the invoice disappears. Simple as that.
+
+*Recommended: A — because "Not satisfied with your first project? No invoice." is already proven copy (brand-voice.md §6, Do/Don't #4) and uses Formula 7 verbatim. Variant B risks sounding like a claim about competitors rather than a commitment. Use B for A/B testing only if Variant A plateaus in conversion data.*
+
+---
+
