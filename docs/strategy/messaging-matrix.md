@@ -81,3 +81,129 @@ Each cell contains five fields:
 | **Expansion** | "Already working with us? Your colleagues in other markets have the same creative production problem you used to have." | 18 languages in-house. 5 continents. One invoice, multiple markets. | "A paid ad trying to upsell me feels transactional after a good working relationship." | Use: Named results from existing collaboration. "Same team, same pricing." Avoid: "Upgrade your plan," "Unlock more services" | Refer a colleague |
 
 ---
+
+## MARC — Landing Page
+
+| Funnel Stage | Message | Proof | Objection | Vocabulary | CTA |
+|---|---|---|---|---|---|
+| **Discovery** | "An agency with published, fixed prices and a named enterprise client list — that's the kind of vendor I can actually benchmark." | Published pricing: banner from 155€. GEODIS: 8,500€ for 350 presentations (traditional agency quote: 80,000€+). 60% average cost savings vs. network agencies (Sarani commercial deck, 2026). | "Every agency says transparent pricing. I've seen what 'transparent' looks like once the invoice arrives." | Use: "fixed prices," "published rates," "per-project pricing," "no hidden fees." Avoid: "competitive rates," "tailored to your needs," "we'll assess and quote" | See our work |
+| **Consideration** | "I need to compare this against our current incumbent and justify the switch to my CFO — give me the numbers." | Per-asset pricing: banner 155–470€ (Sarani) vs. 500–2,000€ (network agency). GEODIS: 8,500€ vs. 80,000€+ traditional quote. 60% savings claim sourced from 2026 commercial deck. | "Switching vendors has a hidden cost in procurement time, legal review, and onboarding. Is the saving worth the switch cost?" | Use: "60% savings," "no minimum commitment," "framework agreement available," "per-unit pricing." Avoid: "affordable," "cheap," "budget-friendly" | Compare our pricing |
+| **Decision** | "Before I put this agency on our approved vendor list, I need to know the first engagement carries zero financial risk for us." | "First project satisfaction or no invoice." No long-term lock-in. Per-project pricing means Marc can audit quality and cost with each deliverable. | "Satisfaction guarantees usually have fine print. What does 'satisfaction' actually mean in a contract?" | Use: "First project satisfaction or no invoice" (verbatim), "no lock-in," "per-project." Avoid: vague satisfaction language, "we stand behind our work" | Start a project |
+| **Onboarding** | "The first project is running. I need one clear invoice with a per-asset breakdown — not a retainer line item I can't explain to finance." | Fixed pricing per deliverable. No surprise scope additions. Unlimited revisions included in the quoted price — no revision surcharges on the invoice. | "The first invoice is always the test. If it matches the quote, I'm comfortable. If there are additions, we have a problem." | Use: "fixed price," "per-asset," "no revision charges," "as quoted." Avoid: "additional fees may apply," "subject to final scope" | Track your project |
+| **Expansion** | "We're managing 4 regional creative agencies across Europe and Asia. If Sarani can consolidate 3 of those relationships, that's a procurement win." | 18 languages in-house. 5 continents. One invoice for multi-market campaigns. GEODIS handled 350 presentations across a full rebrand — single vendor, single contract. | "Vendor consolidation sounds good on paper. The risk is dependency on a single supplier." | Use: "one partner," "18 languages," "framework agreement," "one invoice." Avoid: "exclusive relationship," "lock-in" | Refer a colleague |
+
+---
+
+## MARC — Email
+
+| Funnel Stage | Message | Proof | Objection | Vocabulary | CTA |
+|---|---|---|---|---|---|
+| **Discovery** | "A vendor who publishes their prices and lists named enterprise references — GEODIS, Sony, TikTok — is worth 5 minutes of my time." | Subject line anchor: "How GEODIS cut agency costs by 90% on 350 presentations." Body: 8,500€ vs. 80,000€ traditional quote, 3 weeks vs. 3 months. | "Cold emails come to my inbox from people who want me to introduce them to our marketing team. I'm not a switchboard." | Use: Cost saving number in subject line, reference client by name. Avoid: "I'd love to connect," "synergies," "thought leadership" | See our work |
+| **Consideration** | "Before I run a vendor evaluation, I need your pricing structure, SLA commitments, and reference accounts. Can you send those?" | Published pricing page (no 'request a quote' friction). Reference accounts: GEODIS, Sony, TikTok. SLA: D+1 standard delivery. | "I've requested vendor documentation before and got a 40-slide deck with no actual numbers." | Use: "published pricing," "D+1 SLA," "reference accounts available." Avoid: "bespoke pricing," "we'll prepare a tailored proposal" | Compare our pricing |
+| **Decision** | "I'm ready to run a pilot. I need to confirm the contract structure — project-based, no auto-renewal, satisfaction guarantee documented." | Per-project pricing, no minimum commitment, no automatic renewal. "First project satisfaction or no invoice" as explicit contractual commitment. | "Pilots have a way of becoming permanent dependencies. I need a clean exit if this doesn't work." | Use: "per-project," "no auto-renewal," "First project satisfaction or no invoice." Avoid: "partnership," "long-term commitment," "preferred vendor" | Start a project |
+| **Onboarding** | "The pilot is live. I'll be monitoring the invoice against the original quote — any deviation needs to be flagged before it's issued." | Fixed pricing model: the invoice matches the quote. Unlimited revisions included — no additional billing for feedback rounds. | "I've had agencies come back mid-project with 'scope adjustments.' I need that door closed." | Use: "fixed price," "as quoted," "no scope additions." Avoid: "we may need to adjust," "outside original scope" | Track your project |
+| **Expansion** | "Our marketing team in Paris has been satisfied for 6 months. I want to evaluate putting Sarani on our European framework agreement." | One partner for 18 languages and 5 continents. One consolidated invoice per market. Framework agreement structure available. | "Expanding a vendor's scope increases our dependency. I need pricing locked and performance SLAs documented." | Use: "framework agreement," "SLA documentation," "per-unit pricing," "locked rates." Avoid: "grow our partnership," "unlock more capacity" | Refer a colleague |
+
+---
+
+## MARC — LinkedIn
+
+| Funnel Stage | Message | Proof | Objection | Vocabulary | CTA |
+|---|---|---|---|---|---|
+| **Discovery** | "GEODIS rebranded 350 presentations (5,700 slides) in 3 weeks for 8,500€. Their traditional agency quoted 3 months and 80,000€+." | GEODIS: 350 presentations, 5,700 slides, 3 weeks, 8,500€. Traditional agency comparison: 3 months, 80,000€+. | "Case studies are cherry-picked. What about when it doesn't go perfectly?" | Use: Exact figures, named client, direct cost comparison. Avoid: "significant savings," "up to X%" without the absolute number | See our work |
+| **Consideration** | "Published pricing. No retainer. Per-project invoicing. For a procurement director, that's not a selling point — it's a qualification criterion." | Fixed pricing published on website. Banner: 155–470€. Full rebrand: 5,000€. No minimum commitment. 60% average savings vs. network agencies. | "Published pricing is rare because agencies know procurement will use it to drive price down. There must be a catch." | Use: "published pricing," "no minimum commitment," "fixed price per deliverable." Avoid: "transparent pricing" (too vague — show the numbers) | Compare our pricing |
+| **Decision** | N/A — Marc does not make vendor decisions on LinkedIn. Decision happens through formal procurement process. | N/A | N/A | N/A | N/A |
+| **Onboarding** | N/A — LinkedIn is not an onboarding channel for Marc. | N/A | N/A | N/A | N/A |
+| **Expansion** | "One creative partner for 18 languages, 5 continents, and a per-asset pricing model. That's one vendor on your approved list instead of four." | 18 languages in-house. 5 continents. GEODIS: single vendor for full European rebrand. Sony: 15-language video localization from one brief. | "Vendor consolidation sounds good. Dependency risk sounds bad." | Use: "one invoice," "one partner," "framework agreement available," "no lock-in." Avoid: "become your primary agency," "preferred supplier status" | Refer a colleague |
+
+---
+
+## MARC — Twitter/X
+
+| Funnel Stage | Message | Proof | Objection | Vocabulary | CTA |
+|---|---|---|---|---|---|
+| **Discovery** | N/A | N/A | N/A | N/A | N/A |
+| **Consideration** | N/A | N/A | N/A | N/A | N/A |
+| **Decision** | N/A | N/A | N/A | N/A | N/A |
+| **Onboarding** | N/A | N/A | N/A | N/A | N/A |
+| **Expansion** | N/A | N/A | N/A | N/A | N/A |
+
+*Note: Marc × Twitter/X is systematically N/A. Procurement directors do not use Twitter/X as a professional research channel for vendor evaluation. Paid budget on X should be 100% Sophie-targeted. No organic content required for Marc on this channel.*
+
+---
+
+## MARC — Paid Ads (LinkedIn Ads + Google Ads)
+
+| Funnel Stage | Message | Proof | Objection | Vocabulary | CTA |
+|---|---|---|---|---|---|
+| **Discovery** | "350 presentations rebranded in 3 weeks. 8,500€. One invoice. GEODIS." | GEODIS: 350 presentations, 5,700 slides, 3 weeks, 8,500€. Published, fixed pricing. | "LinkedIn shows me this because my job title includes 'Procurement.' This is targeted, not relevant." | Use: Cost number in ad headline. Named client. "Published pricing." Avoid: Creative imagery only — Marc needs data in the ad copy itself | See our work |
+| **Consideration** | "Superside: $10,000/month minimum. Sarani: 155€ per project. Same enterprise clients. No subscription required." | Direct pricing comparison. Named client overlap: TikTok, Sony, Adidas — enterprise benchmarks Marc recognizes. | "Cost-per-project pricing often hides volume minimums or quality tiering." | Use: "no minimum commitment," "per-project," "published pricing." Avoid: "starting from," "as low as," anything that implies bait-and-switch | Compare our pricing |
+| **Decision** | "First project: satisfaction or no invoice. No legal risk. No lock-in. That's the only thing procurement needs to hear." | Explicit guarantee as risk-reversal for procurement directors. No competitor offers this with equivalent explicitness. | "A paid ad guarantee means nothing legally. I need this in the contract." | Use: "First project satisfaction or no invoice" (verbatim), "per-project contract available." Avoid: "risk-free," "no risk," vague legal language | Start a project |
+| **Onboarding** | N/A — Suppress Marc from paid ad targeting during active project onboarding. | N/A | N/A | N/A | N/A |
+| **Expansion** | "One partner for 18 languages. One consolidated invoice. GEODIS, Sony, TikTok already on framework agreements." | 18 languages, one invoice model. Framework agreement structure available for multi-project, multi-market accounts. | "Expanding a vendor's contract scope requires a new procurement cycle. Is the consolidation worth the process cost?" | Use: "framework agreement," "one invoice," "consolidated vendor." Avoid: "upsell," "expand our engagement" | Refer a colleague |
+
+---
+
+## Priority Cases for @copywriter
+
+The following 6 cells are the highest-priority for 2-variant copywriting (Version A: evidence-led; Version B: challenger/provocative).
+
+### Priority 1 — Sophie × Landing Page × Discovery (Hero section)
+*Why priority:* First impression. Sophie lands on the homepage from LinkedIn, Google, or referral. She has 3 seconds. This cell defines the H1, H2, and primary CTA of the site.
+- **Deliverable needed:** 2 headline variants (H1 max 10 words), 2 subheadline variants (max 40 words), CTA copy
+- **Anchor required:** TikTok or Sony named in subheadline
+
+### Priority 2 — Sophie × Email × Discovery (Cold outreach subject line + opener)
+*Why priority:* The entire email open rate depends on this. Subject line is the single highest-leverage word in the acquisition funnel.
+- **Deliverable needed:** 2 subject line variants (max 8 words each), 2 opening line variants
+- **Anchor required:** One named client, one specific number
+
+### Priority 3 — Sophie × Paid Ads × Consideration (LinkedIn Ad)
+*Why priority:* This is the Superside comparison moment. Sarani's clearest competitive advantage (per-project vs. subscription) must be compressed into 150 characters.
+- **Deliverable needed:** 2 ad headline variants (max 150 chars), 2 ad body variants (max 300 chars)
+- **Anchor required:** "$10,000/month" (Superside) and "155€" (Sarani) must both appear
+- **Note:** Naming Superside by name in paid ads is a strategic decision — validate with Sarani before activation
+
+### Priority 4 — Marc × Landing Page × Consideration (Pricing page headline)
+*Why priority:* Marc lands on the pricing page after Sophie refers him. This is the procurement qualification page. The headline must speak Marc's language — not Sophie's.
+- **Deliverable needed:** 2 page headline variants, 2 subheadline variants
+- **Anchor required:** "published pricing," one cost-comparison figure
+
+### Priority 5 — Sophie × LinkedIn × Discovery (Organic post — case study lead)
+*Why priority:* LinkedIn is Sarani's primary organic acquisition channel. The opening line of a case study post determines whether Sophie stops scrolling.
+- **Deliverable needed:** 2 opening line variants for a GEODIS post, 2 opening line variants for a TikTok post
+- **Anchor required:** Number or named result in the first 10 words
+
+### Priority 6 — Sophie × Landing Page × Decision (Guarantee block)
+*Why priority:* The guarantee is Sarani's strongest conversion lever and the only claim no competitor can match. The copy for this block determines whether Sophie actually believes it.
+- **Deliverable needed:** 2 headline variants for the guarantee section, 2 supporting copy variants (max 30 words)
+- **Anchor required:** "First project satisfaction or no invoice" verbatim
+
+---
+
+## Hypotheses to Validate
+
+- [HYPOTHÈSE] Marc × Twitter/X = N/A across all funnel stages. Based on persona profile (procurement director, 45, enterprise). Validate against Sarani's actual analytics once site is live — if Marc-profile users engage on X, re-open this channel.
+- [HYPOTHÈSE] Sophie × Onboarding on LinkedIn/Twitter/X = N/A. Assumed that active client communication moves to direct channels (email, Slack, project tracking). Validate with Sarani's ops team.
+- [HYPOTHÈSE] Marc × LinkedIn × Decision/Onboarding = N/A. Based on assumption that Marc's formal procurement process happens off-platform. If Sarani identifies Marc-profile engagement post-Decision on LinkedIn, reconsider.
+- [HYPOTHÈSE] "Framework agreement available" referenced in Marc cells — to be confirmed by @legal (contract structure, minimum terms, liability clauses).
+
+---
+
+**Handoff → @copywriter**
+
+- Fichiers produits : `/home/user/Sarani/docs/strategy/messaging-matrix.md`
+- Décisions prises :
+  - 50 cases produites — toutes distinctes, zéro duplication entre cases
+  - Cases N/A documentées et justifiées : Marc × Twitter/X (5 cases), Sophie × LinkedIn × Onboarding, Sophie × Twitter/X × Onboarding, Sophie × Paid Ads × Onboarding, Marc × LinkedIn × Decision/Onboarding, Marc × Paid Ads × Onboarding
+  - CTA différenciés par étape funnel : Discovery → "See our work", Consideration → "Compare our pricing", Decision → "Start a project", Onboarding → "Track your project", Expansion → "Refer a colleague"
+  - Objections Sophie : speed, proof, quality (emotional). Objections Marc : cost, contract, vendor risk (rational)
+  - 6 cases prioritaires identifiées pour rédaction de 2 variantes A/B chacune
+- Points d'attention pour @copywriter :
+  - "First project satisfaction or no invoice" = verbatim dans tous les contextes, aucune reformulation
+  - Les 6 preuves clients (TikTok, Sony, GEODIS, Adidas, Air Corsica, Pernod Ricard) avec chiffres exacts sont le socle de toute copy — ne jamais généraliser
+  - Marc et Sophie ne se lisent jamais dans la même phrase — pages et emails séparés
+  - Vocabulaire interdit : "affordable," "cheap," "competitive rates," "world-class," "boutique agency" — voir brand-voice.md §3.3
+  - Priority 3 (LinkedIn Ads × Consideration) nomme Superside explicitement : à valider avec Sarani avant activation en paid media
+
+---
