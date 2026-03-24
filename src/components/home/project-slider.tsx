@@ -1,9 +1,17 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 /**
  * Auto-scrolling horizontal slider of project images.
  * Matches V2 Webflow hero carousel behavior.
- * Uses CSS animation (no JS) — speed adjusts by breakpoint via globals.css.
+ * Uses CSS animation (no JS scroll) — speed adjusts by breakpoint via globals.css.
+ *
+ * Accessibility:
+ * - Pauses on hover (desktop)
+ * - Pauses on touch (mobile)
+ * - Respects prefers-reduced-motion: stops auto-scroll entirely
+ * - Position indicator dots below
  */
 
 const PROJECTS = [
@@ -17,7 +25,7 @@ const PROJECTS = [
   { client: "Air Corsica", title: "Route Launches", category: "Videos" },
 ] as const;
 
-function ProjectCard({ client, title, category }: typeof PROJECTS[number]) {
+function ProjectCard({ client, title, category }: (typeof PROJECTS)[number]) {
   return (
     <div className="group relative w-[320px] shrink-0 overflow-hidden rounded-2xl bg-surface-elevated sm:w-[400px]">
       {/* Placeholder for project image */}
@@ -35,16 +43,87 @@ function ProjectCard({ client, title, category }: typeof PROJECTS[number]) {
   );
 }
 
+/** Hook: true when the user prefers reduced motion */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return reduced;
+}
+
 export function ProjectSlider() {
+  const prefersReduced = usePrefersReducedMotion();
+  const [paused, setPaused] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  // Track the approximate active slide based on scroll position via animation
+  useEffect(() => {
+    if (prefersReduced || !trackRef.current) return;
+
+    const interval = setInterval(() => {
+      if (!trackRef.current) return;
+      const el = trackRef.current;
+      const style = window.getComputedStyle(el);
+      const matrix = new DOMMatrix(style.transform);
+      const translateX = Math.abs(matrix.m41);
+      // Each card is ~320px + 24px gap = ~344px on mobile, ~424px on desktop
+      const cardWidth = window.innerWidth >= 640 ? 424 : 344;
+      const idx = Math.round(translateX / cardWidth) % PROJECTS.length;
+      setActiveIndex(idx);
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [prefersReduced]);
+
+  const shouldAnimate = !prefersReduced && !paused;
+
   return (
-    <div className="overflow-hidden">
-      <div className="animate-slideshow flex gap-6">
-        {PROJECTS.map((p) => (
-          <ProjectCard key={`${p.client}-${p.title}`} {...p} />
-        ))}
-        {/* Duplicate for seamless loop */}
-        {PROJECTS.map((p) => (
-          <ProjectCard key={`dup-${p.client}-${p.title}`} {...p} />
+    <div className="space-y-4">
+      <div
+        className="overflow-hidden"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => setPaused(false)}
+      >
+        <div
+          ref={trackRef}
+          className={`flex gap-6 ${shouldAnimate ? "animate-slideshow" : ""}`}
+          style={
+            shouldAnimate
+              ? undefined
+              : { animationPlayState: "paused" }
+          }
+        >
+          {PROJECTS.map((p) => (
+            <ProjectCard key={`${p.client}-${p.title}`} {...p} />
+          ))}
+          {/* Duplicate for seamless loop */}
+          {PROJECTS.map((p) => (
+            <ProjectCard key={`dup-${p.client}-${p.title}`} {...p} />
+          ))}
+        </div>
+      </div>
+
+      {/* Position indicator dots */}
+      <div className="flex items-center justify-center gap-1.5" aria-hidden="true">
+        {PROJECTS.map((p, i) => (
+          <span
+            key={`dot-${p.client}-${p.title}`}
+            className={`inline-block h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+              i === activeIndex
+                ? "bg-brand-flame w-4"
+                : "bg-neutral-300"
+            }`}
+          />
         ))}
       </div>
     </div>

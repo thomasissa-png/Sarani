@@ -69,7 +69,7 @@ export function ProofCards() {
           <p className="mb-4 text-3xl font-bold text-brand-flame">
             {point.price}
           </p>
-          <p className="text-sm text-neutral-500">{point.detail}</p>
+          <p className="text-sm font-medium text-neutral-500">{point.detail}</p>
         </motion.div>
       ))}
     </motion.div>

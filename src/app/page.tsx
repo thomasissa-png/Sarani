@@ -91,7 +91,7 @@ export default function HomePage() {
             </h2>
             <Link
               href="/work"
-              className="text-sm font-bold text-brand-flame transition-colors hover:text-brand-flame-light"
+              className="text-sm font-medium text-brand-flame transition-colors hover:text-brand-flame-light"
             >
               view all works &rarr;
             </Link>

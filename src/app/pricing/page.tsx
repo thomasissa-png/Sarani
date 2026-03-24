@@ -95,7 +95,7 @@ export default function PricingPage() {
         <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl">
           Fixed prices. Zero surprises.
         </h1>
-        <p className="max-w-2xl text-xl text-neutral-600">
+        <p className="max-w-2xl text-xl font-medium text-neutral-600">
           No retainer. No minimum commitment. Unlimited revisions. Up to 60%
           savings vs agencies.
         </p>
@@ -213,7 +213,7 @@ function PricingCard({ category }: { category: PricingCategory }) {
             key={item.name}
             className="flex items-baseline justify-between gap-4"
           >
-            <span className="text-neutral-600">{item.name}</span>
+            <span className="font-medium text-neutral-600">{item.name}</span>
             <span className="shrink-0 font-bold text-brand-black">
               {item.price}
             </span>

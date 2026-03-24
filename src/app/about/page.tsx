@@ -139,7 +139,7 @@ export default function AboutPage() {
           <h2 className="mb-4 text-2xl font-bold text-brand-black">
             What we believe
           </h2>
-          <p className="mb-6 text-lg leading-relaxed text-neutral-600">
+          <p className="mb-6 text-lg font-medium leading-relaxed text-neutral-600">
             We refuse to accept that fast and good are a trade-off.
           </p>
           <p className="mb-6 text-lg leading-relaxed text-neutral-600">
