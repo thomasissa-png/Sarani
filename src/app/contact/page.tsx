@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="pt-[72px]">
+    <div className="pt-[var(--header-height)]">
       <Section ariaLabel="Contact form">
         <div className="mx-auto max-w-[640px]">
           <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">

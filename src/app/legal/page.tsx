@@ -18,7 +18,7 @@ const TOC_ITEMS = [
 
 export default function LegalPage() {
   return (
-    <div className="pt-[72px]">
+    <div className="pt-[var(--header-height)]">
       <Section ariaLabel="Legal and privacy">
         <div className="max-w-3xl">
           <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">

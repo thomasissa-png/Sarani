@@ -29,7 +29,7 @@ const TEAM_STATS: Stat[] = [
 
 export default function AboutPage() {
   return (
-    <div className="pt-[72px]">
+    <div className="pt-[var(--header-height)]">
       {/* ── Section 1: Why Sarani exists ── */}
       <Section ariaLabel="Why Sarani exists">
         <div className="max-w-3xl">

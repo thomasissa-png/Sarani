@@ -69,7 +69,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
   };
 
   return (
-    <div className="relative pt-[72px]">
+    <div className="relative pt-[var(--header-height)]">
       {/* JSON-LD */}
       <script
         type="application/ld+json"

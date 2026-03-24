@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function WorkPage() {
   return (
-    <div className="pt-[72px]">
+    <div className="pt-[var(--header-height)]">
       <Section ariaLabel="Case studies">
         <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl">
           Case Studies
