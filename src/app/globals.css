@@ -101,3 +101,21 @@ body {
   outline: 3px solid var(--color-brand-cerulean);
   outline-offset: 2px;
 }
+
+/* Marquee animation for client logo strip */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+.group:hover .animate-marquee {
+  animation-play-state: paused;
+}
