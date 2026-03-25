@@ -100,19 +100,29 @@
 
 ### Équipe d'agents IA internes (concept clé)
 
-**Vision** : Le back-office donne accès à une équipe projet d'agents IA spécialisés, comme une équipe virtuelle permanente. Chaque agent a un profil métier précis. L'équipe Sarani (35 experts) interagit avec ces agents pour leurs besoins quotidiens sur les projets clients.
+**Vision** : Le back-office donne accès à une équipe projet d'agents IA spécialisés, comme une équipe virtuelle permanente. Chaque agent a un profil métier précis. L'équipe Sarani interagit avec ces agents pour leurs besoins quotidiens sur les projets clients.
+
+**Utilisateurs v1** : Thomas (fondateur) + responsable des opérations. Ensuite : client managers.
+
+**Interface** : Mixte — formulaires structurés pour les tâches récurrentes (ex: traduction = langue + document) + chat pour les échanges libres. Interface fixe par type de tâche.
+
+**Orchestration** : Le Project Manager IA peut dispatcher aux autres agents automatiquement.
 
 **Agents à créer (via @agent-factory)** :
-1. **Project Manager** — Profil chargé de projet Sarani : comprend les briefs clients, briefe les agents, vérifie les outputs, renvoie au client, sait communiquer
-2. **Translator** — Multilingue natif professionnel. Langues v1 : FR, EN, IT, ES, DE
-3. **Creative Strategist** — Basé sur notre agent @creative-strategy existant
-4. **Graphic Designer** — Expert super créatif, profil de DA/directeur artistique
-5. **Legal** — Basé sur notre agent @legal existant, peut générer des contrats sur base d'exemples
-6. **Social** — Gestion des contenus réseaux sociaux
-7. **SEO** — Gestion du blog et du référencement
+1. **Project Manager** — Chef de projet Sarani : comprend les briefs clients, briefe les agents, vérifie les outputs, renvoie au client, communique. Dans un monde parfait : connecté aux emails + ClickUp, préremplit tout automatiquement.
+2. **Translator** — Multilingue natif professionnel. Langues v1 : FR, EN, IT, ES, DE. Interface formulaire simple (langue source, langue cible, document). Mémoire par client (glossaire, ton, historique).
+3. **Creative Strategist** — Basé sur notre agent @creative-strategy existant.
+4. **Graphic Designer** — Expert super créatif DA. Génère des premiers jets visuels via API IA en respectant les brand books clients (uploadés dans le back-office). Peut aussi créer des présentations / landing pages pour répondre à des projets ou appels d'offres. Section back-office dédiée : infos clés clients (minimum vital + brand book).
+5. **Legal** — Basé sur notre agent @legal existant. Génère des contrats (UGC, SOW...) sur base de modèles fournis par Thomas. Format sortie : Word (.docx).
+6. **Social** — LinkedIn uniquement pour commencer. Génère contenu (posts + calendrier éditorial) que l'humain valide avant publication manuelle.
+7. **SEO** — Gestion du blog et du référencement.
 
-**Budget IA** : Pas de limite tant que l'usage est intelligent
-**Priorité** : Tous les agents en même temps (pas de séquençage)
+**Mémoire** : Par client. Chaque agent se souvient du contexte client (glossaire, ton, historique, brand book) pour les prochaines demandes. Section back-office "Clients" avec fiche minimum vital par client.
+
+**Stockage outputs** : Sauvegardés dans le back-office (BDD) + synchronisables vers ClickUp + téléchargeables en fichier.
+
+**Budget IA** : Pas de limite tant que l'usage est intelligent et optimisé.
+**Priorité** : Tous les agents en même temps (pas de séquençage). Ambition v1 = option C (7 agents + orchestration PM).
 **Langues traduction** : FR, EN, IT, ES, DE (v1)
 
 **[À DÉFINIR — Questions en cours]** : voir ci-dessous les questions posées à l'utilisateur
