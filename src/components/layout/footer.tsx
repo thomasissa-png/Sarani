@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 
 const ABOUT_LINKS = [
-  { href: "/how-we-work", label: "How we work" },
+  { href: "/services", label: "How we work" },
   { href: "/about", label: "About us" },
   { href: "/work", label: "Portfolio" },
   { href: "/#faq", label: "FAQ" },
@@ -23,7 +23,7 @@ const CATEGORY_LINKS = [
 const SUPPORT_LINKS = [
   { href: "/contact", label: "Contact Us" },
   { href: "/legal", label: "Terms and Conditions" },
-  { href: "/legal#privacy", label: "Privacy Policy" },
+  { href: "/legal#privacy-policy", label: "Privacy Policy" },
 ] as const;
 
 function FooterHeading({ children }: { children: React.ReactNode }) {

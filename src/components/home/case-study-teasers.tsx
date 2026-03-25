@@ -78,7 +78,7 @@ export function CaseStudyTeasers() {
           whileHover={prefersReduced ? {} : { scale: 1.02 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
-          <p className="mb-2 text-sm font-bold uppercase tracking-wider text-brand-cerulean">
+          <p className="mb-2 text-sm font-bold uppercase tracking-wider text-brand-cerulean-dark">
             {study.client}
           </p>
           <p className="mb-3 text-xl font-bold text-brand-black">

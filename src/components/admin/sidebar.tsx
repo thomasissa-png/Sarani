@@ -15,20 +15,40 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Clients", href: "/admin/clients", icon: "users" },
 ];
 
-const AGENT_ITEMS: NavItem[] = [
-  { label: "Project Manager", href: "/admin/agents/pm", icon: "briefcase" },
-  { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
-  { label: "Creative", href: "/admin/agents/creative", icon: "palette" },
-  { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
-  { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
-  { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
-  { label: "Social", href: "/admin/agents/social", icon: "share" },
-  { label: "SEO", href: "/admin/agents/seo", icon: "search" },
-  { label: "Proposal", href: "/admin/agents/proposal", icon: "file-text" },
-  { label: "Presentation", href: "/admin/agents/presentation", icon: "monitor" },
-  { label: "Email Drafter", href: "/admin/agents/email-drafter", icon: "mail" },
-  { label: "Video Script", href: "/admin/agents/video-script", icon: "video" },
-  { label: "Proofreader", href: "/admin/agents/proofreader", icon: "check-circle" },
+type AgentGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const AGENT_GROUPS: AgentGroup[] = [
+  {
+    label: "Content",
+    items: [
+      { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
+      { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
+      { label: "SEO", href: "/admin/agents/seo", icon: "search" },
+      { label: "Social", href: "/admin/agents/social", icon: "share" },
+      { label: "Video Script", href: "/admin/agents/video-script", icon: "video" },
+    ],
+  },
+  {
+    label: "Strategy",
+    items: [
+      { label: "Project Manager", href: "/admin/agents/pm", icon: "briefcase" },
+      { label: "Creative", href: "/admin/agents/creative", icon: "palette" },
+      { label: "Proposal", href: "/admin/agents/proposal", icon: "file-text" },
+      { label: "Presentation", href: "/admin/agents/presentation", icon: "monitor" },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
+      { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
+      { label: "Email Drafter", href: "/admin/agents/email-drafter", icon: "mail" },
+      { label: "Proofreader", href: "/admin/agents/proofreader", icon: "check-circle" },
+    ],
+  },
 ];
 
 function NavIcon({ name, className }: { name: string; className?: string }) {
@@ -153,13 +173,17 @@ export function Sidebar() {
           <NavLink key={item.href} item={item} />
         ))}
 
-        <div className="pt-4 pb-2">
-          <p className="px-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-            Agents
-          </p>
-        </div>
-        {AGENT_ITEMS.map((item) => (
-          <NavLink key={item.href} item={item} />
+        {AGENT_GROUPS.map((group) => (
+          <div key={group.label}>
+            <div className="pt-4 pb-2">
+              <p className="px-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                {group.label}
+              </p>
+            </div>
+            {group.items.map((item) => (
+              <NavLink key={item.href} item={item} />
+            ))}
+          </div>
         ))}
       </nav>
     </aside>

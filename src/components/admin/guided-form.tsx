@@ -193,7 +193,7 @@ export function StepIndicator({
           <div
             className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
               i < currentStep
-                ? "bg-green-500 text-white"
+                ? "bg-success text-white"
                 : i === currentStep
                   ? "bg-brand-black text-white"
                   : "bg-neutral-200 text-neutral-400"
@@ -211,7 +211,7 @@ export function StepIndicator({
           {i < steps.length - 1 && (
             <div
               className={`w-8 h-0.5 ${
-                i < currentStep ? "bg-green-500" : "bg-neutral-200"
+                i < currentStep ? "bg-success" : "bg-neutral-200"
               }`}
             />
           )}
@@ -237,17 +237,17 @@ export function PreSubmitSummary({
   buttonLabel?: string;
 }) {
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 space-y-4">
-      <h3 className="text-sm font-bold text-amber-900">
+    <div className="bg-warning-light border border-warning rounded-xl p-6 space-y-4">
+      <h3 className="text-sm font-bold text-warning-text">
         Review before generating
       </h3>
       <div className="grid grid-cols-2 gap-3">
         {items.map((item) => (
           <div key={item.label}>
-            <span className="text-xs font-medium text-amber-700">
+            <span className="text-xs font-medium text-warning-text">
               {item.label}
             </span>
-            <p className="text-sm text-amber-900 font-medium">{item.value}</p>
+            <p className="text-sm text-warning-text font-medium">{item.value}</p>
           </div>
         ))}
       </div>
@@ -284,8 +284,8 @@ export function GuidanceMessage({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-      <p className="text-sm text-blue-800 leading-relaxed">
+    <div className="bg-info-light border border-info rounded-lg px-4 py-3">
+      <p className="text-sm text-info leading-relaxed">
         {text ?? children}
       </p>
     </div>
@@ -335,12 +335,12 @@ export function TextareaWithCount({
         rows={rows}
         maxLength={maxLength}
         className={`w-full px-4 py-2.5 rounded-lg border ${
-          isTooShort ? "border-amber-400" : "border-neutral-300"
+          isTooShort ? "border-warning" : "border-neutral-300"
         } bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-none`}
       />
       <div className="flex justify-between mt-1">
         {isTooShort && (
-          <span className="text-xs text-amber-600">
+          <span className="text-xs text-warning-text">
             Minimum {minLength} characters for best results
           </span>
         )}
@@ -426,20 +426,20 @@ export function FileUpload({
   // File selected state
   if (value) {
     return (
-      <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-green-300 bg-green-50">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-bold shrink-0">
+      <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-success bg-success-light">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-success-light text-success text-sm font-bold shrink-0">
           &#10003;
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-green-900 truncate">
+          <p className="text-sm font-medium text-success truncate">
             {value.name}
           </p>
-          <p className="text-xs text-green-600">{formatFileSize(value.size)}</p>
+          <p className="text-xs text-success">{formatFileSize(value.size)}</p>
         </div>
         <button
           type="button"
           onClick={handleRemove}
-          className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+          className="px-2.5 py-1 text-xs font-medium text-error border border-error rounded-lg hover:bg-error-light transition-colors"
         >
           Remove
         </button>
@@ -457,8 +457,8 @@ export function FileUpload({
         onClick={() => inputRef.current?.click()}
         className={`flex flex-col items-center justify-center gap-2 px-6 py-6 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
           dragOver
-            ? "border-brand-cerulean bg-blue-50"
-            : "border-neutral-300 bg-neutral-50 hover:border-brand-cerulean hover:bg-blue-50/50"
+            ? "border-brand-cerulean bg-info-light"
+            : "border-neutral-300 bg-neutral-50 hover:border-brand-cerulean hover:bg-info-light/50"
         }`}
       >
         <div className="text-neutral-400 text-2xl">&#8593;</div>
@@ -483,7 +483,7 @@ export function FileUpload({
         <p className="text-xs text-neutral-400 mt-1">{helperText}</p>
       )}
       {sizeError && (
-        <p className="text-xs text-red-500 mt-1">{sizeError}</p>
+        <p className="text-xs text-error mt-1">{sizeError}</p>
       )}
     </div>
   );

@@ -47,7 +47,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
   {
     id: "content-creation",
     accent: "bg-brand-cerulean/10",
-    accentText: "text-brand-cerulean",
+    accentText: "text-brand-cerulean-dark",
     accentBorder: "border-l-brand-cerulean",
     headline: "Every asset your campaign needs. On time.",
     subtitle:

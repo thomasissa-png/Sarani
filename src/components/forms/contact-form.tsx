@@ -496,7 +496,7 @@ export function ContactForm() {
         data to respond to your inquiry. See our{" "}
         <a
           href="/legal"
-          className="text-brand-cerulean underline underline-offset-2 transition-colors hover:text-brand-cerulean-light"
+          className="text-brand-cerulean-dark underline underline-offset-2 transition-colors hover:text-brand-cerulean"
         >
           Privacy Policy
         </a>

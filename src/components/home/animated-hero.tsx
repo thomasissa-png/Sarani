@@ -86,7 +86,7 @@ export function AnimatedHeroContent() {
     return (
       <div className="relative z-10 mx-auto w-full max-w-screen-xl px-5 md:px-8">
         <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-          <span className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean">
+          <span className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean-dark">
             {PRE_HEADLINE}
           </span>
           <h1 className="mb-4 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
@@ -147,7 +147,7 @@ export function AnimatedHeroContent() {
       <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
         {/* Pre-headline tag */}
         <motion.span
-          className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean"
+          className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean-dark"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}

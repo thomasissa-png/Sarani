@@ -26,7 +26,7 @@ export default function ContactPage() {
             Prefer email?{" "}
             <a
               href="mailto:team@sarani.studio"
-              className="text-brand-cerulean underline underline-offset-4 hover:text-brand-cerulean-light transition-colors"
+              className="text-brand-cerulean-dark underline underline-offset-4 hover:text-brand-cerulean transition-colors"
             >
               team@sarani.studio
             </a>

@@ -44,14 +44,14 @@ export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProp
       </p>
 
       <div className="flex flex-col gap-3">
-        <a
+        <Link
           href={`/work/${caseStudy.slug}`}
           onClick={handleClick}
-          className="inline-flex items-center gap-1 text-sm font-bold text-brand-cerulean transition-all duration-150 group-hover:gap-2"
+          className="inline-flex items-center gap-1 text-sm font-bold text-brand-cerulean-dark transition-all duration-150 group-hover:gap-2"
         >
           Read case study
           <span aria-hidden="true">&rarr;</span>
-        </a>
+        </Link>
 
         <Link
           href="/contact"

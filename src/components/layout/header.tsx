@@ -11,6 +11,7 @@ import { track, getDevice } from "@/lib/analytics";
 
 const NAV_LINKS = [
   { href: "/work", label: "Work" },
+  { href: "/services", label: "Services" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },

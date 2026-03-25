@@ -125,7 +125,7 @@ export default function PricingPage() {
       {/* Hero — bold, creative */}
       <Section ariaLabel="Pricing hero">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean">
+          <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean-dark">
             Transparent pricing
           </span>
           <h1 className="mb-6 text-5xl font-bold tracking-tight text-brand-black sm:text-6xl lg:text-7xl">

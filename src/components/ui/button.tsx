@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { type ButtonHTMLAttributes, type AnchorHTMLAttributes } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
@@ -35,7 +36,7 @@ const variantStyles: Record<ButtonVariant, string> = {
     "hover:bg-brand-black hover:text-brand-white",
   ].join(" "),
   ghost: [
-    "bg-transparent text-brand-cerulean",
+    "bg-transparent text-brand-cerulean-dark",
     "hover:underline hover:underline-offset-4",
   ].join(" "),
 };
@@ -66,6 +67,7 @@ export function Button({
 
   if ("href" in props && props.href) {
     const { href, ...rest } = props as ButtonAsLink;
+    const isInternal = href.startsWith("/") || href.startsWith("#");
     return (
       <motion.div
         className="inline-block"
@@ -73,9 +75,15 @@ export function Button({
         whileTap={{ scale: 0.96 }}
         transition={springTransition}
       >
-        <a href={href} className={classes} {...rest}>
-          {children}
-        </a>
+        {isInternal ? (
+          <Link href={href} className={classes} {...rest}>
+            {children}
+          </Link>
+        ) : (
+          <a href={href} className={classes} {...rest}>
+            {children}
+          </a>
+        )}
       </motion.div>
     );
   }

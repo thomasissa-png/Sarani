@@ -20,7 +20,7 @@ export default function NotFound() {
         </Button>
         <Link
           href="/"
-          className="text-sm text-brand-cerulean transition-colors duration-150 hover:underline hover:underline-offset-4"
+          className="text-sm text-brand-cerulean-dark transition-colors duration-150 hover:underline hover:underline-offset-4"
         >
           &larr; Back to homepage
         </Link>

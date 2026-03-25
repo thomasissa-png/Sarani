@@ -60,7 +60,7 @@ export function ProofCards() {
           whileHover={prefersReduced ? {} : { y: -4 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
-          <p className="mb-2 text-sm font-bold uppercase tracking-wider text-brand-cerulean">
+          <p className="mb-2 text-sm font-bold uppercase tracking-wider text-brand-cerulean-dark">
             {point.client}
           </p>
           <p className="mb-1 text-2xl font-bold text-brand-black">

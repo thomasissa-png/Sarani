@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { track, getDevice, getReferrer } from "@/lib/analytics";
 
@@ -27,15 +28,17 @@ export function TrackedCta({
   className,
   children,
 }: TrackedCtaProps) {
+  const pathname = usePathname();
+
   const handleClick = useCallback(() => {
     track("cta_click", {
       location: trackingLocation,
       label: trackingLabel,
-      page: "/",
+      page: pathname,
       device: getDevice(),
       referrer: getReferrer(),
     });
-  }, [trackingLocation, trackingLabel]);
+  }, [trackingLocation, trackingLabel, pathname]);
 
   return (
     <Button variant={variant} href={href} className={className} onClick={handleClick}>
