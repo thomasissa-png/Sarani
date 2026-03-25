@@ -236,7 +236,7 @@ export default function NewProjectPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
-              Client <span className="text-red-500">*</span>
+              Client <span className="text-error">*</span>
             </label>
             <select
               value={clientName}

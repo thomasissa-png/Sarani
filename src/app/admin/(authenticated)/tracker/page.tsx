@@ -54,18 +54,18 @@ function timeAgo(isoString: string | null): string {
 function getStatusBadgeClasses(status: string): string {
   const lower = status.toLowerCase();
   if (lower === "open") return "bg-neutral-200 text-neutral-600";
-  if (lower === "in progress") return "bg-blue-100 text-blue-700";
-  if (lower === "review") return "bg-purple-100 text-purple-700";
+  if (lower === "in progress") return "bg-info-light text-info";
+  if (lower === "review") return "bg-warning-light text-warning-text";
   if (lower === "closed" || lower === "delivered")
-    return "bg-green-100 text-green-700";
+    return "bg-success-light text-success";
   return "bg-neutral-200 text-neutral-600";
 }
 
 function getInvoiceBadgeClasses(status: string): string {
   const lower = status.toLowerCase();
-  if (lower === "paid") return "bg-green-100 text-green-700";
-  if (lower === "invoiced") return "bg-blue-100 text-blue-700";
-  if (lower === "overdue") return "bg-red-100 text-red-700";
+  if (lower === "paid") return "bg-success-light text-success";
+  if (lower === "invoiced") return "bg-info-light text-info";
+  if (lower === "overdue") return "bg-error-light text-error";
   if (lower === "open po") return "bg-neutral-200 text-neutral-600";
   return "bg-neutral-200 text-neutral-600";
 }
@@ -89,6 +89,7 @@ export default function TrackerPage() {
   const [clientFilter, setClientFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [invoiceFilter, setInvoiceFilter] = useState("All");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -174,6 +175,15 @@ export default function TrackerPage() {
     };
   }, [data]);
 
+  // Active filter count (for mobile badge)
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (clientFilter !== "All") count++;
+    if (statusFilter !== "All") count++;
+    if (invoiceFilter !== "All") count++;
+    return count;
+  }, [clientFilter, statusFilter, invoiceFilter]);
+
   // Oldest fetch timestamp for "cached X min ago"
   const oldestFetch = useMemo(() => {
     if (!data) return null;
@@ -213,8 +223,11 @@ export default function TrackerPage() {
         <div className="flex items-center gap-3 shrink-0">
           <Link
             href="/admin/tracker/new"
-            className="px-4 py-2 bg-brand-cerulean text-white text-sm font-semibold rounded-lg hover:bg-brand-cerulean/90 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
           >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
             New Project
           </Link>
           <button
@@ -261,57 +274,78 @@ export default function TrackerPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          placeholder="Search projects, clients, contacts..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-        />
-        <select
-          value={clientFilter}
-          onChange={(e) => setClientFilter(e.target.value)}
-          className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-        >
-          {clients.map((c) => (
-            <option key={c} value={c}>
-              {c === "All" ? "All Clients" : c}
-            </option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-        >
-          {PROJECT_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s === "All" ? "All Statuses" : s}
-            </option>
-          ))}
-        </select>
-        <select
-          value={invoiceFilter}
-          onChange={(e) => setInvoiceFilter(e.target.value)}
-          className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-        >
-          {INVOICE_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s === "All" ? "All Invoices" : s}
-            </option>
-          ))}
-        </select>
+      <div className="space-y-3">
+        <div className="flex gap-3">
+          <input
+            type="text"
+            placeholder="Search projects, clients, contacts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          />
+          {/* Mobile filter toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((prev) => !prev)}
+            className="sm:hidden inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm font-medium text-brand-black shrink-0"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-brand-black text-white rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </div>
+        {/* Dropdown filters -- always visible on sm+, toggle on mobile */}
+        <div className={`${mobileFiltersOpen ? "flex" : "hidden"} sm:flex flex-col sm:flex-row gap-3`}>
+          <select
+            value={clientFilter}
+            onChange={(e) => setClientFilter(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          >
+            {clients.map((c) => (
+              <option key={c} value={c}>
+                {c === "All" ? "All Clients" : c}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          >
+            {PROJECT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s === "All" ? "All Statuses" : s}
+              </option>
+            ))}
+          </select>
+          <select
+            value={invoiceFilter}
+            onChange={(e) => setInvoiceFilter(e.target.value)}
+            className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          >
+            {INVOICE_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s === "All" ? "All Invoices" : s}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-sm text-red-700">
+        <div className="bg-error-light border border-error rounded-xl px-5 py-4 text-sm text-error">
           <p className="font-medium">Failed to load tracker data</p>
-          <p className="mt-1 text-red-600">{error}</p>
+          <p className="mt-1 text-error">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-3 text-sm font-medium text-red-700 underline hover:no-underline"
+            className="mt-3 text-sm font-medium text-error underline hover:no-underline"
           >
             Retry
           </button>
@@ -542,7 +576,7 @@ function StatCard({
       <p
         className={`text-lg font-bold mt-0.5 ${
           variant === "danger" && value !== "0"
-            ? "text-red-600"
+            ? "text-error"
             : "text-brand-black"
         }`}
       >

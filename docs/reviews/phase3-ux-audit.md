@@ -157,3 +157,187 @@ The dashboard has a Tracker CTA card but no equivalent card for Quotes. If a use
 **"Generate PDF" button is at the bottom of a long form.** On mobile, the user scrolls past 8-10 input interactions before reaching the submit button. There is no sticky submit affordance. For a time-pressured PM filling out a quote on mobile, this increases perceived form length.
 
 *Fix (minor, medium-effort):* Make the "Generate PDF" button sticky at the bottom of the viewport on mobile only (`sticky bottom-0` inside the form card, visible only on `md:hidden`). Or add a floating action button. This is a quality-of-life improvement rather than a blocker.
+
+---
+
+## 4. Feedback & States — 8/10
+
+### What works
+
+**Loading skeleton on Tracker is well-executed.** `TrackerSkeleton` renders 4 stat cards + 8 table rows with `animate-pulse`, matching the final layout's structure. The skeleton accurately predicts what the loaded state will look like — the gold standard for skeleton screens.
+
+**Error state on Tracker is complete.** The red banner shows the API error message, includes a "Retry" link, and the message differentiates technical errors from empty states. This follows WCAG 2.2 guidance on error identification.
+
+**Stale data indicator is present.** When `isAnyCached` is true, the subtitle shows `(cached X min ago)` using `timeAgo()`. The integration status bar provides per-source granularity (ClickUp / SharePoint / Evoliz status dots) — particularly useful during a partial outage.
+
+**New Project result screen distinguishes partial vs full success.** The `allSuccess` vs `hasPartialFailure` logic drives different UI states — heading changes, retry button appears conditionally, each step shows its own status icon. This is the correct multi-step feedback pattern.
+
+**Login error state has `role="alert"` and `aria-live="polite"`.** The error message will be announced by screen readers without requiring the user to navigate to it. The `aria-invalid` attribute on the password field is correctly set when an error exists.
+
+**Quote generation: success and error banners are both implemented.** The success message distinguishes "uploaded to SharePoint" from "SharePoint upload skipped" — this contextual differentiation prevents false confidence.
+
+### Problems
+
+**P1 — Severity: Major. No progress indicator during PDF generation.**
+When the user clicks "Generate PDF", `generating` flips to true and the button label changes to "Generating...". PDF generation may take 3-10 seconds. For a PM on a slow mobile connection, the button label change alone is insufficient — the user may think the app has frozen.
+
+*Fix:* Add a pulsing bar or spinner inside the form card during generation, with text: "Generating your PDF — this takes a few seconds..." This sets correct expectations and prevents duplicate submissions.
+
+**P2 — Severity: Minor. Empty state for past quotes is not actionable.**
+When `pastQuotes.length === 0`, the card shows "No quotes found." with no contextual message or CTA.
+
+*Fix:* When filter is empty and quotes are 0: "No quotes generated yet. Fill out the form above to create your first quote." When a filter is active: "No quotes for [client name]. [Clear filter]"
+
+**P3 — Severity: Minor. Sync button provides no success confirmation.**
+After a successful sync, the button reverts to "Sync now" with no momentary confirmation. The user must infer success from data updating.
+
+*Fix:* After successful sync, briefly show "Synced ✓" on the button (2 seconds) then revert. Add a `syncSuccess` state boolean, reset via `setTimeout(2000)`.
+
+---
+
+## 5. Cognitive Load — 7.5/10
+
+### What works
+
+**Tracker page: data density is appropriate for the user.** Thomas and the ops team are power users managing 20-50+ projects across 10+ clients. The table approach with 9 columns is correct for this persona. Filters allow immediate narrowing.
+
+**New Project form: minimal and purposeful.** 6 fields, one card, one button. Every field serves a direct purpose in the automation. Cognitive load is low.
+
+**Dashboard stats (4 cards) are instantly scannable.** Total Clients / Active Clients / Total Outputs / Outputs This Week — one number each.
+
+**Progressive disclosure for division field.** The division dropdown only appears as a real dropdown when divisions exist for the selected client — otherwise it shows a disabled informational input.
+
+### Problems
+
+**P1 — Severity: Major. Quotes form requires 7 mandatory fields before any line items.**
+Client, Contact Name, Project Name, Currency, Purpose of Work, Scope and Deliverables — all required, all blank on every visit. For a PM generating a routine quote for an existing repeat client, filling 6 metadata fields from scratch is unnecessarily repetitive.
+
+*Fix (medium effort):* Pre-populate Contact Name from the client record in DB. Add a "Load from last quote" button next to the client selector that auto-fills Purpose of Work and Scope from the `quote_data` JSONB snapshot of the most recent quote for that client.
+
+**P2 — Severity: Major. No currency symbol in Unit Price input fields.**
+The Unit Price column header says "Unit Price" but the input is a bare number with no currency symbol. The Total column shows formatted currency (`€1,000`), but the input context is ambiguous — the user cannot confirm they are entering amounts in the correct currency without looking at the Currency dropdown.
+
+*Fix:* Add a currency symbol prefix to the Unit Price column header: `Unit Price (€)`. Update reactively when the Currency dropdown changes. Alternatively, use a styled input prefix group: `€ [input]`.
+
+**P3 — Severity: Minor. Dashboard "Recent Outputs" list is not clickable through to the output.**
+Clicking a client name goes to `/admin/clients/[id]`. The user cannot navigate directly to the output. A PM who wants to retrieve a "done" translation from 2h ago must navigate through the client page.
+
+*Fix:* Make each output row link to the output detail page, or add a visible "Open" icon button on row hover.
+
+---
+
+## 6. Micro-interactions — 6.5/10
+
+### What works
+
+**Hover states are consistently applied** across all interactive elements: nav items, table rows, CTA cards, buttons. The system is coherent and predictable.
+
+**Focus rings are consistently applied.** All interactive inputs use `focus:ring-2 focus:ring-brand-cerulean`. This meets WCAG 2.2 AA contrast requirements for focus indicators.
+
+**Active nav state is clear.** `bg-brand-black text-white` on the active nav item provides maximum contrast. The active state logic correctly distinguishes dashboard (exact match) from sub-pages (startsWith).
+
+**Mobile drawer animation.** `animate-in slide-in-from-left duration-200` provides smooth entrance. Escape key dismissal and route-change dismissal are both implemented correctly.
+
+**Tracker skeleton.** `animate-pulse` provides appropriate visual rhythm. Structure mirrors the final layout.
+
+**"Trusted by" section respects `prefers-reduced-motion`.** `useReducedMotion()` hook disables the scroll-triggered fade for users who have set the accessibility preference.
+
+### Problems
+
+**P1 — Severity: Major. Mobile marquee ignores `prefers-reduced-motion`.**
+The `animate-marquee` class runs unconditionally on mobile. The `prefersReduced` check disables the `whileInView` fade but not the continuous CSS marquee. Users with vestibular disorders may experience discomfort from continuous horizontal scrolling animation.
+
+*Fix:* Apply `animate-marquee` conditionally only when `!prefersReduced`. When reduced motion is preferred, show a static centered layout on mobile (same as desktop static grid).
+
+**P2 — Severity: Major. Mobile drawer backdrop appears without fade transition.**
+The drawer has `animate-in slide-in-from-left duration-200` but the backdrop (`bg-black/40`) appears instantaneously. The content is suddenly dimmed while the drawer slides in — jarring.
+
+*Fix:* Add `animate-in fade-in duration-200` to the backdrop div. This requires the animation classes from the same Tailwind animation package already in use.
+
+**P3 — Severity: Minor. Back arrow on New Project has undersized touch target.**
+The back arrow link in the New Project header is `w-5 h-5` (20px icon) with no padding. WCAG 2.2 AA minimum touch target is 24×24px; best practice is 44×44px.
+
+*Fix:* Wrap in `p-2` container or replace with a text link "← Back to Tracker" which naturally has a larger tap area.
+
+**P4 — Severity: Minor. No success micro-animation on "Sync now" button.**
+(See Section 4 P3.) Beyond the functional gap, the absence of a confirmatory cue makes the back-office feel less responsive.
+
+*Fix:* Brief color pulse on button: `bg-brand-black` → `bg-green-600` → `bg-brand-black` over 1.5s on sync success.
+
+**P5 — Severity: Minor. SharePoint / ClickUp action icons have no mobile label.**
+On desktop, `title` attribute provides a hover tooltip (acceptable for internal tool). On mobile, icon-only action buttons provide no label — the user cannot confirm which system they are opening before tapping.
+
+*Fix:* On mobile cards, replace icon-only buttons with short labeled buttons: "SP →" and "CU →". Use `md:hidden` / `hidden md:inline` to show labels only on mobile.
+
+---
+
+## 7. Global Assessment — 7/10
+
+### Overall verdict
+
+Phase 3 delivers a functional, coherent back-office for a small internal team. The core flows are completable without friction on desktop. Code quality is high — skeleton loading, error handling, stale data detection, and retry logic on multi-step writes are all production-grade. The mobile tracker (card layout) is well designed.
+
+The score stops at 7/10 because of four issues that block or significantly degrade the experience for the target user.
+
+### 4 Blockers before wider rollout
+
+| # | Problem | File | Impact | Fix cost |
+|---|---|---|---|---|
+| B1 | Quotes line item table overflows viewport on mobile | quotes/page.tsx | PM on mobile cannot fill line items | Medium (2-3h) |
+| B2 | Past quotes table has no mobile card layout | quotes/page.tsx | Past data inaccessible on mobile | Medium (1-2h) |
+| B3 | Required field markers absent on quotes form | quotes/page.tsx | Submit-fail loop on every first use | Low (30 min) |
+| B4 | Mobile marquee ignores prefers-reduced-motion | client-logos.tsx | Accessibility regression before public launch | Low (30 min) |
+
+### 7 Majors to address in next sprint
+
+| # | Problem | Section ref | Fix cost |
+|---|---|---|---|
+| M1 | "Projects" vs "Tracker" nav label confusion | IA | Low — rename label |
+| M2 | No "Quotes" CTA card on dashboard | IA | Low — copy Tracker card pattern |
+| M3 | No "Create another" button after project creation | Task/Desktop | Low |
+| M4 | No progress indicator during PDF generation | Feedback | Low-Medium |
+| M5 | No currency symbol in Unit Price input fields | Cognitive Load | Low |
+| M6 | Mobile drawer backdrop appears without fade | Micro-interactions | Low |
+| M7 | Admin header title map missing Tracker/Quotes routes | IA | Low — add 3 entries |
+
+### What to ship as-is
+
+- Tracker desktop experience (smooth PM workflow)
+- New Project form and retry logic (correct multi-step UX)
+- Login page (clean, accessible, password toggle, error state)
+- Sidebar navigation structure and mobile drawer (Escape key, route-change close)
+- Integration status bar (clear, scannable health indicators)
+- Tracker skeleton (correctly structured against final layout)
+- Client logos fade animation on front-office (reduce-motion respected — just fix marquee)
+
+---
+
+## Hypotheses to Validate
+
+- [HYPOTHESE] A PM generating quotes typically reuses the same client and contact across multiple quotes. Pre-filling from last quote would save 60-90 seconds per quote. To confirm: ask Thomas if repeat-client quotes represent more than 50% of usage.
+- [HYPOTHESE] The 40% mobile usage (project-context.md) likely concentrates on Tracker (read-only scan) rather than the Quotes form (complex write). If confirmed, blocker severity on quotes/mobile may be lower in practice. To confirm: add Umami events per page and device type.
+
+---
+
+## Auto-evaluation
+
+| Criterion | Status |
+|---|---|
+| Each screen justified by persona need | Yes — Sophie/Thomas PM persona drives every recommendation |
+| Edge cases and error states covered | Yes — all identified, gaps explicitly flagged |
+| Steps to aha moment documented | Yes — Tracker: 1 click from dashboard. New Project: 6 fields + 1 click. Quote: 8 fields + 1 click |
+| WCAG 2.2 AA compliance | Partial — focus rings pass, marquee fails reduced-motion, back arrow fails touch target |
+| Consistency with functional specs | Yes — all spec features (retry, stale data, partial results) covered |
+
+---
+
+**Handoff → @orchestrator**
+
+- Files produced: `/home/user/Sarani/docs/reviews/phase3-ux-audit.md`
+- Decisions taken: 4 blockers identified (quotes mobile overflow, past quotes no mobile layout, missing required field markers, marquee accessibility). 7 majors for next sprint. Desktop tracker and new project flows are production-ready.
+- Points of attention:
+  - B1 and B2 (quotes mobile) must be assigned to @fullstack before any rollout to ops team members who are on mobile
+  - B3 (required field markers) is a 30-minute fix — include in next PR
+  - B4 (marquee reduced-motion) is an accessibility regression — must fix before public launch
+  - M5 (currency symbol) is low-effort, high-clarity — include in same PR as B3
+  - M1 ("Projects" vs "Tracker" naming) should be aligned with @product-manager before renaming to keep DB model labels consistent

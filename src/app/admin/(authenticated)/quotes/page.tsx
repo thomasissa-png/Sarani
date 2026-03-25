@@ -221,7 +221,7 @@ export default function QuotesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
-              Client
+              Client <span className="text-error">*</span>
             </label>
             <select
               value={clientName}
@@ -238,7 +238,7 @@ export default function QuotesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
-              Contact Name
+              Contact Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -254,7 +254,7 @@ export default function QuotesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-brand-black mb-1.5">
-              Project Name
+              Project Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -283,7 +283,7 @@ export default function QuotesPage() {
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-brand-black mb-1.5">
-            Purpose of Work
+            Purpose of Work <span className="text-error">*</span>
           </label>
           <textarea
             value={description}
@@ -297,7 +297,7 @@ export default function QuotesPage() {
         {/* Scope */}
         <div>
           <label className="block text-sm font-medium text-brand-black mb-1.5">
-            Scope and Deliverables
+            Scope and Deliverables <span className="text-error">*</span>
           </label>
           <textarea
             value={scope}
@@ -401,12 +401,12 @@ export default function QuotesPage() {
 
         {/* Error / Success */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          <div className="bg-error-light border border-error rounded-lg px-4 py-3 text-sm text-error">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700">
+          <div className="bg-success-light border border-success rounded-lg px-4 py-3 text-sm text-success">
             {success}
           </div>
         )}
