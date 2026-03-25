@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const projectMap = new Map<
       string,
       {
-        clientId: string;
+        clientId: string | null;
         clientName: string;
         briefSummary: string;
         tasks: ProjectTask[];

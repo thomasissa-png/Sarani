@@ -1,0 +1,1 @@
+ALTER TABLE "agent_outputs" ALTER COLUMN "client_id" DROP NOT NULL;
