@@ -245,8 +245,19 @@ export async function GET() {
       evolizResult.invoices
     );
 
+    // S-01/S-02: Strip financial data for non-admin users
+    // Per spec BR-INT-02: "A user role never sees financial data (invoice amounts, billing status)"
+    const filteredProjects = session.role === "admin"
+      ? projects
+      : projects.map(({ totalValue, invoiceStatus, invoiceNumber, ...rest }) => ({
+          ...rest,
+          totalValue: null,
+          invoiceStatus: "",
+          invoiceNumber: "",
+        }));
+
     const response: TrackerResponse = {
-      projects,
+      projects: filteredProjects,
       sources: {
         clickup: clickupResult.meta,
         sharepoint: excelResult.meta,

@@ -4,6 +4,8 @@ import { getUserFromSession } from "@/lib/auth";
 import {
   getListsForSpace,
   createTask,
+  getTasksForList,
+  setCustomFieldValue,
   type ClickUpTask,
 } from "@/lib/integrations/clickup";
 import {
@@ -12,6 +14,7 @@ import {
   writeExcelRows,
   createFolder,
   resolveSheetName,
+  SharePointApiError,
   type DriveItem,
 } from "@/lib/integrations/sharepoint";
 import { logSync, acquireAdvisoryLock } from "@/lib/integrations/cache";
@@ -24,7 +27,24 @@ import {
   getTrackerFullPath,
   getMappingBySpaceName,
 } from "@/lib/integrations/config";
-import { setCustomFieldValue } from "@/lib/integrations/clickup";
+import { COL_MAP, findColumnIndex } from "@/lib/integrations/excel-parser";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Convert a 1-based column number to an Excel column letter (e.g. 1->A, 26->Z, 27->AA, 50->AX).
+ * Handles multi-letter columns beyond Z.
+ */
+function columnNumberToLetter(n: number): string {
+  let result = "";
+  let num = n;
+  while (num > 0) {
+    const remainder = (num - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    num = Math.floor((num - 1) / 26);
+  }
+  return result;
+}
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -133,18 +153,30 @@ export async function POST(request: NextRequest) {
         ? lists.find((l) => l.name.toLowerCase() === data.division.toLowerCase()) ?? lists[0]
         : lists[0];
 
-      clickupTask = await createTask(targetList.id, {
-        name: data.projectName,
-        description: [
-          `Client: ${data.clientName}`,
-          data.contactName ? `Contact: ${data.contactName}` : "",
-          data.category ? `Category: ${data.category}` : "",
-          data.division ? `Division: ${data.division}` : "",
-          data.estimatedValue ? `Estimated value: ${data.estimatedValue}` : "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      });
+      // R-04: Check for duplicate task name before creating
+      const existingTasks = await getTasksForList(targetList.id);
+      const normalizedName = data.projectName.toLowerCase().trim();
+      const duplicate = existingTasks.tasks.find(
+        (t) => t.name.toLowerCase().trim() === normalizedName
+      );
+
+      if (duplicate) {
+        // Return existing task instead of creating a duplicate
+        clickupTask = duplicate;
+      } else {
+        clickupTask = await createTask(targetList.id, {
+          name: data.projectName,
+          description: [
+            `Client: ${data.clientName}`,
+            data.contactName ? `Contact: ${data.contactName}` : "",
+            data.category ? `Category: ${data.category}` : "",
+            data.division ? `Division: ${data.division}` : "",
+            data.estimatedValue ? `Estimated value: ${data.estimatedValue}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        });
+      }
 
       result.clickup = {
         success: true,
@@ -292,18 +324,15 @@ export async function POST(request: NextRequest) {
         h !== null && h !== undefined ? String(h).toLowerCase().trim() : ""
       ) ?? [];
 
-      // Column mapping (same aliases as tracker route's COL_MAP)
-      const findCol = (aliases: string[]): number =>
-        headers.findIndex((h) => aliases.includes(h));
-
-      const colCustomer = findCol(["customer", "client"]);
-      const colProject = findCol(["project", "project name", "project description"]);
-      const colDate = findCol(["date"]);
-      const colContact = findCol(["contact", "contact name"]);
-      const colStatus = findCol(["status"]);
-      const colCategory = findCol(["category", "cat", "cat."]);
-      const colTotalValue = findCol(["total value", "total value (eur)", "total", "total eur"]);
-      const colLink = findCol(["link", "sharepoint link", "folder link", "sharepoint"]);
+      // A-02: Reuse COL_MAP and findColumnIndex from excel-parser.ts
+      const colCustomer = findColumnIndex(headers, COL_MAP.customer);
+      const colProject = findColumnIndex(headers, COL_MAP.project);
+      const colDate = findColumnIndex(headers, COL_MAP.date);
+      const colContact = findColumnIndex(headers, COL_MAP.contact);
+      const colStatus = findColumnIndex(headers, COL_MAP.status);
+      const colCategory = findColumnIndex(headers, COL_MAP.category);
+      const colTotalValue = findColumnIndex(headers, COL_MAP.totalValue);
+      const colLink = findColumnIndex(headers, COL_MAP.link);
 
       // Build row data using detected column positions
       const numCols = headers.length || 8;
@@ -318,8 +347,9 @@ export async function POST(request: NextRequest) {
       if (colTotalValue !== -1) rowData[colTotalValue] = data.estimatedValue ?? null;
       if (colLink !== -1) rowData[colLink] = folderUrl ?? "";
 
-      // Build the range address from A to the last column letter
-      const lastColLetter = String.fromCharCode(64 + numCols); // 8 -> H
+      // A-01: Build the range address from A to the last column letter
+      // Uses columnNumberToLetter() to support >26 columns (AA, AB, AX, etc.)
+      const lastColLetter = columnNumberToLetter(numCols);
       const rangeAddress = `A${nextRow}:${lastColLetter}${nextRow}`;
       await writeExcelRows(
         SHAREPOINT_TRACKERS_DRIVE_ID,
@@ -342,7 +372,14 @@ export async function POST(request: NextRequest) {
         await releaseLock();
       }
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : "Unknown error";
+      // R-03: Handle Excel file lock (423) with user-friendly message
+      const is423 =
+        err instanceof SharePointApiError && err.statusCode === 423;
+      const errMsg = is423
+        ? "The Excel tracker is currently being edited by another user. Please try again in a few minutes."
+        : err instanceof Error
+          ? err.message
+          : "Unknown error";
       result.excel = { success: false, error: errMsg };
       await logSync({
         source: "sharepoint",
