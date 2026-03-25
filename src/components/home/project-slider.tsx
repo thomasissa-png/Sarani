@@ -48,7 +48,7 @@ function ProjectCard({ client, title, category, image, proof }: Project) {
         />
       </div>
       <div className="p-4">
-        <p className="text-xs font-bold uppercase tracking-wider text-brand-flame">
+        <p className="text-xs font-bold uppercase tracking-wider text-brand-flame-dark">
           {client}
         </p>
         <p className="mt-1 text-sm font-bold text-brand-black">

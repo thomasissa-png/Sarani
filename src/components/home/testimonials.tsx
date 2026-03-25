@@ -113,7 +113,7 @@ export function Testimonials() {
         >
           <p className="text-base font-bold text-brand-black">{t.name}</p>
           <p className="text-sm text-neutral-500">{t.role}</p>
-          <p className="mt-1 text-xs font-bold uppercase tracking-wider text-brand-flame">
+          <p className="mt-1 text-xs font-bold uppercase tracking-wider text-brand-flame-dark">
             {t.service}
           </p>
         </motion.div>

@@ -33,7 +33,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
   {
     id: "strategic-marketing",
     accent: "bg-brand-flame/10",
-    accentText: "text-brand-flame",
+    accentText: "text-brand-flame-dark",
     accentBorder: "border-l-brand-flame",
     headline: "The brief before the brief.",
     subtitle:
@@ -85,7 +85,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
   {
     id: "on-demand",
     accent: "bg-brand-flame/10",
-    accentText: "text-brand-flame",
+    accentText: "text-brand-flame-dark",
     accentBorder: "border-l-brand-flame",
     headline: "Need something that doesn\u2019t fit a category?",
     subtitle:

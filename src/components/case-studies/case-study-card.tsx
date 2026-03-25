@@ -33,7 +33,7 @@ export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProp
         {caseStudy.keyMetric}
       </span>
 
-      <p className="mb-1 text-sm font-medium uppercase tracking-wider text-brand-flame">
+      <p className="mb-1 text-sm font-medium uppercase tracking-wider text-brand-flame-dark">
         {caseStudy.client}
       </p>
       <p className="mb-3 text-lg font-bold text-brand-black">

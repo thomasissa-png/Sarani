@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
+import { Button } from "@/components/ui/button";
 import { CaseStudyCard } from "@/components/case-studies/case-study-card";
 import { caseStudies } from "@/data/case-studies";
 
@@ -35,6 +36,21 @@ export default function WorkPage() {
               trackingLocation="work_listing"
             />
           ))}
+        </div>
+      </Section>
+
+      {/* Footer CTA */}
+      <Section ariaLabel="Start your project">
+        <div className="text-center">
+          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
+            Ready to see what we can do for you?
+          </h2>
+          <p className="mx-auto mb-8 max-w-xl text-neutral-500">
+            First project satisfaction or no invoice.
+          </p>
+          <Button variant="primary" href="/contact">
+            Start a project
+          </Button>
         </div>
       </Section>
     </div>

@@ -89,7 +89,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
               ))}
             </div>
           )}
-          <p className="mb-4 text-sm font-medium uppercase tracking-wider text-brand-flame">
+          <p className="mb-4 text-sm font-medium uppercase tracking-wider text-brand-flame-dark">
             {cs.client}
           </p>
           <h1 className="mb-6 text-3xl font-bold leading-tight text-brand-black sm:text-4xl lg:text-5xl">
@@ -126,11 +126,6 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
             </div>
           </div>
         </div>
-      </Section>
-
-      {/* Hero image placeholder */}
-      <Section ariaLabel="Project imagery" tight>
-        <div className="aspect-video w-full rounded-2xl bg-surface-elevated" />
       </Section>
 
       {/* Challenge + Solution */}
@@ -230,14 +225,6 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
         <p className="mt-8 text-center text-lg font-medium text-neutral-600">
           {cs.resultsDetail || cs.result}
         </p>
-      </Section>
-
-      {/* Gallery placeholder */}
-      <Section ariaLabel="Project gallery" tight>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="aspect-video rounded-2xl bg-surface-elevated" />
-          <div className="aspect-video rounded-2xl bg-surface-elevated" />
-        </div>
       </Section>
 
       {/* Closing CTA */}
