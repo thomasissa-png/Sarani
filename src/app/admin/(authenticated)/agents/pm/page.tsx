@@ -8,6 +8,7 @@ import { PRIORITY_OPTIONS } from "@/lib/validations/pm";
 import {
   ClientSelector,
   FormField,
+  FileUpload,
   GuidanceMessage,
   RecommendedBadge,
   StepIndicator,
@@ -30,6 +31,7 @@ type FormState = {
   internalNote: string;
   clickupProjectIdOverride: string;
   preferredAgents: string[];
+  briefAttachment: File | null;
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -89,6 +91,7 @@ export default function PMAgentPage() {
     internalNote: "",
     clickupProjectIdOverride: "",
     preferredAgents: [],
+    briefAttachment: null,
   });
 
   // Analysis state
@@ -462,6 +465,19 @@ export default function PMAgentPage() {
                         );
                       })}
                     </div>
+                  </FormField>
+
+                  <FormField
+                    label="Brief Attachment"
+                    helperText="Attach the client's original brief (PDF or DOCX). Useful when the brief was received as a document rather than email."
+                  >
+                    <FileUpload
+                      value={form.briefAttachment}
+                      onChange={(file) =>
+                        setForm((prev) => ({ ...prev, briefAttachment: file }))
+                      }
+                      accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    />
                   </FormField>
                 </div>
               )}

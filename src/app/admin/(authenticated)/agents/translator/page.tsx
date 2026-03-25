@@ -12,6 +12,7 @@ import {
 import {
   ClientSelector,
   FormField,
+  FileUpload,
   GuidanceMessage,
   RecommendedBadge,
   StepIndicator,
@@ -36,6 +37,7 @@ type FormState = {
   showGlossaryHits: boolean;
   contextNote: string;
   preserveFormatting: boolean;
+  documentUpload: File | null;
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Translate"];

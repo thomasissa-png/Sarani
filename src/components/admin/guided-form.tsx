@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, type DragEvent } from "react";
 import type { Client } from "@/lib/db/schema";
 
 // ─── Client Context Panel ────────────────────────────────────────────────────
@@ -350,6 +350,141 @@ export function TextareaWithCount({
           {minLength > 0 && count === 0 && ` (min ${minLength})`}
         </span>
       </div>
+    </div>
+  );
+}
+
+// ─── File Upload ────────────────────────────────────────────────────────────
+// Drag & drop zone + click to browse. Stores file in state (base64 for v1).
+
+const DEFAULT_ACCEPT =
+  ".pdf,.docx,.doc,.png,.jpg,.jpeg,.svg,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/svg+xml,application/zip";
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function FileUpload({
+  value,
+  onChange,
+  accept,
+  helperText,
+  maxSizeMB = 10,
+}: {
+  value: File | null;
+  onChange: (file: File | null) => void;
+  accept?: string;
+  helperText?: string;
+  maxSizeMB?: number;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [sizeError, setSizeError] = useState<string | null>(null);
+
+  function handleFile(file: File | undefined) {
+    if (!file) return;
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      setSizeError(`File exceeds ${maxSizeMB} MB limit.`);
+      return;
+    }
+    setSizeError(null);
+    onChange(file);
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    handleFile(file);
+  }
+
+  function handleDragOver(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }
+
+  function handleDragLeave(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }
+
+  function handleRemove() {
+    onChange(null);
+    setSizeError(null);
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  }
+
+  const effectiveAccept = accept || DEFAULT_ACCEPT;
+
+  // File selected state
+  if (value) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3 rounded-lg border border-green-300 bg-green-50">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 text-sm font-bold shrink-0">
+          &#10003;
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-green-900 truncate">
+            {value.name}
+          </p>
+          <p className="text-xs text-green-600">{formatFileSize(value.size)}</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleRemove}
+          className="px-2.5 py-1 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+        >
+          Remove
+        </button>
+      </div>
+    );
+  }
+
+  // Drop zone state
+  return (
+    <div>
+      <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onClick={() => inputRef.current?.click()}
+        className={`flex flex-col items-center justify-center gap-2 px-6 py-6 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+          dragOver
+            ? "border-brand-cerulean bg-blue-50"
+            : "border-neutral-300 bg-neutral-50 hover:border-brand-cerulean hover:bg-blue-50/50"
+        }`}
+      >
+        <div className="text-neutral-400 text-2xl">&#8593;</div>
+        <p className="text-sm text-neutral-600">
+          <span className="font-medium text-brand-cerulean">
+            Click to browse
+          </span>{" "}
+          or drag and drop
+        </p>
+        <p className="text-xs text-neutral-400">
+          PDF, DOCX, PNG, JPG, SVG, ZIP — max {maxSizeMB} MB
+        </p>
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={effectiveAccept}
+        onChange={(e) => handleFile(e.target.files?.[0])}
+        className="hidden"
+      />
+      {helperText && (
+        <p className="text-xs text-neutral-400 mt-1">{helperText}</p>
+      )}
+      {sizeError && (
+        <p className="text-xs text-red-500 mt-1">{sizeError}</p>
+      )}
     </div>
   );
 }
