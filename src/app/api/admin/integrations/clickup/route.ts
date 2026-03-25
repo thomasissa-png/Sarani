@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
-import { getSpaces, getListsForSpace, ClickUpApiError } from "@/lib/integrations/clickup";
+import { getSpaces, getListsForSpace } from "@/lib/integrations/clickup";
 import { fetchWithCache, logSync } from "@/lib/integrations/cache";
 import { CACHE_TTL } from "@/lib/integrations/config";
+import { handleIntegrationError } from "@/lib/integrations/error-handler";
 
 interface SpaceWithLists {
   id: string;
@@ -63,52 +64,16 @@ export async function GET() {
       data: result.data,
     });
   } catch (error) {
-    // Check if ClickUp is not configured
-    if (
-      error instanceof Error &&
-      error.message.includes("environment variable is not set")
-    ) {
-      return NextResponse.json(
-        {
-          status: "unavailable",
-          cached: false,
-          error: "ClickUp integration is not configured.",
-          data: null,
-        },
-        { status: 200 }
-      );
-    }
+    // A-03: Log before delegating to centralized error handler
+    await logSync({
+      source: "clickup",
+      action: "fetch_spaces_with_lists",
+      status: "error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    }).catch(() => {
+      // Don't let logging failure mask the original error
+    });
 
-    if (error instanceof ClickUpApiError) {
-      await logSync({
-        source: "clickup",
-        action: "fetch_spaces_with_lists",
-        status: "error",
-        error: error.message,
-      }).catch(() => {
-        // Don't let logging failure mask the original error
-      });
-
-      return NextResponse.json(
-        {
-          status: "unavailable",
-          cached: false,
-          error: `ClickUp API error: ${error.statusCode}`,
-          data: null,
-        },
-        { status: 200 }
-      );
-    }
-
-    console.error("ClickUp integration error:", error);
-    return NextResponse.json(
-      {
-        status: "unavailable",
-        cached: false,
-        error: "Unexpected error fetching ClickUp data.",
-        data: null,
-      },
-      { status: 200 }
-    );
+    return handleIntegrationError(error, { source: "clickup" });
   }
 }

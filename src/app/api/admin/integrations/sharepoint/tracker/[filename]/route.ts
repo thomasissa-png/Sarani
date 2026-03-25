@@ -4,7 +4,6 @@ import {
   getDriveItemByPath,
   readExcelUsedRange,
   resolveSheetName,
-  SharePointApiError,
 } from "@/lib/integrations/sharepoint";
 import { fetchWithCache, logSync } from "@/lib/integrations/cache";
 import {
@@ -14,6 +13,7 @@ import {
   EXCEL_SHEET_NAME_CANDIDATES,
   getMappingByTrackerFilename,
 } from "@/lib/integrations/config";
+import { handleIntegrationError } from "@/lib/integrations/error-handler";
 
 interface TrackerData {
   filename: string;
@@ -121,53 +121,14 @@ export async function GET(
       data: result.data,
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("environment variable is not set")
-    ) {
-      return NextResponse.json(
-        {
-          status: "unavailable",
-          cached: false,
-          error: "SharePoint integration is not configured.",
-          data: null,
-        },
-        { status: 200 }
-      );
-    }
+    // A-03: Log before delegating to centralized error handler
+    await logSync({
+      source: "sharepoint",
+      action: "read_tracker",
+      status: "error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    }).catch(() => {});
 
-    if (error instanceof SharePointApiError) {
-      const isNotFound = error.statusCode === 404;
-
-      await logSync({
-        source: "sharepoint",
-        action: "read_tracker",
-        status: "error",
-        error: error.message,
-      }).catch(() => {});
-
-      return NextResponse.json(
-        {
-          status: "unavailable",
-          cached: false,
-          error: isNotFound
-            ? "Tracker file not found. Check SharePoint configuration."
-            : `SharePoint API error: ${error.statusCode}`,
-          data: null,
-        },
-        { status: isNotFound ? 404 : 200 }
-      );
-    }
-
-    console.error("SharePoint tracker read error:", error);
-    return NextResponse.json(
-      {
-        status: "unavailable",
-        cached: false,
-        error: "Unexpected error reading tracker data.",
-        data: null,
-      },
-      { status: 200 }
-    );
+    return handleIntegrationError(error, { source: "sharepoint" });
   }
 }

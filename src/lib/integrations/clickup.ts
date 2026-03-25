@@ -223,12 +223,22 @@ export async function getAllTasksForList(
   const allTasks: ClickUpTask[] = [];
   let page = 0;
   let lastPage = false;
+  const MAX_PAGES = 50;
 
   while (!lastPage) {
     const result = await getTasksForList(listId, { page });
     allTasks.push(...result.tasks);
     lastPage = result.last_page;
     page++;
+
+    // R-02: Safety limit to prevent unbounded pagination on misconfigured lists
+    if (page >= MAX_PAGES && !lastPage) {
+      console.warn(
+        `[ClickUp] getAllTasksForList hit ${MAX_PAGES}-page safety limit for list ${listId}. ` +
+        `${allTasks.length} tasks fetched so far. Remaining tasks will be truncated.`
+      );
+      break;
+    }
   }
 
   return allTasks;

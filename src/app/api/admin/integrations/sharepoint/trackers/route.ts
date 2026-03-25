@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
-import {
-  listDriveItems,
-  SharePointApiError,
-} from "@/lib/integrations/sharepoint";
+import { listDriveItems } from "@/lib/integrations/sharepoint";
 import { fetchWithCache, logSync } from "@/lib/integrations/cache";
 import {
   SHAREPOINT_TRACKERS_DRIVE_ID,
   TRACKERS_BASE_PATH,
   CACHE_TTL,
 } from "@/lib/integrations/config";
+import { handleIntegrationError } from "@/lib/integrations/error-handler";
 
 interface TrackerFileInfo {
   id: string;
@@ -72,49 +70,14 @@ export async function GET() {
       data: result.data,
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("environment variable is not set")
-    ) {
-      return NextResponse.json(
-        {
-          status: "unavailable",
-          cached: false,
-          error: "SharePoint integration is not configured.",
-          data: null,
-        },
-        { status: 200 }
-      );
-    }
+    // A-03: Log before delegating to centralized error handler
+    await logSync({
+      source: "sharepoint",
+      action: "list_tracker_files",
+      status: "error",
+      error: error instanceof Error ? error.message : "Unknown error",
+    }).catch(() => {});
 
-    if (error instanceof SharePointApiError) {
-      await logSync({
-        source: "sharepoint",
-        action: "list_tracker_files",
-        status: "error",
-        error: error.message,
-      }).catch(() => {});
-
-      return NextResponse.json(
-        {
-          status: "unavailable",
-          cached: false,
-          error: `SharePoint API error: ${error.statusCode}`,
-          data: null,
-        },
-        { status: 200 }
-      );
-    }
-
-    console.error("SharePoint trackers error:", error);
-    return NextResponse.json(
-      {
-        status: "unavailable",
-        cached: false,
-        error: "Unexpected error fetching tracker list.",
-        data: null,
-      },
-      { status: 200 }
-    );
+    return handleIntegrationError(error, { source: "sharepoint" });
   }
 }
