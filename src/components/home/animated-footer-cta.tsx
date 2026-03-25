@@ -28,7 +28,7 @@ export function AnimatedFooterCta() {
         </FadeInUp>
         <FadeInUp delay={0.25}>
           <p className="mt-6 text-sm text-neutral-400">
-            No commitment required.
+            First project satisfaction or no invoice.
           </p>
         </FadeInUp>
         <FadeInUp delay={0.35}>

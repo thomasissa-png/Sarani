@@ -55,12 +55,12 @@ export function AnimatedHeroDots() {
 
 /* ---------- Pre-headline ---------- */
 
-const PRE_HEADLINE = "THE ENTERPRISE CREATIVE PARTNER";
+const PRE_HEADLINE = "TIKTOK. SONY. ADIDAS. GEODIS.";
 
 /* ---------- Value props ---------- */
 
 const SUBTITLE =
-  "Enterprise creative shouldn\u2019t mean enterprise delays. 24-hour delivery. Fixed prices. Unlimited revisions.";
+  "The agency enterprises call when every other agency says two weeks. Fixed prices. Unlimited revisions. First project satisfaction or no invoice.";
 
 const VALUE_PROPS = [
   "24/7 availability",
@@ -90,9 +90,9 @@ export function AnimatedHeroContent() {
             {PRE_HEADLINE}
           </span>
           <h1 className="mb-4 text-6xl font-bold leading-[1.05] tracking-tight text-brand-black sm:text-7xl lg:text-8xl xl:text-[7rem]">
-            Unlimited
+            Enterprise creative.
             <br />
-            Creativity
+            Delivered in 24 hours.
           </h1>
           <p className="mb-6 max-w-2xl text-lg text-neutral-600 md:text-xl">
             {SUBTITLE}
@@ -121,19 +121,22 @@ export function AnimatedHeroContent() {
               href="/contact"
               variant="primary"
               trackingLocation="hero"
-              trackingLabel="lets_chat"
+              trackingLabel="start_a_project"
             >
-              Let&apos;s chat
+              Start a project
             </TrackedCta>
             <TrackedCta
-              href="/pricing"
+              href="/work"
               variant="secondary"
               trackingLocation="hero"
-              trackingLabel="discover_prices"
+              trackingLabel="see_our_work"
             >
-              Discover our prices
+              See our work
             </TrackedCta>
           </div>
+          <p className="mt-3 text-sm text-neutral-500">
+            First project satisfaction or no invoice.
+          </p>
         </div>
       </div>
     );
@@ -165,7 +168,7 @@ export function AnimatedHeroContent() {
                 ease: [0.25, 0.1, 0.25, 1],
               }}
             >
-              Unlimited
+              Enterprise creative.
             </motion.span>
           </span>
           <span className="block overflow-hidden">
@@ -179,7 +182,7 @@ export function AnimatedHeroContent() {
                 ease: [0.25, 0.1, 0.25, 1],
               }}
             >
-              Creativity
+              Delivered in 24 hours.
             </motion.span>
           </span>
         </h1>
@@ -251,19 +254,27 @@ export function AnimatedHeroContent() {
             href="/contact"
             variant="primary"
             trackingLocation="hero"
-            trackingLabel="lets_chat"
+            trackingLabel="start_a_project"
           >
-            Let&apos;s chat
+            Start a project
           </TrackedCta>
           <TrackedCta
-            href="/pricing"
+            href="/work"
             variant="secondary"
             trackingLocation="hero"
-            trackingLabel="discover_prices"
+            trackingLabel="see_our_work"
           >
-            Discover our prices
+            See our work
           </TrackedCta>
         </motion.div>
+        <motion.p
+          className="mt-3 text-sm text-neutral-500"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 1.5, ease: [0.25, 0.1, 0.25, 1] }}
+        >
+          First project satisfaction or no invoice.
+        </motion.p>
       </div>
     </div>
   );

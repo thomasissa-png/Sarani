@@ -144,8 +144,8 @@ export default function PricingPage() {
       <div className="bg-brand-black">
         <div className="mx-auto max-w-screen-xl px-5 py-5 md:px-8">
           <p className="text-center text-lg font-bold text-brand-white">
-            🛡️ Not satisfied with your first project?{" "}
-            <span className="text-brand-lemon">No invoice.</span>
+            Not satisfied with your first project?{" "}
+            <span className="text-brand-lemon">No invoice.</span> No questions.
           </p>
         </div>
       </div>
@@ -176,10 +176,10 @@ export default function PricingPage() {
       <Section ariaLabel="Pricing comparison" className="bg-brand-black">
         <div className="mx-auto max-w-3xl">
           <h2 className="mb-3 text-center text-3xl font-bold text-brand-white sm:text-4xl">
-            Why pay more for less?
+            The numbers speak.
           </h2>
           <p className="mb-10 text-center text-neutral-400">
-            Same quality. Fraction of the cost. Here's the math.
+            GEODIS: 350 presentations, 3 weeks, 8,500€. Their previous agency quoted 80,000€.
           </p>
 
           <div className="overflow-x-auto">

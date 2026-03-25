@@ -122,6 +122,9 @@ export default function HomePage() {
             >
               Start a project
             </TrackedCta>
+            <p className="mt-3 text-sm text-neutral-500">
+              First project satisfaction or no invoice.
+            </p>
           </FadeInUp>
         </AnimatedSection>
       </Section>

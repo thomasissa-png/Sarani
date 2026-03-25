@@ -15,19 +15,27 @@ import Image from "next/image";
  * - Position indicator dots below
  */
 
-const PROJECTS = [
-  { client: "Adidas", title: "The Sound of Superstar(s)", category: "Event Campaign", image: "/images/hero-adidas-arena.png" },
-  { client: "Lego", title: "Le Grand Tournoi Des Champs", category: "Marketing Assets", image: "/images/hero-lego.png" },
-  { client: "Sony", title: "ULT Power Sound", category: "Campaign", image: "/images/hero-sony-ult.png" },
-  { client: "TikTok", title: "Unlearn Beauty 3.0", category: "Marketing Assets", image: "/images/hero-tiktok-beauty.png" },
-  { client: "Bose", title: "Smart Ultra Soundbar", category: "Graphic Design", image: "/images/hero-bose.png" },
-  { client: "Air Corsica", title: "Route Launches", category: "Marketing Assets", image: "/images/hero-aircorsica.png" },
-  { client: "Sony", title: "ZV-E10 II Camera", category: "Graphic Design", image: "/images/hero-sony-camera.png" },
-  { client: "Adidas", title: "Superstar", category: "Campaign", image: "/images/hero-adidas-superstar.png" },
-  { client: "TikTok", title: "Creator Content", category: "Video Production", image: "/images/hero-tiktok-creator.png" },
+type Project = {
+  client: string;
+  title: string;
+  category: string;
+  image: string;
+  proof?: string | null;
+};
+
+const PROJECTS: readonly Project[] = [
+  { client: "Adidas", title: "The Sound of Superstar(s)", category: "Event Campaign", image: "/images/hero-adidas-arena.png", proof: "92 assets. Delivered before the event." },
+  { client: "Lego", title: "Le Grand Tournoi Des Champs", category: "Marketing Assets", image: "/images/hero-lego.png", proof: null },
+  { client: "Sony", title: "ULT Power Sound", category: "Campaign", image: "/images/hero-sony-ult.png", proof: "Ordered in the morning. On screen the same day." },
+  { client: "TikTok", title: "Unlearn Beauty 3.0", category: "Marketing Assets", image: "/images/hero-tiktok-beauty.png", proof: "300\u2013500 videos delivered per week." },
+  { client: "Bose", title: "Smart Ultra Soundbar", category: "Graphic Design", image: "/images/hero-bose.png", proof: null },
+  { client: "Air Corsica", title: "Route Launches", category: "Marketing Assets", image: "/images/hero-aircorsica.png", proof: "Multi-market assets. 18 languages available." },
+  { client: "Sony", title: "ZV-E10 II Camera", category: "Graphic Design", image: "/images/hero-sony-camera.png", proof: "D+1 delivery. Fixed price per asset." },
+  { client: "Adidas", title: "Superstar", category: "Campaign", image: "/images/hero-adidas-superstar.png", proof: null },
+  { client: "TikTok", title: "Creator Content", category: "Video Production", image: "/images/hero-tiktok-creator.png", proof: "1,500+ edits delivered per month." },
 ] as const;
 
-function ProjectCard({ client, title, category, image }: (typeof PROJECTS)[number]) {
+function ProjectCard({ client, title, category, image, proof }: Project) {
   return (
     <div className="group relative w-[320px] shrink-0 overflow-hidden rounded-2xl bg-surface-elevated sm:w-[400px]">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-200">
@@ -47,6 +55,11 @@ function ProjectCard({ client, title, category, image }: (typeof PROJECTS)[numbe
           {title}
         </p>
         <p className="text-xs text-neutral-500">{category}</p>
+        {proof && (
+          <p className="mt-1.5 text-xs italic text-neutral-600">
+            · {proof}
+          </p>
+        )}
       </div>
     </div>
   );
