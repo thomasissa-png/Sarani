@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticatedFromCookie } from "@/lib/auth";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow the login page and auth API
@@ -11,7 +11,7 @@ export function middleware(request: NextRequest) {
 
   // Protect all /admin and /api/admin routes
   const cookieHeader = request.headers.get("cookie");
-  const authenticated = isAuthenticatedFromCookie(cookieHeader);
+  const authenticated = await isAuthenticatedFromCookie(cookieHeader);
 
   if (!authenticated) {
     // For API routes, return 401 instead of redirect

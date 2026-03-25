@@ -3,11 +3,9 @@ import { cookies } from "next/headers";
 const SESSION_COOKIE = "sarani_admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
-// ─── HMAC-based session ─────────────────────────────────────────────────────
-// Instead of an in-memory Map (which doesn't work across Edge/Node runtimes),
-// we use a signed cookie. The cookie value is: `expiry.signature` where
-// signature = HMAC-SHA256(ADMIN_PASSWORD, "sarani-session:" + expiry).
-// Both middleware (Edge) and API routes (Node) can verify independently.
+// ─── HMAC-based session (Web Crypto API only) ───────────────────────────────
+// Uses crypto.subtle exclusively — works in both Edge and Node runtimes.
+// No require("crypto"), no sync fallbacks.
 
 const encoder = new TextEncoder();
 
@@ -23,17 +21,6 @@ async function hmacSign(secret: string, data: string): Promise<string> {
   return Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-function hmacSignSync(secret: string, data: string): string {
-  // For middleware (sync context), use Node crypto if available, else block on subtle
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const nodeCrypto = typeof require !== "undefined" ? require("crypto") : null;
-  if (nodeCrypto?.createHmac) {
-    return nodeCrypto.createHmac("sha256", secret).update(data).digest("hex");
-  }
-  // Fallback: shouldn't happen in practice
-  return "";
 }
 
 async function createSignedToken(secret: string): Promise<string> {
@@ -53,21 +40,6 @@ async function verifySignedToken(token: string, secret: string): Promise<boolean
   const signature = token.substring(dotIndex + 1);
   const payload = `sarani-session:${expiry}`;
   const expected = await hmacSign(secret, payload);
-
-  return signature === expected;
-}
-
-function verifySignedTokenSync(token: string, secret: string): boolean {
-  const dotIndex = token.indexOf(".");
-  if (dotIndex === -1) return false;
-
-  const expiry = parseInt(token.substring(0, dotIndex), 10);
-  if (isNaN(expiry) || Date.now() >= expiry) return false;
-
-  const signature = token.substring(dotIndex + 1);
-  const payload = `sarani-session:${expiry}`;
-  const expected = hmacSignSync(secret, payload);
-  if (!expected) return false;
 
   return signature === expected;
 }
@@ -121,11 +93,11 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 /**
- * Check auth from a raw cookie header string (for middleware — sync context).
+ * Check auth from a raw cookie header string (for middleware — async).
  */
-export function isAuthenticatedFromCookie(
+export async function isAuthenticatedFromCookie(
   cookieHeader: string | null
-): boolean {
+): Promise<boolean> {
   if (!cookieHeader) return false;
 
   const adminPassword = process.env.ADMIN_PASSWORD;
@@ -135,7 +107,7 @@ export function isAuthenticatedFromCookie(
   const sessionValue = parsedCookies[SESSION_COOKIE];
   if (!sessionValue) return false;
 
-  return verifySignedTokenSync(sessionValue, adminPassword);
+  return verifySignedToken(sessionValue, adminPassword);
 }
 
 function parseCookies(cookieHeader: string): Record<string, string> {
