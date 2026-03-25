@@ -1,5 +1,5 @@
 # UX Audit Front-Office — Sarani
-**Score global : 7.4/10** | Date : 2026-03-25 | Agent : @ux
+**Score global : 7.2/10** | Date : 2026-03-25 | Agent : @ux (v2 — audit approfondi code source)
 
 ---
 

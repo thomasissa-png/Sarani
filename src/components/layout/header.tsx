@@ -208,6 +208,11 @@ export function Header() {
             transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
             aria-hidden={!mobileOpen}
           >
+            {/* Logo — brand anchor in mobile overlay */}
+            <div className="absolute top-5 left-5">
+              <Logo variant="dark" width={100} />
+            </div>
+
             {/* Close button */}
             <button
               type="button"

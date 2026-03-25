@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { StickyCTAMobile } from "@/components/layout/sticky-cta-mobile";
 import "./globals.css";
 
 const outfit = localFont({
@@ -116,6 +117,7 @@ export default function RootLayout({
         <Header />
         <main id="main-content">{children}</main>
         <Footer />
+        <StickyCTAMobile />
       </body>
     </html>
   );

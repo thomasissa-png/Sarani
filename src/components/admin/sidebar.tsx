@@ -1,8 +1,35 @@
 "use client";
 
+import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+
+// ─── Mobile sidebar context ─────────────────────────────────────────────────
+// Allows the header (hamburger button) and sidebar to share open/close state.
+
+type SidebarContextValue = {
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
+};
+
+const SidebarContext = createContext<SidebarContextValue>({
+  mobileOpen: false,
+  setMobileOpen: () => {},
+});
+
+export function useSidebar() {
+  return useContext(SidebarContext);
+}
+
+export function SidebarProvider({ children }: { children: React.ReactNode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  return (
+    <SidebarContext.Provider value={{ mobileOpen, setMobileOpen }}>
+      {children}
+    </SidebarContext.Provider>
+  );
+}
 
 type NavItem = {
   label: string;
@@ -142,7 +169,11 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
     ),
   };
 
-  return <>{icons[name] || null}</>;
+  const icon = icons[name];
+  if (!icon) return null;
+
+  // Wrap with aria-hidden since these are decorative icons (text label is present)
+  return <span aria-hidden="true">{icon}</span>;
 }
 
 function NavLink({ item }: { item: NavItem }) {
