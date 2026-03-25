@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { clients, agentOutputs } from "@/lib/db/schema";
-import { sql, eq } from "drizzle-orm";
+import { sql, eq, desc } from "drizzle-orm";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -9,18 +9,18 @@ export default async function AdminDashboardPage() {
   const totalClients = await db
     .select({ count: sql<number>`count(*)` })
     .from(clients)
-    .then((r) => r[0]?.count ?? 0);
+    .then((r) => Number(r[0]?.count ?? 0));
 
   const activeClients = await db
     .select({ count: sql<number>`count(*)` })
     .from(clients)
     .where(eq(clients.status, "active"))
-    .then((r) => r[0]?.count ?? 0);
+    .then((r) => Number(r[0]?.count ?? 0));
 
   const totalOutputs = await db
     .select({ count: sql<number>`count(*)` })
     .from(agentOutputs)
-    .then((r) => r[0]?.count ?? 0);
+    .then((r) => Number(r[0]?.count ?? 0));
 
   const recentOutputs = await db
     .select({
@@ -32,7 +32,7 @@ export default async function AdminDashboardPage() {
     })
     .from(agentOutputs)
     .leftJoin(clients, eq(agentOutputs.clientId, clients.id))
-    .orderBy(sql`${agentOutputs.createdAt} DESC`)
+    .orderBy(desc(agentOutputs.createdAt))
     .limit(5);
 
   return (
@@ -44,14 +44,12 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      {/* Stats cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard label="Total Clients" value={totalClients} />
         <StatCard label="Active Clients" value={activeClients} />
         <StatCard label="Agent Outputs" value={totalOutputs} />
       </div>
 
-      {/* Recent activity */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-brand-black">

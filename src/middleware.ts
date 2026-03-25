@@ -4,20 +4,20 @@ import { isAuthenticatedFromCookie } from "@/lib/auth";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Only protect /admin routes (except the login page and auth API)
-  if (!pathname.startsWith("/admin")) {
-    return NextResponse.next();
-  }
-
-  // Allow the login page and auth API routes
+  // Allow the login page and auth API
   if (pathname === "/admin/login" || pathname.startsWith("/api/admin/auth")) {
     return NextResponse.next();
   }
 
+  // Protect all /admin and /api/admin routes
   const cookieHeader = request.headers.get("cookie");
   const authenticated = isAuthenticatedFromCookie(cookieHeader);
 
   if (!authenticated) {
+    // For API routes, return 401 instead of redirect
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const loginUrl = new URL("/admin/login", request.url);
     return NextResponse.redirect(loginUrl);
   }

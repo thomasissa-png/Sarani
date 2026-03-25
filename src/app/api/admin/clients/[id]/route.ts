@@ -47,7 +47,6 @@ export async function PUT(
     }
 
     const data = parsed.data;
-    const now = new Date().toISOString();
 
     await db
       .update(clients)
@@ -56,7 +55,7 @@ export async function PUT(
         industry: data.industry,
         status: data.status,
         primaryLanguage: data.primaryLanguage,
-        secondaryLanguages: JSON.stringify(data.secondaryLanguages),
+        secondaryLanguages: data.secondaryLanguages,
         primaryContactName: data.primaryContactName || null,
         primaryContactEmail: data.primaryContactEmail || null,
         clickupProjectId: data.clickupProjectId || null,
@@ -71,9 +70,8 @@ export async function PUT(
         legalCountry: data.legalCountry || null,
         vatNumber: data.vatNumber || null,
         signedFrameworkAgreement: data.signedFrameworkAgreement,
-        preferredContractTemplate:
-          data.preferredContractTemplate || null,
-        updatedAt: now,
+        preferredContractTemplate: data.preferredContractTemplate || null,
+        updatedAt: new Date(),
       })
       .where(eq(clients.id, id));
 
