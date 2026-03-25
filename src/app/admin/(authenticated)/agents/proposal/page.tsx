@@ -23,6 +23,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { generateProposalHTML } from "@/lib/export/proposal-html";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -213,6 +214,39 @@ export default function ProposalAgentPage() {
       );
     } finally {
       setGenerating(false);
+    }
+  }
+
+  // ── HTML export ────────────────────────────────────────────────────────
+
+  function handlePreviewHTML() {
+    if (!proposal) return;
+    const html = generateProposalHTML({
+      proposal,
+      prospectName: form.prospectName,
+      industry: form.prospectIndustry || undefined,
+    });
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  }
+
+  function handleDownloadPDF() {
+    if (!proposal) return;
+    const html = generateProposalHTML({
+      proposal,
+      prospectName: form.prospectName,
+      industry: form.prospectIndustry || undefined,
+    });
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      win.onload = () => {
+        setTimeout(() => win.print(), 500);
+      };
     }
   }
 
@@ -846,6 +880,8 @@ export default function ProposalAgentPage() {
           prospectName={form.prospectName}
           onCopyAll={handleCopyAll}
           onDownload={handleDownload}
+          onPreviewHTML={handlePreviewHTML}
+          onDownloadPDF={handleDownloadPDF}
           copied={copied}
         />
       )}
@@ -860,12 +896,16 @@ function ProposalOutput({
   prospectName,
   onCopyAll,
   onDownload,
+  onPreviewHTML,
+  onDownloadPDF,
   copied,
 }: {
   proposal: ProposalResponse;
   prospectName: string;
   onCopyAll: () => void;
   onDownload: () => void;
+  onPreviewHTML: () => void;
+  onDownloadPDF: () => void;
   copied: boolean;
 }) {
   return (
@@ -887,6 +927,18 @@ function ProposalOutput({
             className="px-3 py-1.5 text-sm font-medium border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors text-brand-black"
           >
             Download .md
+          </button>
+          <button
+            onClick={onPreviewHTML}
+            className="px-3 py-1.5 text-sm font-medium border border-brand-cerulean text-brand-cerulean rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            Preview HTML
+          </button>
+          <button
+            onClick={onDownloadPDF}
+            className="px-3 py-1.5 text-sm font-medium bg-brand-black text-white rounded-lg hover:bg-neutral-800 transition-colors"
+          >
+            Download PDF
           </button>
         </div>
       </div>

@@ -21,6 +21,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { generatePresentationHTML } from "@/lib/export/presentation-html";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -211,6 +212,40 @@ export default function PresentationAgentPage() {
       }
       return next;
     });
+  }
+
+  // ── HTML export ────────────────────────────────────────────────────────
+
+  function handlePreviewHTML() {
+    if (!presentation) return;
+    const html = generatePresentationHTML({
+      presentation,
+      clientName: selectedClient?.name,
+      presentationType: form.presentationType || undefined,
+    });
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  }
+
+  function handleDownloadPDF() {
+    if (!presentation) return;
+    const html = generatePresentationHTML({
+      presentation,
+      clientName: selectedClient?.name,
+      presentationType: form.presentationType || undefined,
+    });
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      // Wait for fonts to load before printing
+      win.onload = () => {
+        setTimeout(() => win.print(), 500);
+      };
+    }
   }
 
   // ── Copy all as markdown ──────────────────────────────────────────────
@@ -659,6 +694,8 @@ export default function PresentationAgentPage() {
           onToggleNotes={toggleNotes}
           onCopyAll={handleCopyAll}
           onDownload={handleDownload}
+          onPreviewHTML={handlePreviewHTML}
+          onDownloadPDF={handleDownloadPDF}
           copied={copied}
         />
       )}
@@ -676,6 +713,8 @@ function PresentationPreview({
   onToggleNotes,
   onCopyAll,
   onDownload,
+  onPreviewHTML,
+  onDownloadPDF,
   copied,
 }: {
   presentation: PresentationOutput;
@@ -685,6 +724,8 @@ function PresentationPreview({
   onToggleNotes: (slideNumber: number) => void;
   onCopyAll: () => void;
   onDownload: () => void;
+  onPreviewHTML: () => void;
+  onDownloadPDF: () => void;
   copied: boolean;
 }) {
   const slide = presentation.slides[currentSlide];
@@ -712,6 +753,18 @@ function PresentationPreview({
             className="px-3 py-1.5 text-sm font-medium border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors text-brand-black"
           >
             Download .md
+          </button>
+          <button
+            onClick={onPreviewHTML}
+            className="px-3 py-1.5 text-sm font-medium border border-brand-cerulean text-brand-cerulean rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            Preview HTML
+          </button>
+          <button
+            onClick={onDownloadPDF}
+            className="px-3 py-1.5 text-sm font-medium bg-brand-black text-white rounded-lg hover:bg-neutral-800 transition-colors"
+          >
+            Download PDF
           </button>
         </div>
       </div>
