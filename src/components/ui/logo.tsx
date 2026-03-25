@@ -1,78 +1,50 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
-  /** "dark" = black text (for light bg), "light" = white text (for dark bg) */
+  /** "dark" = dark logo (for light bg), "light" = white logo (for dark bg) */
   variant?: "dark" | "light";
-  /** Width class — maps to Tailwind width utilities */
+  /** Width in px — height is auto-calculated from aspect ratio */
   width?: number;
   className?: string;
 }
 
 /**
- * Sarani logo — HTML text with Outfit font + 3 colored dots (red, yellow, blue)
- * clustered in a triangle above the "i", matching the official logo.
- *
- * Uses HTML <span> instead of SVG <text> so the web font (Outfit) loads reliably.
- * The 3 dots are positioned absolutely above the "i" using a small inline SVG.
+ * Sarani logo — uses the real PNG logo files.
+ * - "light" variant: white text + colored dots (for dark backgrounds)
+ * - "dark" variant: same image with CSS invert (for light backgrounds)
+ *   since no separate dark PNG is available.
  */
 export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
-  const textColor = variant === "dark" ? "text-brand-black" : "text-brand-white";
-
-  // Scale factor relative to default 120px width
-  const scale = width / 120;
-  const fontSize = 28 * scale;
-  const dotSize = 5 * scale;
-  const dotsRight = 13 * scale;
-  const dotsBottom = 2 * scale;
+  // sarani-logo-white.png is white text on transparent bg (ratio ~2.6:1)
+  const height = Math.round(width / 2.6);
 
   return (
     <Link
       href="/"
       aria-label="Sarani — Back to homepage"
-      className={cn("inline-flex items-center", className)}
+      className={cn("inline-flex items-center shrink-0", className)}
     >
-      <span
-        className="relative inline-block select-none"
-        style={{ width: `${width}px` }}
-        aria-hidden="true"
-      >
-        {/* Text "sarani" in Outfit bold */}
-        <span
-          className={cn(
-            "block font-heading font-bold leading-none tracking-tight",
-            textColor
-          )}
-          style={{ fontSize: `${fontSize}px`, letterSpacing: "-0.02em" }}
-        >
-          sarani
-        </span>
-
-        {/* 3 colored dots clustered above the "i" — triangle arrangement */}
-        <span
-          className="absolute pointer-events-none"
-          style={{
-            bottom: `calc(100% - ${dotsBottom}px)`,
-            right: `${dotsRight}px`,
-          }}
-        >
-          <svg
-            width={dotSize * 4}
-            height={dotSize * 3.5}
-            viewBox="0 0 20 17"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            {/* Red — top right */}
-            <circle cx="15" cy="3" r="2.8" fill="#da5126" />
-            {/* Yellow — bottom left */}
-            <circle cx="8" cy="10" r="2.8" fill="#f1c217" />
-            {/* Blue — bottom right */}
-            <circle cx="16" cy="10" r="2.8" fill="#0babe8" />
-          </svg>
-        </span>
-      </span>
+      {variant === "light" ? (
+        <Image
+          src="/sarani-logo-white.png"
+          alt="Sarani"
+          width={width}
+          height={height}
+          className="h-auto"
+          priority
+        />
+      ) : (
+        <Image
+          src="/sarani-logo-white.png"
+          alt="Sarani"
+          width={width}
+          height={height}
+          className="h-auto dark-logo-invert"
+          priority
+        />
+      )}
     </Link>
   );
 }

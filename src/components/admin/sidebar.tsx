@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -204,12 +205,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <div className="p-5 border-b border-neutral-300">
-        <Link href="/admin" className="text-lg font-bold text-brand-black tracking-tight" onClick={onNavigate}>
-          Sarani
+        <Link href="/admin" className="inline-flex items-center gap-2" onClick={onNavigate}>
+          <Image
+            src="/sarani-logo-white.png"
+            alt="Sarani"
+            width={100}
+            height={38}
+            className="h-auto dark-logo-invert"
+            priority
+          />
+          <span className="text-xs font-medium text-neutral-500 bg-neutral-200 px-2 py-0.5 rounded-full">
+            Admin
+          </span>
         </Link>
-        <span className="ml-2 text-xs font-medium text-neutral-500 bg-neutral-200 px-2 py-0.5 rounded-full">
-          Admin
-        </span>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
