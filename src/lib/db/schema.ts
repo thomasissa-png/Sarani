@@ -56,10 +56,10 @@ export const agentOutputs = pgTable(
   "agent_outputs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    clientId: uuid("client_id")
-      .notNull()
-      .references(() => clients.id, { onDelete: "cascade" }),
-    agentType: varchar("agent_type", { length: 20 }).notNull(), // pm | translator | creative | designer | legal | social | seo
+    clientId: uuid("client_id").references(() => clients.id, {
+      onDelete: "cascade",
+    }), // nullable — proposals target prospects (no client record yet)
+    agentType: varchar("agent_type", { length: 20 }).notNull(), // pm | translator | creative | designer | legal | social | seo | proposal
     inputPayload: jsonb("input_payload"), // the form data submitted
     outputContent: text("output_content"), // the generated deliverable
     status: varchar("status", { length: 20 }).notNull().default("pending"), // pending | processing | done | error
