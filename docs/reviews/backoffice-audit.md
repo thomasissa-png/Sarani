@@ -203,8 +203,100 @@
 
 ---
 
+---
+
+## Re-audit — 2026-03-25
+
+*Suite aux corrections appliquees par @fullstack sur les 8 points remontes.*
+
+### Nouveau score : 8.5 / 10 (etait 7.5/10)
+
+---
+
+### Corrections verifiees
+
+| # | Correction demandee | Fichier verifie | Statut | Detail |
+|---|---|---|---|---|
+| 1 | Auth token — crypto.randomUUID() au lieu de base64 password | `src/lib/auth.ts` | VERIFIE | `generateOpaqueToken()` utilise `crypto.randomUUID()`. Session store in-memory avec expiration. Token opaque, aucune donnee utilisateur encodee. Cookie httpOnly, secure en production, sameSite lax. Implementation propre. |
+| 2 | PM AGENT_TYPES — 13 agents au lieu de 6 | `src/lib/validations/pm.ts` | VERIFIE | Le tableau `AGENT_TYPES` contient exactement 13 entrees : translator, creative, designer, legal, social, seo, copywriter, email-drafter, presentation, proofreader, proposal, video-script, pm. Conforme. |
+| 3 | PM analyze sauvegarde en DB | `src/app/api/admin/agents/pm/analyze/route.ts` | VERIFIE | Apres validation de la reponse Claude, insertion dans `agentOutputs` avec `agentType: "pm"`, `status: "done"`, et retour de `outputId`. Pattern identique aux autres agents. |
+| 4 | SEO — client recommande (pas requis) | `src/app/admin/(authenticated)/agents/seo/page.tsx` | VERIFIE | `ClientSelector` rendu avec `required={false}`. Le `canProceedStep0()` ne verifie plus `clientId` — il verifie uniquement `articleTitleH1` et `primaryKeyword`. L'utilisateur peut avancer sans selectionner de client. |
+| 5 | Proofreader — 3 etapes comme les autres | `src/app/admin/(authenticated)/agents/proofreader/page.tsx` | VERIFIE | `STEPS = ["Content", "Options", "Review & Submit"]` — 3 etapes. Coherence UX restauree avec les 12 autres agents. |
+| 6 | GuidanceMessage + RecommendedBadge — composants partages dans guided-form.tsx | `src/components/admin/guided-form.tsx` | VERIFIE | `GuidanceMessage` et `RecommendedBadge` sont exportes comme composants partages. Les 13 agents importent ces composants depuis `guided-form.tsx` (verifie par grep global). Aucun composant local `RecommendedBadge` ou `GuidanceMessage` residuel dans les pages agents. Aucun inline JSX `bg-orange-100 text-orange-700` residuel non plus. |
+| 7 | max-w-4xl harmonise partout | Tous les agents | VERIFIE | Grep global confirme : tous les conteneurs principaux utilisent `max-w-4xl`. Plus aucun `max-w-3xl` sur les pages agents (PM et Creative corrigees). |
+| 8 | PM projects route — conditions hack nettoye | `src/app/api/admin/agents/pm/projects/route.ts` | VERIFIE | Code propre : conditions construites dans un tableau, appliquees via `and(...conditions)`. Pas de hack, pas de TODO, pas de workaround. Logique de groupement par `clientId + briefSummary` lisible. |
+
+**Bilan : 8/8 corrections conformes.**
+
+---
+
+### Problemes restants pour atteindre 9/10
+
+#### P1 — Proposal IA toujours sans ClientSelector (heritage de l'audit initial, section 3.1)
+
+- **Fichier** : `src/app/admin/(authenticated)/agents/proposal/page.tsx`
+- **Constat** : Le formulaire utilise toujours un champ texte `prospectName` (ligne 44) sans `ClientSelector`. Les specs exigent `client` comme champ Required avec Select (client record).
+- **Impact** : L'agent Proposal ne beneficie pas du contexte client automatique (brand tone, industry, contact name, language preference). C'est le seul agent sur 13 qui ne respecte pas le pattern partage `ClientSelector`.
+- **Criticite** : MAJEUR — c'est le dernier agent non conforme au pattern partage.
+- **Fix requis** : Integrer `ClientSelector` dans le Step 0 avec un mode dual (client CRM OU prospect libre). Garder `prospectName` comme fallback quand aucun client n'est selectionne. Le stepper a deja 3 steps ("Prospect Info", "Configure", "Review & Generate") — renommer step 0 en "Select Client or Prospect".
+
+#### P2 — FileUpload composant toujours absent (heritage de l'audit initial, section 3.3)
+
+- **Fichier** : `src/components/admin/guided-form.tsx`
+- **Constat** : Aucun composant `FileUpload` n'existe. Les specs le requierent pour PM (brief_attachment), Translator (source_content), Designer (mood_references), Creative (existing_assets), Presentation (data_and_charts, existing_template, must_include_assets), Proofreader (content_to_review, original_source, previous_version).
+- **Impact** : Les operateurs doivent copier-coller manuellement le contenu de PDF/DOCX. Pour le Proofreader (relecture de documents longs), c'est un friction point significatif.
+- **Criticite** : MAJEUR pour UX operationnelle, mais non bloquant fonctionnellement (les agents fonctionnent sans).
+- **Fix requis** : Creer un composant `FileUpload` dans guided-form.tsx et l'integrer en priorite dans Proofreader > PM > Translator > Presentation.
+
+#### P3 — Deux inline blue info blocks residuels
+
+- **Fichiers** : `proposal/page.tsx` (ligne 795), `creative/page.tsx` (ligne 755)
+- **Constat** : Deux occurrences de `<div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 ..."` en inline au lieu d'utiliser le composant `GuidanceMessage` partage. Ce ne sont pas le message de guidance principal (celui-ci est bien importe) mais des messages contextuels secondaires (tip apres generation, etc.).
+- **Criticite** : MINEUR — cosmetique, pas de divergence fonctionnelle.
+- **Fix suggere** : Remplacer par `<GuidanceMessage>` pour coherence maximale du code.
+
+---
+
+### Ameliorations mineures detectees (non bloquantes)
+
+| # | Observation | Criticite | Agent concerne |
+|---|---|---|---|
+| 1 | StepIndicator : les steps ne sont pas cliquables (navigation directe impossible) | MINEUR | guided-form.tsx |
+| 2 | ClientSelector : pas de recherche/filtre pour les listes >20 clients | MINEUR | guided-form.tsx |
+| 3 | Nommage inconsistant des toggles Advanced (`showAdvanced` vs `advancedOpen`) | NEGLIGEABLE | Aucun impact fonctionnel |
+| 4 | Video Script : `videoFormat` combine platform + duration au lieu de 2 selects distincts | MINEUR | video-script |
+| 5 | Social IA : `client_reference` en text libre au lieu de ClientSelector optionnel | MINEUR | social |
+
+---
+
+### Synthese de la progression
+
+| Critere | Score initial (7.5) | Score re-audit (8.5) | Progression |
+|---|---|---|---|
+| Securite auth | Token base64 previsible | Token opaque crypto.randomUUID() | +0.5 |
+| Coherence UX stepper | 12/13 agents a 3 steps | 13/13 agents a 3 steps | +0.25 |
+| Coherence container | 11/13 max-w-4xl | 13/13 max-w-4xl | +0.1 |
+| Composants partages | 3 patterns differents | 1 pattern partage (importe de guided-form) | +0.25 |
+| SEO client optionnel | Bloque sans client | Avance sans client | +0.15 |
+| PM analyze en DB | Pas de sauvegarde | Sauvegarde dans agentOutputs | +0.15 |
+| PM projects route | Code avec hack | Code propre | +0.1 |
+| **Restant a corriger** | | Proposal ClientSelector + FileUpload | **= 8.5** |
+
+**Chemin vers 9/10** : corriger P1 (Proposal ClientSelector) = +0.3. Creer FileUpload composant (P2) = +0.2.
+**Chemin vers 9.5/10** : P3 (inline residuels) + ameliorations mineures.
+
+---
+
+### Verdict
+
+**8.5/10 — GO avec reserves.**
+
+Les 8 corrections demandees sont toutes appliquees correctement. Le back-office a gagne 1 point complet. Deux problemes heritage de l'audit initial restent non traites : le `ClientSelector` absent dans Proposal IA (MAJEUR) et le composant `FileUpload` absent partout (MAJEUR pour UX operationnelle). Corriger le Proposal suffit pour passer a 8.8. Ajouter le FileUpload pousse a 9.0.
+
+---
+
 **Handoff -> @orchestrator**
-- Fichiers produits : `docs/reviews/backoffice-audit.md`
-- Decisions prises : Score 7.5/10. 4 problemes critiques identifies. Chemin vers 9/10 defini en 4 niveaux de priorite.
-- Points d'attention : Proposal IA doit etre retravaille (ClientSelector manquant). FileUpload composant absent partout. Proofreader a 2 steps au lieu de 3. SEO IA bloque inutilement sans client.
-- Agent a reinvoquer : @fullstack pour corrections P1-P3.
+- Fichiers produits : `docs/reviews/backoffice-audit.md` (section Re-audit ajoutee)
+- Decisions prises : Score rehausse a 8.5/10. 8/8 corrections verifiees conformes. 2 problemes restants identifies (Proposal ClientSelector + FileUpload absent).
+- Points d'attention : Proposal IA reste le seul agent non conforme au pattern ClientSelector. FileUpload est un manque fonctionnel reel pour l'UX operationnelle quotidienne.
+- Agent a reinvoquer : @fullstack pour P1 (Proposal ClientSelector) et P2 (FileUpload composant).
