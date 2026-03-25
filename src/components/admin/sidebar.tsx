@@ -12,6 +12,8 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "grid" },
+  { label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
+  { label: "Projects", href: "/admin/projects", icon: "folder" },
   { label: "Clients", href: "/admin/clients", icon: "users" },
 ];
 
@@ -121,6 +123,16 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
     video: (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" />
+      </svg>
+    ),
+    folder: (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+    zap: (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
       </svg>
     ),
     "check-circle": (

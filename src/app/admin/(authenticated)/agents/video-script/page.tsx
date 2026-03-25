@@ -60,6 +60,7 @@ type FormState = {
   platform: VideoPlatform;
   videoFormat: VideoFormat;
   videoConcept: string;
+  tone: VideoTone;
   // Recommended
   hookDirection: string;
   scriptFormat: string;
@@ -99,6 +100,7 @@ export default function VideoScriptPage() {
     platform: "tiktok",
     videoFormat: "tiktok-30s",
     videoConcept: "",
+    tone: "entertaining",
     hookDirection: "",
     scriptFormat: "",
     cta: "",
@@ -171,7 +173,7 @@ export default function VideoScriptPage() {
           videoFormat: form.videoFormat,
           platform: form.platform,
           topic: form.videoConcept,
-          tone: "entertaining" as VideoTone,
+          tone: form.tone,
           language: form.language,
           variantCount: form.variantCount,
           // Extended fields
@@ -209,6 +211,7 @@ export default function VideoScriptPage() {
       { label: "Client", value: selectedClient?.name || "---" },
       { label: "Platform", value: VIDEO_PLATFORM_LABELS[form.platform] },
       { label: "Duration", value: VIDEO_FORMAT_LABELS[form.videoFormat] },
+      { label: "Tone", value: VIDEO_TONE_LABELS[form.tone] },
       {
         label: "Concept",
         value:
@@ -353,6 +356,30 @@ export default function VideoScriptPage() {
                 </select>
               </FormField>
             </div>
+
+            {/* Tone */}
+            <FormField
+              label="Tone"
+              required
+              helperText="Sets the overall energy and style of the script. A promotional script and an educational one have different rhythm."
+            >
+              <select
+                value={form.tone}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    tone: e.target.value as VideoTone,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {VIDEO_TONES.map((t) => (
+                  <option key={t} value={t}>
+                    {VIDEO_TONE_LABELS[t]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
 
             {/* Video Concept */}
             <FormField

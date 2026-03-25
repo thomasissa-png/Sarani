@@ -169,7 +169,33 @@ export default function TranslatorPage() {
 
   async function handleSaveValidated() {
     if (!form.clientId || !result) return;
-    setSaved(true);
+
+    try {
+      const res = await fetch("/api/admin/agents/translator/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: form.clientId,
+          sourceLanguage: form.sourceLanguage,
+          targetLanguage: form.targetLanguage,
+          sourceText: form.inputText,
+          validatedTranslation: editedText.replace(/\[\[(.+?)\]\]/g, "$1"),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to save validated translation");
+      }
+
+      setSaved(true);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to save validated translation"
+      );
+    }
   }
 
   // ── Render helpers ────────────────────────────────────────────────────
