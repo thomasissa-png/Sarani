@@ -10,6 +10,17 @@ interface ClientRecord {
   name: string;
 }
 
+interface ClickUpList {
+  id: string;
+  name: string;
+}
+
+interface ClickUpSpace {
+  id: string;
+  name: string;
+  lists: ClickUpList[];
+}
+
 interface StepResult {
   success: boolean;
   error?: string;
@@ -29,6 +40,8 @@ interface CreateProjectResponse {
 
 export default function NewProjectPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
+  const [spaces, setSpaces] = useState<ClickUpSpace[]>([]);
+  const [divisions, setDivisions] = useState<ClickUpList[]>([]);
   const [creating, setCreating] = useState(false);
   const [result, setResult] = useState<CreateProjectResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +54,7 @@ export default function NewProjectPage() {
   const [division, setDivision] = useState("");
   const [estimatedValue, setEstimatedValue] = useState("");
 
+  // Fetch clients from DB
   const fetchClients = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/clients");
@@ -53,9 +67,54 @@ export default function NewProjectPage() {
     }
   }, []);
 
+  // Fetch ClickUp spaces + lists (for division dropdown)
+  const fetchSpaces = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/integrations/clickup");
+      if (res.ok) {
+        const data = await res.json();
+        const spaceData: ClickUpSpace[] = (data.data ?? data.spaces ?? []).map(
+          (s: { id: string; name: string; lists?: { id: string; name: string }[] }) => ({
+            id: s.id,
+            name: s.name,
+            lists: (s.lists ?? []).map((l: { id: string; name: string }) => ({ id: l.id, name: l.name })),
+          })
+        );
+        setSpaces(spaceData);
+      }
+    } catch {
+      // Non-critical — division dropdown will be empty
+    }
+  }, []);
+
   useEffect(() => {
     fetchClients();
-  }, [fetchClients]);
+    fetchSpaces();
+  }, [fetchClients, fetchSpaces]);
+
+  // When client changes, update available divisions from ClickUp lists
+  useEffect(() => {
+    if (!clientName) {
+      setDivisions([]);
+      setDivision("");
+      return;
+    }
+    const matchedSpace = spaces.find(
+      (s) => s.name.toLowerCase() === clientName.toLowerCase()
+    );
+    if (matchedSpace && matchedSpace.lists.length > 0) {
+      setDivisions(matchedSpace.lists);
+      // Auto-select if only one division
+      if (matchedSpace.lists.length === 1) {
+        setDivision(matchedSpace.lists[0].name);
+      } else {
+        setDivision("");
+      }
+    } else {
+      setDivisions([]);
+      setDivision("");
+    }
+  }, [clientName, spaces]);
 
   const handleCreate = async () => {
     setError(null);
@@ -191,15 +250,30 @@ export default function NewProjectPage() {
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
               Division
-              <span className="text-neutral-400 font-normal ml-1">(optional)</span>
+              {divisions.length > 0 && <span className="text-red-500 ml-0.5">*</span>}
+              {divisions.length === 0 && <span className="text-neutral-400 font-normal ml-1">(auto-detected from ClickUp)</span>}
             </label>
-            <input
-              type="text"
-              value={division}
-              onChange={(e) => setDivision(e.target.value)}
-              placeholder="e.g. Sony Music, Sony Pictures"
-              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
+            {divisions.length > 0 ? (
+              <select
+                value={division}
+                onChange={(e) => setDivision(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                <option value="">Select a division...</option>
+                {divisions.map((d) => (
+                  <option key={d.id} value={d.name}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={clientName ? "No divisions found" : "Select a client first"}
+                disabled
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 bg-neutral-100 text-sm text-neutral-400 cursor-not-allowed"
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">

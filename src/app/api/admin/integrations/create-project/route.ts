@@ -104,12 +104,14 @@ export async function POST(request: NextRequest) {
 
     let clickupTask: ClickUpTask | null = null;
     try {
-      // Get the first list in the space
+      // Get the matching list in the space (by division name, or first list if no division)
       const lists = await getListsForSpace(effectiveMapping.clickupSpaceId);
       if (lists.length === 0) {
         throw new Error(`No lists found in ClickUp space ${effectiveMapping.clickupSpaceName}`);
       }
-      const targetList = lists[0];
+      const targetList = data.division
+        ? lists.find((l) => l.name.toLowerCase() === data.division.toLowerCase()) ?? lists[0]
+        : lists[0];
 
       clickupTask = await createTask(targetList.id, {
         name: data.projectName,
@@ -164,10 +166,18 @@ export async function POST(request: NextRequest) {
         parentPath = `${customerBasePath}/${data.division}`;
       }
 
+      // Folder naming convention: YYYYMMDD_Project Name (truncated if too long)
+      const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const maxNameLength = 80; // SharePoint path limit safety
+      const truncatedName = data.projectName.length > maxNameLength
+        ? data.projectName.slice(0, maxNameLength).trim()
+        : data.projectName;
+      const folderName = `${datePrefix}_${truncatedName}`;
+
       const folder: DriveItem = await createFolder(
         SHAREPOINT_ASSETS_DRIVE_ID,
         parentPath,
-        data.projectName
+        folderName
       );
       folderUrl = folder.webUrl;
 
@@ -180,7 +190,7 @@ export async function POST(request: NextRequest) {
         source: "sharepoint",
         action: "create_project_folder",
         entityId: folder.id,
-        payload: { path: `${parentPath}/${data.projectName}` },
+        payload: { path: `${parentPath}/${folderName}` },
       });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Unknown error";
