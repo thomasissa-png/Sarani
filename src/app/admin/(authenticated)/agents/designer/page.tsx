@@ -21,6 +21,7 @@ import {
 import {
   ClientSelector,
   FormField,
+  FileUpload,
   GuidanceMessage,
   RecommendedBadge,
   StepIndicator,
@@ -48,6 +49,7 @@ type FormState = {
   mandatoryTextElements: string;
   textPlacementInstruction: string;
   forbiddenElements: string;
+  visualReferences: File | null;
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
@@ -77,6 +79,7 @@ export default function DesignerPage() {
     mandatoryTextElements: "",
     textPlacementInstruction: "",
     forbiddenElements: "",
+    visualReferences: null,
   });
 
   // Generation state
@@ -472,6 +475,19 @@ export default function DesignerPage() {
                       }
                       placeholder="e.g. No gradients, no lifestyle photography, no competitor colors"
                       rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Visual References"
+                    helperText="Upload reference images (mood boards, competitor visuals, style inspiration) to guide the design direction."
+                  >
+                    <FileUpload
+                      value={form.visualReferences}
+                      onChange={(file) =>
+                        setForm((prev) => ({ ...prev, visualReferences: file }))
+                      }
+                      accept=".png,.jpg,.jpeg,.svg,.pdf,image/png,image/jpeg,image/svg+xml,application/pdf"
                     />
                   </FormField>
                 </div>

@@ -64,6 +64,7 @@ export default function TranslatorPage() {
     showGlossaryHits: false,
     contextNote: "",
     preserveFormatting: true,
+    documentUpload: null,
   });
 
   // Translation state
@@ -439,6 +440,19 @@ export default function TranslatorPage() {
                       Preserve formatting (bold, italic, tables)
                     </label>
                   </div>
+
+                  <FormField
+                    label="Upload Document"
+                    helperText="Upload a PDF or DOCX instead of pasting text. Useful for formatted documents where copy-paste would lose structure."
+                  >
+                    <FileUpload
+                      value={form.documentUpload}
+                      onChange={(file) =>
+                        setForm((prev) => ({ ...prev, documentUpload: file }))
+                      }
+                      accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    />
+                  </FormField>
                 </div>
               )}
             </div>

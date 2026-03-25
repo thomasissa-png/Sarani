@@ -14,6 +14,7 @@ import {
 import {
   ClientSelector,
   FormField,
+  FileUpload,
   GuidanceMessage,
   RecommendedBadge,
   StepIndicator,
@@ -66,6 +67,7 @@ type FormState = {
   slideOutline: string;
   toneDirection: string;
   mustIncludeAssets: string;
+  referenceSlides: File | null;
 };
 
 const INITIAL_FORM: FormState = {
@@ -80,6 +82,7 @@ const INITIAL_FORM: FormState = {
   slideOutline: "",
   toneDirection: "",
   mustIncludeAssets: "",
+  referenceSlides: null,
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
@@ -567,7 +570,7 @@ export default function PresentationAgentPage() {
                   {/* Must include assets note */}
                   <FormField
                     label="Must-Include Assets"
-                    helperText="Describe logos, photos, or charts that must appear in the deck (file upload not yet supported)."
+                    helperText="Describe logos, photos, or charts that must appear in the deck."
                   >
                     <TextareaWithCount
                       value={form.mustIncludeAssets}
@@ -576,6 +579,19 @@ export default function PresentationAgentPage() {
                       }
                       placeholder="Include GEODIS logo on every slide, CEO headshot on slide 2, supply chain map on slide 4"
                       rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Reference Slides"
+                    helperText="Upload existing slides or decks to use as inspiration for structure, visual style, or content approach."
+                  >
+                    <FileUpload
+                      value={form.referenceSlides}
+                      onChange={(file) =>
+                        setForm((prev) => ({ ...prev, referenceSlides: file }))
+                      }
+                      accept=".pdf,.pptx,.ppt,.png,.jpg,.jpeg,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/png,image/jpeg"
                     />
                   </FormField>
                 </div>

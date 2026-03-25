@@ -7,6 +7,7 @@ import {
   ClientSelector,
   ClientContextPanel,
   FormField,
+  FileUpload,
   GuidanceMessage,
   RecommendedBadge,
   StepIndicator,
@@ -84,6 +85,7 @@ type FormState = {
   lengthConstraint: string;
   checkBrand: boolean;
   checkGlossary: boolean;
+  documentUpload: File | null;
 };
 
 type ActiveTab = "issues" | "improved" | "brand" | "glossary";
@@ -172,6 +174,7 @@ export default function ProofreaderPage() {
     lengthConstraint: "",
     checkBrand: false,
     checkGlossary: false,
+    documentUpload: null,
   });
 
   // Review state
@@ -378,6 +381,20 @@ export default function ProofreaderPage() {
                 placeholder="Paste the content you want reviewed — translation, social post, article, email, contract, or any deliverable"
                 minLength={20}
                 rows={10}
+              />
+            </FormField>
+
+            {/* Or upload a document */}
+            <FormField
+              label="Or Upload a Document"
+              helperText="Upload a PDF or DOCX instead of pasting text above. Useful for formatted documents."
+            >
+              <FileUpload
+                value={form.documentUpload}
+                onChange={(file) =>
+                  setForm((prev) => ({ ...prev, documentUpload: file }))
+                }
+                accept=".pdf,.docx,.doc,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               />
             </FormField>
 

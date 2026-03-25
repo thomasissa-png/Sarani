@@ -11,6 +11,7 @@ import {
 import {
   ClientSelector,
   FormField,
+  FileUpload,
   GuidanceMessage,
   RecommendedBadge,
   StepIndicator,
@@ -60,6 +61,7 @@ type FormState = {
   competitorsToBenchmark: string;
   inspirationReferences: string;
   numberOfTerritories: number;
+  existingAssets: File | null;
 };
 
 const INITIAL_FORM: FormState = {
@@ -74,6 +76,7 @@ const INITIAL_FORM: FormState = {
   competitorsToBenchmark: "",
   inspirationReferences: "",
   numberOfTerritories: 3,
+  existingAssets: null,
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
@@ -608,6 +611,19 @@ export default function CreativeStrategistPage() {
                         </button>
                       ))}
                     </div>
+                  </FormField>
+
+                  <FormField
+                    label="Existing Assets"
+                    helperText="Upload existing research, brand tracking reports, or competitive audits to ground the strategy in real data."
+                  >
+                    <FileUpload
+                      value={form.existingAssets}
+                      onChange={(file) =>
+                        setForm((prev) => ({ ...prev, existingAssets: file }))
+                      }
+                      accept=".pdf,.docx,.doc,.png,.jpg,.jpeg,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,application/zip"
+                    />
                   </FormField>
                 </div>
               )}

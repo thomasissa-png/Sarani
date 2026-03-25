@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
+import type { Client } from "@/lib/db/schema";
 import {
   PROSPECT_INDUSTRIES,
   PROSPECT_INDUSTRY_LABELS,
@@ -14,6 +15,7 @@ import {
   type ProposalResponse,
 } from "@/lib/validations/proposal";
 import {
+  ClientSelector,
   FormField,
   GuidanceMessage,
   RecommendedBadge,
@@ -62,6 +64,7 @@ type FormState = {
   timeline: string;
   competitorMentioned: string;
   language: ProposalLanguage;
+  existingClientId: string;
 };
 
 const INITIAL_FORM: FormState = {
@@ -83,6 +86,7 @@ const INITIAL_FORM: FormState = {
   timeline: "",
   competitorMentioned: "",
   language: "EN",
+  existingClientId: "",
 };
 
 const STEPS = ["Prospect Info", "Configure", "Review & Generate"];
@@ -95,6 +99,13 @@ export default function ProposalAgentPage() {
 
   // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+
+  // Existing client reference (optional)
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  const handleClientLoaded = useCallback((client: Client | null) => {
+    setSelectedClient(client);
+  }, []);
 
   // Advanced options toggle
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -146,6 +157,9 @@ export default function ProposalAgentPage() {
         proposedInvestment: form.proposedInvestment.trim(),
       };
 
+      if (form.existingClientId) {
+        payload.existingClientId = form.existingClientId;
+      }
       if (form.prospectIndustry) {
         payload.prospectIndustry = form.prospectIndustry;
       }
@@ -455,6 +469,17 @@ export default function ProposalAgentPage() {
         {/* ── Step 1: Configure ─────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-5">
+            {/* Existing client reference — optional */}
+            <ClientSelector
+              value={form.existingClientId}
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, existingClientId: clientId }))
+              }
+              required={false}
+              onClientLoaded={handleClientLoaded}
+              helperText="If this prospect is already a client, select them to load their context. Otherwise leave empty."
+            />
+
             {/* Client pain point — required, most critical */}
             <FormField
               label="Client Pain Point"
