@@ -249,7 +249,46 @@ This document defines the optimal inputs for each of the 13 Sarani back-office a
 
 ## Agent 6 — Legal IA
 
-*(Sections to follow)*
+**Why this agent needs these inputs:** A contract is a legal instrument. Every variable — the exact legal name of the client entity, the governing law, the amount, the scope — has binding consequences. A contract generated with the wrong legal entity name is invalid. A contract with "scope TBD" will cause a dispute. The Legal IA can only be as precise as the inputs it receives, and here imprecision is not a quality issue — it's a legal risk.
+
+### Message de guidance (displayed at the top of the form)
+
+> "Contracts require precision. Before generating, verify that the client record contains the correct legal entity name and VAT number — these are auto-filled but should always be confirmed. Fill every variable before generating. A draft reviewed by human counsel before sending is mandatory — this agent produces the draft, not the signed contract."
+
+### Inputs requis (mandatory — blocks submission)
+
+| Field | Type | Why it's mandatory | Placeholder / example |
+|-------|------|--------------------|-----------------------|
+| `client` | Select (client record) | Auto-fills legal entity name, VAT, country, governing law default, and preferred template. Without it, the contract will have blank legal variables. If the client record is incomplete (missing legal entity), the agent blocks and lists the missing fields. | Select client → TikTok |
+| `contract_type` | Radio (SOW / UGC Agreement / NDA / Freelance / Other) | Determines which template is loaded. Different templates have entirely different clause structures, variable lists, and legal logic. | SOW |
+| `scope_of_work` | Textarea | The single most litigated clause in any SOW. Vague scope = scope creep = unpaid work. Must describe the deliverables with enough specificity to be enforceable. | "Design and delivery of 50 web banners in 3 formats (728×90, 300×250, 160×600) in English and French, 2 revision rounds included." |
+| `total_amount` | Number (EUR) | Cannot generate a contract without the agreed commercial amount. | 15000 |
+| `delivery_date` | Date picker | Contractual commitment. Without it, the SOW has no deadline clause, which eliminates Sarani's right to invoice on delivery. | 2026-04-15 |
+
+### Inputs recommandés (strongly advised — improves output quality significantly)
+
+| Field | Type | What it improves | Placeholder / example |
+|-------|------|------------------|-----------------------|
+| `payment_terms` | Select (100% upfront / 50% upfront + 50% on delivery / 30 days net / 60 days net) | Payment terms are the second most disputed clause. Leaving this blank defaults to the template standard, which may not match what was agreed verbally with the client. | 50% upfront / 50% on delivery |
+| `revisions_included` | Select (Unlimited / 2 rounds / 3 rounds / None) | Sarani's differentiator is unlimited revisions — but for specific fixed-price projects, this may need to be capped. The contract must reflect what was sold. | Unlimited |
+| `project_name` | Text | The project name appears in the SOW header and in ClickUp. Without it, the contract is identified only by date + client, which causes confusion when clients have multiple active SOWs simultaneously. | Black Friday Campaign 2026 |
+| `governing_law` | Select (France / UK / Ireland / UAE / USA / Other) | Auto-filled from client country, but may need override. A French company contracting with a Dubai entity may prefer neutral jurisdiction. | France |
+
+### Inputs optionnels
+
+| Field | Type | What it enriches |
+|-------|------|-----------------|
+| `special_clauses` | Textarea | Non-standard clauses to add or modify (e.g., confidentiality addendum, exclusivity window, specific IP transfer terms). |
+| `references_framework_agreement` | Toggle | If a master services agreement exists for this client, the SOW should reference it. Auto-filled if `signed_framework_agreement = true` in the client record. |
+| `second_party_contact` | Text | Name and title of the signatory on the client side. Useful for the signature block. |
+
+### Auto-detected from client record
+
+- `client.legal_entity_name` → auto-filled in the "Client" party block of the contract
+- `client.vat_number` → auto-filled in fiscal identification clause
+- `client.legal_country` → determines governing law default
+- `client.signed_framework_agreement` → if true, SOW references the master agreement automatically
+- `client.preferred_contract_template` → selects the correct template version
 
 ---
 
