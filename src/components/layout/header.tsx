@@ -155,7 +155,7 @@ export function Header() {
           {/* Hamburger button — mobile only: blue circle like V2 */}
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-cerulean md:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-cerulean md:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-expanded={mobileOpen}
             aria-controls="mobile-menu"
@@ -195,78 +195,89 @@ export function Header() {
         </div>
       </nav>
 
-      {/* Mobile overlay menu — slide down from top */}
+      {/* Mobile overlay menu — full-screen with backdrop */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
             ref={mobileMenuRef}
             id="mobile-menu"
-            className="fixed inset-0 top-0 z-[var(--z-overlay)] flex flex-col items-center justify-center bg-brand-white md:hidden"
-            initial={{ y: "-100%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: "-100%", opacity: 0 }}
-            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+            className="fixed inset-0 z-[var(--z-overlay)] flex flex-col bg-brand-white md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
             aria-hidden={!mobileOpen}
           >
-            {/* Logo — brand anchor in mobile overlay */}
-            <div className="absolute top-5 left-5">
+            {/* Top bar — logo + close */}
+            <div className="flex h-[var(--header-height)] items-center justify-between px-5">
               <Logo variant="dark" width={100} />
+              <button
+                type="button"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-cerulean text-brand-white"
+                onClick={() => setMobileOpen(false)}
+                aria-label="Close menu"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
             </div>
 
-            {/* Close button */}
-            <button
-              type="button"
-              className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full bg-brand-cerulean text-brand-white"
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close menu"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-
-            <ul className="flex flex-col items-center gap-8" role="list">
-              {NAV_LINKS.map((link, i) => (
-                <motion.li
-                  key={link.href}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 + i * 0.08, duration: 0.4 }}
-                >
-                  <Link
-                    href={link.href}
-                    onClick={() => handleNavClick(link.label)}
-                    className="text-2xl font-bold text-brand-black transition-colors duration-150 hover:text-brand-flame"
+            {/* Nav links — left-aligned with active state */}
+            <nav className="flex-1 flex flex-col justify-center px-8">
+              <ul className="flex flex-col gap-6" role="list">
+                {NAV_LINKS.filter((l) => l.href !== "/contact").map((link, i) => (
+                  <motion.li
+                    key={link.href}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 + i * 0.06, duration: 0.35 }}
                   >
-                    {link.label}
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
+                    <Link
+                      href={link.href}
+                      onClick={() => handleNavClick(link.label)}
+                      className={cn(
+                        "text-3xl font-bold transition-colors duration-150",
+                        pathname === link.href
+                          ? "text-brand-flame"
+                          : "text-brand-black hover:text-brand-flame"
+                      )}
+                    >
+                      {link.label}
+                    </Link>
+                  </motion.li>
+                ))}
+              </ul>
+            </nav>
 
+            {/* Bottom CTA — pinned */}
             <motion.div
-              className="mt-10"
-              initial={{ opacity: 0, y: 20 }}
+              className="px-8 pb-10 pt-4"
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35, duration: 0.4 }}
+              transition={{ delay: 0.25, duration: 0.35 }}
             >
               <Button
                 variant="primary"
                 href="/contact"
+                className="w-full text-center"
                 onClick={() => handleNavClick("start_a_project")}
               >
                 Start a project
               </Button>
+              <p className="mt-3 text-center text-sm text-neutral-500">
+                First project satisfaction or no invoice.
+              </p>
             </motion.div>
           </motion.div>
         )}

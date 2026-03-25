@@ -29,13 +29,16 @@ function pruneExpiredSessions(): void {
   }
 }
 
-export function verifyPassword(password: string): boolean {
+export function verifyPassword(password: string): { valid: boolean; reason?: "not_configured" | "wrong_password" } {
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminPassword) {
-    console.error("ADMIN_PASSWORD env var is not set");
-    return false;
+    console.error("ADMIN_PASSWORD env var is not set — login will always fail");
+    return { valid: false, reason: "not_configured" };
   }
-  return password === adminPassword;
+  if (password !== adminPassword) {
+    return { valid: false, reason: "wrong_password" };
+  }
+  return { valid: true };
 }
 
 export async function createSession(): Promise<void> {

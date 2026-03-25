@@ -10,8 +10,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Password required" }, { status: 400 });
     }
 
-    if (!verifyPassword(password)) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+    const passwordResult = verifyPassword(password);
+    if (!passwordResult.valid) {
+      return NextResponse.json(
+        { error: passwordResult.reason === "not_configured"
+            ? "Admin password not configured. Set ADMIN_PASSWORD in environment variables."
+            : "Invalid password" },
+        { status: passwordResult.reason === "not_configured" ? 500 : 401 }
+      );
     }
 
     await createSession();
