@@ -52,6 +52,7 @@ Pour une tâche ciblée : invoquer directement l'agent concerné.
 | Revue croisée / cohérence | reviewer | orchestrator |
 | Juridique / conformité | legal | — |
 | Roadmap / backlog | product-manager | creative-strategy |
+| Gestion projets clients / dispatch | pm | fullstack, reviewer |
 | Création d'agents spécialisés | agent-factory | ia, orchestrator |
 | Audit stratégique / amélioration continue | elon | orchestrator, reviewer |
 
@@ -97,6 +98,7 @@ docs/
 ├── legal/             ← @legal : legal-audit.md, cgu-draft.md, privacy-policy.md, rgpd-checklist.md
 ├── infra/             ← @infrastructure : infrastructure.md, performance-audit.md, security-checklist.md
 ├── ia/                ← @ia : ai-architecture.md, model-selection.md, prompt-library.md
+├── pm/                ← @pm : platform-audit.md, project-plan.md, workflow-test-report.md, agent-quality-review.md
 ├── qa/                ← @qa : qa-strategy.md, TESTING.md
 ├── reviews/           ← @reviewer : cross-review-report.md, consistency-audit.md
 │                        @elon : elon-audit.md, strategic-review.md
