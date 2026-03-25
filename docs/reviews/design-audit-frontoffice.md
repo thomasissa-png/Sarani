@@ -163,4 +163,77 @@ Chaque page est évaluée sur 5 axes, notés /10 :
 
 ## Synthèse comparative
 
-[Section à compléter]
+### Tableau de scores
+
+| Page | Identité | Hiérarchie | Premium | Responsive | Animations | **Global** |
+|---|---|---|---|---|---|---|
+| P6 — Work Listing | 6/10 | 5/10 | 5/10 | 8/10 | 6/10 | **6.0/10** |
+| P7 — Work Detail | 7/10 | 7/10 | 4/10 | 7/10 | 5/10 | **6.0/10** |
+| P8 — Pricing | 8/10 | 8/10 | 7/10 | 7/10 | 7/10 | **7.4/10** |
+| P9 — Contact | 7/10 | 7/10 | 6/10 | 8/10 | 6/10 | **6.8/10** |
+
+### Points forts transversaux
+
+- **Système de tokens cohérent** : Les 4 pages utilisent correctement les variables CSS du design system (brand-flame, brand-cerulean, brand-lemon, neutral scale). Aucune couleur hors-système détectée.
+- **Accessibilité de base solide** : `aria-label` sur toutes les sections, `aria-invalid` + `aria-describedby` sur les champs du formulaire, `role="alert"` sur les banners d'erreur, skip link dans globals.css, `prefers-reduced-motion` respecté. Base WCAG 2.2 AA correcte.
+- **Typographie cohérente** : Outfit exclusivement sur les 4 pages, echelle de tailles logique (text-sm → text-5xl selon le contexte), line-height `leading-relaxed` sur les corps de texte.
+- **Responsive fonctionnel** : Toutes les grilles ont un comportement mobile-first correct. `min-h-[44px]` sur les inputs du formulaire respecte les guidelines tactiles.
+
+### Problème systémique #1 — Absence d'imagery
+
+Le problème le plus impactant transversalement est l'absence totale de visuels réels du travail de l'agence. Sur les 4 pages auditées :
+- Work Listing : cards sans thumbnail
+- Work Detail : 2 placeholders gris vides
+- Pricing : aucun visuel d'illustration du service
+- Contact : page entière sans image
+
+Pour une agence créative dont le cœur de métier est la production visuelle, cette absence envoie un signal de manque de confiance et contredit directement le positionnement "enterprise premium". C'est le chantier prioritaire #1.
+
+### Problème systémique #2 — Réassurance insuffisante sur les pages conversionnelles
+
+Les pages Work (listing + detail) et Contact ne capitalisent pas assez sur la preuve sociale. Les chiffres clés (400M+ views, 1500+ edits/month, 60% savings) sont présents dans les données mais soit trop discrets visuellement, soit absents des zones à fort impact persuasif (hero, sidebar, page contact).
+
+### Contrastes WCAG 2.2 AA — Vérification
+
+| Combinaison couleur | Ratio estimé | AA 4.5:1 (texte normal) | AA 3:1 (grand texte) |
+|---|---|---|---|
+| `text-brand-black` (#000) sur `bg-brand-white` (#fff) | 21:1 | PASS | PASS |
+| `text-neutral-600` (#525252) sur `bg-brand-white` (#fff) | ~7:1 | PASS | PASS |
+| `text-neutral-500` (#737373) sur `bg-brand-white` (#fff) | ~4.6:1 | PASS | PASS |
+| `text-neutral-400` (#a3a3a3) sur `bg-brand-white` (#fff) | ~2.9:1 | **FAIL** — texte décoratif uniquement | FAIL |
+| `text-brand-lemon` (#faca15) sur `bg-brand-black` (#000) | ~10.7:1 | PASS | PASS |
+| `text-brand-cerulean` (#0bb3f0) sur `bg-brand-white` (#fff) | ~3.1:1 | FAIL sur texte normal | PASS (grand texte) |
+| `text-brand-flame` (#e35019) sur `bg-brand-white` (#fff) | ~4.0:1 | **FAIL** sur texte corps normal | PASS (grand texte) |
+| `text-brand-white` (#fff) sur `bg-brand-black` (#000) | 21:1 | PASS | PASS |
+| `text-neutral-500` (#737373) sur `bg-surface-elevated` (#f3f5f7) | ~4.1:1 | **FAIL** sur texte corps | PASS (grand texte) |
+
+**Points de vigilance WCAG** :
+- `text-neutral-400` est utilisé comme texte décoratif (placeholder, micro-copy) — acceptable uniquement si non porteur d'information critique
+- `text-brand-cerulean` (#0bb3f0) sur fond blanc : ratio 3.1:1 insuffisant pour le texte corps. Les usages actuels (CTA "Read case study" en `text-sm`, lien email sur /contact) sont **sous le seuil AA**. Remplacer par `text-brand-cerulean-dark` (#0888ba) qui passe à ~4.7:1
+- `text-brand-flame` (#e35019) sur fond blanc : ratio ~4.0:1, juste sous le seuil 4.5:1 pour le texte corps. Utilisé comme label client (text-sm) — **non conforme AA**. Utiliser `text-brand-flame-dark` (#b03d1c) pour le texte body (ratio ~6.8:1)
+
+### Priorités d'action (ordre décroissant d'impact)
+
+1. **[P0] Ajouter imagery réelle** sur Work Listing et Work Detail — bloquant pour le positionnement premium
+2. **[P1] Corriger les contrastes WCAG** : cerulean et flame sur fond blanc passent en dark variants pour les usages texte corps
+3. **[P1] Page Contact** : layout 2 colonnes + select chevron + input file custom
+4. **[P2] Work Listing** : hero repositionné + metric badge impactant + CTA de fin
+5. **[P2] Pricing** : icônes SVG à la place des emojis + badge D+1 sur les cards
+6. **[P3] Work Detail** : StatCards haute impact + suppression conditionnelle des placeholders gallery
+
+---
+
+**Handoff → @fullstack**
+
+- Fichiers produits : `/home/user/Sarani/docs/reviews/design-audit-frontoffice.md`
+- Décisions prises :
+  - Imagery manquante identifiée comme problème systémique #1 — nécessite ajout du champ `coverImage` dans l'interface `CaseStudy` (`src/data/case-studies.ts`) et rendu conditionnel dans `CaseStudyCard` et la page detail
+  - Remplacement `text-brand-cerulean` → `text-brand-cerulean-dark` (#0888ba) pour tous les liens texte corps (WCAG non conforme actuellement)
+  - Remplacement `text-brand-flame` → `text-brand-flame-dark` (#b03d1c) pour les labels client en `text-sm` (WCAG non conforme actuellement)
+  - Select natif sur /contact : ajouter chevron SVG custom dans wrapper `relative`
+  - Input file sur /contact : remplacer par composant DropZone custom
+  - Page Contact : passer en layout 2 colonnes sur `lg:` avec colonne de réassurance
+- Points d'attention :
+  - Les tokens `--color-brand-cerulean-dark` et `--color-brand-flame-dark` existent déjà dans `globals.css` — aucun ajout de token requis, juste substitution des classes Tailwind
+  - La suppression des placeholders gallery sur `/work/[slug]/page.tsx` doit être conditionnelle sur un champ `cs.gallery` futur — ne pas supprimer le slot structurel
+  - Toutes les modifications de couleur texte doivent être testées en régression visuelle (@qa snapshots)
