@@ -814,14 +814,25 @@ Return HTTP 200 to ClickUp (within 5s to avoid webhook retry)
 
 ### 10.4 Status Mapping: ClickUp ↔ Excel ↔ Back-office Display
 
-| ClickUp Status | Excel "Status" column value | Back-office badge | Badge color |
-|---|---|---|---|
-| OPEN | Open PO | Open | Gray |
-| ON HOLD | In progress (on hold) | On Hold | Yellow |
-| SUBMITTED | In progress | Submitted | Blue |
-| CLOSED | Delivered | Closed | Green |
+**Project Status** (from ClickUp):
 
-[HYPOTHESIS: the status mapping above is inferred from the Sony tracker analysis. Thomas must validate the exact mapping — see OQ-8]
+| ClickUp Status | Excel "Status" column | Back-office badge | Badge color |
+|---|---|---|---|
+| `Open` | In progress | Open | Gray |
+| `in progress` | In progress | In Progress | Blue |
+| `review` | In progress | Review | Purple |
+| `Closed` | Delivered | Closed | Green |
+
+**Invoice Status** (from Evoliz — separate dimension):
+
+| Evoliz Status | Excel "Invoice Status" column | Back-office badge | Badge color |
+|---|---|---|---|
+| No invoice | — | Open PO | Gray |
+| Invoice created | Sent | Invoiced | Blue |
+| Paid | Paid | Paid | Green |
+| Overdue | Unpaid | Overdue | Red |
+
+*Updated 2026-03-25: Real statuses from live API exploration (see Addendum A.2). Thomas confirmed dual-status model: project lifecycle + invoice lifecycle.*
 
 ---
 
@@ -883,7 +894,7 @@ Log all steps in sync_logs
 |---|---|---|
 | `CLICKUP_API_KEY` | ClickUp personal API token | All ClickUp API calls |
 | `CLICKUP_WORKSPACE_ID` | ClickUp workspace (team) ID | Scoping API calls to the right workspace |
-| `CLICKUP_LIST_ID` | [HYPOTHESIS: one list or multiple? — see OQ-10] | Fetching tasks |
+| ~~`CLICKUP_LIST_ID`~~ | **NOT NEEDED** — app fetches all Spaces (one per client), each with multiple Lists | — |
 | `CLICKUP_WEBHOOK_SECRET` | HMAC secret for webhook signature verification | Webhook endpoint security |
 | `MICROSOFT_TENANT_ID` | Azure AD tenant ID for OAuth2 | Graph API auth |
 | `MICROSOFT_CLIENT_ID` | Azure AD app registration client ID | Graph API auth |
@@ -1005,6 +1016,164 @@ These questions are blockers or near-blockers for implementation. Answers requir
 | H-06 | Last-write-wins is acceptable for concurrent Excel edits (v1) | Data loss if two admins edit the same row simultaneously | Thomas — confirm team size and usage patterns (OQ-7) |
 | H-07 | The 8 client trackers all have the same column structure (same columns Q-AX pricing grid) | Quote generator breaks for clients with different column layouts | Thomas — provide all 8 tracker files for review (OQ-5) |
 | H-08 | `user` role should see only their assigned clients (principle of least privilege) | If users need cross-client visibility, the permission model changes significantly | Thomas — confirm intended user role scope (OQ-1) |
+
+---
+
+## ADDENDUM — API Exploration Results (2026-03-25)
+
+All data below was obtained by live API calls. This resolves most Open Questions and validates/invalidates Hypotheses.
+
+### A.1 ClickUp Workspace Structure (OQ-10 RESOLVED)
+
+Sarani uses **one Space per client** (not one list). Each Space contains folderless Lists by division/region.
+
+| Space | ID | Lists (folderless) |
+|---|---|---|
+| Sony | 90100452675 | Sony France (156 tasks), Sony Professional (49), Sony Europe (105) |
+| TikTok | 90050434316 | TBD |
+| PICO XR | 90050434327 | TBD |
+| Ubi | 90171040997 | TBD |
+| Brand Native | 90050436581 | TBD |
+| Aujan | 90171121804 | TBD |
+| Bose | 90171343766 | TBD |
+| Other customers | 90050435651 | TBD |
+| Sarani | 90050433950 | TBD |
+| CMC Markets | 90172572190 | TBD |
+| Lamarck | 90172906076 | TBD |
+| Aristocrat | 90174878459 | TBD |
+
+**Consequence**: No single `CLICKUP_LIST_ID` env var needed. The app must fetch all Spaces, then iterate Lists per Space. The Space name = Client name mapping.
+
+### A.2 ClickUp Statuses (OQ-8 RESOLVED)
+
+All Spaces share the same 4 statuses:
+
+| ClickUp Status | Type | Color | → Excel Project Status | → Excel Invoice Status |
+|---|---|---|---|---|
+| `Open` | open | #87909e | In progress | — |
+| `in progress` | custom | #1090e0 | In progress | — |
+| `review` | custom | #5f55ee | In progress | Open PO |
+| `Closed` | closed | #008844 | Delivered | — |
+
+**Note**: Thomas specified a dual-status model: Project Status (`Open` / `In progress` → `Submitted` → `Closed`) AND Invoice Status (`Open PO` → `Invoiced` → `Paid`). ClickUp has only project-level statuses. Invoice status comes from Evoliz only.
+
+### A.3 ClickUp Custom Fields
+
+Discovered on Sony France list (consistent across workspace):
+
+| Field Name | Type | ID | Usage |
+|---|---|---|---|
+| `🌐 Contact` | short_text | 83dde580-... | Client contact name → maps to Excel "Contact" column |
+| `Folder` | url | 64230d72-... | **SharePoint project folder URL** — this is the link between ClickUp and SharePoint |
+| `Project Manager` | users | df65cc18-... | Sarani PM assigned |
+| `Priority` | short_text | 8708f0ac-... | 1, 2, 3 scale |
+| `Note de transition` | text | 1411a64c-... | Handoff notes |
+| `Figma` | short_text | 5a5cebfa-... | Figma link |
+| `Google Slides` | url | b6fcca99-... | Slides link |
+| `Rating` | emoji | db412289-... | Client satisfaction |
+| `Résumé` | text | 9edce6e6-... | Project summary |
+| `Message on Lark` | url | b9f02cf3-... | Lark chat link |
+
+**Critical finding**: The `Folder` custom field (URL type) already contains the SharePoint project folder link. This means:
+- OQ-3 is PARTIALLY RESOLVED: matching ClickUp → SharePoint is via the `Folder` custom field
+- For ClickUp → Excel matching, we still rely on **project name** (Thomas confirmed: flow is always ClickUp → back-office → Excel)
+
+### A.4 SharePoint — Two Sites (OQ-12 RESOLVED)
+
+Azure AD app registration is now active with `Sites.ReadWrite.All` + `Files.ReadWrite.All` permissions (admin consent granted).
+
+| Site | Host | Site ID | Drive ID | Purpose |
+|---|---|---|---|---|
+| **OneDrive (team@sarani.studio)** | saranistudio-my.sharepoint.com | 08675b24-... | `b!JFtnCBXApE6jsyomGN6hXni64SgHnShCg41yK06ZLObe1kAv17nOTZJFGBX3aH4A` | Financial trackers (Excel files) |
+| **SaraniAssets** | saranistudio.sharepoint.com/sites/SaraniAssets | 07d23b05-... | `b!BTvSB7PxVEeCQbtgLKBtdI62eOvL4gFEkH_L6luQY04w7z1UWPKDQ4GDuZJmfD9_` | Project folders + client assets |
+
+### A.5 Excel Tracker Filenames (OQ-2 RESOLVED)
+
+Located at: `OneDrive / Documents / 00. Administrative / 03. Financials (Trackers)/`
+
+| # | Filename | Size |
+|---|---|---|
+| 0 | `00. Global Overview.xlsx.xlsx` | 35 KB |
+| 1 | `01. Sarani_Sony Projects.xlsx` | 795 KB |
+| 2 | `02. Sarani_Bytedance Projects.xlsx` | 15.5 MB |
+| 3 | `03. Sarani_Other Projects.xlsx` | 119 KB |
+| 4 | `04. Sarani_Aristocrat Projects.xlsx` | 83 KB |
+| 5 | `09. Sarani_Projets Ubi.xlsx` | 79 KB |
+| 6 | `10. Sarani_Aujan Projects.xlsx` | 38 KB |
+| 7 | `11. Sarani_Bose Projects.xlsx` | 35 KB |
+| 8 | `12. Sarani_Lamarck Projects.xlsx` | 28 KB |
+| 9 | `13. Sarani_CMC Markets Project.xlsx` | 19 KB |
+
+Plus sub-folders: `01_Quotes/`, `02_Old/`, `03_Tracker Archivés/`
+
+**Mapping ClickUp Space → Excel Tracker → SharePoint Customer Folder:**
+
+| ClickUp Space | Excel Tracker | SharePoint Customer Folder |
+|---|---|---|
+| Sony | 01. Sarani_Sony Projects.xlsx | 03. Customers/02. Sony/ |
+| TikTok | 02. Sarani_Bytedance Projects.xlsx | 03. Customers/05. TikTok/ |
+| Other customers | 03. Sarani_Other Projects.xlsx | 03. Customers/01. Single Projects/ |
+| Aristocrat | 04. Sarani_Aristocrat Projects.xlsx | 03. Customers/11. Aristocrat/ |
+| Ubi | 09. Sarani_Projets Ubi.xlsx | 03. Customers/17. Ubi/ |
+| Aujan | 10. Sarani_Aujan Projects.xlsx | 03. Customers/18. Aujan/ |
+| Bose | 11. Sarani_Bose Projects.xlsx | 03. Customers/19. Bose/ |
+| Lamarck | 12. Sarani_Lamarck Projects.xlsx | 03. Customers/21.Lamarck/ |
+| CMC Markets | 13. Sarani_CMC Markets Project.xlsx | 03. Customers/20. CMC Markets/ |
+
+### A.6 SharePoint Customer Folder Structure (OQ-4 RESOLVED)
+
+```
+SaraniAssets / Documents / 03. Customers /
+├── 01. Single Projects/ (74 items — one-off projects)
+├── 02. Sony/
+│   ├── 01. Guidelines & Assets/
+│   ├── 02. Sony Europe/
+│   ├── 03. Sony France/
+│   │   ├── 01. Cross/ (51 items)
+│   │   ├── 02. TV-HAV/ (173 items)
+│   │   ├── 03. V&S/ (183 items)
+│   │   └── ...
+│   └── 06. Sony Professional/ (160 items)
+├── 05. TikTok/
+├── 11. Aristocrat/
+├── 17. Ubi/
+├── 18. Aujan/
+├── 19. Bose/
+├── 20. CMC Markets/
+└── 21.Lamarck/
+```
+
+**For new project automation (US-AUTO-02)**: project folder should be created inside the client's existing subfolder structure. The exact subfolder (e.g. Sony France → `03. V&S/`) must be inferred from the ClickUp List name or selected manually in the back-office.
+
+### A.7 Resolved Open Questions Summary
+
+| OQ | Status | Resolution |
+|---|---|---|
+| OQ-1 | **OPEN** | Still needs Thomas input: can `user` role see all clients? |
+| OQ-2 | **RESOLVED** | 9 tracker files identified (see A.5) |
+| OQ-3 | **PARTIALLY RESOLVED** | ClickUp → Excel matching by project name. ClickUp → SharePoint via `Folder` custom field URL. Flow: ClickUp first → back-office → Excel. |
+| OQ-4 | **RESOLVED** | Structure: `03. Customers / [XX. Client Name] / [Division] / [Project Folder]` |
+| OQ-5 | **PARTIALLY RESOLVED** | Sony tracker columns confirmed. Thomas confirmed pricing grid varies per client. Need to handle per-tracker column mappings. |
+| OQ-6 | **OPEN** | Where to store generated PDFs? Recommend: SharePoint (`01_Quotes/` subfolder in Trackers) |
+| OQ-7 | **OPEN** | Last-write-wins acceptable for v1? |
+| OQ-8 | **RESOLVED** | Real ClickUp statuses: Open / in progress / review / Closed. Invoice status is separate (from Evoliz). |
+| OQ-9 | **OPEN** | Email vs in-app notification for auto-created projects |
+| OQ-10 | **RESOLVED** | One Space per client, multiple Lists per Space (by division) |
+| OQ-11 | **OPEN** | CEO signature format on quotes |
+| OQ-12 | **RESOLVED** | Azure AD app registration created, admin consent granted, API access confirmed |
+
+### A.8 Validated/Invalidated Hypotheses
+
+| ID | Status | Notes |
+|---|---|---|
+| H-01 | **INVALIDATED** | Filenames are `01. Sarani_Sony Projects.xlsx` not `Sony_Tracker.xlsx`. Naming is inconsistent (numbered, some with `Sarani_` prefix). Mapping table provided in A.5. |
+| H-02 | **VALIDATED (modified)** | Matching by project name confirmed, but flow is always ClickUp → back-office → Excel (not bidirectional matching). ClickUp `Folder` custom field provides SharePoint link. |
+| H-03 | **INVALIDATED** | Project folders are NOT in the Trackers folder. They're in a separate SharePoint site (SaraniAssets), path: `03. Customers/[Client]/[Division]/[Project]/` |
+| H-04 | **INVALIDATED** | Real statuses are `Open`, `in progress`, `review`, `Closed` (not OPEN/ON HOLD/SUBMITTED/CLOSED). Invoice status is a separate dimension from Evoliz. |
+| H-05 | **OPEN** | pdf-lib still recommended — to test on Replit |
+| H-06 | **OPEN** | Last-write-wins — awaiting Thomas confirmation |
+| H-07 | **CONFIRMED at risk** | Thomas confirmed pricing grids vary per client. Quote generator must read column headers dynamically from each tracker, not assume a fixed schema. |
+| H-08 | **OPEN** | User role scoping — awaiting Thomas |
 
 ---
 
