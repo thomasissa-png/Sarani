@@ -13,6 +13,12 @@ import {
   type ProposalLanguage,
   type ProposalResponse,
 } from "@/lib/validations/proposal";
+import {
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -44,10 +50,18 @@ const INITIAL_FORM: FormState = {
   language: "EN",
 };
 
+const STEPS = ["Prospect Info", "Configure", "Review & Generate"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function ProposalAgentPage() {
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+
+  // Generation state
   const [generating, setGenerating] = useState(false);
   const [proposal, setProposal] = useState<ProposalResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -63,22 +77,24 @@ export default function ProposalAgentPage() {
     });
   }
 
+  // ── Step validation ─────────────────────────────────────────────────────
+
+  function canProceedStep0(): boolean {
+    return form.prospectName.trim().length >= 2;
+  }
+
+  function canProceedStep1(): boolean {
+    return (
+      form.prospectNeeds.length >= 30 &&
+      form.servicesRequested.length > 0
+    );
+  }
+
   // ── Submit ────────────────────────────────────────────────────────────────
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setProposal(null);
-
-    if (form.prospectName.trim().length < 2) {
-      setError("Prospect name must be at least 2 characters.");
-      return;
-    }
-    if (form.servicesRequested.length === 0) {
-      setError("Select at least one service.");
-      return;
-    }
-
     setGenerating(true);
 
     try {
@@ -206,6 +222,43 @@ export default function ProposalAgentPage() {
     URL.revokeObjectURL(url);
   }
 
+  // ── Build summary items ────────────────────────────────────────────────
+
+  function getSummaryItems() {
+    return [
+      { label: "Prospect", value: form.prospectName },
+      {
+        label: "Industry",
+        value: form.prospectIndustry
+          ? PROSPECT_INDUSTRY_LABELS[form.prospectIndustry]
+          : "Not specified",
+      },
+      {
+        label: "Services",
+        value: form.servicesRequested
+          .map((s) => SERVICE_LABELS[s])
+          .join(", "),
+      },
+      { label: "Language", value: form.language === "EN" ? "English" : "French" },
+      ...(form.estimatedBudget
+        ? [{ label: "Budget", value: form.estimatedBudget }]
+        : []),
+      ...(form.timeline
+        ? [{ label: "Timeline", value: form.timeline }]
+        : []),
+      ...(form.competitorMentioned
+        ? [{ label: "Competitor", value: form.competitorMentioned }]
+        : []),
+      {
+        label: "Brief",
+        value:
+          form.prospectNeeds.length > 80
+            ? form.prospectNeeds.slice(0, 80) + "..."
+            : form.prospectNeeds,
+      },
+    ];
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -229,219 +282,253 @@ export default function ProposalAgentPage() {
       </div>
 
       {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           Prospect Brief
         </h2>
 
-        {/* Prospect name */}
-        <div>
-          <label
-            htmlFor="prospectName"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Prospect Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="prospectName"
-            type="text"
-            value={form.prospectName}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, prospectName: e.target.value }))
-            }
-            placeholder="e.g. Danone, BMW, L'Oreal"
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          />
-        </div>
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Industry + Language */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="industry"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
+        {/* ── Step 0: Prospect Info ─────────────────────────────────────── */}
+        {step === 0 && (
+          <div className="space-y-5">
+            {/* Prospect name */}
+            <FormField
+              label="Prospect Name"
+              required
+              helperText="The company or brand name this proposal is for."
             >
-              Industry
-            </label>
-            <select
-              id="industry"
-              value={form.prospectIndustry}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  prospectIndustry: e.target.value as ProspectIndustry | "",
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">Select industry...</option>
-              {PROSPECT_INDUSTRIES.map((ind) => (
-                <option key={ind} value={ind}>
-                  {PROSPECT_INDUSTRY_LABELS[ind]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="language"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Proposal Language
-            </label>
-            <select
-              id="language"
-              value={form.language}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  language: e.target.value as ProposalLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {PROPOSAL_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang === "EN" ? "English" : "French"}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+              <input
+                type="text"
+                value={form.prospectName}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    prospectName: e.target.value,
+                  }))
+                }
+                placeholder="e.g. Danone, BMW, L'Oreal"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
 
-        {/* Needs / brief */}
-        <div>
-          <label
-            htmlFor="needs"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Needs / Brief
-          </label>
-          <textarea
-            id="needs"
-            value={form.prospectNeeds}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, prospectNeeds: e.target.value }))
-            }
-            placeholder="Describe what the prospect needs — context, challenges, goals..."
-            rows={4}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Services requested */}
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 mb-2">
-            Services Requested <span className="text-red-500">*</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {SERVICES_AVAILABLE.map((service) => {
-              const selected = form.servicesRequested.includes(service);
-              return (
-                <button
-                  key={service}
-                  type="button"
-                  onClick={() => toggleService(service)}
-                  className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                    selected
-                      ? "bg-brand-black text-white border-brand-black"
-                      : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
-                  }`}
-                >
-                  {SERVICE_LABELS[service]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Budget + Timeline */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="budget"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
+            {/* Industry */}
+            <FormField
+              label="Industry"
+              helperText="Select the prospect's industry so relevant case studies and terminology are included."
             >
-              Estimated Budget (optional)
-            </label>
-            <input
-              id="budget"
-              type="text"
-              value={form.estimatedBudget}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  estimatedBudget: e.target.value,
-                }))
-              }
-              placeholder="e.g. 50,000 EUR"
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="timeline"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
+              <select
+                value={form.prospectIndustry}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    prospectIndustry: e.target.value as ProspectIndustry | "",
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                <option value="">Select industry...</option>
+                {PROSPECT_INDUSTRIES.map((ind) => (
+                  <option key={ind} value={ind}>
+                    {PROSPECT_INDUSTRY_LABELS[ind]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* Language */}
+            <FormField
+              label="Proposal Language"
+              helperText="The language the proposal will be written in."
             >
-              Timeline (optional)
-            </label>
-            <input
-              id="timeline"
-              type="text"
-              value={form.timeline}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, timeline: e.target.value }))
-              }
-              placeholder="e.g. Q2 2026, 3 months"
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-        </div>
+              <select
+                value={form.language}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    language: e.target.value as ProposalLanguage,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {PROPOSAL_LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang === "EN" ? "English" : "French"}
+                  </option>
+                ))}
+              </select>
+            </FormField>
 
-        {/* Competitor mentioned */}
-        <div>
-          <label
-            htmlFor="competitor"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Competitor Mentioned (optional)
-          </label>
-          <input
-            id="competitor"
-            type="text"
-            value={form.competitorMentioned}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                competitorMentioned: e.target.value,
-              }))
-            }
-            placeholder="Who are they comparing us to?"
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                disabled={!canProceedStep0()}
+                onClick={() => setStep(1)}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Configure
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Generate Proposal"}
-          </button>
-        </div>
-      </form>
+        {/* ── Step 1: Configure ─────────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Needs / brief */}
+            <FormField
+              label="Needs / Brief"
+              required
+              helperText="Describe what the prospect needs. The more context you provide, the more tailored the proposal will be."
+            >
+              <TextareaWithCount
+                value={form.prospectNeeds}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, prospectNeeds: val }))
+                }
+                placeholder="e.g. L'Oreal needs a creative agency for their 2027 European beauty campaign — 200 assets across 8 markets, video + social + print"
+                minLength={30}
+                rows={4}
+              />
+            </FormField>
+
+            {/* Services requested */}
+            <FormField
+              label="Services Requested"
+              required
+              helperText="Select all services the prospect is interested in. Case studies matching these services will be automatically included."
+            >
+              <div className="flex flex-wrap gap-2">
+                {SERVICES_AVAILABLE.map((service) => {
+                  const selected = form.servicesRequested.includes(service);
+                  return (
+                    <button
+                      key={service}
+                      type="button"
+                      onClick={() => toggleService(service)}
+                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                        selected
+                          ? "bg-brand-black text-white border-brand-black"
+                          : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                      }`}
+                    >
+                      {SERVICE_LABELS[service]}
+                    </button>
+                  );
+                })}
+              </div>
+            </FormField>
+
+            {/* Budget + Timeline */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Estimated Budget"
+                helperText="Optional. If known, helps calibrate the scope and pricing approach."
+              >
+                <input
+                  type="text"
+                  value={form.estimatedBudget}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      estimatedBudget: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. 50,000 EUR"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+              <FormField
+                label="Timeline"
+                helperText="Optional. When does the prospect need this delivered?"
+              >
+                <input
+                  type="text"
+                  value={form.timeline}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, timeline: e.target.value }))
+                  }
+                  placeholder="e.g. Q2 2026, 3 months"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+            </div>
+
+            {/* Competitor mentioned */}
+            <FormField
+              label="Competitor Mentioned"
+              helperText="Optional. If the prospect mentioned a competitor, the proposal will include differentiation points."
+            >
+              <input
+                type="text"
+                value={form.competitorMentioned}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    competitorMentioned: e.target.value,
+                  }))
+                }
+                placeholder="e.g. WPP, Publicis, local agency name"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={!canProceedStep1()}
+                onClick={() => {
+                  setError(null);
+                  setStep(2);
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Review
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 2: Review & Generate ─────────────────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-4">
+            {/* Helper banner */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
+              Case studies matching the prospect&apos;s industry will be
+              automatically included in the proposal.
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onConfirm={handleGenerate}
+              onBack={() => setStep(1)}
+              loading={generating}
+              buttonLabel="Generate Proposal"
+            />
+          </div>
+        )}
+      </div>
 
       {/* Output */}
       {proposal && (
@@ -640,7 +727,7 @@ function ProposalOutput({
           Next Steps
         </h3>
         <ol className="space-y-1.5">
-          {p.nextSteps.map((step, i) => (
+          {p.nextSteps.map((s, i) => (
             <li
               key={i}
               className="text-sm text-brand-black flex items-start gap-2"
@@ -648,7 +735,7 @@ function ProposalOutput({
               <span className="text-neutral-400 font-medium shrink-0">
                 {i + 1}.
               </span>
-              {step}
+              {s}
             </li>
           ))}
         </ol>

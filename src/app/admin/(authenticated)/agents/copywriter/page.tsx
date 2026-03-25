@@ -48,14 +48,14 @@ const TOPIC_PLACEHOLDERS: Partial<Record<ContentType, string>> = {
     "e.g. Welcome email for new GEODIS logistics partnership — introduce key account manager, highlight SLA commitments, schedule kickoff call",
   tagline:
     "e.g. Sarani unlimited creativity positioning — convey scale, speed, and AI-powered creative production for global brands",
-  "social-post":
-    "e.g. Instagram carousel for Sony ULT headphones launch — 5 slides, lifestyle + product shots, Gen Z audience",
   "press-release":
     "e.g. Sarani announces partnership with Publicis Groupe — AI creative production at scale for their global client portfolio",
   "ad-copy":
     "e.g. Google Ads campaign for Black Friday electronics deals — urgency messaging, price anchoring, multiple headline variants",
-  "blog-post":
-    "e.g. How AI is transforming creative production for global agencies — thought leadership piece, 1500 words, SEO-optimized",
+  "brand-manifesto":
+    "e.g. Sarani brand manifesto — our mission to democratize world-class creative production through AI, tone: bold and visionary",
+  "product-description":
+    "e.g. Sony ULT Wear headphones product page — highlight noise cancellation, 30h battery, bass boost, lifestyle positioning for Gen Z",
 };
 
 const DEFAULT_TOPIC_PLACEHOLDER =
