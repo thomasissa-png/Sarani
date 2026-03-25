@@ -49,18 +49,18 @@
 - **Frontend** : À recommander par @fullstack (contrainte : site vitrine international, performance, SEO-friendly) — **greenfield**, on repart de zéro
 - **Backend** : À recommander par @fullstack (contrainte : site vitrine, formulaire contact, intégration Umami) — **greenfield**
 - **Base de données** : À recommander par @fullstack (besoin minimal : formulaire contact, éventuellement blog/case studies)
-- **Authentification** : Non requise (site vitrine public)
+- **Authentification** : Non requise (site vitrine public). **Back-office** : simple password (ajout ultérieur avant lancement, comme Resend)
 - **Hébergement** : Replit
-- **Outils IA utilisés** : À recommander par @ia (potentiel : chatbot, génération de contenu, automatisation)
-- **Budget IA mensuel (tokens)** : À définir après recommandation @ia
-- **Volume d'usage IA prévu** : À définir
+- **Outils IA utilisés** : Équipe d'agents IA internes via back-office (voir section Back-office IA ci-dessous)
+- **Budget IA mensuel (tokens)** : Pas de limite — tant que l'usage est intelligent et optimisé
+- **Volume d'usage IA prévu** : Usage quotidien par l'équipe de 35 experts
 - **Latence IA cible** : Défauts framework
 - **Outils d'analytics** : Umami (self-hosted, privacy-first, à implémenter dans le projet)
 
 ---
 
 ## Modèle économique et juridique
-- **Modèle économique** : [x] Site vitrine
+- **Modèle économique** : [x] Site vitrine + Back-office interne (via /admin)
 - **Pays de commercialisation** : International
 - **Données sensibles collectées** : [x] Non
 - **Utilisation d'IA générative** : À définir (usage prévu à déterminer)
@@ -83,6 +83,39 @@
 - **Outils analytics en place** : Aucun — Umami à implémenter dans ce projet
 - **Contenu existant** : Site web vitrine existant, base email clients (~1 000 contacts), deck de présentation commercial (96 slides, EN), portfolio de case studies (Sony, TikTok, Adidas, GEODIS, PICO, L'Oréal, Pernod Ricard, Air Corsica, France Chimie, GIE, ProcessOut, Avenir Actifs)
 - **Historique SEO** : Repartir de zéro — pas de stratégie SEO en place, trafic organique non mesuré
+
+---
+
+## Back-office — Décisions validées (2026-03-25)
+
+### Architecture
+- **Déploiement** : Même app Next.js, route `/admin` (pas de sous-domaine séparé)
+- **Auth** : Simple password pour commencer (pas d'OAuth, pas d'IP restriction)
+- **Rôles/permissions** : Password unique partagé pour commencer (pas de rôles différenciés v1)
+
+### APIs tierces
+- **ClickUp** : API key + workspace ID à ajouter avant lancement (comme Resend — env vars)
+- **Evoliz** : API key + company ID à ajouter avant lancement (comme Resend — env vars)
+- **Données ClickUp/Evoliz prioritaires** : [À REPOSER — utilisateur veut répondre plus tard]
+
+### Équipe d'agents IA internes (concept clé)
+
+**Vision** : Le back-office donne accès à une équipe projet d'agents IA spécialisés, comme une équipe virtuelle permanente. Chaque agent a un profil métier précis. L'équipe Sarani (35 experts) interagit avec ces agents pour leurs besoins quotidiens sur les projets clients.
+
+**Agents à créer (via @agent-factory)** :
+1. **Project Manager** — Profil chargé de projet Sarani : comprend les briefs clients, briefe les agents, vérifie les outputs, renvoie au client, sait communiquer
+2. **Translator** — Multilingue natif professionnel. Langues v1 : FR, EN, IT, ES, DE
+3. **Creative Strategist** — Basé sur notre agent @creative-strategy existant
+4. **Graphic Designer** — Expert super créatif, profil de DA/directeur artistique
+5. **Legal** — Basé sur notre agent @legal existant, peut générer des contrats sur base d'exemples
+6. **Social** — Gestion des contenus réseaux sociaux
+7. **SEO** — Gestion du blog et du référencement
+
+**Budget IA** : Pas de limite tant que l'usage est intelligent
+**Priorité** : Tous les agents en même temps (pas de séquençage)
+**Langues traduction** : FR, EN, IT, ES, DE (v1)
+
+**[À DÉFINIR — Questions en cours]** : voir ci-dessous les questions posées à l'utilisateur
 
 ---
 
