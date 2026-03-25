@@ -64,9 +64,13 @@ export function ClientLogos() {
         Trusted by
       </p>
 
-      {/* Fade edges on mobile */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-brand-white to-transparent md:hidden" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-brand-white to-transparent md:hidden" />
+      {/* Fade edges on mobile (only when marquee is active) */}
+      {!prefersReduced && (
+        <>
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-brand-white to-transparent md:hidden" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-brand-white to-transparent md:hidden" />
+        </>
+      )}
 
       {/* Desktop: centered static grid */}
       <div className="hidden md:flex items-center justify-center gap-14">
@@ -75,20 +79,28 @@ export function ClientLogos() {
         ))}
       </div>
 
-      {/* Mobile: marquee animation */}
-      <div className="flex md:hidden group hover:[animation-play-state:paused]">
-        <div className="animate-marquee flex shrink-0 items-center gap-12">
+      {/* Mobile: marquee animation OR static flex when prefers-reduced-motion */}
+      {prefersReduced ? (
+        <div className="flex md:hidden flex-wrap items-center justify-center gap-8">
           {CLIENTS.map((client) => (
             <ClientItem key={client.name} client={client} />
           ))}
         </div>
-        {/* Duplicate for seamless loop */}
-        <div className="animate-marquee flex shrink-0 items-center gap-12 pl-12" aria-hidden="true">
-          {CLIENTS.map((client) => (
-            <ClientItem key={`dup-${client.name}`} client={client} />
-          ))}
+      ) : (
+        <div className="flex md:hidden group hover:[animation-play-state:paused]">
+          <div className="animate-marquee flex shrink-0 items-center gap-12">
+            {CLIENTS.map((client) => (
+              <ClientItem key={client.name} client={client} />
+            ))}
+          </div>
+          {/* Duplicate for seamless loop */}
+          <div className="animate-marquee flex shrink-0 items-center gap-12 pl-12" aria-hidden="true">
+            {CLIENTS.map((client) => (
+              <ClientItem key={`dup-${client.name}`} client={client} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 }

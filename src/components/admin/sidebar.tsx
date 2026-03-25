@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/ui/logo";
 
 // ─── Mobile sidebar context ─────────────────────────────────────────────────
 // Allows the header (hamburger button) and sidebar to share open/close state.
@@ -217,20 +217,13 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
-      <div className="p-5 border-b border-neutral-300">
-        <Link href="/admin" className="inline-flex items-center gap-2" onClick={onNavigate}>
-          <Image
-            src="/sarani-logo-black.png"
-            alt="Sarani"
-            width={100}
-            height={38}
-            className="h-auto"
-            priority
-          />
+      <div className="p-5 border-b border-neutral-300" onClick={onNavigate}>
+        <div className="inline-flex items-center gap-2">
+          <Logo variant="dark" width={100} href="/admin" />
           <span className="text-xs font-medium text-neutral-500 bg-neutral-200 px-2 py-0.5 rounded-full">
             Admin
           </span>
-        </Link>
+        </div>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">

@@ -305,6 +305,7 @@ export default function TrackerPage() {
           <select
             value={clientFilter}
             onChange={(e) => setClientFilter(e.target.value)}
+            aria-label="Filter by client"
             className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
           >
             {clients.map((c) => (
@@ -316,6 +317,7 @@ export default function TrackerPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter by project status"
             className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
           >
             {PROJECT_STATUSES.map((s) => (
@@ -327,6 +329,7 @@ export default function TrackerPage() {
           <select
             value={invoiceFilter}
             onChange={(e) => setInvoiceFilter(e.target.value)}
+            aria-label="Filter by invoice status"
             className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
           >
             {INVOICE_STATUSES.map((s) => (
@@ -371,6 +374,7 @@ export default function TrackerPage() {
         <div className="hidden md:block bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
+              <caption className="sr-only">Project tracker data</caption>
               <thead>
                 <tr className="border-b border-neutral-200 text-left">
                   <Th>Client</Th>

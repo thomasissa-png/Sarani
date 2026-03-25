@@ -2,9 +2,8 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { useSidebar } from "@/components/admin/sidebar";
+import { Logo } from "@/components/ui/logo";
 
 function getPageTitle(pathname: string): string {
   // Remove trailing slash
@@ -81,15 +80,9 @@ export function AdminHeader() {
           </svg>
         </button>
         {/* Mobile logo — visible only on small screens */}
-        <Link href="/admin" className="md:hidden shrink-0">
-          <Image
-            src="/sarani-logo-black.png"
-            alt="Sarani"
-            width={80}
-            height={31}
-            className="h-auto"
-          />
-        </Link>
+        <div className="md:hidden shrink-0">
+          <Logo variant="dark" width={80} href="/admin" />
+        </div>
         {/* Page title — desktop always, mobile only if not dashboard */}
         <h1 className="text-sm font-semibold text-brand-black hidden md:block">{pageTitle}</h1>
         <h1 className="text-sm font-semibold text-brand-black md:hidden">{pageTitle !== "Dashboard" ? pageTitle : ""}</h1>

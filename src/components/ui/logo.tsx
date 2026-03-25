@@ -7,6 +7,8 @@ interface LogoProps {
   variant?: "dark" | "light";
   /** Width in px — height is auto-calculated from aspect ratio */
   width?: number;
+  /** Override the default link target (defaults to "/") */
+  href?: string;
   className?: string;
 }
 
@@ -15,14 +17,14 @@ interface LogoProps {
  * - "light" variant: white text + colored dots (for dark backgrounds)
  * - "dark" variant: black text + colored dots (for light backgrounds)
  */
-export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
+export function Logo({ variant = "dark", width = 120, href = "/", className }: LogoProps) {
   const height = Math.round(width / 2.6);
   const src = variant === "light" ? "/sarani-logo-white.png" : "/sarani-logo-black.png";
 
   return (
     <Link
-      href="/"
-      aria-label="Sarani — Back to homepage"
+      href={href}
+      aria-label={href === "/" ? "Sarani — Back to homepage" : "Sarani — Back to dashboard"}
       className={cn("inline-flex items-center shrink-0", className)}
     >
       <Image

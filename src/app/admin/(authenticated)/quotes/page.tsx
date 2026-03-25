@@ -314,74 +314,148 @@ export default function QuotesPage() {
             Line Items
           </label>
           <div className="border border-neutral-300 rounded-lg overflow-hidden">
-            {/* Table Header */}
-            <div className="grid grid-cols-[1fr_100px_120px_120px_40px] gap-0 bg-neutral-100 border-b border-neutral-300">
-              <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
-                Description
+            {/* Desktop table layout */}
+            <div className="hidden sm:block overflow-x-auto">
+              {/* Table Header */}
+              <div className="grid grid-cols-[1fr_100px_120px_120px_40px] gap-0 bg-neutral-100 border-b border-neutral-300">
+                <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
+                  Description
+                </div>
+                <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
+                  Qty
+                </div>
+                <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
+                  Unit Price
+                </div>
+                <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
+                  Total
+                </div>
+                <div />
               </div>
-              <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
-                Qty
-              </div>
-              <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
-                Unit Price
-              </div>
-              <div className="px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
-                Total
-              </div>
-              <div />
+
+              {/* Rows */}
+              {items.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`grid grid-cols-[1fr_100px_120px_120px_40px] gap-0 border-b border-neutral-200 ${
+                    idx % 2 === 0 ? "bg-white" : "bg-neutral-50"
+                  }`}
+                >
+                  <input
+                    type="text"
+                    value={item.description}
+                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                    placeholder="Item description"
+                    aria-label="Item description"
+                    className="px-3 py-2.5 text-sm text-brand-black bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-neutral-400"
+                  />
+                  <input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateItem(item.id, "quantity", Math.max(0, parseFloat(e.target.value) || 0))
+                    }
+                    min={0}
+                    aria-label="Quantity"
+                    className="px-3 py-2.5 text-sm text-brand-black bg-transparent border-none focus:outline-none focus:ring-0"
+                  />
+                  <input
+                    type="number"
+                    value={item.unitPrice}
+                    onChange={(e) =>
+                      updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))
+                    }
+                    min={0}
+                    step={0.01}
+                    aria-label="Unit price"
+                    className="px-3 py-2.5 text-sm text-brand-black bg-transparent border-none focus:outline-none focus:ring-0"
+                  />
+                  <div className="px-3 py-2.5 text-sm font-medium text-brand-black">
+                    {formatCurrency(item.total, currency)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    disabled={items.length <= 1}
+                    className="flex items-center justify-center text-neutral-400 hover:text-error disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Remove item"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
             </div>
 
-            {/* Rows */}
-            {items.map((item, idx) => (
-              <div
-                key={item.id}
-                className={`grid grid-cols-[1fr_100px_120px_120px_40px] gap-0 border-b border-neutral-200 ${
-                  idx % 2 === 0 ? "bg-white" : "bg-neutral-50"
-                }`}
-              >
-                <input
-                  type="text"
-                  value={item.description}
-                  onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                  placeholder="Item description"
-                  className="px-3 py-2.5 text-sm text-brand-black bg-transparent border-none focus:outline-none focus:ring-0 placeholder:text-neutral-400"
-                />
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    updateItem(item.id, "quantity", Math.max(0, parseFloat(e.target.value) || 0))
-                  }
-                  min={0}
-                  className="px-3 py-2.5 text-sm text-brand-black bg-transparent border-none focus:outline-none focus:ring-0"
-                />
-                <input
-                  type="number"
-                  value={item.unitPrice}
-                  onChange={(e) =>
-                    updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))
-                  }
-                  min={0}
-                  step={0.01}
-                  className="px-3 py-2.5 text-sm text-brand-black bg-transparent border-none focus:outline-none focus:ring-0"
-                />
-                <div className="px-3 py-2.5 text-sm font-medium text-brand-black">
-                  {formatCurrency(item.total, currency)}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                  disabled={items.length <= 1}
-                  className="flex items-center justify-center text-neutral-400 hover:text-error disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Remove item"
+            {/* Mobile card layout */}
+            <div className="sm:hidden divide-y divide-neutral-200">
+              {items.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`p-3 space-y-2 ${idx % 2 === 0 ? "bg-white" : "bg-neutral-50"}`}
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+                  <div className="flex items-start justify-between gap-2">
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                      placeholder="Item description"
+                      aria-label="Item description"
+                      className="flex-1 px-2 py-2 text-sm text-brand-black bg-transparent border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-cerulean placeholder:text-neutral-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.id)}
+                      disabled={items.length <= 1}
+                      className="p-2 text-neutral-400 hover:text-error disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
+                      aria-label="Remove item"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Qty</label>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateItem(item.id, "quantity", Math.max(0, parseFloat(e.target.value) || 0))
+                        }
+                        min={0}
+                        aria-label="Quantity"
+                        className="w-full px-2 py-1.5 text-sm text-brand-black border border-neutral-300 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-brand-cerulean"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Unit Price</label>
+                      <input
+                        type="number"
+                        value={item.unitPrice}
+                        onChange={(e) =>
+                          updateItem(item.id, "unitPrice", Math.max(0, parseFloat(e.target.value) || 0))
+                        }
+                        min={0}
+                        step={0.01}
+                        aria-label="Unit price"
+                        className="w-full px-2 py-1.5 text-sm text-brand-black border border-neutral-300 rounded-lg bg-transparent focus:outline-none focus:ring-2 focus:ring-brand-cerulean"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-neutral-400 mb-1">Total</label>
+                      <div className="px-2 py-1.5 text-sm font-medium text-brand-black">
+                        {formatCurrency(item.total, currency)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {/* Add row + Total */}
             <div className="flex items-center justify-between px-3 py-3 bg-neutral-100">
@@ -455,64 +529,105 @@ export default function QuotesPage() {
         )}
 
         {!loading && pastQuotes.length > 0 && (
-          <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-neutral-200 text-left">
-                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                    Client
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                    Project
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {pastQuotes.map((q) => (
-                  <tr
-                    key={q.id}
-                    className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
-                  >
-                    <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
-                      {formatDate(q.createdAt)}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
-                      {q.clientName}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
-                      {q.projectName}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white rounded-xl border border-neutral-300 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <caption className="sr-only">Previous quotes</caption>
+                  <thead>
+                    <tr className="border-b border-neutral-200 text-left">
+                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Client
+                      </th>
+                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Project
+                      </th>
+                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Total
+                      </th>
+                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pastQuotes.map((q) => (
+                      <tr
+                        key={q.id}
+                        className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
+                      >
+                        <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                          {formatDate(q.createdAt)}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
+                          {q.clientName}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
+                          {q.projectName}
+                        </td>
+                        <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
+                          {formatCurrency(q.total, q.currency)}
+                        </td>
+                        <td className="px-5 py-3.5">
+                          {q.pdfUrl ? (
+                            <a
+                              href={q.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm font-medium text-brand-cerulean hover:underline"
+                            >
+                              View on SharePoint
+                            </a>
+                          ) : (
+                            <span className="text-neutral-400 text-xs">No link</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {pastQuotes.map((q) => (
+                <div
+                  key={q.id}
+                  className="bg-white rounded-xl border border-neutral-300 p-4 space-y-2"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-xs text-neutral-400">{formatDate(q.createdAt)}</p>
+                      <p className="text-sm font-medium text-brand-black mt-0.5">
+                        {q.clientName}
+                      </p>
+                    </div>
+                    <p className="text-sm font-bold text-brand-black shrink-0">
                       {formatCurrency(q.total, q.currency)}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {q.pdfUrl ? (
-                        <a
-                          href={q.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-brand-cerulean hover:underline"
-                        >
-                          View on SharePoint
-                        </a>
-                      ) : (
-                        <span className="text-neutral-400 text-xs">No link</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </p>
+                  </div>
+                  <p className="text-sm text-neutral-600 truncate">{q.projectName}</p>
+                  {q.pdfUrl ? (
+                    <a
+                      href={q.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-sm font-medium text-brand-cerulean hover:underline"
+                    >
+                      View on SharePoint
+                    </a>
+                  ) : (
+                    <span className="text-neutral-400 text-xs">No link</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
