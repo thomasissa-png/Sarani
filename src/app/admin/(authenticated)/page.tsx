@@ -107,12 +107,12 @@ export default async function AdminDashboardPage() {
         <StatCard label="Outputs This Week" value={outputsThisWeekResult} />
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions — All agents */}
       <div>
         <h2 className="text-lg font-semibold text-brand-black mb-3">
-          Quick Actions
+          Agents
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <QuickActionCard
             label="Quick Brief"
             href="/admin/quick-brief"
@@ -129,6 +129,31 @@ export default async function AdminDashboardPage() {
             description="Translate content"
           />
           <QuickActionCard
+            label="Copywriter"
+            href="/admin/agents/copywriter"
+            description="Write copy"
+          />
+          <QuickActionCard
+            label="Creative"
+            href="/admin/agents/creative"
+            description="Strategy & brief"
+          />
+          <QuickActionCard
+            label="Designer"
+            href="/admin/agents/designer"
+            description="Generate visuals"
+          />
+          <QuickActionCard
+            label="SEO"
+            href="/admin/agents/seo"
+            description="Optimize content"
+          />
+          <QuickActionCard
+            label="Social"
+            href="/admin/agents/social"
+            description="Social posts"
+          />
+          <QuickActionCard
             label="Email Drafter"
             href="/admin/agents/email-drafter"
             description="Draft emails"
@@ -137,6 +162,26 @@ export default async function AdminDashboardPage() {
             label="Video Script"
             href="/admin/agents/video-script"
             description="Generate scripts"
+          />
+          <QuickActionCard
+            label="Proposal"
+            href="/admin/agents/proposal"
+            description="Write proposals"
+          />
+          <QuickActionCard
+            label="Presentation"
+            href="/admin/agents/presentation"
+            description="Build decks"
+          />
+          <QuickActionCard
+            label="Legal"
+            href="/admin/agents/legal"
+            description="Draft contracts"
+          />
+          <QuickActionCard
+            label="Proofreader"
+            href="/admin/agents/proofreader"
+            description="Review & correct"
           />
         </div>
       </div>
@@ -148,10 +193,10 @@ export default async function AdminDashboardPage() {
             Recent Outputs
           </h2>
           <Link
-            href="/admin/clients"
+            href="/admin/projects"
             className="text-sm text-brand-cerulean hover:underline"
           >
-            View all clients
+            View all outputs
           </Link>
         </div>
 
