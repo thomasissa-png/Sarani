@@ -58,6 +58,7 @@ Pour une tâche ciblée : invoquer directement l'agent concerné.
 ## Convention d'appel
 
 - `@orchestrator` : planification multi-agents
+- `@pm` : Project Manager opérationnel — gestion quotidienne des projets clients, dispatch, suivi ClickUp/SharePoint/Excel
 - `@fullstack` : écriture de code React, Next.js, Expo, API
 - `@qa` : tests unitaires, E2E, intégration, pipeline CI/CD, audit qualité
 - `@design` : UI, design system, composants visuels
