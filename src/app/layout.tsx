@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { StickyCTAMobile } from "@/components/layout/sticky-cta-mobile";
+import { PublicSiteChrome } from "@/components/layout/public-site-chrome";
 import "./globals.css";
 
 const outfit = localFont({
@@ -114,10 +112,9 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
-        <Header />
-        <main id="main-content">{children}</main>
-        <Footer />
-        <StickyCTAMobile />
+        <PublicSiteChrome>
+          <main id="main-content">{children}</main>
+        </PublicSiteChrome>
       </body>
     </html>
   );
