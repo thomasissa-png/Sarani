@@ -34,17 +34,75 @@ type SeoApiResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+type SearchIntent = "informational" | "navigational" | "commercial" | "transactional";
+
+const SEARCH_INTENT_OPTIONS: { value: SearchIntent | ""; label: string }[] = [
+  { value: "", label: "-- Select search intent --" },
+  { value: "informational", label: "Informational" },
+  { value: "navigational", label: "Navigational" },
+  { value: "commercial", label: "Commercial" },
+  { value: "transactional", label: "Transactional" },
+];
+
+type TargetCta = "" | "contact" | "pricing" | "case-studies" | "consultation";
+
+const TARGET_CTA_OPTIONS: { value: TargetCta; label: string }[] = [
+  { value: "", label: "-- Select target CTA --" },
+  { value: "contact", label: "Contact form" },
+  { value: "pricing", label: "Pricing page" },
+  { value: "case-studies", label: "Case studies" },
+  { value: "consultation", label: "Free consultation" },
+];
+
+type TargetLength = 1500 | 2000 | 2500;
+
+const TARGET_LENGTH_OPTIONS: { value: TargetLength; label: string }[] = [
+  { value: 1500, label: "1,500 words" },
+  { value: 2000, label: "2,000 words" },
+  { value: 2500, label: "2,500 words" },
+];
+
 type FormState = {
   clientId: string;
   contentType: SeoContentType;
-  targetKeyword: string;
+  // Required
+  articleTitleH1: string;
+  primaryKeyword: string;
+  // Recommended
+  searchIntent: SearchIntent | "";
   secondaryKeywords: string;
+  targetCta: TargetCta;
+  targetLength: TargetLength;
+  // Optional
+  competitorArticles: string;
+  internalLinks: string;
+  proofPoints: string;
+  articleOutline: string;
+  // Kept
   language: SeoLanguage;
   wordCount: number;
   topic: string;
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
+// ─── Shared UI helpers ──────────────────────────────────────────────────────
+
+function RecommendedBadge() {
+  return (
+    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded">
+      Recommended
+    </span>
+  );
+}
+
+function GuidanceMessage({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800 leading-relaxed">
+      {children}
+    </div>
+  );
+}
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -59,12 +117,23 @@ export default function SeoPage() {
   const [form, setForm] = useState<FormState>({
     clientId: "",
     contentType: "article",
-    targetKeyword: "",
+    articleTitleH1: "",
+    primaryKeyword: "",
+    searchIntent: "",
     secondaryKeywords: "",
+    targetCta: "",
+    targetLength: 2000,
+    competitorArticles: "",
+    internalLinks: "",
+    proofPoints: "",
+    articleOutline: "",
     language: "EN",
-    wordCount: 1000,
+    wordCount: 2000,
     topic: "",
   });
+
+  // Advanced options toggle
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Generation state
   const [generating, setGenerating] = useState(false);
@@ -94,8 +163,9 @@ export default function SeoPage() {
 
   function canProceedStep1(): boolean {
     return (
-      !!form.targetKeyword.trim() &&
-      form.topic.length >= 30
+      !!form.articleTitleH1.trim() &&
+      !!form.primaryKeyword.trim() &&
+      form.primaryKeyword.length <= 70
     );
   }
 
@@ -115,11 +185,20 @@ export default function SeoPage() {
         body: JSON.stringify({
           clientId: form.clientId,
           contentType: form.contentType,
-          targetKeyword: form.targetKeyword,
+          targetKeyword: form.primaryKeyword,
           secondaryKeywords: form.secondaryKeywords,
           language: form.language,
-          wordCount: form.wordCount,
-          topic: form.topic,
+          wordCount: form.targetLength || form.wordCount,
+          topic: form.articleTitleH1,
+          // Additional context
+          articleTitleH1: form.articleTitleH1,
+          primaryKeyword: form.primaryKeyword,
+          searchIntent: form.searchIntent || undefined,
+          targetCta: form.targetCta || undefined,
+          competitorArticles: form.competitorArticles || undefined,
+          internalLinks: form.internalLinks || undefined,
+          proofPoints: form.proofPoints || undefined,
+          articleOutline: form.articleOutline || undefined,
         }),
       });
 
@@ -166,21 +245,21 @@ export default function SeoPage() {
     return [
       { label: "Client", value: selectedClient?.name || "---" },
       { label: "Content Type", value: SEO_CONTENT_TYPE_LABELS[form.contentType] },
-      { label: "Target Keyword", value: form.targetKeyword || "---" },
+      { label: "H1 Title", value: form.articleTitleH1 || "---" },
+      { label: "Primary Keyword", value: form.primaryKeyword || "---" },
+      ...(form.searchIntent
+        ? [{ label: "Search Intent", value: SEARCH_INTENT_OPTIONS.find((o) => o.value === form.searchIntent)?.label || form.searchIntent }]
+        : []),
       ...(form.secondaryKeywords
         ? [{ label: "Secondary Keywords", value: form.secondaryKeywords }]
         : []),
       { label: "Language", value: SEO_LANGUAGE_LABELS[form.language] },
       ...(form.contentType === "article"
-        ? [{ label: "Word Count", value: `${form.wordCount.toLocaleString()} words` }]
+        ? [{ label: "Target Length", value: `${form.targetLength.toLocaleString()} words` }]
         : []),
-      {
-        label: "Topic",
-        value:
-          form.topic.length > 80
-            ? form.topic.slice(0, 80) + "..."
-            : form.topic,
-      },
+      ...(form.targetCta
+        ? [{ label: "Target CTA", value: TARGET_CTA_OPTIONS.find((o) => o.value === form.targetCta)?.label || form.targetCta }]
+        : []),
     ];
   }
 
@@ -209,6 +288,16 @@ export default function SeoPage() {
         <h2 className="text-lg font-semibold text-brand-black">
           New SEO Content
         </h2>
+
+        {/* Guidance message */}
+        <GuidanceMessage>
+          SEO writing is a precision exercise. Give me a specific keyword (not
+          &quot;marketing agency&quot; — try &quot;creative agency for enterprise
+          brands&quot;), confirm the search intent (is the reader looking to
+          hire, to learn, or to compare?), and tell me where you want to convert
+          them. I&apos;ll handle the structure, the optimization, and the Sarani
+          voice.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -288,86 +377,278 @@ export default function SeoPage() {
               </FormField>
             </div>
 
-            {/* Target keyword */}
+            {/* Article title H1 — required */}
             <FormField
-              label="Target Keyword"
+              label="Article Title (H1)"
               required
-              helperText="The primary keyword you want to rank for. Use 2-4 words for best results."
+              helperText="The H1 title determines the primary keyword placement and sets the topic frame."
             >
               <input
                 type="text"
-                value={form.targetKeyword}
+                value={form.articleTitleH1}
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
-                    targetKeyword: e.target.value,
+                    articleTitleH1: e.target.value,
                   }))
                 }
-                placeholder="e.g. creative agency international"
+                placeholder="How to Brief a Creative Agency for Same-Day Delivery"
                 className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
               />
             </FormField>
 
-            {/* Secondary keywords */}
+            {/* Primary keyword — required, max 70 chars */}
             <FormField
-              label="Secondary Keywords"
-              helperText="Comma-separated list of supporting keywords to include naturally in the content."
+              label="Primary Keyword"
+              required
+              helperText="The exact search query the article must rank for. Every structural and density decision is built around this keyword."
+              error={
+                form.primaryKeyword.length > 70
+                  ? `Keyword must be 70 characters or less (currently ${form.primaryKeyword.length})`
+                  : undefined
+              }
             >
-              <input
-                type="text"
-                value={form.secondaryKeywords}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    secondaryKeywords: e.target.value,
-                  }))
-                }
-                placeholder="e.g. global creative production, multilingual design, cross-market campaigns"
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              />
-            </FormField>
-
-            {/* Word count (only for articles) */}
-            {form.contentType === "article" && (
-              <FormField
-                label="Target Word Count"
-                helperText="Longer articles (1500+) tend to rank better for competitive keywords."
-              >
-                <select
-                  value={form.wordCount}
+              <div>
+                <input
+                  type="text"
+                  value={form.primaryKeyword}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      wordCount: Number(e.target.value),
+                      primaryKeyword: e.target.value,
                     }))
                   }
-                  className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  maxLength={70}
+                  placeholder="brief creative agency"
+                  className={`w-full px-4 py-2.5 rounded-lg border ${
+                    form.primaryKeyword.length > 70
+                      ? "border-red-400"
+                      : "border-neutral-300"
+                  } bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent`}
+                />
+                <div className="flex justify-end mt-1">
+                  <span
+                    className={`text-xs ${
+                      form.primaryKeyword.length > 70
+                        ? "text-red-500"
+                        : "text-neutral-400"
+                    }`}
+                  >
+                    {form.primaryKeyword.length}/70 chars
+                  </span>
+                </div>
+              </div>
+            </FormField>
+
+            {/* ── Recommended fields ──────────────────────────────────────── */}
+            <div className="border-t border-neutral-200 pt-5 space-y-5">
+              {/* Search intent — recommended */}
+              <FormField
+                label={
+                  <>
+                    Search Intent
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="Determines the article structure and conclusion strategy. An informational article educates; a commercial one builds comparison and moves toward a decision."
+              >
+                <select
+                  value={form.searchIntent}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      searchIntent: e.target.value as SearchIntent | "",
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 >
-                  {WORD_COUNT_OPTIONS.map((wc) => (
-                    <option key={wc} value={wc}>
-                      {wc.toLocaleString()} words
+                  {SEARCH_INTENT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
                     </option>
                   ))}
                 </select>
               </FormField>
-            )}
 
-            {/* Topic / brief */}
-            <FormField
-              label="Topic / Brief"
-              required
-              helperText="Describe the angle, target audience, and key points. The more context you provide, the better the output."
-            >
-              <TextareaWithCount
-                value={form.topic}
-                onChange={(val) =>
-                  setForm((prev) => ({ ...prev, topic: val }))
+              {/* Secondary keywords — recommended */}
+              <FormField
+                label={
+                  <>
+                    Secondary Keywords
+                    <RecommendedBadge />
+                  </>
                 }
-                placeholder="e.g. Why international brands need a 24/7 creative agency — speed, quality, and cost advantages"
-                minLength={30}
-                rows={5}
-              />
-            </FormField>
+                helperText="Semantic keywords increase topical authority and capture long-tail queries."
+              >
+                <input
+                  type="text"
+                  value={form.secondaryKeywords}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      secondaryKeywords: e.target.value,
+                    }))
+                  }
+                  placeholder="agency briefing template, creative brief example, how to write a creative brief"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+
+              {/* Target CTA — recommended */}
+              <FormField
+                label={
+                  <>
+                    Target CTA
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="Every SEO article should have a conversion path. Without a CTA target, the article ends with no action for the reader."
+              >
+                <select
+                  value={form.targetCta}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      targetCta: e.target.value as TargetCta,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {TARGET_CTA_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              {/* Target length — recommended */}
+              {form.contentType === "article" && (
+                <FormField
+                  label={
+                    <>
+                      Target Length
+                      <RecommendedBadge />
+                    </>
+                  }
+                  helperText="Length signals content depth to search engines. Competitive queries require longer articles."
+                >
+                  <div className="flex gap-2">
+                    {TARGET_LENGTH_OPTIONS.map((opt) => (
+                      <label
+                        key={opt.value}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
+                          form.targetLength === opt.value
+                            ? "border-brand-cerulean bg-blue-50/50"
+                            : "border-neutral-200 hover:border-neutral-300"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="targetLength"
+                          value={opt.value}
+                          checked={form.targetLength === opt.value}
+                          onChange={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              targetLength: opt.value,
+                              wordCount: opt.value,
+                            }))
+                          }
+                          className="sr-only"
+                        />
+                        <span className="text-sm font-medium text-brand-black">
+                          {opt.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </FormField>
+              )}
+            </div>
+
+            {/* ── Advanced options (collapsible) ─────────────────────────── */}
+            <div className="border-t border-neutral-200 pt-4">
+              <button
+                type="button"
+                onClick={() => setAdvancedOpen(!advancedOpen)}
+                className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-brand-black transition-colors"
+              >
+                <span
+                  className="transition-transform"
+                  style={{
+                    display: "inline-block",
+                    transform: advancedOpen ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
+                >
+                  &#9654;
+                </span>
+                Advanced options
+              </button>
+              {advancedOpen && (
+                <div className="mt-4 space-y-5">
+                  <FormField
+                    label="Competitor Articles to Beat"
+                    helperText="What is currently ranking #1-3 for this keyword? Knowing what to outcompete allows the agent to structure a more comprehensive article."
+                  >
+                    <TextareaWithCount
+                      value={form.competitorArticles}
+                      onChange={(val) =>
+                        setForm((prev) => ({ ...prev, competitorArticles: val }))
+                      }
+                      placeholder="https://competitor.com/article-1, https://competitor.com/article-2"
+                      rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Internal Links to Include"
+                    helperText="Specific pages to link to within the article (case studies, service pages). Builds internal link equity."
+                  >
+                    <input
+                      type="text"
+                      value={form.internalLinks}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          internalLinks: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. /case-studies/geodis, /services/design"
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Proof Points to Include"
+                    helperText="Specific Sarani data points to include (e.g., pricing, case study metrics). Without these, the agent will use placeholders."
+                  >
+                    <TextareaWithCount
+                      value={form.proofPoints}
+                      onChange={(val) =>
+                        setForm((prev) => ({ ...prev, proofPoints: val }))
+                      }
+                      placeholder='e.g. "155 EUR Sony banners", "8,500 EUR GEODIS 5,700 slides"'
+                      rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Article Outline"
+                    helperText="If you have a specific section structure in mind, providing it here overrides the auto-generated outline."
+                  >
+                    <TextareaWithCount
+                      value={form.articleOutline}
+                      onChange={(val) =>
+                        setForm((prev) => ({ ...prev, articleOutline: val }))
+                      }
+                      placeholder="1. Introduction / hook&#10;2. The problem with traditional briefing&#10;3. Step-by-step briefing framework&#10;4. Case study: GEODIS&#10;5. Conclusion + CTA"
+                      rows={4}
+                    />
+                  </FormField>
+                </div>
+              )}
+            </div>
 
             {/* Error */}
             {error && (

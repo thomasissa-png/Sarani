@@ -36,15 +36,59 @@ type GenerateApiResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+// Spec-aligned platform options
+const PLATFORM_OPTIONS: { value: VideoPlatform; label: string }[] = [
+  { value: "tiktok", label: "TikTok" },
+  { value: "instagram", label: "Instagram Reels" },
+  { value: "youtube", label: "YouTube Shorts" },
+  { value: "youtube", label: "YouTube long-form" },
+  { value: "linkedin", label: "LinkedIn video" },
+  { value: "website", label: "Internal / Other" },
+];
+
+// Spec-aligned duration options
+const DURATION_OPTIONS = [
+  { value: "tiktok-15s", label: "15s" },
+  { value: "tiktok-30s", label: "30s" },
+  { value: "tiktok-60s", label: "60s" },
+  { value: "instagram-reel", label: "90s" },
+  { value: "youtube-short", label: "3-5min" },
+  { value: "youtube-long", label: "10min+" },
+] as const;
+
+// Script format options from specs
+const SCRIPT_FORMAT_OPTIONS = [
+  "Voiceover",
+  "On-camera presenter",
+  "Text overlays only",
+  "Dialogue",
+  "Hybrid",
+] as const;
+
+// Caption style options from specs
+const CAPTION_STYLE_OPTIONS = [
+  "Auto-captions",
+  "Styled text overlays",
+  "None",
+] as const;
+
 type FormState = {
   clientId: string;
-  videoFormat: VideoFormat;
+  // Required
   platform: VideoPlatform;
-  topic: string;
-  targetAudience: string;
-  tone: VideoTone;
-  keyMessages: string;
+  videoFormat: VideoFormat;
+  videoConcept: string;
+  // Recommended
+  hookDirection: string;
+  scriptFormat: string;
+  cta: string;
   language: VideoLanguage;
+  // Optional
+  visualDirection: string;
+  musicMood: string;
+  captionStyle: string;
+  seriesContext: string;
+  existingReferenceScript: string;
   variantCount: number;
 };
 
@@ -52,24 +96,8 @@ type FormState = {
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
 
-const TONE_DESCRIPTIONS: Record<VideoTone, string> = {
-  entertaining: "Humor, trends, viral potential",
-  educational: "How-to, tips, tutorials",
-  inspirational: "Storytelling, emotion, aspirational",
-  promotional: "Product focus, offers, launches",
-};
-
-const FORMAT_DESCRIPTIONS: Record<VideoFormat, string> = {
-  "tiktok-15s": "Quick impact, single message, trending hooks",
-  "tiktok-30s": "Best for product showcases and trending hooks",
-  "tiktok-60s": "Mini-stories, tutorials, deeper engagement",
-  "instagram-reel": "Polished visuals, brand-forward, lifestyle content",
-  "youtube-short": "Vertical, snackable, discoverability-focused",
-  "youtube-long": "In-depth content, tutorials, brand storytelling",
-  corporate: "Professional tone, stakeholders, internal or external comms",
-  "ugc-brief": "Creator instructions, authentic style, performance-driven",
-  "product-demo": "Feature walkthrough, use cases, conversion-focused",
-};
+const GUIDANCE_MESSAGE =
+  "At Sarani, we produce 1,500+ videos per month. Every script must be production-ready: right duration, right format, strong hook in the first 3 seconds. Tell me the platform, the exact duration, what happens on screen, and what the video must make the viewer do or feel. I'll write a script the editor can follow without questions.";
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -80,16 +108,24 @@ export default function VideoScriptPage() {
   // Client ref
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // Form state
   const [form, setForm] = useState<FormState>({
     clientId: "",
-    videoFormat: "tiktok-30s",
     platform: "tiktok",
-    topic: "",
-    targetAudience: "",
-    tone: "entertaining",
-    keyMessages: "",
+    videoFormat: "tiktok-30s",
+    videoConcept: "",
+    hookDirection: "",
+    scriptFormat: "",
+    cta: "",
     language: "EN",
+    visualDirection: "",
+    musicMood: "",
+    captionStyle: "",
+    seriesContext: "",
+    existingReferenceScript: "",
     variantCount: 1,
   });
 
@@ -119,7 +155,9 @@ export default function VideoScriptPage() {
     if (s === 0) return !!form.clientId;
     if (s === 1)
       return (
-        form.topic.trim().length >= 30 && form.targetAudience.trim().length > 0
+        !!form.platform &&
+        !!form.videoFormat &&
+        form.videoConcept.trim().length >= 20
       );
     return true;
   }
@@ -127,10 +165,10 @@ export default function VideoScriptPage() {
   function getStepError(s: number): string | null {
     if (s === 0 && !form.clientId) return "Please select a client to continue.";
     if (s === 1) {
-      if (form.topic.trim().length < 30)
-        return "Topic must be at least 30 characters for a quality script.";
-      if (!form.targetAudience.trim())
-        return "Target audience is required. A video without a target audience is wasted content.";
+      if (!form.platform) return "Please select a platform.";
+      if (!form.videoFormat) return "Please select a video duration.";
+      if (form.videoConcept.trim().length < 20)
+        return "Video concept must be at least 20 characters. Describe what happens on screen.";
     }
     return null;
   }
@@ -150,12 +188,19 @@ export default function VideoScriptPage() {
           clientId: form.clientId,
           videoFormat: form.videoFormat,
           platform: form.platform,
-          topic: form.topic,
-          targetAudience: form.targetAudience || undefined,
-          tone: form.tone,
-          keyMessages: form.keyMessages || undefined,
+          topic: form.videoConcept,
+          tone: "entertaining" as VideoTone,
           language: form.language,
           variantCount: form.variantCount,
+          // Extended fields
+          hookDirection: form.hookDirection || undefined,
+          scriptFormat: form.scriptFormat || undefined,
+          cta: form.cta || undefined,
+          visualDirection: form.visualDirection || undefined,
+          musicMood: form.musicMood || undefined,
+          captionStyle: form.captionStyle || undefined,
+          seriesContext: form.seriesContext || undefined,
+          existingReferenceScript: form.existingReferenceScript || undefined,
         }),
       });
 
@@ -179,27 +224,29 @@ export default function VideoScriptPage() {
 
   function buildSummaryItems() {
     return [
-      { label: "Client", value: selectedClient?.name || "—" },
-      { label: "Format", value: VIDEO_FORMAT_LABELS[form.videoFormat] },
+      { label: "Client", value: selectedClient?.name || "---" },
       { label: "Platform", value: VIDEO_PLATFORM_LABELS[form.platform] },
-      { label: "Tone", value: VIDEO_TONE_LABELS[form.tone] },
-      { label: "Language", value: VIDEO_LANGUAGE_LABELS[form.language] },
+      { label: "Duration", value: VIDEO_FORMAT_LABELS[form.videoFormat] },
       {
-        label: "Topic",
+        label: "Concept",
         value:
-          form.topic.length > 80
-            ? form.topic.slice(0, 80) + "..."
-            : form.topic,
+          form.videoConcept.length > 80
+            ? form.videoConcept.slice(0, 80) + "..."
+            : form.videoConcept,
       },
-      { label: "Target audience", value: form.targetAudience },
       {
-        label: "Key messages",
-        value: form.keyMessages
-          ? form.keyMessages.length > 60
-            ? form.keyMessages.slice(0, 60) + "..."
-            : form.keyMessages
-          : "None specified",
+        label: "Hook direction",
+        value: form.hookDirection
+          ? form.hookDirection.length > 60
+            ? form.hookDirection.slice(0, 60) + "..."
+            : form.hookDirection
+          : "Not specified",
       },
+      {
+        label: "Script format",
+        value: form.scriptFormat || "Not specified",
+      },
+      { label: "Language", value: VIDEO_LANGUAGE_LABELS[form.language] },
       { label: "Variants", value: `${form.variantCount}` },
     ];
   }
@@ -228,6 +275,13 @@ export default function VideoScriptPage() {
 
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800 leading-relaxed">
+            {GUIDANCE_MESSAGE}
+          </p>
+        </div>
+
         <StepIndicator steps={STEPS} currentStep={step} />
 
         {/* ── Step 0: Select Client ──────────────────────────────────── */}
@@ -240,7 +294,7 @@ export default function VideoScriptPage() {
               value={form.clientId}
               onChange={(id) => setForm((prev) => ({ ...prev, clientId: id }))}
               required
-              helperText="Select the client this video is for. Their brand context is essential for matching the right tone and messaging."
+              helperText="Loads brand voice, tone, and visual identity constraints. A script for TikTok's own channel and a script for a GEODIS product video have different register and energy."
               onClientLoaded={handleClientLoaded}
             />
             <div className="flex justify-end pt-2">
@@ -271,195 +325,305 @@ export default function VideoScriptPage() {
 
             <ClientContextPanel client={selectedClient} />
 
-            {/* Video Format */}
-            <FormField
-              label="Video Format"
-              required
-              helperText="Choose the format that fits your content goal."
-            >
-              <select
-                value={form.videoFormat}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    videoFormat: e.target.value as VideoFormat,
-                  }))
-                }
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                {VIDEO_FORMATS.map((f) => (
-                  <option key={f} value={f}>
-                    {VIDEO_FORMAT_LABELS[f]}
-                  </option>
-                ))}
-              </select>
-              {/* Format description */}
-              <p className="text-xs text-neutral-500 mt-1.5 bg-neutral-50 px-3 py-1.5 rounded">
-                {FORMAT_DESCRIPTIONS[form.videoFormat]}
-              </p>
-            </FormField>
+            {/* ── Required Fields ── */}
 
-            {/* Platform */}
-            <FormField
-              label="Platform"
-              required
-              helperText="Where will this video be published?"
-            >
-              <select
-                value={form.platform}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    platform: e.target.value as VideoPlatform,
-                  }))
-                }
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                {VIDEO_PLATFORMS.map((p) => (
-                  <option key={p} value={p}>
-                    {VIDEO_PLATFORM_LABELS[p]}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-
-            {/* Topic */}
-            <FormField
-              label="Topic / Brief"
-              required
-              helperText="Describe the video concept, product, or message you want to convey."
-            >
-              <TextareaWithCount
-                value={form.topic}
-                onChange={(val) =>
-                  setForm((prev) => ({ ...prev, topic: val }))
-                }
-                placeholder="e.g. TikTok creator campaign for Sony ULT headphones — Gen Z audience, music festival season, street style angle"
-                minLength={30}
-                rows={4}
-              />
-            </FormField>
-
-            {/* Target Audience (REQUIRED) */}
-            <FormField
-              label="Target Audience"
-              required
-              helperText="Who is this video for? A video without a clear target audience is wasted content."
-            >
-              <input
-                type="text"
-                value={form.targetAudience}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    targetAudience: e.target.value,
-                  }))
-                }
-                placeholder="e.g. Gen Z women 18-24 interested in music festivals and street fashion"
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              />
-            </FormField>
-
-            {/* Tone */}
-            <FormField
-              label="Tone"
-              required
-              helperText="Set the overall vibe for the video."
-            >
-              <div className="space-y-2">
-                {VIDEO_TONES.map((t) => (
-                  <label
-                    key={t}
-                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      form.tone === t
-                        ? "border-brand-cerulean bg-blue-50"
-                        : "border-neutral-200 hover:bg-neutral-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="tone"
-                      value={t}
-                      checked={form.tone === t}
-                      onChange={() =>
-                        setForm((prev) => ({ ...prev, tone: t }))
-                      }
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-brand-black">
-                        {VIDEO_TONE_LABELS[t]}
-                      </span>
-                      <p className="text-xs text-neutral-500">
-                        {TONE_DESCRIPTIONS[t]}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </FormField>
-
-            {/* Key Messages */}
-            <FormField
-              label="Key Messages"
-              helperText="Specific talking points, features, stats, or CTAs to include."
-            >
-              <TextareaWithCount
-                value={form.keyMessages}
-                onChange={(val) =>
-                  setForm((prev) => ({ ...prev, keyMessages: val }))
-                }
-                placeholder="e.g. Highlight the 30-hour battery life, show it surviving rain at a festival, mention the ULT button for extra bass"
-                rows={3}
-              />
-            </FormField>
-
-            {/* Language + Variants */}
+            {/* Platform + Duration */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
-                label="Language"
-                helperText={
-                  selectedClient?.primaryLanguage
-                    ? `Auto-filled from ${selectedClient.name}'s primary language.`
-                    : "Script language."
-                }
+                label="Platform"
+                required
+                helperText="Platform defines format rules, caption behavior, safe zones, and viewer attention patterns."
               >
                 <select
-                  value={form.language}
+                  value={form.platform}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      language: e.target.value as VideoLanguage,
+                      platform: e.target.value as VideoPlatform,
                     }))
                   }
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 >
-                  {VIDEO_LANGUAGES.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {VIDEO_LANGUAGE_LABELS[lang]} ({lang})
+                  {VIDEO_PLATFORMS.map((p) => (
+                    <option key={p} value={p}>
+                      {VIDEO_PLATFORM_LABELS[p]}
                     </option>
                   ))}
                 </select>
               </FormField>
+
               <FormField
-                label="Variants"
-                helperText="Generate alternative script versions."
+                label="Video Duration"
+                required
+                helperText="Duration is the hard constraint around which everything else is built."
               >
                 <select
-                  value={form.variantCount}
+                  value={form.videoFormat}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      variantCount: Number(e.target.value),
+                      videoFormat: e.target.value as VideoFormat,
                     }))
                   }
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 >
-                  <option value={1}>1 variant</option>
-                  <option value={2}>2 variants</option>
-                  <option value={3}>3 variants</option>
+                  {VIDEO_FORMATS.map((f) => (
+                    <option key={f} value={f}>
+                      {VIDEO_FORMAT_LABELS[f]}
+                    </option>
+                  ))}
                 </select>
               </FormField>
+            </div>
+
+            {/* Video Concept */}
+            <FormField
+              label="Video Concept"
+              required
+              helperText="What is this video about? What happens visually and verbally? Without the concept, the agent writes a script without a story."
+            >
+              <TextareaWithCount
+                value={form.videoConcept}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, videoConcept: val }))
+                }
+                placeholder="TikTok creator shows how to use TikTok's creative toolkit to produce a brand campaign in 24 hours. POV: content creator at their desk. Fast cuts. Text overlays on each feature."
+                minLength={20}
+                rows={5}
+              />
+            </FormField>
+
+            {/* ── Recommended Fields ── */}
+            <div className="border-t border-neutral-200 pt-4 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Recommended
+                </span>
+                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
+                  Recommended
+                </span>
+              </div>
+
+              {/* Hook direction */}
+              <FormField
+                label="Hook Direction"
+                helperText="What should the first 3 seconds look like? The first 3 seconds either stop the scroll or lose the viewer forever."
+              >
+                <TextareaWithCount
+                  value={form.hookDirection}
+                  onChange={(val) =>
+                    setForm((prev) => ({ ...prev, hookDirection: val }))
+                  }
+                  placeholder="Start with a problem: 'Most brands spend 6 weeks on a campaign that should take 6 hours.'"
+                  rows={2}
+                />
+              </FormField>
+
+              {/* Script format + CTA */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  label="Script Format"
+                  helperText="Determines how the script is written. A voiceover script and a text-overlay-only script have different rhythm."
+                >
+                  <select
+                    value={form.scriptFormat}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        scriptFormat: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    <option value="">Not specified</option>
+                    {SCRIPT_FORMAT_OPTIONS.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <FormField
+                  label="Language"
+                  helperText={
+                    selectedClient?.primaryLanguage
+                      ? `Auto-filled from ${selectedClient.name}'s primary language.`
+                      : "Script language."
+                  }
+                >
+                  <select
+                    value={form.language}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        language: e.target.value as VideoLanguage,
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    {VIDEO_LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {VIDEO_LANGUAGE_LABELS[lang]} ({lang})
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+
+              {/* CTA */}
+              <FormField
+                label="Call to Action"
+                helperText="Every video must end with one action. Without a CTA, the video closes as entertainment, not communication."
+              >
+                <input
+                  type="text"
+                  value={form.cta}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, cta: e.target.value }))
+                  }
+                  placeholder="Follow for more — link in bio for your free consultation"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+            </div>
+
+            {/* ── Optional Fields (collapsible) ── */}
+            <div className="border-t border-neutral-200 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-brand-black transition-colors"
+              >
+                <span
+                  className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+                >
+                  &#9654;
+                </span>
+                Advanced options
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-4 space-y-5">
+                  {/* Visual direction */}
+                  <FormField
+                    label="Visual Direction"
+                    helperText="Shot list suggestions, visual style references, transitions to use or avoid."
+                  >
+                    <TextareaWithCount
+                      value={form.visualDirection}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          visualDirection: val,
+                        }))
+                      }
+                      placeholder="Fast jump cuts, warm color grading, text appears with bounce animation"
+                      rows={3}
+                    />
+                  </FormField>
+
+                  {/* Music mood */}
+                  <FormField
+                    label="Music Mood"
+                    helperText="Music tempo and energy affects script pacing."
+                  >
+                    <input
+                      type="text"
+                      value={form.musicMood}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          musicMood: e.target.value,
+                        }))
+                      }
+                      placeholder="Upbeat lo-fi, 120bpm, energetic but not aggressive"
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+
+                  {/* Caption style */}
+                  <FormField
+                    label="Caption Style"
+                    helperText="Affects how the copy elements of the script are formatted and timed."
+                  >
+                    <select
+                      value={form.captionStyle}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          captionStyle: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    >
+                      <option value="">Not specified</option>
+                      {CAPTION_STYLE_OPTIONS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+
+                  {/* Series context */}
+                  <FormField
+                    label="Series Context"
+                    helperText="If this is episode N in a series, the script should reference continuity."
+                  >
+                    <TextareaWithCount
+                      value={form.seriesContext}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          seriesContext: val,
+                        }))
+                      }
+                      placeholder="This is episode 3 of the 'Behind the Brand' series. Last episode covered the design process."
+                      rows={2}
+                    />
+                  </FormField>
+
+                  {/* Existing reference script */}
+                  <FormField
+                    label="Reference Script"
+                    helperText="A script from a previous video in the same series or style. Used to match established cadence."
+                  >
+                    <TextareaWithCount
+                      value={form.existingReferenceScript}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          existingReferenceScript: val,
+                        }))
+                      }
+                      placeholder="Paste a previous script to match the style..."
+                      rows={4}
+                    />
+                  </FormField>
+
+                  {/* Variants */}
+                  <FormField
+                    label="Variants"
+                    helperText="Generate alternative script versions."
+                  >
+                    <select
+                      value={form.variantCount}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          variantCount: Number(e.target.value),
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    >
+                      <option value={1}>1 variant</option>
+                      <option value={2}>2 variants</option>
+                      <option value={3}>3 variants</option>
+                    </select>
+                  </FormField>
+                </div>
+              )}
             </div>
 
             {/* Step navigation */}

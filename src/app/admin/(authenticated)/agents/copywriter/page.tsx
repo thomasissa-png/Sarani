@@ -28,38 +28,44 @@ type GenerateApiResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+const PLACEMENT_OPTIONS = [
+  { value: "", label: "-- Select placement --" },
+  { value: "website-hero", label: "Website hero" },
+  { value: "banner", label: "Banner" },
+  { value: "email", label: "Email" },
+  { value: "social-post", label: "Social post" },
+  { value: "ooh", label: "OOH" },
+  { value: "print", label: "Print" },
+  { value: "video-script", label: "Video script" },
+  { value: "packaging", label: "Packaging" },
+] as const;
+
+const TONE_DIRECTION_OPTIONS = [
+  { value: "", label: "-- Use brand default --" },
+  { value: "inspiring", label: "Inspiring" },
+  { value: "urgent", label: "Urgent" },
+  { value: "informational", label: "Informational" },
+  { value: "playful", label: "Playful" },
+  { value: "premium", label: "Premium" },
+  { value: "technical", label: "Technical" },
+] as const;
+
 type FormState = {
   clientId: string;
   contentType: ContentType;
-  topic: string;
+  keyMessage: string;
   targetAudience: string;
-  tone: string;
+  placement: string;
+  toneDirection: string;
   language: SupportedLanguage;
-  keyMessages: string;
   variantCount: number;
+  competitiveContext: string;
+  existingCopyToImprove: string;
+  approvedReferences: string;
+  hardConstraints: string;
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
-
-// ─── Topic placeholder examples per content type ────────────────────────────
-
-const TOPIC_PLACEHOLDERS: Partial<Record<ContentType, string>> = {
-  email:
-    "e.g. Welcome email for new GEODIS logistics partnership — introduce key account manager, highlight SLA commitments, schedule kickoff call",
-  tagline:
-    "e.g. Sarani unlimited creativity positioning — convey scale, speed, and AI-powered creative production for global brands",
-  "press-release":
-    "e.g. Sarani announces partnership with Publicis Groupe — AI creative production at scale for their global client portfolio",
-  "ad-copy":
-    "e.g. Google Ads campaign for Black Friday electronics deals — urgency messaging, price anchoring, multiple headline variants",
-  "brand-manifesto":
-    "e.g. Sarani brand manifesto — our mission to democratize world-class creative production through AI, tone: bold and visionary",
-  "product-description":
-    "e.g. Sony ULT Wear headphones product page — highlight noise cancellation, 30h battery, bass boost, lifestyle positioning for Gen Z",
-};
-
-const DEFAULT_TOPIC_PLACEHOLDER =
-  "e.g. Describe the content topic, context, and any specific angles or messages to include";
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -70,16 +76,23 @@ export default function CopywriterPage() {
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // Form state
   const [form, setForm] = useState<FormState>({
     clientId: "",
     contentType: "email",
-    topic: "",
+    keyMessage: "",
     targetAudience: "",
-    tone: "",
+    placement: "",
+    toneDirection: "",
     language: "EN",
-    keyMessages: "",
-    variantCount: 1,
+    variantCount: 3,
+    competitiveContext: "",
+    existingCopyToImprove: "",
+    approvedReferences: "",
+    hardConstraints: "",
   });
 
   // Generation state
@@ -95,7 +108,7 @@ export default function CopywriterPage() {
 
   function isStep1Valid(): boolean {
     return (
-      form.topic.length >= 20 && !!form.targetAudience.trim()
+      form.keyMessage.length >= 20 && !!form.targetAudience.trim()
     );
   }
 
@@ -129,12 +142,16 @@ export default function CopywriterPage() {
         body: JSON.stringify({
           clientId: form.clientId,
           contentType: form.contentType,
-          topic: form.topic,
+          topic: form.keyMessage,
           targetAudience: form.targetAudience,
-          tone: form.tone || undefined,
+          tone: form.toneDirection || undefined,
           language: form.language,
-          keyMessages: form.keyMessages || undefined,
+          keyMessages: form.keyMessage || undefined,
           variantCount: form.variantCount,
+          placement: form.placement || undefined,
+          competitiveContext: form.competitiveContext || undefined,
+          existingCopyToImprove: form.existingCopyToImprove || undefined,
+          hardConstraints: form.hardConstraints || undefined,
         }),
       });
 
@@ -160,15 +177,15 @@ export default function CopywriterPage() {
     const items: { label: string; value: string }[] = [
       { label: "Client", value: selectedClient?.name || "---" },
       {
-        label: "Content Type",
+        label: "Copy Type",
         value: CONTENT_TYPE_LABELS[form.contentType],
       },
       {
-        label: "Topic",
+        label: "Key Message",
         value:
-          form.topic.length > 100
-            ? form.topic.slice(0, 100) + "..."
-            : form.topic,
+          form.keyMessage.length > 100
+            ? form.keyMessage.slice(0, 100) + "..."
+            : form.keyMessage,
       },
       { label: "Target Audience", value: form.targetAudience },
       {
@@ -184,17 +201,27 @@ export default function CopywriterPage() {
       },
     ];
 
-    if (form.tone.trim()) {
-      items.push({ label: "Tone Override", value: form.tone });
+    if (form.placement) {
+      items.push({
+        label: "Placement",
+        value: PLACEMENT_OPTIONS.find((p) => p.value === form.placement)?.label || form.placement,
+      });
     }
 
-    if (form.keyMessages.trim()) {
+    if (form.toneDirection) {
       items.push({
-        label: "Key Messages",
+        label: "Tone Direction",
+        value: TONE_DIRECTION_OPTIONS.find((t) => t.value === form.toneDirection)?.label || form.toneDirection,
+      });
+    }
+
+    if (form.competitiveContext.trim()) {
+      items.push({
+        label: "Competitive Context",
         value:
-          form.keyMessages.length > 80
-            ? form.keyMessages.slice(0, 80) + "..."
-            : form.keyMessages,
+          form.competitiveContext.length > 80
+            ? form.competitiveContext.slice(0, 80) + "..."
+            : form.competitiveContext,
       });
     }
 
@@ -227,6 +254,13 @@ export default function CopywriterPage() {
           New Content
         </h2>
 
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800">
+            Good copy is specific. Tell me the one thing you want the reader to feel or do, who they are, and where this will appear. A tagline for a Sony product launch and a CTA for a GEODIS procurement email require completely different tones. The more specific your brief, the sharper the copy.
+          </p>
+        </div>
+
         <StepIndicator steps={STEPS} currentStep={step} />
 
         {/* Step 0: Select Client */}
@@ -257,80 +291,52 @@ export default function CopywriterPage() {
         {/* Step 1: Configure */}
         {step === 1 && (
           <div className="space-y-5">
-            {/* Content type + Language */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                label="Content Type"
-                required
-                helperText="What kind of copy do you need? This shapes the structure, length, and format of the output."
-              >
-                <select
-                  value={form.contentType}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      contentType: e.target.value as ContentType,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {CONTENT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {CONTENT_TYPE_LABELS[type]}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              <FormField
-                label="Language"
-                required
-                helperText="Auto-filled from client profile. Change if you need copy in a different language."
-              >
-                <select
-                  value={form.language}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      language: e.target.value as SupportedLanguage,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {SUPPORTED_LANGUAGES.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {LANGUAGE_LABELS[lang]} ({lang})
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            </div>
-
-            {/* Topic textarea */}
+            {/* Required: Copy type */}
             <FormField
-              label="Topic / Brief"
+              label="Copy Type"
               required
-              helperText="Describe what the content should be about. Include context, goals, and any specific angles."
+              helperText="Different copy types have entirely different constraints: a tagline is 3-6 words, body copy can be 200 words."
+            >
+              <select
+                value={form.contentType}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    contentType: e.target.value as ContentType,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {CONTENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {CONTENT_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* Required: Key message */}
+            <FormField
+              label="Key Message"
+              required
+              helperText="The single idea the copy must communicate. Not the features list — the one thing. If the copywriter doesn't know this, they write copy that says everything, which means nothing."
             >
               <TextareaWithCount
-                value={form.topic}
-                onChange={(topic) =>
-                  setForm((prev) => ({ ...prev, topic }))
+                value={form.keyMessage}
+                onChange={(keyMessage) =>
+                  setForm((prev) => ({ ...prev, keyMessage }))
                 }
-                placeholder={
-                  TOPIC_PLACEHOLDERS[form.contentType] ||
-                  DEFAULT_TOPIC_PLACEHOLDER
-                }
+                placeholder="Adidas Ultraboost 26 makes you 15% faster over long distances — proven by independent biomechanics research."
                 minLength={20}
                 rows={4}
               />
             </FormField>
 
-            {/* Target audience */}
+            {/* Required: Target audience */}
             <FormField
               label="Target Audience"
               required
-              helperText="Who will read this content? The more specific, the better the tone and messaging."
+              helperText="Copy changes fundamentally depending on who's reading. A 24-year-old runner and a 45-year-old procurement director are not the same person."
             >
               <input
                 type="text"
@@ -341,66 +347,200 @@ export default function CopywriterPage() {
                     targetAudience: e.target.value,
                   }))
                 }
-                placeholder="e.g. CMOs at mid-size SaaS companies, luxury retail consumers aged 25-40, internal sales team..."
+                placeholder="Elite amateur runners, 28-45, train 5x/week, read performance reviews before buying"
                 className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
               />
             </FormField>
 
-            {/* Key messages */}
-            <FormField
-              label="Key Messages"
-              helperText="Optional. List the key points or messages the copy must include. One per line works best."
-            >
-              <TextareaWithCount
-                value={form.keyMessages}
-                onChange={(keyMessages) =>
-                  setForm((prev) => ({ ...prev, keyMessages }))
-                }
-                placeholder="e.g. 1. We produce creative 10x faster than traditional agencies&#10;2. AI-powered but human-reviewed quality&#10;3. Works with your existing brand guidelines"
-                rows={3}
-              />
-            </FormField>
-
-            {/* Tone override + Variant count */}
+            {/* Recommended fields */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
-                label="Tone Override"
-                helperText="Optional. Overrides the client's default brand tone for this specific piece."
-              >
-                <input
-                  type="text"
-                  value={form.tone}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, tone: e.target.value }))
-                  }
-                  placeholder="e.g. Urgent and bold, Warm and conversational, Technical and precise..."
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                />
-              </FormField>
-
-              <FormField
-                label="Variants"
-                helperText="Generate multiple versions to A/B test or pick the best one."
+                label={
+                  <>
+                    Placement
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="Copy tone and length are dictated by where it appears. An OOH billboard is read in 3 seconds; an email can be 150 words."
               >
                 <select
-                  value={form.variantCount}
+                  value={form.placement}
                   onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      variantCount: Number(e.target.value),
-                    }))
+                    setForm((prev) => ({ ...prev, placement: e.target.value }))
                   }
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 >
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>
-                      {n === 1
-                        ? "1 (primary only)"
-                        : `${n} (primary + ${n - 1} variants)`}
+                  {PLACEMENT_OPTIONS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
                     </option>
                   ))}
                 </select>
               </FormField>
+
+              <FormField
+                label={
+                  <>
+                    Tone Direction
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="Even within a brand's tone of voice, specific campaigns call for specific emotional registers."
+              >
+                <select
+                  value={form.toneDirection}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      toneDirection: e.target.value,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {TONE_DIRECTION_OPTIONS.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label={
+                  <>
+                    Number of Variants
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="Copy should always be explored in multiple directions. 3 variants minimum for any client-facing piece."
+              >
+                <div className="flex gap-2">
+                  {[1, 3, 5, 10].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() =>
+                        setForm((prev) => ({ ...prev, variantCount: n }))
+                      }
+                      className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
+                        form.variantCount === n
+                          ? "bg-brand-black text-white border-brand-black"
+                          : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              <FormField
+                label={
+                  <>
+                    Competitive Context
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="What are competitors saying? The copy should differentiate."
+              >
+                <input
+                  type="text"
+                  value={form.competitiveContext}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      competitiveContext: e.target.value,
+                    }))
+                  }
+                  placeholder="Nike is owning 'Just Do It' / performance. We must own the science angle."
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+            </div>
+
+            {/* Advanced options (optional) */}
+            <div className="border border-neutral-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors rounded-lg"
+              >
+                <span>Advanced options</span>
+                <span className="text-neutral-400">{showAdvanced ? "−" : "+"}</span>
+              </button>
+              {showAdvanced && (
+                <div className="px-4 pb-4 space-y-4 border-t border-neutral-200 pt-4">
+                  <FormField
+                    label="Existing Copy to Improve"
+                    helperText="Paste the current copy to rewrite or refine rather than generate from scratch."
+                  >
+                    <TextareaWithCount
+                      value={form.existingCopyToImprove}
+                      onChange={(existingCopyToImprove) =>
+                        setForm((prev) => ({ ...prev, existingCopyToImprove }))
+                      }
+                      placeholder="Paste the current copy here if you want a rewrite"
+                      rows={3}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Approved References"
+                    helperText="Examples of copy the client has approved in the past. Anchors the tone to something already validated."
+                  >
+                    <TextareaWithCount
+                      value={form.approvedReferences}
+                      onChange={(approvedReferences) =>
+                        setForm((prev) => ({ ...prev, approvedReferences }))
+                      }
+                      placeholder="e.g. 'Impossible is Nothing' was approved for last campaign"
+                      rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Hard Constraints"
+                    helperText="Character limits, words to avoid, mandatory inclusions."
+                  >
+                    <input
+                      type="text"
+                      value={form.hardConstraints}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          hardConstraints: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. Max 60 characters for this banner, must include trademark symbol"
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Language"
+                    helperText="Default is English. Auto-filled from client profile. Specify if copy needs a different language."
+                  >
+                    <select
+                      value={form.language}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          language: e.target.value as SupportedLanguage,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    >
+                      {SUPPORTED_LANGUAGES.map((lang) => (
+                        <option key={lang} value={lang}>
+                          {LANGUAGE_LABELS[lang]} ({lang})
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between">

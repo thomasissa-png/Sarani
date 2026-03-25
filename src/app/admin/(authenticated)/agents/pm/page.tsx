@@ -25,6 +25,9 @@ type FormState = {
   brief: string;
   deadline: string;
   priority: "normal" | "urgent" | "asap";
+  internalNote: string;
+  clickupProjectIdOverride: string;
+  preferredAgents: string[];
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -35,14 +38,19 @@ function getDefaultDeadline(): string {
   return d.toISOString().split("T")[0];
 }
 
-const AGENT_LABELS: Record<string, string> = {
-  translator: "Translator",
-  creative: "Creative Strategist",
-  designer: "Designer IA",
-  legal: "Legal IA",
-  social: "Social IA",
-  seo: "SEO IA",
-};
+const AVAILABLE_AGENTS = [
+  { value: "translator", label: "Translator" },
+  { value: "creative", label: "Creative Strategist" },
+  { value: "designer", label: "Designer IA" },
+  { value: "legal", label: "Legal IA" },
+  { value: "social", label: "Social IA" },
+  { value: "seo", label: "SEO IA" },
+  { value: "copywriter", label: "Copywriter IA" },
+] as const;
+
+const AGENT_LABELS: Record<string, string> = Object.fromEntries(
+  AVAILABLE_AGENTS.map((a) => [a.value, a.label])
+);
 
 const PRIORITY_LABELS: Record<string, string> = {
   normal: "Normal",
@@ -67,12 +75,18 @@ export default function PMAgentPage() {
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // Form state
   const [form, setForm] = useState<FormState>({
     clientId: "",
     brief: "",
     deadline: getDefaultDeadline(),
     priority: "normal",
+    internalNote: "",
+    clickupProjectIdOverride: "",
+    preferredAgents: [],
   });
 
   // Analysis state
@@ -95,7 +109,7 @@ export default function PMAgentPage() {
   }
 
   function isStep1Valid(): boolean {
-    return form.brief.length >= 30 && !!form.deadline;
+    return form.brief.length >= 20;
   }
 
   // ── Client loaded callback ────────────────────────────────────────────
@@ -212,8 +226,8 @@ export default function PMAgentPage() {
   // ── Build summary items for PreSubmitSummary ──────────────────────────
 
   function getSummaryItems(): { label: string; value: string }[] {
-    return [
-      { label: "Client", value: selectedClient?.name || "—" },
+    const items = [
+      { label: "Client", value: selectedClient?.name || "---" },
       {
         label: "Brief",
         value:
@@ -221,9 +235,30 @@ export default function PMAgentPage() {
             ? form.brief.slice(0, 120) + "..."
             : form.brief,
       },
-      { label: "Deadline", value: form.deadline || "Not set" },
+      { label: "Deadline", value: form.deadline || "D+1 (default)" },
       { label: "Priority", value: PRIORITY_LABELS[form.priority] },
     ];
+
+    if (form.internalNote.trim()) {
+      items.push({
+        label: "Internal Note",
+        value:
+          form.internalNote.length > 80
+            ? form.internalNote.slice(0, 80) + "..."
+            : form.internalNote,
+      });
+    }
+
+    if (form.preferredAgents.length > 0) {
+      items.push({
+        label: "Preferred Agents",
+        value: form.preferredAgents
+          .map((a) => AGENT_LABELS[a] || a)
+          .join(", "),
+      });
+    }
+
+    return items;
   }
 
   // ── Render ────────────────────────────────────────────────────────────
@@ -251,6 +286,13 @@ export default function PMAgentPage() {
       {/* Brief Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">New Brief</h2>
+
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800">
+            Paste the client&apos;s email or describe the project in plain language — I&apos;ll handle the structure. The more context you give me (client, deadline, language, format), the more precise the task breakdown will be. If something is missing, I&apos;ll flag it before dispatching.
+          </p>
+        </div>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -282,6 +324,7 @@ export default function PMAgentPage() {
         {/* Step 1: Configure */}
         {step === 1 && (
           <div className="space-y-5">
+            {/* Required */}
             <FormField
               label="Brief"
               required
@@ -290,16 +333,22 @@ export default function PMAgentPage() {
               <TextareaWithCount
                 value={form.brief}
                 onChange={(brief) => setForm((prev) => ({ ...prev, brief }))}
-                placeholder="e.g. Sony needs 50 Black Friday banners across 15 languages, delivery by Friday. Key visual: ULT headphones on dark background. Must include promotional pricing and urgency messaging."
-                minLength={30}
+                placeholder="Sony needs 50 Black Friday banners by Friday — 728x90, 300x250, 160x600. EN and FR versions."
+                minLength={20}
                 rows={6}
               />
             </FormField>
 
+            {/* Recommended */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
-                label="Deadline"
-                helperText="When does the client need delivery? Defaults to tomorrow."
+                label={
+                  <>
+                    Deadline
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="Without a deadline, the PM IA defaults to D+1. If the actual deadline is different, the priority and dispatch order will be wrong."
               >
                 <input
                   type="date"
@@ -312,8 +361,13 @@ export default function PMAgentPage() {
               </FormField>
 
               <FormField
-                label="Priority"
-                helperText="Affects task ordering and urgency flags on dispatched work."
+                label={
+                  <>
+                    Priority
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="Changes the dispatch strategy: ASAP triggers immediate parallel dispatch; Normal allows sequential."
               >
                 <select
                   value={form.priority}
@@ -332,6 +386,85 @@ export default function PMAgentPage() {
                   ))}
                 </select>
               </FormField>
+            </div>
+
+            {/* Advanced options (optional) */}
+            <div className="border border-neutral-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors rounded-lg"
+              >
+                <span>Advanced options</span>
+                <span className="text-neutral-400">{showAdvanced ? "−" : "+"}</span>
+              </button>
+              {showAdvanced && (
+                <div className="px-4 pb-4 space-y-4 border-t border-neutral-200 pt-4">
+                  <FormField
+                    label="Internal Note"
+                    helperText="Context visible only to the team — what was said on the call, sensitivities, client mood. Not sent to sub-agents."
+                  >
+                    <TextareaWithCount
+                      value={form.internalNote}
+                      onChange={(internalNote) =>
+                        setForm((prev) => ({ ...prev, internalNote }))
+                      }
+                      placeholder="e.g. Client sounded frustrated on the call — be extra careful with timelines"
+                      rows={3}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="ClickUp Project ID Override"
+                    helperText="If this brief belongs to a specific ClickUp project that differs from the client's default project ID."
+                  >
+                    <input
+                      type="text"
+                      value={form.clickupProjectIdOverride}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          clickupProjectIdOverride: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. 90120384756"
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Preferred Agents"
+                    helperText="Pre-select which agents should be activated, bypassing the PM IA's automatic detection."
+                  >
+                    <div className="flex flex-wrap gap-2">
+                      {AVAILABLE_AGENTS.map((agent) => {
+                        const selected = form.preferredAgents.includes(agent.value);
+                        return (
+                          <button
+                            key={agent.value}
+                            type="button"
+                            onClick={() =>
+                              setForm((prev) => ({
+                                ...prev,
+                                preferredAgents: selected
+                                  ? prev.preferredAgents.filter((a) => a !== agent.value)
+                                  : [...prev.preferredAgents, agent.value],
+                              }))
+                            }
+                            className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                              selected
+                                ? "bg-brand-black text-white border-brand-black"
+                                : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                            }`}
+                          >
+                            {agent.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </FormField>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between">

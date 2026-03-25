@@ -27,29 +27,65 @@ type GenerateResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+type SlideCountRange = "5-7" | "8-12" | "15-20" | "30+";
+
+const SLIDE_COUNT_OPTIONS: { value: SlideCountRange; label: string }[] = [
+  { value: "5-7", label: "5-7 slides" },
+  { value: "8-12", label: "8-12 slides" },
+  { value: "15-20", label: "15-20 slides" },
+  { value: "30+", label: "30+ slides" },
+];
+
+const SLIDE_COUNT_MAP: Record<SlideCountRange, number> = {
+  "5-7": 6,
+  "8-12": 10,
+  "15-20": 17,
+  "30+": 35,
+};
+
+const TONE_OPTIONS = [
+  "Formal",
+  "Consultative",
+  "Inspirational",
+  "Technical",
+] as const;
+
 type FormState = {
   clientId: string;
+  presentationObjective: string;
+  audience: string;
+  keyContentPoints: string;
+  // Recommended
+  slideCountRange: SlideCountRange;
   presentationType: PresentationType | "";
-  topic: string;
-  audienceDescription: string;
-  slideCount: number;
+  dataAndCharts: string;
   language: PresentationLanguage;
-  keyMessages: string;
-  includeData: boolean;
+  // Optional
+  slideOutline: string;
+  toneDirection: string;
+  mustIncludeAssets: string;
 };
 
 const INITIAL_FORM: FormState = {
   clientId: "",
+  presentationObjective: "",
+  audience: "",
+  keyContentPoints: "",
+  slideCountRange: "8-12",
   presentationType: "",
-  topic: "",
-  audienceDescription: "",
-  slideCount: 12,
+  dataAndCharts: "",
   language: "English",
-  keyMessages: "",
-  includeData: false,
+  slideOutline: "",
+  toneDirection: "",
+  mustIncludeAssets: "",
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
+// ─── Guidance Message ────────────────────────────────────────────────────────
+
+const GUIDANCE_MESSAGE =
+  "Think of this as briefing a McKinsey consultant who has 48 hours to prepare a deck. Tell me who will be in the room, what they need to decide or understand by the end, and what story the data tells. I'll handle the slide structure, the narrative flow, and the Sarani-branded formatting. The clearer your brief, the fewer slides end up in the bin.";
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -62,6 +98,9 @@ export default function PresentationAgentPage() {
 
   // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Generation state
   const [generating, setGenerating] = useState(false);
@@ -94,9 +133,9 @@ export default function PresentationAgentPage() {
 
   function canProceedStep1(): boolean {
     return (
-      !!form.presentationType &&
-      form.topic.length >= 20 &&
-      form.audienceDescription.length >= 5
+      form.presentationObjective.length >= 20 &&
+      form.audience.length >= 10 &&
+      form.keyContentPoints.length >= 20
     );
   }
 
@@ -112,16 +151,25 @@ export default function PresentationAgentPage() {
     try {
       const payload: Record<string, unknown> = {
         clientId: form.clientId,
-        presentationType: form.presentationType,
-        topic: form.topic,
-        audienceDescription: form.audienceDescription,
-        slideCount: form.slideCount,
+        presentationType: form.presentationType || undefined,
+        topic: form.presentationObjective,
+        audienceDescription: form.audience,
+        slideCount: SLIDE_COUNT_MAP[form.slideCountRange],
         language: form.language,
-        includeData: form.includeData,
+        includeData: !!form.dataAndCharts.trim(),
       };
 
-      if (form.keyMessages.trim()) {
-        payload.keyMessages = form.keyMessages;
+      if (form.keyContentPoints.trim()) {
+        payload.keyMessages = form.keyContentPoints;
+      }
+      if (form.dataAndCharts.trim()) {
+        payload.dataAndCharts = form.dataAndCharts;
+      }
+      if (form.slideOutline.trim()) {
+        payload.slideOutline = form.slideOutline;
+      }
+      if (form.toneDirection) {
+        payload.toneDirection = form.toneDirection;
       }
 
       const res = await fetch("/api/admin/agents/presentation/generate", {
@@ -219,27 +267,30 @@ export default function PresentationAgentPage() {
     return [
       { label: "Client", value: selectedClient?.name || "---" },
       {
-        label: "Presentation Type",
-        value: form.presentationType
-          ? PRESENTATION_TYPE_LABELS[form.presentationType]
-          : "---",
-      },
-      { label: "Slides", value: String(form.slideCount) },
-      { label: "Language", value: form.language },
-      { label: "Include Data", value: form.includeData ? "Yes" : "No" },
-      {
-        label: "Topic",
+        label: "Objective",
         value:
-          form.topic.length > 80
-            ? form.topic.slice(0, 80) + "..."
-            : form.topic,
+          form.presentationObjective.length > 80
+            ? form.presentationObjective.slice(0, 80) + "..."
+            : form.presentationObjective,
       },
       {
         label: "Audience",
         value:
-          form.audienceDescription.length > 60
-            ? form.audienceDescription.slice(0, 60) + "..."
-            : form.audienceDescription,
+          form.audience.length > 60
+            ? form.audience.slice(0, 60) + "..."
+            : form.audience,
+      },
+      { label: "Slide range", value: form.slideCountRange },
+      {
+        label: "Presentation type",
+        value: form.presentationType
+          ? PRESENTATION_TYPE_LABELS[form.presentationType]
+          : "Not specified",
+      },
+      { label: "Language", value: form.language },
+      {
+        label: "Tone",
+        value: form.toneDirection || "Not specified",
       },
     ];
   }
@@ -268,6 +319,13 @@ export default function PresentationAgentPage() {
 
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800 leading-relaxed">
+            {GUIDANCE_MESSAGE}
+          </p>
+        </div>
+
         <h2 className="text-lg font-semibold text-brand-black">
           Presentation Brief
         </h2>
@@ -283,7 +341,7 @@ export default function PresentationAgentPage() {
                 setForm((prev) => ({ ...prev, clientId }))
               }
               required
-              helperText="Select the client this presentation is for. Their brand colors and tone will guide the visual suggestions."
+              helperText="Loads brand book for visual formatting of the deck, and historical context."
               onClientLoaded={handleClientLoaded}
             />
 
@@ -303,95 +361,137 @@ export default function PresentationAgentPage() {
         {/* ── Step 1: Configure ─────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-5">
-            {/* Presentation type */}
-            <FormField
-              label="Presentation Type"
-              required
-              helperText="The type determines the structure, tone, and level of detail."
-            >
-              <select
-                value={form.presentationType}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    presentationType: e.target.value as PresentationType | "",
-                  }))
-                }
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                <option value="">Select a type...</option>
-                {PRESENTATION_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {PRESENTATION_TYPE_LABELS[type]}
-                  </option>
-                ))}
-              </select>
-            </FormField>
+            {/* ── Required Fields ── */}
 
-            {/* Topic */}
+            {/* Presentation Objective */}
             <FormField
-              label="Topic"
+              label="Presentation Objective"
               required
-              helperText="Be specific about the subject, goals, and key points. This drives the entire presentation structure."
+              helperText="What must the audience believe, decide, or do by the last slide? Without a clear objective, the agent creates a content dump."
             >
               <TextareaWithCount
-                value={form.topic}
+                value={form.presentationObjective}
                 onChange={(val) =>
-                  setForm((prev) => ({ ...prev, topic: val }))
+                  setForm((prev) => ({ ...prev, presentationObjective: val }))
                 }
-                placeholder="e.g. Q1 2026 campaign results for GEODIS — rebrand impact across 12 markets"
+                placeholder="GEODIS management team approves the 12-month rebrand rollout plan and validates the &euro;85K budget."
                 minLength={20}
                 rows={3}
               />
             </FormField>
 
-            {/* Audience description */}
+            {/* Audience */}
             <FormField
               label="Audience"
               required
-              helperText="Describe who will see this presentation. This affects tone, level of detail, and vocabulary."
+              helperText="Who is in the room? Seniority level, expertise, and expected objections all change the presentation structure."
             >
-              <input
-                type="text"
-                value={form.audienceDescription}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    audienceDescription: e.target.value,
-                  }))
+              <TextareaWithCount
+                value={form.audience}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, audience: val }))
                 }
-                placeholder="e.g. GEODIS Marketing Director + 3 regional managers"
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                placeholder="GEODIS ExCom: CEO, CFO, CDO. No design background. Decision-makers. Time-pressed. Skeptical of creative agency costs."
+                minLength={10}
+                rows={3}
               />
             </FormField>
 
-            {/* Slide count + Language */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Key Content Points */}
+            <FormField
+              label="Key Content Points"
+              required
+              helperText="The core information, data, or argument that must appear in the deck. Without content inputs, the agent fills slides with generic placeholder text."
+            >
+              <TextareaWithCount
+                value={form.keyContentPoints}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, keyContentPoints: val }))
+                }
+                placeholder="Current state: 350 outdated slide templates. Pain: 3h per presentation for each regional manager. Solution: Sarani rebrand + template library. Proof: delivered in 3 weeks for &euro;8,500. Ask: approve 12-month rollout for &euro;85K."
+                minLength={20}
+                rows={4}
+              />
+            </FormField>
+
+            {/* ── Recommended Fields ── */}
+            <div className="border-t border-neutral-200 pt-4 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Recommended
+                </span>
+                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
+                  Recommended
+                </span>
+              </div>
+
+              {/* Number of slides + Presentation type */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  label="Number of Slides"
+                  helperText="Dictates the level of narrative detail per slide."
+                >
+                  <select
+                    value={form.slideCountRange}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        slideCountRange: e.target.value as SlideCountRange,
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    {SLIDE_COUNT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <FormField
+                  label="Presentation Type"
+                  helperText="Each type has a known narrative structure."
+                >
+                  <select
+                    value={form.presentationType}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        presentationType: e.target.value as PresentationType | "",
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    <option value="">Select a type...</option>
+                    {PRESENTATION_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {PRESENTATION_TYPE_LABELS[type]}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+
+              {/* Data & Charts */}
               <FormField
-                label={`Number of Slides (${form.slideCount})`}
-                helperText="5 for a quick pitch, 15-20 for a standard deck, 30+ for a detailed review."
+                label="Data & Charts"
+                helperText="Specific data the slides should visualize (tables, metrics, comparisons). Without it, the agent uses placeholder data."
               >
-                <input
-                  type="range"
-                  min={5}
-                  max={40}
-                  value={form.slideCount}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      slideCount: Number(e.target.value),
-                    }))
+                <TextareaWithCount
+                  value={form.dataAndCharts}
+                  onChange={(val) =>
+                    setForm((prev) => ({ ...prev, dataAndCharts: val }))
                   }
-                  className="w-full accent-brand-black"
+                  placeholder="Before: 3h per deck. After: 45min. Volume: 350 templates."
+                  rows={3}
                 />
-                <div className="flex justify-between text-xs text-neutral-400 mt-0.5">
-                  <span>5</span>
-                  <span>40</span>
-                </div>
               </FormField>
+
+              {/* Language */}
               <FormField
                 label="Language"
-                helperText="Auto-filled from client profile."
+                helperText="Auto-filled from client profile. The presentation language may differ from the client's primary language."
               >
                 <select
                   value={form.language}
@@ -412,46 +512,78 @@ export default function PresentationAgentPage() {
               </FormField>
             </div>
 
-            {/* Key messages */}
-            <FormField
-              label="Key Messages"
-              helperText="Optional. List the key messages or themes that must appear. One per line."
-            >
-              <TextareaWithCount
-                value={form.keyMessages}
-                onChange={(val) =>
-                  setForm((prev) => ({ ...prev, keyMessages: val }))
-                }
-                placeholder="e.g. Brand awareness +45% in target markets\nCost per asset reduced by 30%\nNew workflow saved 2 weeks per campaign"
-                rows={3}
-              />
-            </FormField>
-
-            {/* Include data toggle */}
-            <div className="flex items-center gap-3">
+            {/* ── Optional Fields (collapsible) ── */}
+            <div className="border-t border-neutral-200 pt-4">
               <button
                 type="button"
-                role="switch"
-                aria-checked={form.includeData}
-                onClick={() =>
-                  setForm((prev) => ({
-                    ...prev,
-                    includeData: !prev.includeData,
-                  }))
-                }
-                className={`relative w-10 h-6 rounded-full transition-colors ${
-                  form.includeData ? "bg-brand-black" : "bg-neutral-300"
-                }`}
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-brand-black transition-colors"
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                    form.includeData ? "translate-x-4" : "translate-x-0"
-                  }`}
-                />
+                  className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+                >
+                  &#9654;
+                </span>
+                Advanced options
               </button>
-              <label className="text-sm text-neutral-700">
-                Include data & metrics slides (charts, KPIs, statistics)
-              </label>
+
+              {showAdvanced && (
+                <div className="mt-4 space-y-5">
+                  {/* Slide outline */}
+                  <FormField
+                    label="Slide Outline"
+                    helperText="If you have a specific slide order in mind, provide it to override the auto-generated structure."
+                  >
+                    <TextareaWithCount
+                      value={form.slideOutline}
+                      onChange={(val) =>
+                        setForm((prev) => ({ ...prev, slideOutline: val }))
+                      }
+                      placeholder="1. Title slide\n2. Problem statement\n3. Current state\n4. Proposed solution\n5. Budget breakdown\n6. Timeline\n7. Next steps"
+                      rows={4}
+                    />
+                  </FormField>
+
+                  {/* Tone direction */}
+                  <FormField
+                    label="Tone Direction"
+                    helperText="Even within Sarani's brand voice, different presentations have different registers."
+                  >
+                    <select
+                      value={form.toneDirection}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          toneDirection: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    >
+                      <option value="">Default</option>
+                      {TONE_OPTIONS.map((tone) => (
+                        <option key={tone} value={tone}>
+                          {tone}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+
+                  {/* Must include assets note */}
+                  <FormField
+                    label="Must-Include Assets"
+                    helperText="Describe logos, photos, or charts that must appear in the deck (file upload not yet supported)."
+                  >
+                    <TextareaWithCount
+                      value={form.mustIncludeAssets}
+                      onChange={(val) =>
+                        setForm((prev) => ({ ...prev, mustIncludeAssets: val }))
+                      }
+                      placeholder="Include GEODIS logo on every slide, CEO headshot on slide 2, supply chain map on slide 4"
+                      rows={2}
+                    />
+                  </FormField>
+                </div>
+              )}
             </div>
 
             {/* Error */}

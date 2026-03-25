@@ -24,27 +24,55 @@ type RecommendResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+type OutputType = "strategic-recommendation" | "creative-brief" | "campaign-concept";
+
+const OUTPUT_TYPES: { value: OutputType; label: string }[] = [
+  { value: "strategic-recommendation", label: "Strategic recommendation" },
+  { value: "creative-brief", label: "Creative brief" },
+  { value: "campaign-concept", label: "Campaign concept" },
+];
+
+const BUDGET_RANGES = [
+  { value: "", label: "-- Select budget range --" },
+  { value: "under-50k", label: "Under 50K EUR" },
+  { value: "50k-200k", label: "50K-200K EUR" },
+  { value: "200k-1m", label: "200K-1M EUR" },
+  { value: "1m-plus", label: "1M EUR+" },
+] as const;
+
+const TERRITORY_COUNTS = [
+  { value: 2, label: "2 territories" },
+  { value: 3, label: "3 territories (default)" },
+  { value: 5, label: "5 territories" },
+] as const;
+
 type FormState = {
   clientId: string;
   campaignObjective: string;
+  targetAudience: string;
+  outputType: OutputType;
   targetMarkets: TargetMarket[];
-  budgetAmount: string;
-  budgetCurrency: string;
+  budgetRange: string;
   timeline: string;
   constraints: string;
+  competitorsToBenchmark: string;
+  inspirationReferences: string;
+  numberOfTerritories: number;
 };
 
 const INITIAL_FORM: FormState = {
   clientId: "",
   campaignObjective: "",
+  targetAudience: "",
+  outputType: "strategic-recommendation",
   targetMarkets: [],
-  budgetAmount: "",
-  budgetCurrency: "USD",
+  budgetRange: "",
   timeline: "",
   constraints: "",
+  competitorsToBenchmark: "",
+  inspirationReferences: "",
+  numberOfTerritories: 3,
 };
-
-const CURRENCY_OPTIONS = ["USD", "EUR", "GBP", "AED", "CHF"] as const;
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
 
@@ -56,6 +84,9 @@ export default function CreativeStrategistPage() {
 
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
 
@@ -73,8 +104,8 @@ export default function CreativeStrategistPage() {
   function isStep1Valid(): boolean {
     return (
       form.campaignObjective.length >= 30 &&
-      form.targetMarkets.length > 0 &&
-      !!form.timeline.trim()
+      form.targetAudience.length >= 10 &&
+      !!form.outputType
     );
   }
 
@@ -107,19 +138,27 @@ export default function CreativeStrategistPage() {
       const payload: Record<string, unknown> = {
         clientId: form.clientId,
         campaignObjective: form.campaignObjective,
+        targetAudience: form.targetAudience,
+        outputType: form.outputType,
         targetMarkets: form.targetMarkets,
-        timeline: form.timeline,
+        timeline: form.timeline || undefined,
+        numberOfTerritories: form.numberOfTerritories,
       };
 
-      if (form.budgetAmount && Number(form.budgetAmount) > 0) {
-        payload.budget = {
-          amount: Number(form.budgetAmount),
-          currency: form.budgetCurrency,
-        };
+      if (form.budgetRange) {
+        payload.budgetRange = form.budgetRange;
       }
 
       if (form.constraints.trim()) {
         payload.constraints = form.constraints;
+      }
+
+      if (form.competitorsToBenchmark.trim()) {
+        payload.competitorsToBenchmark = form.competitorsToBenchmark;
+      }
+
+      if (form.inspirationReferences.trim()) {
+        payload.inspirationReferences = form.inspirationReferences;
       }
 
       const res = await fetch("/api/admin/agents/creative/recommend", {
@@ -239,16 +278,23 @@ export default function CreativeStrategistPage() {
             : form.campaignObjective,
       },
       {
-        label: "Target Markets",
-        value: form.targetMarkets.join(", ") || "None",
+        label: "Target Audience",
+        value:
+          form.targetAudience.length > 100
+            ? form.targetAudience.slice(0, 100) + "..."
+            : form.targetAudience,
+      },
+      {
+        label: "Output Type",
+        value: OUTPUT_TYPES.find((t) => t.value === form.outputType)?.label || form.outputType,
       },
       { label: "Timeline", value: form.timeline || "Not set" },
     ];
 
-    if (form.budgetAmount && Number(form.budgetAmount) > 0) {
+    if (form.budgetRange) {
       items.push({
-        label: "Budget",
-        value: `${Number(form.budgetAmount).toLocaleString()} ${form.budgetCurrency}`,
+        label: "Budget Range",
+        value: BUDGET_RANGES.find((b) => b.value === form.budgetRange)?.label || form.budgetRange,
       });
     }
 
@@ -259,6 +305,13 @@ export default function CreativeStrategistPage() {
           form.constraints.length > 80
             ? form.constraints.slice(0, 80) + "..."
             : form.constraints,
+      });
+    }
+
+    if (form.competitorsToBenchmark.trim()) {
+      items.push({
+        label: "Competitors",
+        value: form.competitorsToBenchmark,
       });
     }
 
@@ -293,6 +346,13 @@ export default function CreativeStrategistPage() {
           Campaign Brief
         </h2>
 
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800">
+            Think of this as briefing a senior strategist before a client presentation. The more specific you are about what the client wants to achieve and who they&apos;re targeting, the more useful the recommendation will be. Vague objectives produce vague strategies — give me a real brief and I&apos;ll give you something worth presenting.
+          </p>
+        </div>
+
         <StepIndicator steps={STEPS} currentStep={step} />
 
         {/* Step 0: Select Client */}
@@ -323,97 +383,100 @@ export default function CreativeStrategistPage() {
         {/* Step 1: Configure */}
         {step === 1 && (
           <div className="space-y-5">
-            {/* Campaign objective */}
+            {/* Required: Campaign objective */}
             <FormField
               label="Campaign Objective"
               required
-              helperText="Describe what the client wants to achieve. Include the product/service, target outcome, and any geographic or audience scope."
+              helperText="This is the north star of any strategy. Must be specific enough to be measurable."
             >
               <TextareaWithCount
                 value={form.campaignObjective}
                 onChange={(campaignObjective) =>
                   setForm((prev) => ({ ...prev, campaignObjective }))
                 }
-                placeholder="e.g. Launch Adidas Superstar limited edition in 3 European markets with a street culture angle, targeting 18-25 sneakerheads, goal is 50K pairs sold in 8 weeks"
+                placeholder="Drive awareness of TikTok for Business among CMOs in EMEA. Target: 200 qualified leads at the TechSummit event in June 2026."
                 minLength={30}
                 rows={4}
               />
             </FormField>
 
-            {/* Target markets */}
+            {/* Required: Target audience */}
             <FormField
-              label="Target Markets"
+              label="Target Audience"
               required
-              helperText="Select all markets this campaign will run in. This shapes media mix, cultural references, and localization needs."
-              error={
-                form.targetMarkets.length === 0
-                  ? "Select at least one target market."
-                  : undefined
-              }
+              helperText="Creative strategy is audience-driven. Without knowing who we're talking to, the messaging, tone, and creative territories are guesswork."
             >
-              <div className="flex flex-wrap gap-2">
-                {TARGET_MARKETS.map((market) => {
-                  const selected = form.targetMarkets.includes(market);
-                  return (
-                    <button
-                      key={market}
-                      type="button"
-                      onClick={() => toggleMarket(market)}
-                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                        selected
-                          ? "bg-brand-black text-white border-brand-black"
-                          : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
-                      }`}
-                    >
-                      {market}
-                    </button>
-                  );
-                })}
+              <TextareaWithCount
+                value={form.targetAudience}
+                onChange={(targetAudience) =>
+                  setForm((prev) => ({ ...prev, targetAudience }))
+                }
+                placeholder="CMOs and Heads of Digital Marketing at EMEA enterprise companies (500M+ revenue). Age 35-50. Skeptical of social media ROI for B2B."
+                minLength={10}
+                rows={3}
+              />
+            </FormField>
+
+            {/* Required: Output type */}
+            <FormField
+              label="Output Type"
+              required
+              helperText="Determines the structure and depth of the output. A strategic recommendation and a creative brief require completely different outputs."
+            >
+              <div className="flex gap-2">
+                {OUTPUT_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({ ...prev, outputType: type.value }))
+                    }
+                    className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                      form.outputType === type.value
+                        ? "bg-brand-black text-white border-brand-black"
+                        : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
               </div>
             </FormField>
 
-            {/* Budget + Timeline */}
+            {/* Recommended fields */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
-                label="Budget"
-                helperText="Optional. Helps size the activation plan and channel recommendations."
+                label={
+                  <>
+                    Budget Range
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="Budget fundamentally shapes creative ambition. A 50K budget should not receive a recommendation requiring 3 TVC shoots."
               >
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={form.budgetAmount}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        budgetAmount: e.target.value,
-                      }))
-                    }
-                    placeholder="Amount"
-                    className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                  />
-                  <select
-                    value={form.budgetCurrency}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        budgetCurrency: e.target.value,
-                      }))
-                    }
-                    className="w-20 px-2 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                  >
-                    {CURRENCY_OPTIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  value={form.budgetRange}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, budgetRange: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {BUDGET_RANGES.map((b) => (
+                    <option key={b.value} value={b.value}>
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
               </FormField>
 
               <FormField
-                label="Timeline"
-                required
-                helperText="When does the campaign need to launch and run? e.g. Q2 2026, June-August 2026"
+                label={
+                  <>
+                    Timeline
+                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  </>
+                }
+                helperText="Determines what's executable. A 2-week timeline eliminates any production that takes 4 weeks."
               >
                 <input
                   type="text"
@@ -421,26 +484,134 @@ export default function CreativeStrategistPage() {
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, timeline: e.target.value }))
                   }
-                  placeholder="e.g. Q2 2026, June-August 2026"
+                  placeholder="Campaign launch: June 15, 2026"
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 />
               </FormField>
             </div>
 
-            {/* Constraints */}
             <FormField
-              label="Constraints / Additional Context"
-              helperText="Optional. Competitors to avoid, market context, mandatory elements, brand restrictions, regulatory constraints."
+              label={
+                <>
+                  Constraints & Context
+                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                </>
+              }
+              helperText="Mandatory elements, legal disclaimers, competitive restrictions, or recent context. Prevents recommending something the client already tried."
             >
               <TextareaWithCount
                 value={form.constraints}
                 onChange={(constraints) =>
                   setForm((prev) => ({ ...prev, constraints }))
                 }
-                placeholder="e.g. Must avoid any reference to competitor Nike. Regulatory restrictions on influencer disclosure in France. Client wants to reuse existing hero photography."
+                placeholder="Must avoid direct competitor comparisons. Previous campaign (Q4 2025) used 'For You' messaging — don't repeat. Must include accessibility standards."
                 rows={3}
               />
             </FormField>
+
+            <FormField
+              label={
+                <>
+                  Competitors to Benchmark
+                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                </>
+              }
+              helperText="Without knowing the competitive landscape, the strategy may recommend something already done better by a competitor."
+            >
+              <input
+                type="text"
+                value={form.competitorsToBenchmark}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    competitorsToBenchmark: e.target.value,
+                  }))
+                }
+                placeholder="Meta for Business, Google Ads, Snapchat for Business"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Advanced options (optional) */}
+            <div className="border border-neutral-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors rounded-lg"
+              >
+                <span>Advanced options</span>
+                <span className="text-neutral-400">{showAdvanced ? "−" : "+"}</span>
+              </button>
+              {showAdvanced && (
+                <div className="px-4 pb-4 space-y-4 border-t border-neutral-200 pt-4">
+                  <FormField
+                    label="Target Markets"
+                    helperText="Select markets this campaign will run in. Shapes media mix, cultural references, and localization needs."
+                  >
+                    <div className="flex flex-wrap gap-2">
+                      {TARGET_MARKETS.map((market) => {
+                        const selected = form.targetMarkets.includes(market);
+                        return (
+                          <button
+                            key={market}
+                            type="button"
+                            onClick={() => toggleMarket(market)}
+                            className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                              selected
+                                ? "bg-brand-black text-white border-brand-black"
+                                : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                            }`}
+                          >
+                            {market}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </FormField>
+
+                  <FormField
+                    label="Inspiration References"
+                    helperText="Campaigns or brands the client admires (or wants to differentiate from). Orients the creative territories."
+                  >
+                    <TextareaWithCount
+                      value={form.inspirationReferences}
+                      onChange={(inspirationReferences) =>
+                        setForm((prev) => ({ ...prev, inspirationReferences }))
+                      }
+                      placeholder="e.g. Apple 'Shot on iPhone' campaign, Spotify Wrapped, Dove Real Beauty"
+                      rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Number of Territories"
+                    helperText="How many creative directions to explore. Default 3."
+                  >
+                    <div className="flex gap-2">
+                      {TERRITORY_COUNTS.map((t) => (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              numberOfTerritories: t.value,
+                            }))
+                          }
+                          className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                            form.numberOfTerritories === t.value
+                              ? "bg-brand-black text-white border-brand-black"
+                              : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </FormField>
+                </div>
+              )}
+            </div>
 
             <div className="flex justify-between">
               <button

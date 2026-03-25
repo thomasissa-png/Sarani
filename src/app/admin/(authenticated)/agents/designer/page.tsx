@@ -43,6 +43,9 @@ type FormState = {
   briefDescription: string;
   style: DesignStyle;
   platform: DesignPlatform;
+  mandatoryTextElements: string;
+  textPlacementInstruction: string;
+  forbiddenElements: string;
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
@@ -56,6 +59,9 @@ export default function DesignerPage() {
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // Form state
   const [form, setForm] = useState<FormState>({
     clientId: "",
@@ -66,6 +72,9 @@ export default function DesignerPage() {
     briefDescription: "",
     style: "modern",
     platform: "web",
+    mandatoryTextElements: "",
+    textPlacementInstruction: "",
+    forbiddenElements: "",
   });
 
   // Generation state
@@ -82,7 +91,7 @@ export default function DesignerPage() {
   function isStep1Valid(): boolean {
     const dims = getEffectiveDimensions();
     return (
-      form.briefDescription.length >= 20 &&
+      form.briefDescription.length >= 30 &&
       !!dims &&
       /^\d{2,5}x\d{2,5}$/.test(dims)
     );
@@ -192,6 +201,13 @@ export default function DesignerPage() {
           New Design Brief
         </h2>
 
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800">
+            The more precise your brief, the closer the first visual will be to what the client expects. Include the message you want the viewer to read, the mood you&apos;re after, and any mandatory elements (logo placement, legal copy, specific CTA). The brand book will be loaded automatically — but specific guidelines for this project always override defaults.
+          </p>
+        </div>
+
         <StepIndicator steps={STEPS} currentStep={step} />
 
         {/* Step 0: Select Client (with brand asset preview) */}
@@ -225,160 +241,242 @@ export default function DesignerPage() {
         {/* Step 1: Configure */}
         {step === 1 && (
           <div className="space-y-5">
-            {/* Asset type + Style + Platform */}
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                label="Asset Type"
-                required
-                helperText="What kind of visual asset do you need?"
-              >
-                <select
-                  value={form.assetType}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      assetType: e.target.value as AssetType,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {ASSET_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {ASSET_TYPE_LABELS[type]}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              <FormField
-                label="Style"
-                required
-                helperText="Visual style direction for the asset."
-              >
-                <select
-                  value={form.style}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      style: e.target.value as DesignStyle,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {STYLES.map((s) => (
-                    <option key={s} value={s}>
-                      {STYLE_LABELS[s]}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
-              <FormField
-                label="Platform"
-                required
-                helperText="Where will this asset be displayed?"
-              >
-                <select
-                  value={form.platform}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      platform: e.target.value as DesignPlatform,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {PLATFORMS.map((p) => (
-                    <option key={p} value={p}>
-                      {PLATFORM_LABELS[p]}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            </div>
-
-            {/* Dimensions + Quantity */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                label="Dimensions"
-                required
-                helperText="Choose a preset or enter custom WxH dimensions."
-                error={
-                  form.dimensions === "custom" &&
-                  form.customDimensions &&
-                  !/^\d{2,5}x\d{2,5}$/.test(form.customDimensions)
-                    ? "Use WxH format (e.g. 1200x800)"
-                    : undefined
-                }
-              >
-                <select
-                  value={form.dimensions}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      dimensions: e.target.value,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {DIMENSION_PRESETS.map((preset) => (
-                    <option key={preset.value} value={preset.value}>
-                      {preset.label}
-                    </option>
-                  ))}
-                </select>
-                {form.dimensions === "custom" && (
-                  <input
-                    type="text"
-                    placeholder="e.g. 1200x800"
-                    value={form.customDimensions}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        customDimensions: e.target.value,
-                      }))
-                    }
-                    className="w-full mt-2 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                  />
-                )}
-              </FormField>
-
-              <FormField
-                label="Number of Variations"
-                helperText="How many prompt variations to generate (1-6)."
-              >
-                <input
-                  type="number"
-                  min={1}
-                  max={6}
-                  value={form.quantity}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      quantity: parseInt(e.target.value) || 1,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                />
-              </FormField>
-            </div>
-
-            {/* Brief description */}
+            {/* Required: Visual type */}
             <FormField
-              label="Creative Brief"
+              label="Visual Type"
               required
-              helperText="Describe the visual: campaign theme, key message, target audience, specific elements to include. The more detail, the better the prompts."
+              helperText="Determines the generation approach: a web banner needs a text hierarchy, a moodboard needs mood references, a social post needs square/vertical formats."
+            >
+              <select
+                value={form.assetType}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    assetType: e.target.value as AssetType,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {ASSET_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {ASSET_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* Required: Dimensions */}
+            <FormField
+              label="Dimensions"
+              required
+              helperText="An image generated at wrong dimensions cannot be repurposed. Choose a preset or enter custom WxH."
+              error={
+                form.dimensions === "custom" &&
+                form.customDimensions &&
+                !/^\d{2,5}x\d{2,5}$/.test(form.customDimensions)
+                  ? "Use WxH format (e.g. 1200x800)"
+                  : undefined
+              }
+            >
+              <select
+                value={form.dimensions}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    dimensions: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {DIMENSION_PRESETS.map((preset) => (
+                  <option key={preset.value} value={preset.value}>
+                    {preset.label}
+                  </option>
+                ))}
+              </select>
+              {form.dimensions === "custom" && (
+                <input
+                  type="text"
+                  placeholder="e.g. 1200x800"
+                  value={form.customDimensions}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      customDimensions: e.target.value,
+                    }))
+                  }
+                  className="w-full mt-2 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              )}
+            </FormField>
+
+            {/* Required: Visual brief */}
+            <FormField
+              label="Visual Brief"
+              required
+              helperText="The key message, mandatory elements, mood, and references. Without this, the agent produces a visually branded but communicatively empty image."
             >
               <TextareaWithCount
                 value={form.briefDescription}
                 onChange={(briefDescription) =>
                   setForm((prev) => ({ ...prev, briefDescription }))
                 }
-                placeholder="e.g. Black Friday promotional banner for Sony ULT headphones — dark background, product hero shot, urgency messaging, gold accents, price badge showing 30% off"
-                minLength={20}
+                placeholder="Black Friday sale. 30% off Sony headphones. Product shot centered. Message: 'Your sound. Your price.' Black background. CTA: 'Shop now' button bottom right."
+                minLength={30}
                 rows={5}
               />
             </FormField>
+
+            {/* Recommended fields */}
+            <FormField
+              label={
+                <>
+                  Number of Variants
+                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                </>
+              }
+              helperText="3 variants allow creative selection and avoid locking the designer into one direction."
+            >
+              <div className="flex gap-2">
+                {[1, 3, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() =>
+                      setForm((prev) => ({ ...prev, quantity: n }))
+                    }
+                    className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                      form.quantity === n
+                        ? "bg-brand-black text-white border-brand-black"
+                        : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                    }`}
+                  >
+                    {n} variant{n > 1 ? "s" : ""}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+
+            <FormField
+              label={
+                <>
+                  Mandatory Text Elements
+                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                </>
+              }
+              helperText="Text content that must appear in the visual (product name, tagline, CTA, legal disclaimer)."
+            >
+              <input
+                type="text"
+                value={form.mandatoryTextElements}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    mandatoryTextElements: e.target.value,
+                  }))
+                }
+                placeholder="Shop now — sarani.studio — Valid until Nov 29"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            <FormField
+              label={
+                <>
+                  Text Placement Instruction
+                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                </>
+              }
+              helperText="Where specific text elements should sit. Being explicit reduces AI text placement failures."
+            >
+              <input
+                type="text"
+                value={form.textPlacementInstruction}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    textPlacementInstruction: e.target.value,
+                  }))
+                }
+                placeholder="Logo top left, CTA button bottom right, product name center"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Advanced options (optional) */}
+            <div className="border border-neutral-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors rounded-lg"
+              >
+                <span>Advanced options</span>
+                <span className="text-neutral-400">{showAdvanced ? "−" : "+"}</span>
+              </button>
+              {showAdvanced && (
+                <div className="px-4 pb-4 space-y-4 border-t border-neutral-200 pt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      label="Style"
+                      helperText="Visual style direction for the asset."
+                    >
+                      <select
+                        value={form.style}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            style: e.target.value as DesignStyle,
+                          }))
+                        }
+                        className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                      >
+                        {STYLES.map((s) => (
+                          <option key={s} value={s}>
+                            {STYLE_LABELS[s]}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+
+                    <FormField
+                      label="Format Context"
+                      helperText="Screen-optimized images behave differently from print. Signals the rendering environment."
+                    >
+                      <select
+                        value={form.platform}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            platform: e.target.value as DesignPlatform,
+                          }))
+                        }
+                        className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                      >
+                        {PLATFORMS.map((p) => (
+                          <option key={p} value={p}>
+                            {PLATFORM_LABELS[p]}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                  </div>
+
+                  <FormField
+                    label="Forbidden Elements"
+                    helperText="What must NOT appear: specific colors, imagery, style choices. Critical for brands with strict guidelines."
+                  >
+                    <TextareaWithCount
+                      value={form.forbiddenElements}
+                      onChange={(forbiddenElements) =>
+                        setForm((prev) => ({ ...prev, forbiddenElements }))
+                      }
+                      placeholder="e.g. No gradients, no lifestyle photography, no competitor colors"
+                      rows={2}
+                    />
+                  </FormField>
+                </div>
+              )}
+            </div>
 
             <div className="flex justify-between">
               <button

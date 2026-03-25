@@ -32,6 +32,8 @@ type FormState = {
   inputText: string;
   formalRegister: boolean;
   showGlossaryHits: boolean;
+  contextNote: string;
+  preserveFormatting: boolean;
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Translate"];
@@ -45,6 +47,9 @@ export default function TranslatorPage() {
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // Form state
   const [form, setForm] = useState<FormState>({
     clientId: "",
@@ -52,7 +57,9 @@ export default function TranslatorPage() {
     targetLanguage: "EN",
     inputText: "",
     formalRegister: false,
-    showGlossaryHits: true,
+    showGlossaryHits: false,
+    contextNote: "",
+    preserveFormatting: true,
   });
 
   // Translation state
@@ -227,20 +234,32 @@ export default function TranslatorPage() {
           New Translation
         </h2>
 
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800">
+            Select the client to activate their glossary and translation memory — this is what makes the difference between a generic translation and one that sounds like it came from their team. If you&apos;re translating something sensitive or technical, paste the text directly rather than uploading a scanned PDF.
+          </p>
+        </div>
+
         <StepIndicator steps={STEPS} currentStep={step} />
 
         {/* Step 0: Select Client (optional) */}
         {step === 0 && (
           <div className="space-y-4">
-            <ClientSelector
-              value={form.clientId}
-              onChange={(clientId) =>
-                setForm((prev) => ({ ...prev, clientId }))
-              }
-              required={false}
-              onClientLoaded={handleClientLoaded}
-              helperText="Optional — selecting a client enables glossary matching and auto-fills the source language from their profile."
-            />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+              </div>
+              <ClientSelector
+                value={form.clientId}
+                onChange={(clientId) =>
+                  setForm((prev) => ({ ...prev, clientId }))
+                }
+                required={false}
+                onClientLoaded={handleClientLoaded}
+                helperText="Activates the client glossary and translation memory. Without it, the translation is generic and may contradict validated formulations from previous deliveries."
+              />
+            </div>
 
             <div className="flex justify-end">
               <button
@@ -322,52 +341,104 @@ export default function TranslatorPage() {
                 onChange={(inputText) =>
                   setForm((prev) => ({ ...prev, inputText }))
                 }
-                placeholder="Paste the text to translate — email, document, brief, or any content"
+                placeholder="Paste text or upload Sony_brief_FR.docx"
                 minLength={10}
                 rows={8}
               />
             </FormField>
 
-            {/* Options */}
-            <div className="flex items-center gap-6">
-              <FormField
-                label=""
-                helperText=""
-              >
-                <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.formalRegister}
-                    onChange={(e) =>
+            {/* Recommended: Register */}
+            <FormField
+              label={
+                <>
+                  Register
+                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                </>
+              }
+              helperText="Corporate clients (GEODIS, Sony, L'Oreal) expect formal register. Default is Standard."
+            >
+              <div className="flex gap-2">
+                {(["Standard", "Formal"] as const).map((reg) => (
+                  <button
+                    key={reg}
+                    type="button"
+                    onClick={() =>
                       setForm((prev) => ({
                         ...prev,
-                        formalRegister: e.target.checked,
+                        formalRegister: reg === "Formal",
                       }))
                     }
-                    className="rounded border-neutral-300"
-                  />
-                  Formal register
-                </label>
-              </FormField>
-              <FormField
-                label=""
-                helperText=""
+                    className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                      (reg === "Formal") === form.formalRegister
+                        ? "bg-brand-black text-white border-brand-black"
+                        : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                    }`}
+                  >
+                    {reg}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+
+            {/* Advanced options (optional) */}
+            <div className="border border-neutral-200 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors rounded-lg"
               >
-                <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.showGlossaryHits}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        showGlossaryHits: e.target.checked,
-                      }))
-                    }
-                    className="rounded border-neutral-300"
-                  />
-                  Show glossary hits
-                </label>
-              </FormField>
+                <span>Advanced options</span>
+                <span className="text-neutral-400">{showAdvanced ? "−" : "+"}</span>
+              </button>
+              {showAdvanced && (
+                <div className="px-4 pb-4 space-y-4 border-t border-neutral-200 pt-4">
+                  <FormField
+                    label="Context Note"
+                    helperText="What is this document for? (internal brief, client-facing presentation, legal contract, social post). Changes the register calibration."
+                  >
+                    <TextareaWithCount
+                      value={form.contextNote}
+                      onChange={(contextNote) =>
+                        setForm((prev) => ({ ...prev, contextNote }))
+                      }
+                      placeholder="e.g. This is a client-facing presentation for the Q2 business review"
+                      rows={2}
+                    />
+                  </FormField>
+
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.showGlossaryHits}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            showGlossaryHits: e.target.checked,
+                          }))
+                        }
+                        className="rounded border-neutral-300"
+                      />
+                      Show glossary hits in output
+                    </label>
+
+                    <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.preserveFormatting}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            preserveFormatting: e.target.checked,
+                          }))
+                        }
+                        className="rounded border-neutral-300"
+                      />
+                      Preserve formatting (bold, italic, tables)
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between">

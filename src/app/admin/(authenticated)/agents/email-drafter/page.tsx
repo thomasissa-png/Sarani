@@ -32,15 +32,46 @@ type GenerateApiResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+// Spec-aligned email purpose options
+const EMAIL_PURPOSE_OPTIONS = [
+  { value: "delivery", label: "Project delivery" },
+  { value: "follow-up", label: "Follow-up" },
+  { value: "introduction", label: "New proposal / Introduction" },
+  { value: "status-update", label: "Status update" },
+  { value: "brief-confirmation", label: "Issue escalation" },
+  { value: "thank-you", label: "Thank you" },
+  { value: "meeting-request", label: "Introduction" },
+  { value: "revision-response", label: "Invoice / Revision" },
+  { value: "custom", label: "Other" },
+] as const;
+
+const TONE_DIRECTION_OPTIONS = [
+  { value: "formal", label: "Formal" },
+  { value: "friendly", label: "Warm professional" },
+  { value: "urgent", label: "Direct" },
+] as const;
+
+const TONE_DESCRIPTIONS: Record<EmailTone, string> = {
+  formal: "Official correspondence, contracts, sensitive negotiations",
+  friendly: "Regular project updates, good news, warm professional",
+  urgent: "Deadline reminders, critical issues, direct but diplomatic",
+};
+
 type FormState = {
   clientId: string;
+  // Required
   emailType: EmailType;
-  context: string;
+  emailBodyAsk: string;
+  // Recommended
   recipientName: string;
-  recipientRole: string;
+  context: string;
   language: SupportedLanguage;
   tone: EmailTone;
-  includeAttachmentMention: boolean;
+  // Optional
+  attachmentDescription: string;
+  deadlineMentioned: string;
+  previousEmailThread: string;
+  culturalContext: string;
   variantCount: number;
 };
 
@@ -48,11 +79,8 @@ type FormState = {
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
 
-const TONE_DESCRIPTIONS: Record<EmailTone, string> = {
-  formal: "Official correspondence, contracts",
-  friendly: "Regular project updates, good news",
-  urgent: "Deadline reminders, critical issues",
-};
+const GUIDANCE_MESSAGE =
+  "Tell me who you're writing to (name, role, relationship), what you want this email to accomplish, and the one key thing you need them to do or know. If there's a specific tone consideration (they're frustrated, this is a sensitive negotiation, they just approved a budget), tell me — it changes everything.";
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -63,16 +91,22 @@ export default function EmailDrafterPage() {
   // Client ref for context panel
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // Form state
   const [form, setForm] = useState<FormState>({
     clientId: "",
-    emailType: "status-update",
-    context: "",
+    emailType: "delivery",
+    emailBodyAsk: "",
     recipientName: "",
-    recipientRole: "",
+    context: "",
     language: "EN",
     tone: "friendly",
-    includeAttachmentMention: false,
+    attachmentDescription: "",
+    deadlineMentioned: "",
+    previousEmailThread: "",
+    culturalContext: "",
     variantCount: 1,
   });
 
@@ -102,14 +136,18 @@ export default function EmailDrafterPage() {
 
   function canAdvanceFromStep(s: number): boolean {
     if (s === 0) return !!form.clientId;
-    if (s === 1) return form.context.trim().length >= 30;
+    if (s === 1)
+      return !!form.emailType && form.emailBodyAsk.trim().length >= 10;
     return true;
   }
 
   function getStepError(s: number): string | null {
     if (s === 0 && !form.clientId) return "Please select a client to continue.";
-    if (s === 1 && form.context.trim().length < 30)
-      return "Context must be at least 30 characters for a quality draft.";
+    if (s === 1) {
+      if (!form.emailType) return "Please select an email purpose.";
+      if (form.emailBodyAsk.trim().length < 10)
+        return "The email ask must be at least 10 characters. What should the recipient do or know?";
+    }
     return null;
   }
 
@@ -129,13 +167,18 @@ export default function EmailDrafterPage() {
         body: JSON.stringify({
           clientId: form.clientId,
           emailType: form.emailType,
-          context: form.context,
+          context: form.context || form.emailBodyAsk,
           recipientName: form.recipientName || undefined,
-          recipientRole: form.recipientRole || undefined,
           language: form.language,
           tone: form.tone,
-          includeAttachmentMention: form.includeAttachmentMention,
+          includeAttachmentMention: !!form.attachmentDescription.trim(),
           variantCount: form.variantCount,
+          // Extended fields for prompt enrichment
+          emailBodyAsk: form.emailBodyAsk,
+          attachmentDescription: form.attachmentDescription || undefined,
+          deadlineMentioned: form.deadlineMentioned || undefined,
+          previousEmailThread: form.previousEmailThread || undefined,
+          culturalContext: form.culturalContext || undefined,
         }),
       });
 
@@ -208,27 +251,28 @@ export default function EmailDrafterPage() {
 
   function buildSummaryItems() {
     return [
-      { label: "Client", value: selectedClient?.name || "—" },
-      { label: "Email type", value: EMAIL_TYPE_LABELS[form.emailType] },
+      { label: "Client", value: selectedClient?.name || "---" },
+      { label: "Email purpose", value: EMAIL_TYPE_LABELS[form.emailType] },
+      {
+        label: "What the email must accomplish",
+        value:
+          form.emailBodyAsk.length > 80
+            ? form.emailBodyAsk.slice(0, 80) + "..."
+            : form.emailBodyAsk,
+      },
       { label: "Tone", value: EMAIL_TONE_LABELS[form.tone] },
       { label: "Language", value: LANGUAGE_LABELS[form.language] },
       {
-        label: "Context",
-        value:
-          form.context.length > 80
-            ? form.context.slice(0, 80) + "..."
-            : form.context,
-      },
-      {
         label: "Recipient",
-        value:
-          form.recipientName && form.recipientRole
-            ? `${form.recipientName} (${form.recipientRole})`
-            : form.recipientName || form.recipientRole || "Not specified",
+        value: form.recipientName || "Not specified",
       },
       {
-        label: "Attachment mention",
-        value: form.includeAttachmentMention ? "Yes" : "No",
+        label: "Context",
+        value: form.context
+          ? form.context.length > 60
+            ? form.context.slice(0, 60) + "..."
+            : form.context
+          : "Not specified",
       },
       { label: "Variants", value: `${form.variantCount}` },
     ];
@@ -258,6 +302,13 @@ export default function EmailDrafterPage() {
 
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800 leading-relaxed">
+            {GUIDANCE_MESSAGE}
+          </p>
+        </div>
+
         <StepIndicator steps={STEPS} currentStep={step} />
 
         {/* ── Step 0: Select Client ──────────────────────────────────── */}
@@ -270,7 +321,7 @@ export default function EmailDrafterPage() {
               value={form.clientId}
               onChange={(id) => setForm((prev) => ({ ...prev, clientId: id }))}
               required
-              helperText="Select the client this email is for. Their contact info, brand tone, and language will be loaded."
+              helperText="Loads relationship history, contact name, preferred language, and client tone context."
               onClientLoaded={handleClientLoaded}
             />
             {/* Step navigation */}
@@ -303,11 +354,13 @@ export default function EmailDrafterPage() {
             {/* Client context reminder */}
             <ClientContextPanel client={selectedClient} />
 
-            {/* Email type */}
+            {/* ── Required Fields ── */}
+
+            {/* Email purpose */}
             <FormField
-              label="Email Type"
+              label="Email Purpose"
               required
-              helperText="What kind of email are you writing?"
+              helperText="The purpose determines the entire structure: a delivery email leads with the attachment; a follow-up leads with a concise reference."
             >
               <select
                 value={form.emailType}
@@ -327,29 +380,39 @@ export default function EmailDrafterPage() {
               </select>
             </FormField>
 
-            {/* Context */}
+            {/* Email body ask */}
             <FormField
-              label="Context"
+              label="What must this email accomplish?"
               required
-              helperText="Describe the situation in detail. The more context you provide, the better the email will be."
+              helperText="What is the single action or understanding this email must produce? 'Please find attached' is not a purpose — 'Please review by Friday and confirm approval' is."
             >
               <TextareaWithCount
-                value={form.context}
+                value={form.emailBodyAsk}
                 onChange={(val) =>
-                  setForm((prev) => ({ ...prev, context: val }))
+                  setForm((prev) => ({ ...prev, emailBodyAsk: val }))
                 }
-                placeholder="e.g. We just delivered the 50 Black Friday banners to Sony — all 15 languages on time. Need to send delivery confirmation with download links and ask for feedback by Friday"
-                minLength={30}
-                maxLength={5000}
-                rows={5}
+                placeholder="Confirm you've received the 50 Black Friday banners and approve them for production by March 28."
+                minLength={10}
+                maxLength={2000}
+                rows={4}
               />
             </FormField>
 
-            {/* Recipient name + role */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* ── Recommended Fields ── */}
+            <div className="border-t border-neutral-200 pt-4 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Recommended
+                </span>
+                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
+                  Recommended
+                </span>
+              </div>
+
+              {/* Recipient name */}
               <FormField
                 label="Recipient Name"
-                helperText="The person receiving this email"
+                helperText="Personalizes the salutation. Auto-filled from client's primary contact if available."
               >
                 <input
                   type="text"
@@ -360,135 +423,190 @@ export default function EmailDrafterPage() {
                       recipientName: e.target.value,
                     }))
                   }
-                  placeholder="e.g. Sarah Chen"
+                  placeholder="Sophie Tanaka, Senior Brand Manager"
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 />
               </FormField>
+
+              {/* Context */}
               <FormField
-                label="Recipient Role"
-                helperText="Their job title or role"
+                label="Context (what just happened)"
+                helperText="What makes this email necessary right now? Without context, the email feels disconnected."
               >
-                <input
-                  type="text"
-                  value={form.recipientRole}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      recipientRole: e.target.value,
-                    }))
+                <TextareaWithCount
+                  value={form.context}
+                  onChange={(val) =>
+                    setForm((prev) => ({ ...prev, context: val }))
                   }
-                  placeholder="e.g. Marketing Director"
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  placeholder="Following Monday's call where you confirmed the banners are approved pending one copy change on the French version."
+                  maxLength={5000}
+                  rows={4}
                 />
               </FormField>
-            </div>
 
-            {/* Language (auto-filled) */}
-            <FormField
-              label="Language"
-              helperText={
-                selectedClient?.primaryLanguage
-                  ? `Auto-filled from ${selectedClient.name}'s primary language. You can change it.`
-                  : "The language the email will be written in."
-              }
-            >
-              <select
-                value={form.language}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    language: e.target.value as SupportedLanguage,
-                  }))
-                }
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                {SUPPORTED_LANGUAGES.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {LANGUAGE_LABELS[lang]} ({lang})
-                  </option>
-                ))}
-              </select>
-            </FormField>
-
-            {/* Tone */}
-            <FormField
-              label="Tone"
-              required
-              helperText="Set the overall tone for this email."
-            >
-              <div className="space-y-2">
-                {EMAIL_TONES.map((t) => (
-                  <label
-                    key={t}
-                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                      form.tone === t
-                        ? "border-brand-cerulean bg-blue-50"
-                        : "border-neutral-200 hover:bg-neutral-50"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="tone"
-                      value={t}
-                      checked={form.tone === t}
-                      onChange={() =>
-                        setForm((prev) => ({ ...prev, tone: t }))
-                      }
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-brand-black">
-                        {EMAIL_TONE_LABELS[t]}
-                      </span>
-                      <p className="text-xs text-neutral-500">
-                        {TONE_DESCRIPTIONS[t]}
-                      </p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </FormField>
-
-            {/* Attachment + Variants */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                label="Options"
-                helperText="Additional email options"
-              >
-                <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer pt-1.5">
-                  <input
-                    type="checkbox"
-                    checked={form.includeAttachmentMention}
+              {/* Language + Tone */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  label="Language"
+                  helperText={
+                    selectedClient?.primaryLanguage
+                      ? `Auto-filled from ${selectedClient.name}'s primary language. You can change it.`
+                      : "The language the email will be written in."
+                  }
+                >
+                  <select
+                    value={form.language}
                     onChange={(e) =>
                       setForm((prev) => ({
                         ...prev,
-                        includeAttachmentMention: e.target.checked,
+                        language: e.target.value as SupportedLanguage,
                       }))
                     }
-                    className="rounded border-neutral-300"
-                  />
-                  Mention attachment
-                </label>
-              </FormField>
-              <FormField
-                label="Variants"
-                helperText="Generate alternative versions"
-              >
-                <select
-                  value={form.variantCount}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      variantCount: Number(e.target.value),
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    {SUPPORTED_LANGUAGES.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {LANGUAGE_LABELS[lang]} ({lang})
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <FormField
+                  label="Tone Direction"
+                  helperText="The relationship history and email purpose define the tone."
                 >
-                  <option value={1}>1 version</option>
-                  <option value={2}>2 versions</option>
-                  <option value={3}>3 versions</option>
-                </select>
-              </FormField>
+                  <select
+                    value={form.tone}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        tone: e.target.value as EmailTone,
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    {EMAIL_TONES.map((t) => (
+                      <option key={t} value={t}>
+                        {EMAIL_TONE_LABELS[t]} — {TONE_DESCRIPTIONS[t]}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+            </div>
+
+            {/* ── Optional Fields (collapsible) ── */}
+            <div className="border-t border-neutral-200 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-brand-black transition-colors"
+              >
+                <span
+                  className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+                >
+                  &#9654;
+                </span>
+                Advanced options
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-4 space-y-5">
+                  {/* Attachment description */}
+                  <FormField
+                    label="Attachment Description"
+                    helperText="If files are being sent with the email, describe what they are so the email text references them correctly."
+                  >
+                    <TextareaWithCount
+                      value={form.attachmentDescription}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          attachmentDescription: val,
+                        }))
+                      }
+                      placeholder="50 Black Friday banners in 728x90, 300x250, and 160x600 formats, EN and FR versions"
+                      rows={2}
+                    />
+                  </FormField>
+
+                  {/* Deadline mentioned */}
+                  <FormField
+                    label="Deadline"
+                    helperText="If the email needs to set or reference a deadline, include it explicitly."
+                  >
+                    <input
+                      type="date"
+                      value={form.deadlineMentioned}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          deadlineMentioned: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+
+                  {/* Previous email thread */}
+                  <FormField
+                    label="Previous Email Thread"
+                    helperText="Paste the last message in the thread for the agent to understand the conversation history."
+                  >
+                    <TextareaWithCount
+                      value={form.previousEmailThread}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          previousEmailThread: val,
+                        }))
+                      }
+                      placeholder="Paste the last email in the thread..."
+                      rows={4}
+                    />
+                  </FormField>
+
+                  {/* Cultural context */}
+                  <FormField
+                    label="Cultural Context"
+                    helperText="If the recipient is in a specific cultural context (Japanese business etiquette, formal French corporate, informal US startup), flag it."
+                  >
+                    <TextareaWithCount
+                      value={form.culturalContext}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          culturalContext: val,
+                        }))
+                      }
+                      placeholder="Japanese business etiquette — use formal register, address by surname"
+                      rows={2}
+                    />
+                  </FormField>
+
+                  {/* Variants */}
+                  <FormField
+                    label="Variants"
+                    helperText="Generate alternative versions"
+                  >
+                    <select
+                      value={form.variantCount}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          variantCount: Number(e.target.value),
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    >
+                      <option value={1}>1 version</option>
+                      <option value={2}>2 versions</option>
+                      <option value={3}>3 versions</option>
+                    </select>
+                  </FormField>
+                </div>
+              )}
             </div>
 
             {/* Step navigation */}

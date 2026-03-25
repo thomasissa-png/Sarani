@@ -24,42 +24,92 @@ import {
 type FormState = {
   clientId: string;
   contractType: ContractType;
-  projectDescription: string;
-  amount: string;
+  scopeOfWork: string;
+  totalAmount: string;
   currency: Currency;
-  deliverables: string;
-  startDate: string;
-  endDate: string;
+  deliveryDate: string;
+  // recommended
+  paymentTerms: string;
+  revisionsIncluded: string;
+  projectName: string;
+  governingLaw: string;
+  // optional
   specialClauses: string;
+  referencesFrameworkAgreement: boolean;
+  secondPartyContact: string;
   language: "en" | "fr";
 };
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function getDefaultStartDate(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
-function getDefaultEndDate(): string {
+function getDefaultDeliveryDate(): string {
   const d = new Date();
   d.setMonth(d.getMonth() + 1);
   return d.toISOString().split("T")[0];
 }
 
+const PAYMENT_TERMS = [
+  { value: "", label: "-- Select payment terms --" },
+  { value: "100_upfront", label: "100% upfront" },
+  { value: "50_50", label: "50% upfront + 50% on delivery" },
+  { value: "30_net", label: "30 days net" },
+  { value: "60_net", label: "60 days net" },
+];
+
+const REVISIONS_OPTIONS = [
+  { value: "", label: "-- Select revisions --" },
+  { value: "unlimited", label: "Unlimited" },
+  { value: "2_rounds", label: "2 rounds" },
+  { value: "3_rounds", label: "3 rounds" },
+  { value: "none", label: "None" },
+];
+
+const GOVERNING_LAW_OPTIONS = [
+  { value: "", label: "-- Auto-detect from client --" },
+  { value: "France", label: "France" },
+  { value: "UK", label: "UK" },
+  { value: "Ireland", label: "Ireland" },
+  { value: "UAE", label: "UAE" },
+  { value: "USA", label: "USA" },
+  { value: "Other", label: "Other" },
+];
+
 const INITIAL_FORM: FormState = {
   clientId: "",
   contractType: "SOW",
-  projectDescription: "",
-  amount: "",
+  scopeOfWork: "",
+  totalAmount: "",
   currency: "EUR",
-  deliverables: "",
-  startDate: getDefaultStartDate(),
-  endDate: getDefaultEndDate(),
+  deliveryDate: getDefaultDeliveryDate(),
+  paymentTerms: "",
+  revisionsIncluded: "",
+  projectName: "",
+  governingLaw: "",
   specialClauses: "",
+  referencesFrameworkAgreement: false,
+  secondPartyContact: "",
   language: "en",
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
+// ─── Shared UI helpers ──────────────────────────────────────────────────────
+
+function RecommendedBadge() {
+  return (
+    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded">
+      Recommended
+    </span>
+  );
+}
+
+function GuidanceMessage({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800 leading-relaxed">
+      {children}
+    </div>
+  );
+}
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -73,24 +123,48 @@ export default function LegalAgentPage() {
   // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
 
+  // Advanced options toggle
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
   // Generation state
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<GenerateContractResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // ── Legal info completeness check ─────────────────────────────────────────
+
+  const clientLegalIncomplete =
+    selectedClient &&
+    (!selectedClient.legalEntityName || !selectedClient.vatNumber);
+
   // ── Smart defaults when client is loaded ─────────────────────────────────
 
   const handleClientLoaded = useCallback(
     (client: Client | null) => {
       setSelectedClient(client);
-      if (client?.primaryLanguage) {
-        const lang = client.primaryLanguage.toLowerCase();
-        if (lang === "fr" || lang === "french") {
-          setForm((prev) => ({ ...prev, language: "fr" }));
-        } else {
-          setForm((prev) => ({ ...prev, language: "en" }));
-        }
+      if (client) {
+        setForm((prev) => {
+          const updates: Partial<FormState> = {};
+          // Language smart default
+          const lang = client.primaryLanguage?.toLowerCase();
+          if (lang === "fr" || lang === "french") {
+            updates.language = "fr";
+          } else {
+            updates.language = "en";
+          }
+          // Governing law smart default from client country
+          if (client.legalCountry) {
+            const country = client.legalCountry;
+            const match = GOVERNING_LAW_OPTIONS.find(
+              (o) => o.value.toLowerCase() === country.toLowerCase()
+            );
+            if (match) {
+              updates.governingLaw = match.value;
+            }
+          }
+          return { ...prev, ...updates };
+        });
       }
     },
     []
@@ -99,18 +173,17 @@ export default function LegalAgentPage() {
   // ── Step validation ─────────────────────────────────────────────────────
 
   function canProceedStep0(): boolean {
-    return !!form.clientId;
+    // Client required + legal info must be complete
+    return !!form.clientId && !clientLegalIncomplete;
   }
 
   function canProceedStep1(): boolean {
-    const amountNum = parseFloat(form.amount);
+    const amountNum = parseFloat(form.totalAmount);
     return (
-      form.projectDescription.length >= 20 &&
+      form.scopeOfWork.length >= 20 &&
       !isNaN(amountNum) &&
       amountNum > 0 &&
-      form.deliverables.length >= 5 &&
-      !!form.startDate &&
-      !!form.endDate
+      !!form.deliveryDate
     );
   }
 
@@ -129,14 +202,21 @@ export default function LegalAgentPage() {
         body: JSON.stringify({
           clientId: form.clientId,
           contractType: form.contractType,
-          projectDescription: form.projectDescription,
-          amount: parseFloat(form.amount),
+          projectDescription: form.scopeOfWork,
+          amount: parseFloat(form.totalAmount),
           currency: form.currency,
-          deliverables: form.deliverables,
-          startDate: form.startDate,
-          endDate: form.endDate,
+          deliverables: form.scopeOfWork,
+          startDate: new Date().toISOString().split("T")[0],
+          endDate: form.deliveryDate,
           specialClauses: form.specialClauses || undefined,
           language: form.language,
+          // Pass new fields as additional context
+          paymentTerms: form.paymentTerms || undefined,
+          revisionsIncluded: form.revisionsIncluded || undefined,
+          projectName: form.projectName || undefined,
+          governingLaw: form.governingLaw || undefined,
+          referencesFrameworkAgreement: form.referencesFrameworkAgreement || undefined,
+          secondPartyContact: form.secondPartyContact || undefined,
         }),
       });
 
@@ -200,20 +280,29 @@ export default function LegalAgentPage() {
         label: "Legal Entity",
         value: selectedClient?.legalEntityName || selectedClient?.name || "—",
       },
+      { label: "VAT Number", value: selectedClient?.vatNumber || "—" },
       { label: "Contract Type", value: CONTRACT_TYPE_LABELS[form.contractType] },
       {
         label: "Amount",
-        value: form.amount ? `${form.amount} ${form.currency}` : "—",
+        value: form.totalAmount ? `${form.totalAmount} ${form.currency}` : "—",
       },
-      { label: "Start Date", value: form.startDate },
-      { label: "End Date", value: form.endDate },
+      { label: "Delivery Date", value: form.deliveryDate },
       { label: "Language", value: form.language === "en" ? "English" : "French" },
+      ...(form.governingLaw
+        ? [{ label: "Governing Law", value: form.governingLaw }]
+        : []),
+      ...(form.paymentTerms
+        ? [{ label: "Payment Terms", value: PAYMENT_TERMS.find((p) => p.value === form.paymentTerms)?.label || form.paymentTerms }]
+        : []),
+      ...(form.projectName
+        ? [{ label: "Project Name", value: form.projectName }]
+        : []),
       {
-        label: "Description",
+        label: "Scope",
         value:
-          form.projectDescription.length > 80
-            ? form.projectDescription.slice(0, 80) + "..."
-            : form.projectDescription,
+          form.scopeOfWork.length > 80
+            ? form.scopeOfWork.slice(0, 80) + "..."
+            : form.scopeOfWork,
       },
     ];
   }
@@ -243,6 +332,15 @@ export default function LegalAgentPage() {
         <h2 className="text-lg font-semibold text-brand-black">
           New Contract
         </h2>
+
+        {/* Guidance message */}
+        <GuidanceMessage>
+          Contracts require precision. Before generating, verify that the client
+          record contains the correct legal entity name and VAT number — these
+          are auto-filled but should always be confirmed. Fill every variable
+          before generating. A draft reviewed by human counsel before sending is
+          mandatory — this agent produces the draft, not the signed contract.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -285,12 +383,41 @@ export default function LegalAgentPage() {
                     </span>
                   </span>
                 </div>
-                {!selectedClient.legalEntityName && (
-                  <p className="text-amber-600 text-xs mt-1">
-                    Legal entity name is missing. The contract will use the
-                    client name instead. Consider updating the client record.
-                  </p>
+                {/* Blocking warning if legal info is incomplete */}
+                {clientLegalIncomplete && (
+                  <div className="mt-2 bg-red-50 border border-red-300 rounded-lg px-4 py-3 text-sm text-red-800">
+                    <span className="font-semibold">Warning:</span> This
+                    client&apos;s legal information is incomplete
+                    {!selectedClient.legalEntityName && !selectedClient.vatNumber
+                      ? " (missing legal entity name and VAT number)"
+                      : !selectedClient.legalEntityName
+                        ? " (missing legal entity name)"
+                        : " (missing VAT number)"}
+                    . Please update their profile first before generating a
+                    contract.
+                  </div>
                 )}
+              </div>
+            )}
+
+            {/* Auto-detected fields display */}
+            {selectedClient && !clientLegalIncomplete && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm space-y-1">
+                <p className="font-medium text-green-800">
+                  Auto-detected from client record
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-green-700">
+                  <span>
+                    Legal entity: {selectedClient.legalEntityName}
+                  </span>
+                  <span>VAT: {selectedClient.vatNumber}</span>
+                  {selectedClient.legalCountry && (
+                    <span>
+                      Country: {selectedClient.legalCountry} (governing law
+                      default)
+                    </span>
+                  )}
+                </div>
               </div>
             )}
 
@@ -311,11 +438,11 @@ export default function LegalAgentPage() {
         {/* ── Step 1: Configure ─────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-5">
-            {/* Contract type */}
+            {/* Contract type — required */}
             <FormField
               label="Contract Type"
               required
-              helperText="Choose the type of contract. SOW is for project-based work, NDA for confidentiality, UGC for content creation rights, Freelance for contractor agreements."
+              helperText="Determines which template is loaded. Different templates have entirely different clause structures, variable lists, and legal logic."
             >
               <div className="grid grid-cols-2 gap-2">
                 {CONTRACT_TYPES.map((type) => (
@@ -353,37 +480,37 @@ export default function LegalAgentPage() {
               </div>
             </FormField>
 
-            {/* Project description */}
+            {/* Scope of work — required */}
             <FormField
-              label="Project Description / Scope"
+              label="Scope of Work"
               required
-              helperText="Describe the project scope clearly. This becomes the main body of the contract's scope section."
+              helperText="The single most litigated clause in any SOW. Vague scope = scope creep = unpaid work. Describe deliverables with enough specificity to be enforceable."
             >
               <TextareaWithCount
-                value={form.projectDescription}
+                value={form.scopeOfWork}
                 onChange={(val) =>
-                  setForm((prev) => ({ ...prev, projectDescription: val }))
+                  setForm((prev) => ({ ...prev, scopeOfWork: val }))
                 }
-                placeholder="e.g. Design and production of 50 Black Friday banners for Sony across 15 markets"
+                placeholder="Design and delivery of 50 web banners in 3 formats (728x90, 300x250, 160x600) in English and French, 2 revision rounds included."
                 minLength={20}
                 rows={3}
               />
             </FormField>
 
-            {/* Amount + Currency + Language */}
+            {/* Total amount + Currency — required */}
             <div className="grid grid-cols-3 gap-4">
               <FormField
-                label="Amount"
+                label="Total Amount"
                 required
-                helperText="Total contract value before taxes."
+                helperText="Total contract value before taxes (EUR)."
               >
                 <input
                   type="number"
                   step="0.01"
                   min="0"
-                  value={form.amount}
+                  value={form.totalAmount}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, amount: e.target.value }))
+                    setForm((prev) => ({ ...prev, totalAmount: e.target.value }))
                   }
                   placeholder="15000"
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
@@ -427,69 +554,202 @@ export default function LegalAgentPage() {
               </FormField>
             </div>
 
-            {/* Deliverables */}
+            {/* Delivery date — required */}
             <FormField
-              label="Deliverables"
+              label="Delivery Date"
               required
-              helperText="List all deliverables that will be included in the contract. Be specific about quantities and formats."
+              helperText="Contractual commitment. Without it, the SOW has no deadline clause."
             >
-              <TextareaWithCount
-                value={form.deliverables}
-                onChange={(val) =>
-                  setForm((prev) => ({ ...prev, deliverables: val }))
+              <input
+                type="date"
+                value={form.deliveryDate}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, deliveryDate: e.target.value }))
                 }
-                placeholder="e.g. 50 web banners in 5 formats, 10 social media posts, 1 hero video (30s)"
-                minLength={5}
-                rows={3}
+                className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
               />
             </FormField>
 
-            {/* Start date + End date */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* ── Recommended fields ──────────────────────────────────────── */}
+            <div className="border-t border-neutral-200 pt-5 space-y-5">
               <FormField
-                label="Start Date"
-                required
-                helperText="Contract effective date."
+                label={
+                  <>
+                    Payment Terms
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="Payment terms are the second most disputed clause. Leaving this blank defaults to the template standard."
               >
-                <input
-                  type="date"
-                  value={form.startDate}
+                <select
+                  value={form.paymentTerms}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, startDate: e.target.value }))
+                    setForm((prev) => ({
+                      ...prev,
+                      paymentTerms: e.target.value,
+                    }))
                   }
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {PAYMENT_TERMS.map((pt) => (
+                    <option key={pt.value} value={pt.value}>
+                      {pt.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label={
+                  <>
+                    Revisions Included
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="Sarani's differentiator is unlimited revisions — but for fixed-price projects, this may need to be capped."
+              >
+                <select
+                  value={form.revisionsIncluded}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      revisionsIncluded: e.target.value,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {REVISIONS_OPTIONS.map((ro) => (
+                    <option key={ro.value} value={ro.value}>
+                      {ro.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label={
+                  <>
+                    Project Name
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="Appears in the SOW header and in ClickUp. Prevents confusion when clients have multiple active SOWs."
+              >
+                <input
+                  type="text"
+                  value={form.projectName}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, projectName: e.target.value }))
+                  }
+                  placeholder="Black Friday Campaign 2026"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 />
               </FormField>
+
               <FormField
-                label="End Date"
-                required
-                helperText="Contract end date."
+                label={
+                  <>
+                    Governing Law
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="Auto-filled from client country, but may need override. A French company contracting with a Dubai entity may prefer neutral jurisdiction."
               >
-                <input
-                  type="date"
-                  value={form.endDate}
+                <select
+                  value={form.governingLaw}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, endDate: e.target.value }))
+                    setForm((prev) => ({
+                      ...prev,
+                      governingLaw: e.target.value,
+                    }))
                   }
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                />
+                >
+                  {GOVERNING_LAW_OPTIONS.map((gl) => (
+                    <option key={gl.value} value={gl.value}>
+                      {gl.label}
+                    </option>
+                  ))}
+                </select>
               </FormField>
             </div>
 
-            {/* Special clauses */}
-            <FormField
-              label="Special Clauses"
-              helperText="Any additional clauses, terms, or conditions to include. Leave empty if not needed."
-            >
-              <TextareaWithCount
-                value={form.specialClauses}
-                onChange={(val) =>
-                  setForm((prev) => ({ ...prev, specialClauses: val }))
-                }
-                placeholder="e.g. Exclusivity clause for Black Friday campaign period, NDA extension to subcontractors"
-                rows={2}
-              />
-            </FormField>
+            {/* ── Advanced options (collapsible) ─────────────────────────── */}
+            <div className="border-t border-neutral-200 pt-4">
+              <button
+                type="button"
+                onClick={() => setAdvancedOpen(!advancedOpen)}
+                className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-brand-black transition-colors"
+              >
+                <span
+                  className="transition-transform"
+                  style={{
+                    display: "inline-block",
+                    transform: advancedOpen ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
+                >
+                  &#9654;
+                </span>
+                Advanced options
+              </button>
+              {advancedOpen && (
+                <div className="mt-4 space-y-5">
+                  <FormField
+                    label="Special Clauses"
+                    helperText="Non-standard clauses to add or modify (e.g., confidentiality addendum, exclusivity window, specific IP transfer terms)."
+                  >
+                    <TextareaWithCount
+                      value={form.specialClauses}
+                      onChange={(val) =>
+                        setForm((prev) => ({ ...prev, specialClauses: val }))
+                      }
+                      placeholder="e.g. Exclusivity clause for Black Friday campaign period, NDA extension to subcontractors"
+                      rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="References Framework Agreement"
+                    helperText="If a master services agreement exists for this client, the SOW should reference it."
+                  >
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.referencesFrameworkAgreement}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            referencesFrameworkAgreement: e.target.checked,
+                          }))
+                        }
+                        className="rounded border-neutral-300"
+                      />
+                      <span className="text-sm text-neutral-700">
+                        This client has a signed master services agreement
+                      </span>
+                    </label>
+                  </FormField>
+
+                  <FormField
+                    label="Second Party Contact"
+                    helperText="Name and title of the signatory on the client side. Useful for the signature block."
+                  >
+                    <input
+                      type="text"
+                      value={form.secondPartyContact}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          secondPartyContact: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. Sophie Martin, Head of Procurement"
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+                </div>
+              )}
+            </div>
 
             {/* Error */}
             {error && (

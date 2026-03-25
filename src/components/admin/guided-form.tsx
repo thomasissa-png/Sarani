@@ -156,7 +156,7 @@ export function FormField({
   children,
   error,
 }: {
-  label: string;
+  label: React.ReactNode;
   required?: boolean;
   helperText?: string;
   children: React.ReactNode;
