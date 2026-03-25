@@ -273,6 +273,36 @@ export function PreSubmitSummary({
   );
 }
 
+// ─── Guidance Message ────────────────────────────────────────────────────────
+// Shared blue info block used by all agent pages for the guidance message.
+
+export function GuidanceMessage({
+  text,
+  children,
+}: {
+  text?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+      <p className="text-sm text-blue-800 leading-relaxed">
+        {text ?? children}
+      </p>
+    </div>
+  );
+}
+
+// ─── Recommended Badge ──────────────────────────────────────────────────────
+// Shared orange badge used by agent pages to mark recommended fields.
+
+export function RecommendedBadge() {
+  return (
+    <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
+      Recommended
+    </span>
+  );
+}
+
 // ─── Textarea with char count ────────────────────────────────────────────────
 
 export function TextareaWithCount({

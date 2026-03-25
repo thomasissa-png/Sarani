@@ -11,6 +11,8 @@ import {
 import {
   ClientSelector,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -321,7 +323,7 @@ export default function CreativeStrategistPage() {
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -347,11 +349,9 @@ export default function CreativeStrategistPage() {
         </h2>
 
         {/* Guidance message */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-blue-800">
-            Think of this as briefing a senior strategist before a client presentation. The more specific you are about what the client wants to achieve and who they&apos;re targeting, the more useful the recommendation will be. Vague objectives produce vague strategies — give me a real brief and I&apos;ll give you something worth presenting.
-          </p>
-        </div>
+        <GuidanceMessage>
+          Think of this as briefing a senior strategist before a client presentation. The more specific you are about what the client wants to achieve and who they&apos;re targeting, the more useful the recommendation will be. Vague objectives produce vague strategies — give me a real brief and I&apos;ll give you something worth presenting.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -449,7 +449,7 @@ export default function CreativeStrategistPage() {
                 label={
                   <>
                     Budget Range
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="Budget fundamentally shapes creative ambition. A 50K budget should not receive a recommendation requiring 3 TVC shoots."
@@ -473,7 +473,7 @@ export default function CreativeStrategistPage() {
                 label={
                   <>
                     Timeline
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="Determines what's executable. A 2-week timeline eliminates any production that takes 4 weeks."
@@ -494,7 +494,7 @@ export default function CreativeStrategistPage() {
               label={
                 <>
                   Constraints & Context
-                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  <RecommendedBadge />
                 </>
               }
               helperText="Mandatory elements, legal disclaimers, competitive restrictions, or recent context. Prevents recommending something the client already tried."
@@ -513,7 +513,7 @@ export default function CreativeStrategistPage() {
               label={
                 <>
                   Competitors to Benchmark
-                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  <RecommendedBadge />
                 </>
               }
               helperText="Without knowing the competitive landscape, the strategy may recommend something already done better by a competitor."

@@ -9,11 +9,8 @@ export async function GET(request: NextRequest) {
     const clientId = searchParams.get("clientId");
     const status = searchParams.get("status");
 
-    const conditions = [eq(agentOutputs.agentType, "pm")];
-
-    // We fetch all PM-dispatched tasks (any agent type) grouped by client.
-    // Remove the agentType filter to get all dispatched tasks.
-    conditions.length = 0;
+    // Fetch all dispatched tasks (any agent type) grouped by client
+    const conditions = [];
 
     if (clientId) {
       conditions.push(eq(agentOutputs.clientId, clientId));

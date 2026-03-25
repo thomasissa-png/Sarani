@@ -12,6 +12,8 @@ import {
 import {
   ClientSelector,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -235,11 +237,9 @@ export default function TranslatorPage() {
         </h2>
 
         {/* Guidance message */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-blue-800">
-            Select the client to activate their glossary and translation memory — this is what makes the difference between a generic translation and one that sounds like it came from their team. If you&apos;re translating something sensitive or technical, paste the text directly rather than uploading a scanned PDF.
-          </p>
-        </div>
+        <GuidanceMessage>
+          Select the client to activate their glossary and translation memory — this is what makes the difference between a generic translation and one that sounds like it came from their team. If you&apos;re translating something sensitive or technical, paste the text directly rather than uploading a scanned PDF.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -248,7 +248,7 @@ export default function TranslatorPage() {
           <div className="space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                <RecommendedBadge />
               </div>
               <ClientSelector
                 value={form.clientId}
@@ -352,7 +352,7 @@ export default function TranslatorPage() {
               label={
                 <>
                   Register
-                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  <RecommendedBadge />
                 </>
               }
               helperText="Corporate clients (GEODIS, Sony, L'Oreal) expect formal register. Default is Standard."

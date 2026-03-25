@@ -7,6 +7,8 @@ import {
   ClientSelector,
   ClientContextPanel,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -256,11 +258,7 @@ export default function VideoScriptPage() {
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         {/* Guidance message */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-blue-800 leading-relaxed">
-            {GUIDANCE_MESSAGE}
-          </p>
-        </div>
+        <GuidanceMessage text={GUIDANCE_MESSAGE} />
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -379,9 +377,7 @@ export default function VideoScriptPage() {
                 <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
                   Recommended
                 </span>
-                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
-                  Recommended
-                </span>
+                <RecommendedBadge />
               </div>
 
               {/* Hook direction */}

@@ -21,6 +21,8 @@ import {
 import {
   ClientSelector,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -202,11 +204,9 @@ export default function DesignerPage() {
         </h2>
 
         {/* Guidance message */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-blue-800">
-            The more precise your brief, the closer the first visual will be to what the client expects. Include the message you want the viewer to read, the mood you&apos;re after, and any mandatory elements (logo placement, legal copy, specific CTA). The brand book will be loaded automatically — but specific guidelines for this project always override defaults.
-          </p>
-        </div>
+        <GuidanceMessage>
+          The more precise your brief, the closer the first visual will be to what the client expects. Include the message you want the viewer to read, the mood you&apos;re after, and any mandatory elements (logo placement, legal copy, specific CTA). The brand book will be loaded automatically — but specific guidelines for this project always override defaults.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -332,7 +332,7 @@ export default function DesignerPage() {
               label={
                 <>
                   Number of Variants
-                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  <RecommendedBadge />
                 </>
               }
               helperText="3 variants allow creative selection and avoid locking the designer into one direction."
@@ -361,7 +361,7 @@ export default function DesignerPage() {
               label={
                 <>
                   Mandatory Text Elements
-                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  <RecommendedBadge />
                 </>
               }
               helperText="Text content that must appear in the visual (product name, tagline, CTA, legal disclaimer)."
@@ -384,7 +384,7 @@ export default function DesignerPage() {
               label={
                 <>
                   Text Placement Instruction
-                  <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                  <RecommendedBadge />
                 </>
               }
               helperText="Where specific text elements should sit. Being explicit reduces AI text placement failures."

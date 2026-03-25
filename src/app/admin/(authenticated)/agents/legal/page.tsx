@@ -14,6 +14,8 @@ import {
 import {
   ClientSelector,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -92,24 +94,6 @@ const INITIAL_FORM: FormState = {
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
-
-// ─── Shared UI helpers ──────────────────────────────────────────────────────
-
-function RecommendedBadge() {
-  return (
-    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded">
-      Recommended
-    </span>
-  );
-}
-
-function GuidanceMessage({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800 leading-relaxed">
-      {children}
-    </div>
-  );
-}
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -310,7 +294,7 @@ export default function LegalAgentPage() {
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

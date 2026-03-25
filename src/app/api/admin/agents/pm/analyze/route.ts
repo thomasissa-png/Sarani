@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { clients } from "@/lib/db/schema";
+import { clients, agentOutputs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { PM_SYSTEM_PROMPT } from "@/lib/ai/prompts/pm";
@@ -121,8 +121,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Save to agent_outputs (like all other agents)
+    const [savedOutput] = await db
+      .insert(agentOutputs)
+      .values({
+        clientId,
+        agentType: "pm",
+        inputPayload: {
+          brief,
+          deadline,
+          priority,
+        },
+        outputContent: JSON.stringify(validatedAnalysis.data),
+        status: "done",
+      })
+      .returning({ id: agentOutputs.id });
+
     return NextResponse.json({
       analysis: validatedAnalysis.data,
+      outputId: savedOutput.id,
       usage,
     });
   } catch (error: unknown) {

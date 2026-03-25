@@ -8,6 +8,8 @@ import { PRIORITY_OPTIONS } from "@/lib/validations/pm";
 import {
   ClientSelector,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -264,7 +266,7 @@ export default function PMAgentPage() {
   // ── Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -288,11 +290,9 @@ export default function PMAgentPage() {
         <h2 className="text-lg font-semibold text-brand-black">New Brief</h2>
 
         {/* Guidance message */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-blue-800">
-            Paste the client&apos;s email or describe the project in plain language — I&apos;ll handle the structure. The more context you give me (client, deadline, language, format), the more precise the task breakdown will be. If something is missing, I&apos;ll flag it before dispatching.
-          </p>
-        </div>
+        <GuidanceMessage>
+          Paste the client&apos;s email or describe the project in plain language — I&apos;ll handle the structure. The more context you give me (client, deadline, language, format), the more precise the task breakdown will be. If something is missing, I&apos;ll flag it before dispatching.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -345,7 +345,7 @@ export default function PMAgentPage() {
                 label={
                   <>
                     Deadline
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="Without a deadline, the PM IA defaults to D+1. If the actual deadline is different, the priority and dispatch order will be wrong."
@@ -364,7 +364,7 @@ export default function PMAgentPage() {
                 label={
                   <>
                     Priority
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="Changes the dispatch strategy: ASAP triggers immediate parallel dispatch; Normal allows sequential."

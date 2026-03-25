@@ -20,6 +20,8 @@ import {
 import {
   ClientSelector,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -84,25 +86,10 @@ type FormState = {
   topic: string;
 };
 
-const STEPS = ["Select Client", "Configure", "Review & Generate"];
+const STEPS = ["Configure", "Review & Generate"];
 
 // ─── Shared UI helpers ──────────────────────────────────────────────────────
-
-function RecommendedBadge() {
-  return (
-    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded">
-      Recommended
-    </span>
-  );
-}
-
-function GuidanceMessage({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800 leading-relaxed">
-      {children}
-    </div>
-  );
-}
+// RecommendedBadge and GuidanceMessage are now imported from guided-form.tsx
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -158,10 +145,6 @@ export default function SeoPage() {
   // ── Step validation ─────────────────────────────────────────────────────
 
   function canProceedStep0(): boolean {
-    return !!form.clientId;
-  }
-
-  function canProceedStep1(): boolean {
     return (
       !!form.articleTitleH1.trim() &&
       !!form.primaryKeyword.trim() &&
@@ -301,35 +284,19 @@ export default function SeoPage() {
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* ── Step 0: Select Client ─────────────────────────────────────── */}
+        {/* ── Step 0: Configure ─────────────────────────────────────────── */}
         {step === 0 && (
-          <div className="space-y-4">
+          <div className="space-y-5">
+            {/* Client (recommended, not required) */}
             <ClientSelector
               value={form.clientId}
               onChange={(clientId) =>
                 setForm((prev) => ({ ...prev, clientId }))
               }
-              required
-              helperText="Select the client to align SEO content with their brand voice and industry context."
+              required={false}
+              helperText="Recommended — aligns SEO content with the client's brand voice and industry context."
               onClientLoaded={handleClientLoaded}
             />
-
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                disabled={!canProceedStep0()}
-                onClick={() => setStep(1)}
-                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next: Configure
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Step 1: Configure ─────────────────────────────────────────── */}
-        {step === 1 && (
-          <div className="space-y-5">
             {/* Content type and language */}
             <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -658,20 +625,13 @@ export default function SeoPage() {
             )}
 
             {/* Navigation */}
-            <div className="flex justify-between pt-2">
+            <div className="flex justify-end pt-2">
               <button
                 type="button"
-                onClick={() => setStep(0)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                disabled={!canProceedStep1()}
+                disabled={!canProceedStep0()}
                 onClick={() => {
                   setError(null);
-                  setStep(2);
+                  setStep(1);
                 }}
                 className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -681,8 +641,8 @@ export default function SeoPage() {
           </div>
         )}
 
-        {/* ── Step 2: Review & Generate ─────────────────────────────────── */}
-        {step === 2 && (
+        {/* ── Step 1: Review & Generate ─────────────────────────────────── */}
+        {step === 1 && (
           <div className="space-y-4">
             {error && (
               <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
@@ -693,7 +653,7 @@ export default function SeoPage() {
             <PreSubmitSummary
               items={getSummaryItems()}
               onConfirm={handleGenerate}
-              onBack={() => setStep(1)}
+              onBack={() => setStep(0)}
               loading={generating}
               buttonLabel="Generate"
             />

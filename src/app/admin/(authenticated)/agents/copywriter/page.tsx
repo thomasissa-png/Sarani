@@ -15,6 +15,8 @@ import {
 import {
   ClientSelector,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -255,11 +257,9 @@ export default function CopywriterPage() {
         </h2>
 
         {/* Guidance message */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-blue-800">
-            Good copy is specific. Tell me the one thing you want the reader to feel or do, who they are, and where this will appear. A tagline for a Sony product launch and a CTA for a GEODIS procurement email require completely different tones. The more specific your brief, the sharper the copy.
-          </p>
-        </div>
+        <GuidanceMessage>
+          Good copy is specific. Tell me the one thing you want the reader to feel or do, who they are, and where this will appear. A tagline for a Sony product launch and a CTA for a GEODIS procurement email require completely different tones. The more specific your brief, the sharper the copy.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
@@ -358,7 +358,7 @@ export default function CopywriterPage() {
                 label={
                   <>
                     Placement
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="Copy tone and length are dictated by where it appears. An OOH billboard is read in 3 seconds; an email can be 150 words."
@@ -382,7 +382,7 @@ export default function CopywriterPage() {
                 label={
                   <>
                     Tone Direction
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="Even within a brand's tone of voice, specific campaigns call for specific emotional registers."
@@ -411,7 +411,7 @@ export default function CopywriterPage() {
                 label={
                   <>
                     Number of Variants
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="Copy should always be explored in multiple directions. 3 variants minimum for any client-facing piece."
@@ -440,7 +440,7 @@ export default function CopywriterPage() {
                 label={
                   <>
                     Competitive Context
-                    <span className="ml-2 text-xs font-medium bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Recommended</span>
+                    <RecommendedBadge />
                   </>
                 }
                 helperText="What are competitors saying? The copy should differentiate."

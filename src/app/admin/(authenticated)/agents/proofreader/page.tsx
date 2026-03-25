@@ -7,6 +7,8 @@ import {
   ClientSelector,
   ClientContextPanel,
   FormField,
+  GuidanceMessage,
+  RecommendedBadge,
   StepIndicator,
   PreSubmitSummary,
   TextareaWithCount,
@@ -88,7 +90,7 @@ type ActiveTab = "issues" | "improved" | "brand" | "glossary";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const STEPS = ["Configure", "Review & Generate"];
+const STEPS = ["Content", "Options", "Review & Submit"];
 
 const GUIDANCE_MESSAGE =
   "For a perfect proofread, I need to know the language, the register, and the content type. If there are client-specific terminology preferences or known inconsistencies to watch for, add them. The more context you give me, the fewer errors pass through to the client.";
@@ -221,9 +223,10 @@ export default function ProofreaderPage() {
     if (s === 0)
       return (
         form.contentToReview.trim().length >= 20 &&
-        !!form.sourceLanguage &&
-        !!form.contentType
+        !!form.contentType &&
+        !!form.sourceLanguage
       );
+    if (s === 1) return true; // Options step — all fields are optional/recommended
     return true;
   }
 
@@ -231,8 +234,8 @@ export default function ProofreaderPage() {
     if (s === 0) {
       if (form.contentToReview.trim().length < 20)
         return "Content must be at least 20 characters to review.";
-      if (!form.sourceLanguage) return "Please select the content language.";
       if (!form.contentType) return "Please select the content type.";
+      if (!form.sourceLanguage) return "Please select the content language.";
     }
     return null;
   }
@@ -347,22 +350,16 @@ export default function ProofreaderPage() {
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         {/* Guidance message */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
-          <p className="text-sm text-blue-800 leading-relaxed">
-            {GUIDANCE_MESSAGE}
-          </p>
-        </div>
+        <GuidanceMessage text={GUIDANCE_MESSAGE} />
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* ── Step 0: Configure ───────────────────────────────────────── */}
+        {/* ── Step 0: Content ──────────────────────────────────────────── */}
         {step === 0 && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-brand-black">
-              Configure Review
+              Content
             </h2>
-
-            {/* ── Required Fields ── */}
 
             {/* Content to review */}
             <FormField
@@ -384,31 +381,8 @@ export default function ProofreaderPage() {
               />
             </FormField>
 
-            {/* Language + Content type */}
+            {/* Content type + Language */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                label="Language"
-                required
-                helperText="The language of the content determines which grammar, spelling, and style rules apply."
-              >
-                <select
-                  value={form.sourceLanguage}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      sourceLanguage: e.target.value as ProofreaderLanguage,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {PROOFREADER_LANGUAGES.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {PROOFREADER_LANGUAGE_LABELS[lang]} ({lang})
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-
               <FormField
                 label="Content Type"
                 required
@@ -431,20 +405,67 @@ export default function ProofreaderPage() {
                   ))}
                 </select>
               </FormField>
+
+              <FormField
+                label="Language"
+                required
+                helperText="The language of the content determines which grammar, spelling, and style rules apply."
+              >
+                <select
+                  value={form.sourceLanguage}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      sourceLanguage: e.target.value as ProofreaderLanguage,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {PROOFREADER_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {PROOFREADER_LANGUAGE_LABELS[lang]} ({lang})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
             </div>
 
-            {/* ── Recommended Fields ── */}
-            <div className="border-t border-neutral-200 pt-4 space-y-5">
+            {/* Step navigation */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (canAdvanceFromStep(0)) {
+                    setError(null);
+                    setStep(1);
+                  } else {
+                    setError(getStepError(0));
+                  }
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                Next: Options
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 1: Options ─────────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Options
+            </h2>
+
+            {/* Client (recommended, not required) */}
+            <div className="space-y-5">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
                   Recommended
                 </span>
-                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
-                  Recommended
-                </span>
+                <RecommendedBadge />
               </div>
 
-              {/* Client (recommended, not required for proofreader) */}
               <ClientSelector
                 value={form.clientId}
                 onChange={(id) =>
@@ -459,8 +480,30 @@ export default function ProofreaderPage() {
                 <ClientContextPanel client={selectedClient} />
               )}
 
-              {/* Register + Review level */}
+              {/* Review level + Register */}
               <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  label="Review Level"
+                  helperText="How deep should the review go?"
+                >
+                  <select
+                    value={form.reviewLevel}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        reviewLevel: e.target.value as ReviewLevel,
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    {REVIEW_LEVEL_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label} — {opt.description}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
                 <FormField
                   label="Register"
                   helperText="Flags register inconsistencies within the document."
@@ -479,28 +522,6 @@ export default function ProofreaderPage() {
                     {REGISTER_OPTIONS.map((r) => (
                       <option key={r} value={r}>
                         {r}
-                      </option>
-                    ))}
-                  </select>
-                </FormField>
-
-                <FormField
-                  label="Review Level"
-                  helperText="How deep should the review go?"
-                >
-                  <select
-                    value={form.reviewLevel}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        reviewLevel: e.target.value as ReviewLevel,
-                      }))
-                    }
-                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                  >
-                    {REVIEW_LEVEL_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label} — {opt.description}
                       </option>
                     ))}
                   </select>
@@ -608,7 +629,6 @@ export default function ProofreaderPage() {
 
               {showAdvanced && (
                 <div className="mt-4 space-y-5">
-                  {/* Known issues */}
                   <FormField
                     label="Known Issues"
                     helperText="If you already suspect specific problems, flagging them makes the review more targeted."
@@ -626,7 +646,6 @@ export default function ProofreaderPage() {
                     />
                   </FormField>
 
-                  {/* Original source */}
                   <FormField
                     label="Original Source"
                     helperText="For reviewing a translation: provide the source document so the QA agent can verify translation accuracy."
@@ -644,7 +663,6 @@ export default function ProofreaderPage() {
                     />
                   </FormField>
 
-                  {/* Length constraint */}
                   <FormField
                     label="Length Constraint"
                     helperText="For social posts and banners: the character limit. The agent will flag any element exceeding the allowed count."
@@ -667,16 +685,19 @@ export default function ProofreaderPage() {
             </div>
 
             {/* Step navigation */}
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
               <button
                 type="button"
                 onClick={() => {
-                  if (canAdvanceFromStep(0)) {
-                    setError(null);
-                    setStep(1);
-                  } else {
-                    setError(getStepError(0));
-                  }
+                  setError(null);
+                  setStep(2);
                 }}
                 className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
               >
@@ -686,16 +707,16 @@ export default function ProofreaderPage() {
           </div>
         )}
 
-        {/* ── Step 1: Review & Generate ──────────────────────────────── */}
-        {step === 1 && (
+        {/* ── Step 2: Review & Submit ─────────────────────────────────── */}
+        {step === 2 && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-brand-black">
-              Review & Generate
+              Review & Submit
             </h2>
             <PreSubmitSummary
               items={buildSummaryItems()}
               onConfirm={handleReview}
-              onBack={() => setStep(0)}
+              onBack={() => setStep(1)}
               loading={reviewing}
               buttonLabel="Review Content"
             />
