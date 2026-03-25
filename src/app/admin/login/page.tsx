@@ -59,12 +59,13 @@ export default function AdminLoginPage() {
                 placeholder="Password"
                 autoFocus
                 required
+                aria-invalid={!!error}
                 className="w-full px-4 py-3 rounded-xl border border-neutral-300 bg-neutral-100 text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent transition-all"
               />
             </div>
 
             {error && (
-              <p className="text-sm text-error text-center">{error}</p>
+              <p className="text-sm text-error text-center" role="alert" aria-live="polite">{error}</p>
             )}
 
             <button

@@ -268,7 +268,7 @@ function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     done: "bg-success-light text-success",
     processing: "bg-info-light text-info",
-    pending: "bg-warning-light text-warning",
+    pending: "bg-warning-light text-warning-text",
     error: "bg-error-light text-error",
   };
 

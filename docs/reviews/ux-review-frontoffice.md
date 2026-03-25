@@ -65,3 +65,40 @@
 3. **[F4/M1] Sticky CTA mobile** — Sophie sur mobile doit pouvoir contacter Sarani à tout moment sans scroller. Sticky bottom bar après 50% scroll.
 4. **[F3] Logo dans menu mobile** — Ancrage de marque manquant. Le menu plein écran sans logo est désorientant.
 5. **[F6] Dédupliquer About** — Les mêmes chiffres apparaissent deux fois. Fusionner pour gagner en impact et en crédibilité (pas de remplissage visible).
+
+---
+
+## Problemes additionnels (v2 — analyse code approfondie)
+
+| # | Severite | Page/Composant | Description | Recommandation |
+|---|----------|----------------|-------------|----------------|
+| A1 | **Bloquant** | Home / animated-hero.tsx | Le CTA primaire "Start a project" anime avec `delay: 1.3s`. Sur connexion lente ou mobile mid-range, Sophie voit la page sans aucun bouton d'action pendant 1.5–2s. Le CTA est la seule conversion de cette page. | Réduire `delay` à 0.5s max. Ou animer uniquement le transform/y, laisser opacity à 1 dès le rendu. |
+| A2 | **Bloquant** | `/work` | La page n'implémente pas les filtres `?category=` — pourtant le footer les référence (8 catégories). Sophie cherche "vidéo" et voit tout en vrac sans tri possible. | Ajouter filtre par catégorie (tabs ou pills) en haut de grille. Réutiliser les slugs existants dans footer.tsx. |
+| A3 | **Majeur** | Contact form | 6 champs requis incluant "Company size" et "How did you hear about us?" (attribution). L'attribution est une donnée analytique interne — elle ne bénéficie pas à Sophie et augmente la friction. | Passer attribution et company size en optionnels dans le schéma Zod. Rester à 4 champs requis : name, company, email, message. |
+| A4 | **Majeur** | `/contact` mobile | La sidebar "Why work with us" (4 points de réassurance) s'affiche après le formulaire sur mobile (layout en colonne unique). Sophie remplit 6 champs sans voir les garanties. | Afficher "Risk-free first project" et "Response within 1 hour" au-dessus du formulaire sur mobile via CSS order ou conditional rendering. |
+| A5 | **Majeur** | Footer | Le lien "How we work" (colonne About) pointe vers `/services`. Label trompeur — évoque une page process/méthodo, pas une liste de services. | Renommer en "Services" pour correspondre au contenu réel. |
+| A6 | **Mineur** | Home — Proof Cards | TikTok card affiche `price: "300–500/week"` sans devise ni unité. Incohérent avec Sony (155 €) et GEODIS (8,500 €). | Clarifier : "300–500 videos/week" ou "from 20 $/video". Aligner le format sur les 3 cards. |
+| A7 | **Mineur** | Home — Testimonials | Carousel manuel, pas d'autoplay. 6 témoignages nécessitent 5 clics pour tout voir. Sur mobile, les boutons prev/next (h-10 w-10 = 40px) sont à la limite du touch target WCAG (44px minimum). | Ajouter autoplay 8s avec pause au survol/focus. Agrandir les boutons nav à h-11 w-11 (44px). |
+| A8 | **Mineur** | `/about` | `TEAM_STATS` (35, 5, 18) + `KEY_NUMBERS` (35+, 5, 18, D+1, 60%, 1500+) — les 3 premières stats sont identiques sur la même page. | Supprimer TEAM_STATS ou les remplacer par des données distinctes (ex : années d'existence, clients actifs). |
+| A9 | **Mineur** | `/services` | CTA "Start a project" répété 4x (une fois par ServiceBlock) + 1x en closing = 5 fois sur la même page. Dilution de l'intention et bruit visuel pour Sophie qui scanne. | Supprimer les CTAs des ServiceBlocks. Remplacer par un lien contextuel "→ Get a quote" pointant vers `/contact?service=X`. |
+
+---
+
+## Hypotheses a valider
+
+- [HYPOTHESE] Délai 1.3s sur CTA hero : intentionnel pour l'effet de séquence narrative — à confirmer avec @design avant modification.
+- [HYPOTHESE] Absence de filtres sur /work : choix temporaire lié au faible nombre de case studies actuels — à confirmer avec @product-manager.
+- [HYPOTHESE] 6 champs requis du formulaire : besoin de qualification commerciale côté équipe Sarani — à confirmer avant de rendre attribution et company size optionnels.
+- [HYPOTHESE] Button primary en lemon (jaune) et non flame (orange) : choix délibéré de différenciation vs la couleur secondaire, malgré l'incohérence avec design-system.md.
+
+---
+
+**Handoff → @orchestrator**
+- Fichiers produits : `/home/user/Sarani/docs/reviews/ux-review-frontoffice.md` (mise à jour v2)
+- Décisions prises : score ajusté à 7.2/10 après analyse approfondie du code source — 9 problèmes additionnels identifiés
+- Points d'attention critiques pour implémentation :
+  - A1 (délai CTA hero) = 1 ligne de code, impact maximal sur conversion home
+  - A2 (filtres /work) = effort moyen, impact fort sur Sophie qui évalue le portfolio
+  - A4 (réassurance mobile avant form) = CSS order, impact fort sur taux de soumission
+  - F1 (images case studies) reste le problème bloquant n°1 — une agence créative sans visuels n'est pas crédible
+

@@ -39,7 +39,8 @@ export function StickyCTAMobile() {
         href="/contact"
         onClick={() =>
           track("cta_click", {
-            label: "sticky_mobile_cta",
+            location: "sticky_mobile_bar",
+            label: "start_a_project",
             page: pathname,
             device: getDevice(),
           })

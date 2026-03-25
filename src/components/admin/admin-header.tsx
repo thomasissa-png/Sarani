@@ -1,11 +1,54 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
+import { useSidebar } from "@/components/admin/sidebar";
+
+function getPageTitle(pathname: string): string {
+  // Remove trailing slash
+  const path = pathname.replace(/\/$/, "") || "/admin";
+
+  const titles: Record<string, string> = {
+    "/admin": "Dashboard",
+    "/admin/quick-brief": "Quick Brief",
+    "/admin/projects": "Projects",
+    "/admin/clients": "Clients",
+    "/admin/clients/new": "New Client",
+    "/admin/agents/translator": "Translator",
+    "/admin/agents/translator/history": "Translation History",
+    "/admin/agents/pm": "Project Manager",
+    "/admin/agents/copywriter": "Copywriter",
+    "/admin/agents/seo": "SEO",
+    "/admin/agents/social": "Social",
+    "/admin/agents/creative": "Creative",
+    "/admin/agents/video-script": "Video Script",
+    "/admin/agents/proposal": "Proposal",
+    "/admin/agents/presentation": "Presentation",
+    "/admin/agents/designer": "Designer",
+    "/admin/agents/legal": "Legal",
+    "/admin/agents/email-drafter": "Email Drafter",
+    "/admin/agents/proofreader": "Proofreader",
+  };
+
+  // Exact match
+  if (titles[path]) return titles[path];
+
+  // Dynamic routes: /admin/clients/[id]
+  if (/^\/admin\/clients\/[^/]+$/.test(path)) return "Client Details";
+
+  // Fallback: extract last segment
+  const segments = path.split("/").filter(Boolean);
+  const last = segments[segments.length - 1] ?? "Admin";
+  return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
+}
 
 export function AdminHeader() {
   const router = useRouter();
+  const pathname = usePathname();
+  const { setMobileOpen } = useSidebar();
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const pageTitle = getPageTitle(pathname);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -18,8 +61,23 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="h-14 border-b border-neutral-300 bg-white flex items-center justify-between px-6 shrink-0">
-      <div />
+    <header className="h-14 border-b border-neutral-300 bg-white flex items-center justify-between px-4 md:px-6 shrink-0">
+      <div className="flex items-center gap-3">
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="md:hidden p-1.5 -ml-1 rounded-lg text-neutral-600 hover:bg-neutral-100 transition-colors"
+          aria-label="Open navigation"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        {/* Page title */}
+        <h1 className="text-sm font-semibold text-brand-black">{pageTitle}</h1>
+      </div>
       <button
         onClick={handleLogout}
         disabled={loggingOut}

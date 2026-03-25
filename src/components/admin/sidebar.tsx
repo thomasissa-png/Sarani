@@ -176,7 +176,7 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
   return <span aria-hidden="true">{icon}</span>;
 }
 
-function NavLink({ item }: { item: NavItem }) {
+function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
   const isActive =
     item.href === "/admin"
@@ -186,6 +186,7 @@ function NavLink({ item }: { item: NavItem }) {
   return (
     <Link
       href={item.href}
+      onClick={onNavigate}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
         isActive
@@ -199,11 +200,11 @@ function NavLink({ item }: { item: NavItem }) {
   );
 }
 
-export function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <aside className="w-60 shrink-0 border-r border-neutral-300 bg-white h-screen sticky top-0 flex flex-col">
+    <>
       <div className="p-5 border-b border-neutral-300">
-        <Link href="/admin" className="text-lg font-bold text-brand-black tracking-tight">
+        <Link href="/admin" className="text-lg font-bold text-brand-black tracking-tight" onClick={onNavigate}>
           Sarani
         </Link>
         <span className="ml-2 text-xs font-medium text-neutral-500 bg-neutral-200 px-2 py-0.5 rounded-full">
@@ -213,7 +214,7 @@ export function Sidebar() {
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} item={item} />
+          <NavLink key={item.href} item={item} onNavigate={onNavigate} />
         ))}
 
         {AGENT_GROUPS.map((group) => (
@@ -224,11 +225,70 @@ export function Sidebar() {
               </p>
             </div>
             {group.items.map((item) => (
-              <NavLink key={item.href} item={item} />
+              <NavLink key={item.href} item={item} onNavigate={onNavigate} />
             ))}
           </div>
         ))}
       </nav>
-    </aside>
+    </>
+  );
+}
+
+export function Sidebar() {
+  const { mobileOpen, setMobileOpen } = useSidebar();
+  const pathname = usePathname();
+
+  // Close mobile drawer on route change
+  const closeMobile = useCallback(() => setMobileOpen(false), [setMobileOpen]);
+
+  useEffect(() => {
+    closeMobile();
+  }, [pathname, closeMobile]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeMobile();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen, closeMobile]);
+
+  return (
+    <>
+      {/* Desktop sidebar — hidden on mobile */}
+      <aside className="hidden md:flex w-60 shrink-0 border-r border-neutral-300 bg-white h-screen sticky top-0 flex-col">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={closeMobile}
+            aria-hidden="true"
+          />
+          {/* Drawer */}
+          <aside className="absolute inset-y-0 left-0 w-72 bg-white flex flex-col shadow-xl animate-in slide-in-from-left duration-200">
+            {/* Close button */}
+            <div className="absolute top-4 right-4">
+              <button
+                onClick={closeMobile}
+                className="p-1 rounded-lg text-neutral-400 hover:text-brand-black hover:bg-neutral-100 transition-colors"
+                aria-label="Close navigation"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <SidebarContent onNavigate={closeMobile} />
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

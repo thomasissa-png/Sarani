@@ -516,7 +516,7 @@ export default function TranslatorPage() {
 
             {/* Error */}
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              <div className="text-sm text-error bg-error-light border border-error rounded-lg px-4 py-3">
                 {error}
               </div>
             )}

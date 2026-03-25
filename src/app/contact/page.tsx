@@ -24,6 +24,11 @@ export default function ContactPage() {
                 hour.
               </p>
 
+              {/* Mobile-only micro-reassurance — visible above the form */}
+              <p className="mb-6 rounded-lg bg-surface-elevated px-4 py-3 text-sm text-neutral-600 lg:hidden">
+                Response within 1 hour. Unlimited revisions. Risk-free first project.
+              </p>
+
               <ContactForm />
             </div>
 

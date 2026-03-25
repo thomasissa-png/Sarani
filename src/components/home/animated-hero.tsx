@@ -98,7 +98,7 @@ export function AnimatedHeroContent() {
             {SUBTITLE}
           </p>
           {/* Stats row */}
-          <div className="mb-8 flex items-center gap-8">
+          <div className="mb-8 flex flex-wrap items-center gap-4 sm:gap-8">
             {HERO_STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col items-center lg:items-start">
                 <span className="text-2xl font-bold text-brand-black">{stat.value}</span>
@@ -203,7 +203,7 @@ export function AnimatedHeroContent() {
 
         {/* Stats row — social proof */}
         <motion.div
-          className="mb-8 flex items-center gap-8"
+          className="mb-8 flex flex-wrap items-center gap-4 sm:gap-8"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
@@ -246,7 +246,7 @@ export function AnimatedHeroContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{
             duration: 0.6,
-            delay: 1.3,
+            delay: 0.5,
             ease: [0.25, 0.1, 0.25, 1],
           }}
         >
@@ -271,7 +271,7 @@ export function AnimatedHeroContent() {
           className="mt-3 text-sm text-neutral-500"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1.5, ease: [0.25, 0.1, 0.25, 1] }}
+          transition={{ duration: 0.5, delay: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
         >
           First project satisfaction or no invoice.
         </motion.p>
