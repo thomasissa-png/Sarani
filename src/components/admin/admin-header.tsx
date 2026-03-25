@@ -30,6 +30,9 @@ function getPageTitle(pathname: string): string {
     "/admin/agents/legal": "Legal",
     "/admin/agents/email-drafter": "Email Drafter",
     "/admin/agents/proofreader": "Proofreader",
+    "/admin/tracker": "Project Tracker",
+    "/admin/tracker/new": "New Project",
+    "/admin/quotes": "Quote Generator",
   };
 
   // Exact match
