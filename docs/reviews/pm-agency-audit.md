@@ -342,7 +342,138 @@ Les points suivants sont basés sur la lecture du code source des pages. Certain
 
 ---
 
+## Re-audit — 2026-03-25
+
+### Vérification des 6 corrections annoncées
+
+#### 1. Projects Board — `/admin/projects` avec filtres status/client/agent
+
+**Statut : CONFIRME**
+
+Fichier `src/app/admin/(authenticated)/projects/page.tsx` présent et complet. Trois filtres opérationnels :
+- Filtre status (all / pending / processing / done / error) en boutons pill
+- Filtre client (select dynamique depuis `data.clients`)
+- Filtre agent (select dynamique depuis les projets chargés)
+
+Les filtres sont passés en query params à `GET /api/admin/projects`. Vue tableau avec colonnes Client, Brief, Agents, Status, Date, Actions. Bouton "View outputs" qui pointe vers `/admin/clients/[id]/outputs`. Lien "Quick Brief" depuis l'en-tête de page.
+
+La gap 2 de l'audit initial (command center) est couverte. L'hypothèse "[HYPOTHÈSE] La page /admin/agents/pm/projects..." est résolue — la vue n'est pas dans les agents PM mais bien à `/admin/projects`, ce qui est mieux architecturalement.
+
+---
+
+#### 2. Quick Brief — `/admin/quick-brief` minimal
+
+**Statut : CONFIRME — au-delà du scope annoncé**
+
+Fichier `src/app/admin/(authenticated)/quick-brief/page.tsx` présent. L'implémentation va plus loin que "1 client + 1 textarea + 1 bouton" : après l'analyse PM IA, le résultat est affiché inline avec les tâches suggérées (cochables), un dispatch sélectif, et un lien direct vers Projects en cas de succès. C'est la bonne décision — le Quick Brief n'est pas une saisie aveugle, c'est une saisie avec validation immédiate.
+
+Gap 1 (email Sony à 23h) est couverte. Gap 6 de la R2 (mode express sans wizard) est close.
+
+---
+
+#### 3. Bug Video Script — `form.tone` dans le payload
+
+**Statut : CONFIRME**
+
+Ligne 176 du fichier `video-script/page.tsx` :
+```
+tone: form.tone,
+```
+
+Le bug signalé dans l'audit initial (`tone: "entertaining" as VideoTone` hardcodé) est corrigé. Le payload envoie bien la valeur du formulaire. L'hypothèse "[HYPOTHÈSE] Le tone hardcodé... est un bug" est confirmée et résolue. Les 8 valeurs de `VideoTone` définies dans `lib/validations/video-script` sont maintenant accessibles à l'utilisateur.
+
+---
+
+#### 4. Bug Translator — `saveValidated` appelle `POST /api/admin/agents/translator/validate`
+
+**Statut : CONFIRME**
+
+Fichier `src/app/api/admin/agents/translator/validate/route.ts` présent et complet. L'API :
+- Valide le payload avec Zod (clientId, sourceLanguage, targetLanguage, sourceText, validatedTranslation)
+- Fetch le client en DB via Drizzle
+- Construit une entrée formatée `[YYYY-MM-DD] (src>target) "source" => "validated"`
+- Append dans `client.translationMemory` et sauvegarde
+
+L'hypothèse "[HYPOTHÈSE] La 'Save as validated' du Translator ne sauvegarde pas réellement la traduction en DB" est confirmée comme bug et résolue. La translation memory est maintenant persistée.
+
+---
+
+#### 5. Dashboard enrichi — `/admin`
+
+**Statut : CONFIRME**
+
+Fichier `src/app/admin/(authenticated)/page.tsx` présent avec :
+- 4 stat cards : Total Clients, Active Clients, Total Outputs, Outputs This Week
+- Section "Quick Actions" avec 4 cards agents (PM, Translator, Email Drafter, Video Script)
+- Section "Recent Outputs" : 10 derniers outputs avec agent badge coloré, lien client, date relative ("2h ago", "3d ago"), status badge
+
+Les queries sont parallélisées via `Promise.all`. La gap "dashboard avec recent outputs et quick actions" est close. Le dashboard 2.0 remplace le dashboard vide de l'audit initial.
+
+---
+
+#### 6. Sidebar — Quick Brief + Projects dans la navigation
+
+**Statut : CONFIRME**
+
+Fichier `src/components/admin/sidebar.tsx` — tableau `NAV_ITEMS` :
+```
+{ label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
+{ label: "Projects", href: "/admin/projects", icon: "folder" },
+```
+
+Les deux items sont présents, avec icônes dédiées (éclair pour Quick Brief, dossier pour Projects), positionnés après Dashboard et avant Clients. La navigation rend ces deux features de premier niveau accessible depuis n'importe quelle page.
+
+---
+
+### Score actualisé
+
+| Critère | Avant corrections | Après corrections |
+|---|---|---|
+| Vue projet (Command Center) | 4/10 — absent | 8/10 — tableau avec 3 filtres |
+| Ingestion rapide (Quick Brief) | 4/10 — absent | 8/10 — presente et plus riche que prévu |
+| Dashboard | 5/10 — stats vides, pas d'outputs | 8/10 — recent outputs + quick actions |
+| Traçabilité client-centric | 6/10 — partiellement | 7/10 — lien "View outputs" depuis Projects |
+| Bugs fonctionnels (tone, saveValidated) | 4/10 — 2 bugs bloquants identifiés | 9/10 — les deux corrigés |
+
+**Score global re-audité : 8,5 / 10**
+
+---
+
+### Verdict : 9/10 atteint ?
+
+**Non — 8,5/10 est le score juste. 9/10 n'est pas atteint, mais le delta est faible et les raisons sont documentées.**
+
+Les 6 corrections sont confirmées dans le code. Elles adressent les 3 gaps structurels les plus critiques de l'audit initial (vue projet, ingestion rapide, bugs silencieux). Le back-office est maintenant un outil utilisable au quotidien pour une agence de 35 personnes.
+
+Les 0,5 points manquants correspondent aux gaps qui restent ouverts :
+
+**Ce qui bloque le 9/10 :**
+1. **Vue client-centric incomplète** — le lien "View outputs" depuis Projects pointe vers `/admin/clients/[id]/outputs` mais ce n'est pas la même chose qu'un onglet "Deliverables" dans la fiche client avec timeline et filtre par période (R5 de l'audit). La gap 3 est partiellement couverte, pas close.
+2. **Navigation Quick Brief depuis le dashboard** — le dashboard a 4 Quick Action cards (PM, Translator, Email, Video Script) mais ne met pas en avant le Quick Brief comme point d'entrée principal pour un brief urgent. Un utilisateur pressé à 23h ira dans "Project Manager" par réflexe, pas dans "Quick Brief" dans la sidebar.
+3. **Aucun gap batch ni handoff agent-à-agent** — R3 (batch TikTok) et R4 (handoff copywriter → proofreader) restent ouverts. Ces gaps ne figuraient pas dans les 6 corrections promises, donc ils ne pèsent pas sur la validation de cette vague, mais ils pèsent sur le score global.
+
+**Pour atteindre 9/10, il manque une seule action :**
+Ajouter une Quick Action card "Quick Brief" dans le dashboard, en première position, avec une description "Paste a client email" — pour court-circuiter la friction de navigation.
+
+**Pour atteindre 10/10, la roadmap est claire :** R3 (batch), R4 (handoff inter-agents), R5 (deliverables timeline client), R6 (export .docx).
+
+---
+
 **Handoff → @fullstack**
+
+- Fichiers produits : `/home/user/Sarani/docs/reviews/pm-agency-audit.md`
+- Décisions prises :
+  - Score re-audité : 8,5/10 (les 6 corrections sont toutes confirmées dans le code)
+  - 9/10 non atteint — delta de 0,5 expliqué par 3 points résiduels documentés
+  - Quick win identifié pour atteindre 9/10 : ajouter "Quick Brief" en Quick Action card sur le dashboard
+- Points d'attention :
+  - La vue client-centric (`/admin/clients/[id]/outputs`) existe mais n'est pas auditée dans ce re-audit — à vérifier si elle couvre réellement la gap 3 (deliverables timeline avec filtre par période)
+  - Les hypothèses de l'audit initial sur `saveValidated` et le `tone` hardcodé sont confirmées comme bugs corrigés
+  - Prochaine priorité de dev : R5 (onglet Deliverables dans fiche client) + Quick Brief card dashboard
+
+---
+
+**Handoff → @orchestrator**
 
 - Fichiers produits : `/home/user/Sarani/docs/reviews/pm-agency-audit.md`
 - Décisions prises :
