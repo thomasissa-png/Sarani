@@ -553,10 +553,98 @@ This document defines the optimal inputs for each of the 13 Sarani back-office a
 
 ## Agent 13 — QA / Proofreader IA
 
-*(Sections to follow)*
+**Why this agent needs these inputs:** A proofreader reading a 40-slide GEODIS presentation cold, without knowing the client's name conventions, the language register, or what the output is for, will produce a generic spell-check. A proofreader briefed with "this is a French corporate presentation for the GEODIS ExCom, the client uses 'supply chain transformation' not 'logistics optimization', and it must be in formal French register" will catch every error that matters. Context transforms spell-check into brand-quality gate.
+
+### Message de guidance (displayed at the top of the form)
+
+> "For a perfect proofread, I need to know the language, the register, and the content type. If there are client-specific terminology preferences or known inconsistencies to watch for, add them. The more context you give me, the fewer errors pass through to the client."
+
+### Inputs requis (mandatory — blocks submission)
+
+| Field | Type | Why it's mandatory | Placeholder / example |
+|-------|------|--------------------|-----------------------|
+| `content_to_review` | Textarea or file upload (DOCX, TXT, PDF) | The content itself. Without it there is nothing to proofread. | Upload GEODIS_presentation_v2.docx |
+| `language` | Select (EN / FR / IT / ES / DE) | The language of the content determines which grammar, spelling, and style rules apply. Submitting a French text for English proofreading produces garbage output. | FR |
+| `content_type` | Select (Presentation / Contract / Article / Email / Social post / Script / Translation / Other) | A contract and a social post have different error priorities. A contract must be checked for legal precision, consistency of defined terms, and no ambiguity. A social post must be checked for tone, readability, and character count. | Presentation |
+
+### Inputs recommandés (strongly advised — improves output quality significantly)
+
+| Field | Type | What it improves | Placeholder / example |
+|-------|------|------------------|-----------------------|
+| `client` | Select (client record) | Activates the client glossary (terms to use and not to use). Without it, the agent may "correct" a brand-specific term that was intentionally written a certain way. | Select client → GEODIS |
+| `register` | Select (Formal / Standard / Informal) | Flags register inconsistencies within the document. A document that switches between formal and informal in the same slide is a quality failure even if there are no spelling errors. | Formal |
+| `specific_focus` | Multi-select (Spelling / Grammar / Punctuation / Style consistency / Terminology / Formatting / Readability / Character count) | Directs the agent's attention. A fast review for spelling only is a different task from a full editorial review. Selecting specific focus areas produces a more useful output and a more actionable report. | Terminology + Style consistency |
+
+### Inputs optionnels
+
+| Field | Type | What it enriches |
+|-------|------|-----------------|
+| `known_issues` | Textarea | If the operator already suspects specific problems ("the French version has inconsistent capitalization of 'Supply Chain', check every slide"), flagging them makes the review more targeted. |
+| `original_source` | Textarea or file | For reviewing a translation: provide the source document so the QA agent can verify translation accuracy, not just grammar. |
+| `length_constraint` | Text | For social posts and banners: the character limit. The agent will flag any element exceeding the allowed count. |
+| `previous_version` | File upload | For comparing v1 and v2: the agent identifies what changed and flags any new errors introduced in the revision. |
+
+### Auto-detected from client record
+
+- `client.glossary` → all terms in the glossary are cross-referenced against the content (incorrect usage flagged)
+- `client.prohibited_terms` → any prohibited term found in the content is flagged as a critical error
+- `client.translation_memory` → if reviewing a translation, validated formulations are used as the benchmark
 
 ---
 
 ## Auto-detected fields — global reference
 
-*(Section to follow)*
+This table consolidates all client record fields that are automatically injected into agent contexts, mapped to the agents that consume them. Use this as a quick reference when building the form pre-fill logic.
+
+| Client record field | Source | Agents that auto-consume it | What it does |
+|---------------------|--------|-----------------------------|--------------|
+| `client.primary_language` | Client record — required | PM IA, Translator, Copywriter, Email Drafter, Presentation, Video Script | Sets the default language without requiring manual selection |
+| `client.secondary_languages` | Client record | Translator, Proposal, Presentation | Surfaces alternative language options in the UI |
+| `client.brand_book` | Client record — file | Designer IA, Presentation | Parsed for colors, fonts, layout guidelines; injected into generation prompt |
+| `client.primary_color` + `secondary_colors` | Client record | Designer IA | Hex codes injected into image generation prompt |
+| `client.font_name` | Client record | Designer IA | Mentioned in generation prompt (limited AI image compliance — documented) |
+| `client.brand_tone` | Client record | Creative Strategist, Copywriter, Social IA, Email Drafter, Proposal, Presentation, Video Script | Calibrates tone and register for all content outputs |
+| `client.brand_guidelines_notes` | Client record | Designer IA, Creative Strategist | Hard constraints injected verbatim |
+| `client.logo_files` | Client record — files | Designer IA | Displayed in UI as reference for human post-processing |
+| `client.glossary` | Client record | Translator, Copywriter, QA/Proofreader | Enforces correct terminology across all outputs |
+| `client.translation_memory` | Client record — auto-updated | Translator, QA/Proofreader | Maintains consistency across documents over time |
+| `client.prohibited_terms` | Client record | Translator, Copywriter, QA/Proofreader | Excluded from all outputs; flagged as critical errors in QA |
+| `client.legal_entity_name` | Client record | Legal IA | Auto-fills the "Client" party block in all contracts |
+| `client.vat_number` | Client record | Legal IA | Auto-fills fiscal identification clause |
+| `client.legal_country` | Client record | Legal IA | Determines governing law default |
+| `client.signed_framework_agreement` | Client record — boolean | Legal IA | If true, SOW auto-references the master agreement |
+| `client.preferred_contract_template` | Client record | Legal IA | Auto-selects the correct template version |
+| `client.primary_contact_name` + email | Client record | PM IA, Email Drafter, Proposal | Personalizes outputs and pre-fills recipient fields |
+| `client.clickup_project_id` | Client record | PM IA | Used for ClickUp task creation and sync |
+| `client.industry` | Client record | Creative Strategist, Proposal, Presentation | Contextualizes benchmarks and proof case selection |
+| `client.agent_outputs[]` (last 5) | Auto-generated — BDD | PM IA, Creative Strategist, Translator, Copywriter, Email Drafter, Video Script, QA | Injects historical context to maintain consistency across sessions |
+
+### Rules for auto-detection implementation
+
+1. **Auto-detected fields should be visible but not editable in the form** — the operator can see what was loaded and can navigate to the client record to update it.
+2. **If a critical auto-detected field is missing** — the agent must display a specific warning before submission (not block, but warn). Example: "No brand book found for Sony — visuals will be generated without brand constraints."
+3. **Auto-detection failures are never silent** — if a field expected to be auto-loaded is missing, it must be surfaced in the form UI with a link to fill it in the client record.
+
+---
+
+## Summary matrix — Required vs. recommended vs. optional by agent
+
+| Agent | Required fields | Recommended fields | Optional fields |
+|-------|----------------|--------------------|-----------------|
+| PM IA | client, brief_text | deadline, priority, attachment | internal_note, clickup_override, preferred_agents |
+| Translator | source_language, target_language, source_content | client, register | context_note, show_glossary_hits, preserve_formatting |
+| Creative Strategist | client, campaign_objective, target_audience, output_type | budget_range, timeline, constraints, competitors | existing_assets, inspiration_refs, number_of_territories |
+| Designer IA | client, visual_type, dimensions, visual_brief | number_of_variants, mood_references, mandatory_text, text_placement | format_context, forbidden_elements, reference_from_history |
+| Copywriter IA | client, copy_type, key_message, target_audience | placement, tone_direction, number_of_variants, competitive_context | existing_copy, approved_references, hard_constraints, language |
+| Legal IA | client, contract_type, scope_of_work, total_amount, delivery_date | payment_terms, revisions_included, project_name, governing_law | special_clauses, references_framework, second_party_contact |
+| Social IA | topic_or_angle, post_format | proof_points, client_reference, tone_emphasis, scheduled_date | hook_direction, visual_description, hashtag_preferences, cta_direction |
+| SEO IA | article_title_h1, primary_keyword | search_intent, secondary_keywords, target_cta, target_length | competitor_articles, internal_links, proof_points, article_outline |
+| Proposal IA | client, client_pain_point, proposed_solution, proposed_investment | proof_case_reference, client_contact_name, proposal_format, timeline | competitor_context, additional_proof_points, special_conditions, language |
+| Presentation IA | client, presentation_objective, audience, key_content_points | number_of_slides, presentation_type, data_and_charts, language | slide_outline, existing_template, tone_direction, must_include_assets |
+| Email Drafter IA | client, email_purpose, email_body_ask | recipient_name, context, language, tone_direction | attachment_description, deadline_mentioned, previous_thread, cultural_context |
+| Video Script IA | client, platform, video_duration, video_concept | hook_direction, script_format, cta, language | visual_direction, music_mood, caption_style, series_context, reference_script |
+| QA/Proofreader IA | content_to_review, language, content_type | client, register, specific_focus | known_issues, original_source, length_constraint, previous_version |
+
+---
+
+*This document is the source of truth for @fullstack form implementation. Any deviation from required fields must be flagged and justified before development.*
