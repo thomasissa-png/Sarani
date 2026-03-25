@@ -43,11 +43,11 @@ export default function AdminLoginPage() {
         <div className="bg-white rounded-2xl shadow-md p-8">
           <div className="text-center mb-8">
             <Image
-              src="/sarani-logo-white.png"
+              src="/sarani-logo-black.png"
               alt="Sarani"
               width={120}
               height={45}
-              className="h-auto mx-auto mb-4 dark-logo-invert"
+              className="h-auto mx-auto mb-4"
               priority
             />
             <h1 className="text-2xl font-bold text-brand-black tracking-tight">

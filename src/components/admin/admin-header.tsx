@@ -80,11 +80,11 @@ export function AdminHeader() {
         {/* Mobile logo — visible only on small screens */}
         <Link href="/admin" className="md:hidden shrink-0">
           <Image
-            src="/sarani-logo-white.png"
+            src="/sarani-logo-black.png"
             alt="Sarani"
             width={80}
             height={31}
-            className="h-auto dark-logo-invert"
+            className="h-auto"
           />
         </Link>
         {/* Page title — desktop always, mobile only if not dashboard */}

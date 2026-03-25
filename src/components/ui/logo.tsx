@@ -13,12 +13,11 @@ interface LogoProps {
 /**
  * Sarani logo — uses the real PNG logo files.
  * - "light" variant: white text + colored dots (for dark backgrounds)
- * - "dark" variant: same image with CSS invert (for light backgrounds)
- *   since no separate dark PNG is available.
+ * - "dark" variant: black text + colored dots (for light backgrounds)
  */
 export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
-  // sarani-logo-white.png is white text on transparent bg (ratio ~2.6:1)
   const height = Math.round(width / 2.6);
+  const src = variant === "light" ? "/sarani-logo-white.png" : "/sarani-logo-black.png";
 
   return (
     <Link
@@ -26,25 +25,14 @@ export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
       aria-label="Sarani — Back to homepage"
       className={cn("inline-flex items-center shrink-0", className)}
     >
-      {variant === "light" ? (
-        <Image
-          src="/sarani-logo-white.png"
-          alt="Sarani"
-          width={width}
-          height={height}
-          className="h-auto"
-          priority
-        />
-      ) : (
-        <Image
-          src="/sarani-logo-white.png"
-          alt="Sarani"
-          width={width}
-          height={height}
-          className="h-auto dark-logo-invert"
-          priority
-        />
-      )}
+      <Image
+        src={src}
+        alt="Sarani"
+        width={width}
+        height={height}
+        className="h-auto"
+        priority
+      />
     </Link>
   );
 }

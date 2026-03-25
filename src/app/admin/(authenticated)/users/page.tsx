@@ -54,7 +54,7 @@ export default function UsersPage() {
         return;
       }
       const data = await res.json();
-      setUsers(data);
+      setUsers(data.users ?? data);
     } catch {
       setError("Failed to load users");
     } finally {

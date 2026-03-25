@@ -208,11 +208,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="p-5 border-b border-neutral-300">
         <Link href="/admin" className="inline-flex items-center gap-2" onClick={onNavigate}>
           <Image
-            src="/sarani-logo-white.png"
+            src="/sarani-logo-black.png"
             alt="Sarani"
             width={100}
             height={38}
-            className="h-auto dark-logo-invert"
+            className="h-auto"
             priority
           />
           <span className="text-xs font-medium text-neutral-500 bg-neutral-200 px-2 py-0.5 rounded-full">

@@ -157,11 +157,6 @@ body {
   animation-play-state: paused;
 }
 
-/* Dark logo variant — invert white logo to black for light backgrounds.
-   The hue-rotate(180deg) preserves the colored dots approximately. */
-.dark-logo-invert {
-  filter: brightness(0);
-}
 
 /* Respect reduced motion globally */
 @media (prefers-reduced-motion: reduce) {
