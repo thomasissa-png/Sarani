@@ -485,15 +485,28 @@ export default function QuotesPage() {
           </div>
         )}
 
+        {/* Indeterminate progress bar during generation */}
+        {generating && (
+          <div className="h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
+            <div className="h-full w-1/3 rounded-full bg-brand-cerulean animate-[indeterminate_1.5s_ease-in-out_infinite]" />
+          </div>
+        )}
+
         {/* Submit */}
         <div className="flex justify-end">
           <button
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {generating ? "Generating..." : "Generate PDF"}
+            {generating && (
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            {generating ? "Generating PDF..." : "Generate PDF"}
           </button>
         </div>
       </div>
