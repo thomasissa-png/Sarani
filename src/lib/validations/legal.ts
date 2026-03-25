@@ -2,14 +2,21 @@ import { z } from "zod";
 
 // ─── Contract types ────────────────────────────────────────────────────────
 
-export const CONTRACT_TYPES = ["SOW", "NDA", "UGC", "Freelance"] as const;
+export const CONTRACT_TYPES = [
+  "SOW",
+  "ServiceAgreement",
+  "TalentAgreement",
+  "NDA",
+  "Freelance",
+] as const;
 
 export type ContractType = (typeof CONTRACT_TYPES)[number];
 
 export const CONTRACT_TYPE_LABELS: Record<ContractType, string> = {
   SOW: "Statement of Work",
+  ServiceAgreement: "Service Agreement (Enterprise)",
+  TalentAgreement: "Talent Agreement",
   NDA: "Non-Disclosure Agreement",
-  UGC: "UGC Creator Agreement",
   Freelance: "Freelance / Independent Contractor",
 };
 
