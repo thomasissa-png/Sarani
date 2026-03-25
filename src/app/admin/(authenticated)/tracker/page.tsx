@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import Link from "next/link";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -235,13 +236,21 @@ export default function TrackerPage() {
             )}
           </p>
         </div>
-        <button
-          onClick={fetchData}
-          disabled={loading}
-          className="px-4 py-2 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-        >
-          {loading ? "Syncing..." : "Sync now"}
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          <Link
+            href="/admin/tracker/new"
+            className="px-4 py-2 bg-brand-cerulean text-white text-sm font-semibold rounded-lg hover:bg-brand-cerulean/90 transition-colors"
+          >
+            New Project
+          </Link>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="px-4 py-2 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Syncing..." : "Sync now"}
+          </button>
+        </div>
       </div>
 
       {/* Status Bar */}
