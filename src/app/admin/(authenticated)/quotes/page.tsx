@@ -372,7 +372,7 @@ export default function QuotesPage() {
                   type="button"
                   onClick={() => removeItem(item.id)}
                   disabled={items.length <= 1}
-                  className="flex items-center justify-center text-neutral-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center justify-center text-neutral-400 hover:text-error disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   aria-label="Remove item"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
