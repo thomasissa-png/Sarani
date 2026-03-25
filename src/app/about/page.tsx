@@ -23,6 +23,15 @@ const TEAM_STATS: Stat[] = [
   { value: "18", label: "Languages" },
 ];
 
+const KEY_NUMBERS: Stat[] = [
+  { value: "35+", label: "In-house experts" },
+  { value: "5", label: "Continents covered" },
+  { value: "18", label: "Languages supported" },
+  { value: "D+1", label: "Standard delivery" },
+  { value: "60%", label: "Average savings vs agencies" },
+  { value: "1,500+", label: "Deliverables per month" },
+];
+
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
@@ -165,15 +174,43 @@ export default function AboutPage() {
         </div>
       </Section>
 
+      {/* ── Sarani by the numbers ── */}
+      <Section ariaLabel="Sarani by the numbers" className="bg-surface-elevated">
+        <div className="mx-auto max-w-screen-xl">
+          <h2 className="mb-10 text-center text-3xl font-bold text-brand-black sm:text-4xl">
+            Sarani by the numbers
+          </h2>
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+            {KEY_NUMBERS.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl border border-neutral-200 bg-brand-white p-6 text-center shadow-base"
+              >
+                <p className="text-3xl font-bold text-brand-cerulean-dark sm:text-4xl">
+                  {stat.value}
+                </p>
+                <p className="mt-2 text-sm font-medium text-neutral-600">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
       {/* ── Closing CTA ── */}
-      <Section ariaLabel="Get started" className="bg-surface-elevated">
+      <Section ariaLabel="Get started" className="bg-brand-black">
         <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mb-4 text-3xl font-bold text-brand-white sm:text-4xl">
+            Let&apos;s work together.
+          </h2>
+          <p className="mb-8 text-neutral-400">
+            One brief. One contact. Enterprise-grade creative, delivered
+            tomorrow. Your first project is risk-free.
+          </p>
           <Button variant="primary" href="/contact">
             Start a project
           </Button>
-          <p className="mt-4 text-sm text-neutral-500">
-            Your first project, risk-free.
-          </p>
         </div>
       </Section>
     </div>
