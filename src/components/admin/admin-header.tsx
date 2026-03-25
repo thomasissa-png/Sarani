@@ -2,6 +2,8 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useSidebar } from "@/components/admin/sidebar";
 
 function getPageTitle(pathname: string): string {
@@ -63,20 +65,31 @@ export function AdminHeader() {
   return (
     <header className="h-14 border-b border-neutral-300 bg-white flex items-center justify-between px-4 md:px-6 shrink-0">
       <div className="flex items-center gap-3">
-        {/* Mobile hamburger */}
+        {/* Mobile hamburger — prominent cerulean circle */}
         <button
           onClick={() => setMobileOpen(true)}
-          className="md:hidden p-1.5 -ml-1 rounded-lg text-neutral-600 hover:bg-neutral-100 transition-colors"
+          className="md:hidden flex h-9 w-9 items-center justify-center rounded-full bg-brand-cerulean text-white shrink-0"
           aria-label="Open navigation"
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
           </svg>
         </button>
-        {/* Page title */}
-        <h1 className="text-sm font-semibold text-brand-black">{pageTitle}</h1>
+        {/* Mobile logo — visible only on small screens */}
+        <Link href="/admin" className="md:hidden shrink-0">
+          <Image
+            src="/sarani-logo-white.png"
+            alt="Sarani"
+            width={80}
+            height={31}
+            className="h-auto dark-logo-invert"
+          />
+        </Link>
+        {/* Page title — desktop always, mobile only if not dashboard */}
+        <h1 className="text-sm font-semibold text-brand-black hidden md:block">{pageTitle}</h1>
+        <h1 className="text-sm font-semibold text-brand-black md:hidden">{pageTitle !== "Dashboard" ? pageTitle : ""}</h1>
       </div>
       <button
         onClick={handleLogout}
