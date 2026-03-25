@@ -20,6 +20,24 @@ import {
   TextareaWithCount,
 } from "@/components/admin/guided-form";
 
+// ─── Shared UI helpers ──────────────────────────────────────────────────────
+
+function RecommendedBadge() {
+  return (
+    <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide bg-orange-100 text-orange-700 border border-orange-200 px-1.5 py-0.5 rounded">
+      Recommended
+    </span>
+  );
+}
+
+function GuidanceMessage({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800 leading-relaxed">
+      {children}
+    </div>
+  );
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type GenerateResponse = {
@@ -28,8 +46,31 @@ type GenerateResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+type ProposalFormat = "" | "pdf" | "slide-deck" | "email-body";
+
+const PROPOSAL_FORMAT_OPTIONS: { value: ProposalFormat; label: string }[] = [
+  { value: "", label: "-- Select format --" },
+  { value: "pdf", label: "PDF document" },
+  { value: "slide-deck", label: "Slide deck" },
+  { value: "email-body", label: "Email body" },
+];
+
 type FormState = {
+  // Required
   prospectName: string;
+  clientPainPoint: string;
+  proposedSolution: string;
+  proposedInvestment: string;
+  // Recommended
+  proofCaseReference: string;
+  decisionMaker: string;
+  proposalFormat: ProposalFormat;
+  timelineForDecision: string;
+  competitorInPitch: string;
+  // Optional
+  additionalProofPoints: string;
+  specialConditions: string;
+  // Kept from original
   prospectIndustry: ProspectIndustry | "";
   prospectNeeds: string;
   servicesRequested: ServiceType[];
@@ -41,6 +82,16 @@ type FormState = {
 
 const INITIAL_FORM: FormState = {
   prospectName: "",
+  clientPainPoint: "",
+  proposedSolution: "",
+  proposedInvestment: "",
+  proofCaseReference: "",
+  decisionMaker: "",
+  proposalFormat: "",
+  timelineForDecision: "",
+  competitorInPitch: "",
+  additionalProofPoints: "",
+  specialConditions: "",
   prospectIndustry: "",
   prospectNeeds: "",
   servicesRequested: [],
@@ -60,6 +111,9 @@ export default function ProposalAgentPage() {
 
   // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+
+  // Advanced options toggle
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   // Generation state
   const [generating, setGenerating] = useState(false);
@@ -85,8 +139,9 @@ export default function ProposalAgentPage() {
 
   function canProceedStep1(): boolean {
     return (
-      form.prospectNeeds.length >= 30 &&
-      form.servicesRequested.length > 0
+      form.clientPainPoint.length >= 20 &&
+      form.proposedSolution.length >= 20 &&
+      !!form.proposedInvestment.trim()
     );
   }
 
@@ -102,6 +157,9 @@ export default function ProposalAgentPage() {
         prospectName: form.prospectName.trim(),
         servicesRequested: form.servicesRequested,
         language: form.language,
+        clientPainPoint: form.clientPainPoint.trim(),
+        proposedSolution: form.proposedSolution.trim(),
+        proposedInvestment: form.proposedInvestment.trim(),
       };
 
       if (form.prospectIndustry) {
@@ -116,8 +174,26 @@ export default function ProposalAgentPage() {
       if (form.timeline.trim()) {
         payload.timeline = form.timeline.trim();
       }
-      if (form.competitorMentioned.trim()) {
-        payload.competitorMentioned = form.competitorMentioned.trim();
+      if (form.competitorMentioned.trim() || form.competitorInPitch.trim()) {
+        payload.competitorMentioned = (form.competitorMentioned || form.competitorInPitch).trim();
+      }
+      if (form.proofCaseReference.trim()) {
+        payload.proofCaseReference = form.proofCaseReference.trim();
+      }
+      if (form.decisionMaker.trim()) {
+        payload.decisionMaker = form.decisionMaker.trim();
+      }
+      if (form.proposalFormat) {
+        payload.proposalFormat = form.proposalFormat;
+      }
+      if (form.timelineForDecision.trim()) {
+        payload.timelineForDecision = form.timelineForDecision.trim();
+      }
+      if (form.additionalProofPoints.trim()) {
+        payload.additionalProofPoints = form.additionalProofPoints.trim();
+      }
+      if (form.specialConditions.trim()) {
+        payload.specialConditions = form.specialConditions.trim();
       }
 
       const res = await fetch("/api/admin/agents/proposal/generate", {
@@ -234,28 +310,38 @@ export default function ProposalAgentPage() {
           : "Not specified",
       },
       {
-        label: "Services",
-        value: form.servicesRequested
-          .map((s) => SERVICE_LABELS[s])
-          .join(", "),
-      },
-      { label: "Language", value: form.language === "EN" ? "English" : "French" },
-      ...(form.estimatedBudget
-        ? [{ label: "Budget", value: form.estimatedBudget }]
-        : []),
-      ...(form.timeline
-        ? [{ label: "Timeline", value: form.timeline }]
-        : []),
-      ...(form.competitorMentioned
-        ? [{ label: "Competitor", value: form.competitorMentioned }]
-        : []),
-      {
-        label: "Brief",
+        label: "Client Pain Point",
         value:
-          form.prospectNeeds.length > 80
-            ? form.prospectNeeds.slice(0, 80) + "..."
-            : form.prospectNeeds,
+          form.clientPainPoint.length > 80
+            ? form.clientPainPoint.slice(0, 80) + "..."
+            : form.clientPainPoint,
       },
+      {
+        label: "Proposed Solution",
+        value:
+          form.proposedSolution.length > 80
+            ? form.proposedSolution.slice(0, 80) + "..."
+            : form.proposedSolution,
+      },
+      { label: "Investment", value: form.proposedInvestment ? `${form.proposedInvestment} EUR` : "---" },
+      ...(form.servicesRequested.length > 0
+        ? [{
+            label: "Services",
+            value: form.servicesRequested
+              .map((s) => SERVICE_LABELS[s])
+              .join(", "),
+          }]
+        : []),
+      { label: "Language", value: form.language === "EN" ? "English" : "French" },
+      ...(form.decisionMaker
+        ? [{ label: "Decision Maker", value: form.decisionMaker }]
+        : []),
+      ...(form.competitorInPitch
+        ? [{ label: "Competitor in Pitch", value: form.competitorInPitch }]
+        : []),
+      ...(form.proposalFormat
+        ? [{ label: "Format", value: PROPOSAL_FORMAT_OPTIONS.find((o) => o.value === form.proposalFormat)?.label || form.proposalFormat }]
+        : []),
     ];
   }
 
@@ -286,6 +372,16 @@ export default function ProposalAgentPage() {
         <h2 className="text-lg font-semibold text-brand-black">
           Prospect Brief
         </h2>
+
+        {/* Guidance message */}
+        <GuidanceMessage>
+          A winning proposal is a targeted argument, not a capabilities brochure.
+          Tell me what the client&apos;s actual pain is (not &quot;they need
+          design&quot; — &quot;they&apos;re losing 3 weeks on every campaign
+          revision cycle&quot;), what we&apos;ve done for a similar brand, and
+          what we&apos;re proposing to do. I&apos;ll handle the structure, the
+          value framing, and the pricing narrative.
+        </GuidanceMessage>
 
         <StepIndicator steps={STEPS} currentStep={step} />
 
