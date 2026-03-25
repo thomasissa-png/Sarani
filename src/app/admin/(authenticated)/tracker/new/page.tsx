@@ -216,7 +216,7 @@ export default function NewProjectPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/admin/tracker"
-          className="text-neutral-400 hover:text-brand-black transition-colors"
+          className="p-2 -ml-2 text-neutral-400 hover:text-brand-black transition-colors"
           aria-label="Back to tracker"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -253,7 +253,7 @@ export default function NewProjectPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
-              Project Name <span className="text-red-500">*</span>
+              Project Name <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -296,7 +296,7 @@ export default function NewProjectPage() {
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
               Division
-              {divisions.length > 0 && <span className="text-red-500 ml-0.5">*</span>}
+              {divisions.length > 0 && <span className="text-error ml-0.5">*</span>}
               {divisions.length === 0 && <span className="text-neutral-400 font-normal ml-1">(auto-detected from ClickUp)</span>}
             </label>
             {divisions.length > 0 ? (
@@ -340,7 +340,7 @@ export default function NewProjectPage() {
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          <div className="bg-error-light border border-error rounded-lg px-4 py-3 text-sm text-error">
             {error}
           </div>
         )}
