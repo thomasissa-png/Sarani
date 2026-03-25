@@ -4,46 +4,75 @@ import { cn } from "@/lib/utils";
 interface LogoProps {
   /** "dark" = black text (for light bg), "light" = white text (for dark bg) */
   variant?: "dark" | "light";
-  /** Width in px */
+  /** Width class — maps to Tailwind width utilities */
   width?: number;
   className?: string;
 }
 
 /**
- * Sarani logo — SVG text with 3 colored dots (red, yellow, blue)
+ * Sarani logo — HTML text with Outfit font + 3 colored dots (red, yellow, blue)
  * clustered in a triangle above the "i", matching the official logo.
+ *
+ * Uses HTML <span> instead of SVG <text> so the web font (Outfit) loads reliably.
+ * The 3 dots are positioned absolutely above the "i" using a small inline SVG.
  */
 export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
-  const textColor = variant === "dark" ? "#000000" : "#ffffff";
-  const height = Math.round(width * 0.38);
+  const textColor = variant === "dark" ? "text-brand-black" : "text-brand-white";
+
+  // Scale factor relative to default 120px width
+  const scale = width / 120;
+  const fontSize = 28 * scale;
+  const dotSize = 5 * scale;
+  const dotsRight = 13 * scale;
+  const dotsBottom = 2 * scale;
 
   return (
-    <Link href="/" aria-label="Sarani — Back to homepage" className={cn("block", className)}>
-      <svg
-        width={width}
-        height={height}
-        viewBox="0 0 120 46"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
+    <Link
+      href="/"
+      aria-label="Sarani — Back to homepage"
+      className={cn("inline-flex items-center", className)}
+    >
+      <span
+        className="relative inline-block select-none"
+        style={{ width: `${width}px` }}
         aria-hidden="true"
       >
-        {/* 3 colored dots clustered above the "i" — triangle arrangement */}
-        <circle cx="105" cy="3" r="2.8" fill="#da5126" /> {/* Red — top right */}
-        <circle cx="98" cy="9" r="2.8" fill="#f1c217" />  {/* Yellow — bottom left */}
-        <circle cx="106" cy="9" r="2.8" fill="#0babe8" />  {/* Blue — bottom right */}
-        {/* Text "sarani" */}
-        <text
-          x="2"
-          y="38"
-          fontFamily="var(--font-outfit), Outfit, sans-serif"
-          fontSize="34"
-          fontWeight="700"
-          fill={textColor}
-          letterSpacing="-0.5"
+        {/* Text "sarani" in Outfit bold */}
+        <span
+          className={cn(
+            "block font-heading font-bold leading-none tracking-tight",
+            textColor
+          )}
+          style={{ fontSize: `${fontSize}px`, letterSpacing: "-0.02em" }}
         >
           sarani
-        </text>
-      </svg>
+        </span>
+
+        {/* 3 colored dots clustered above the "i" — triangle arrangement */}
+        <span
+          className="absolute pointer-events-none"
+          style={{
+            bottom: `calc(100% - ${dotsBottom}px)`,
+            right: `${dotsRight}px`,
+          }}
+        >
+          <svg
+            width={dotSize * 4}
+            height={dotSize * 3.5}
+            viewBox="0 0 20 17"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            {/* Red — top right */}
+            <circle cx="15" cy="3" r="2.8" fill="#da5126" />
+            {/* Yellow — bottom left */}
+            <circle cx="8" cy="10" r="2.8" fill="#f1c217" />
+            {/* Blue — bottom right */}
+            <circle cx="16" cy="10" r="2.8" fill="#0babe8" />
+          </svg>
+        </span>
+      </span>
     </Link>
   );
 }
