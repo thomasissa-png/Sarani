@@ -397,6 +397,27 @@ export default function NewProjectPage() {
               </button>
             </div>
           )}
+
+          {allSuccess && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setClientName("");
+                  setProjectName("");
+                  setContactName("");
+                  setCategory("");
+                  setDivision("");
+                  setEstimatedValue("");
+                  setResult(null);
+                  setError(null);
+                }}
+                className="px-4 py-2 bg-brand-cerulean text-white text-sm font-semibold rounded-lg hover:bg-brand-cerulean-dark transition-colors"
+              >
+                Create another project
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
