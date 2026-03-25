@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import {
@@ -11,6 +11,13 @@ import {
   type PresentationType,
   type PresentationLanguage,
 } from "@/lib/validations/presentation";
+import {
+  ClientSelector,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -42,14 +49,21 @@ const INITIAL_FORM: FormState = {
   includeData: false,
 };
 
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function PresentationAgentPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
 
+  // Client data
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
 
+  // Generation state
   const [generating, setGenerating] = useState(false);
   const [presentation, setPresentation] = useState<PresentationOutput | null>(
     null
@@ -58,52 +72,41 @@ export default function PresentationAgentPage() {
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Smart defaults when client is loaded ─────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+  const handleClientLoaded = useCallback((client: Client | null) => {
+    setSelectedClient(client);
+    if (client?.primaryLanguage) {
+      const lang = client.primaryLanguage.toLowerCase();
+      if (lang === "fr" || lang === "french") {
+        setForm((prev) => ({ ...prev, language: "French" as PresentationLanguage }));
+      } else if (lang === "en" || lang === "english") {
+        setForm((prev) => ({ ...prev, language: "English" as PresentationLanguage }));
       }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  // ── Step validation ─────────────────────────────────────────────────────
+
+  function canProceedStep0(): boolean {
+    return !!form.clientId;
+  }
+
+  function canProceedStep1(): boolean {
+    return (
+      !!form.presentationType &&
+      form.topic.length >= 20 &&
+      form.audienceDescription.length >= 5
+    );
+  }
 
   // ── Submit ──────────────────────────────────────────────────────────────
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setPresentation(null);
     setCurrentSlide(0);
     setExpandedNotes(new Set());
-
-    if (!form.clientId) {
-      setError("Please select a client.");
-      return;
-    }
-    if (!form.presentationType) {
-      setError("Please select a presentation type.");
-      return;
-    }
-    if (form.topic.length < 10) {
-      setError("Topic must be at least 10 characters.");
-      return;
-    }
-    if (form.audienceDescription.length < 5) {
-      setError("Audience description must be at least 5 characters.");
-      return;
-    }
-
     setGenerating(true);
 
     try {
@@ -210,6 +213,37 @@ export default function PresentationAgentPage() {
     URL.revokeObjectURL(url);
   }
 
+  // ── Build summary items ────────────────────────────────────────────────
+
+  function getSummaryItems() {
+    return [
+      { label: "Client", value: selectedClient?.name || "---" },
+      {
+        label: "Presentation Type",
+        value: form.presentationType
+          ? PRESENTATION_TYPE_LABELS[form.presentationType]
+          : "---",
+      },
+      { label: "Slides", value: String(form.slideCount) },
+      { label: "Language", value: form.language },
+      { label: "Include Data", value: form.includeData ? "Yes" : "No" },
+      {
+        label: "Topic",
+        value:
+          form.topic.length > 80
+            ? form.topic.slice(0, 80) + "..."
+            : form.topic,
+      },
+      {
+        label: "Audience",
+        value:
+          form.audienceDescription.length > 60
+            ? form.audienceDescription.slice(0, 60) + "..."
+            : form.audienceDescription,
+      },
+    ];
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -233,242 +267,243 @@ export default function PresentationAgentPage() {
       </div>
 
       {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           Presentation Brief
         </h2>
 
-        {/* Client select */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <div className="flex gap-2">
-              <select
-                id="client"
-                value={form.clientId}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, clientId: e.target.value }))
-                }
-                className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                <option value="">Select a client...</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.industry})
-                  </option>
-                ))}
-              </select>
-              <Link
-                href="/admin/clients/new"
-                className="px-3 py-2.5 text-sm font-medium text-brand-cerulean border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors whitespace-nowrap"
-              >
-                + New client
-              </Link>
-            </div>
-          )}
-        </div>
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Presentation type */}
-        <div>
-          <label
-            htmlFor="presentationType"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Presentation Type
-          </label>
-          <select
-            id="presentationType"
-            value={form.presentationType}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                presentationType: e.target.value as PresentationType | "",
-              }))
-            }
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          >
-            <option value="">Select a type...</option>
-            {PRESENTATION_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {PRESENTATION_TYPE_LABELS[type]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Topic */}
-        <div>
-          <label
-            htmlFor="topic"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Topic
-          </label>
-          <textarea
-            id="topic"
-            value={form.topic}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, topic: e.target.value }))
-            }
-            placeholder="What is this presentation about? Be specific about the subject, goals, and key points to cover."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-          <p className="text-xs text-neutral-400 mt-1">
-            {form.topic.length} / 10 min characters
-          </p>
-        </div>
-
-        {/* Audience description */}
-        <div>
-          <label
-            htmlFor="audience"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Audience
-          </label>
-          <input
-            id="audience"
-            type="text"
-            value={form.audienceDescription}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                audienceDescription: e.target.value,
-              }))
-            }
-            placeholder="e.g. C-level executives, marketing team, investors, new hires"
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          />
-        </div>
-
-        {/* Slide count + Language */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="slideCount"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Number of Slides ({form.slideCount})
-            </label>
-            <input
-              id="slideCount"
-              type="range"
-              min={5}
-              max={40}
-              value={form.slideCount}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  slideCount: Number(e.target.value),
-                }))
+        {/* ── Step 0: Select Client ─────────────────────────────────────── */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
+              value={form.clientId}
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
               }
-              className="w-full accent-brand-black"
+              required
+              helperText="Select the client this presentation is for. Their brand colors and tone will guide the visual suggestions."
+              onClientLoaded={handleClientLoaded}
             />
-            <div className="flex justify-between text-xs text-neutral-400 mt-0.5">
-              <span>5</span>
-              <span>40</span>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                disabled={!canProceedStep0()}
+                onClick={() => setStep(1)}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Configure
+              </button>
             </div>
-          </div>
-          <div>
-            <label
-              htmlFor="language"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Language
-            </label>
-            <select
-              id="language"
-              value={form.language}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  language: e.target.value as PresentationLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {PRESENTATION_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Key messages */}
-        <div>
-          <label
-            htmlFor="keyMessages"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Key Messages (optional)
-          </label>
-          <textarea
-            id="keyMessages"
-            value={form.keyMessages}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, keyMessages: e.target.value }))
-            }
-            placeholder="List the key messages or themes that must appear in the presentation. One per line."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Include data toggle */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            role="switch"
-            aria-checked={form.includeData}
-            onClick={() =>
-              setForm((prev) => ({ ...prev, includeData: !prev.includeData }))
-            }
-            className={`relative w-10 h-6 rounded-full transition-colors ${
-              form.includeData ? "bg-brand-black" : "bg-neutral-300"
-            }`}
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                form.includeData ? "translate-x-4" : "translate-x-0"
-              }`}
-            />
-          </button>
-          <label className="text-sm text-neutral-700">
-            Include data & metrics slides (charts, KPIs, statistics)
-          </label>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Generate Presentation"}
-          </button>
-        </div>
-      </form>
+        {/* ── Step 1: Configure ─────────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Presentation type */}
+            <FormField
+              label="Presentation Type"
+              required
+              helperText="The type determines the structure, tone, and level of detail."
+            >
+              <select
+                value={form.presentationType}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    presentationType: e.target.value as PresentationType | "",
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                <option value="">Select a type...</option>
+                {PRESENTATION_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {PRESENTATION_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* Topic */}
+            <FormField
+              label="Topic"
+              required
+              helperText="Be specific about the subject, goals, and key points. This drives the entire presentation structure."
+            >
+              <TextareaWithCount
+                value={form.topic}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, topic: val }))
+                }
+                placeholder="e.g. Q1 2026 campaign results for GEODIS — rebrand impact across 12 markets"
+                minLength={20}
+                rows={3}
+              />
+            </FormField>
+
+            {/* Audience description */}
+            <FormField
+              label="Audience"
+              required
+              helperText="Describe who will see this presentation. This affects tone, level of detail, and vocabulary."
+            >
+              <input
+                type="text"
+                value={form.audienceDescription}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    audienceDescription: e.target.value,
+                  }))
+                }
+                placeholder="e.g. GEODIS Marketing Director + 3 regional managers"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Slide count + Language */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label={`Number of Slides (${form.slideCount})`}
+                helperText="5 for a quick pitch, 15-20 for a standard deck, 30+ for a detailed review."
+              >
+                <input
+                  type="range"
+                  min={5}
+                  max={40}
+                  value={form.slideCount}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      slideCount: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full accent-brand-black"
+                />
+                <div className="flex justify-between text-xs text-neutral-400 mt-0.5">
+                  <span>5</span>
+                  <span>40</span>
+                </div>
+              </FormField>
+              <FormField
+                label="Language"
+                helperText="Auto-filled from client profile."
+              >
+                <select
+                  value={form.language}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      language: e.target.value as PresentationLanguage,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {PRESENTATION_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {lang}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            {/* Key messages */}
+            <FormField
+              label="Key Messages"
+              helperText="Optional. List the key messages or themes that must appear. One per line."
+            >
+              <TextareaWithCount
+                value={form.keyMessages}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, keyMessages: val }))
+                }
+                placeholder="e.g. Brand awareness +45% in target markets\nCost per asset reduced by 30%\nNew workflow saved 2 weeks per campaign"
+                rows={3}
+              />
+            </FormField>
+
+            {/* Include data toggle */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.includeData}
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    includeData: !prev.includeData,
+                  }))
+                }
+                className={`relative w-10 h-6 rounded-full transition-colors ${
+                  form.includeData ? "bg-brand-black" : "bg-neutral-300"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                    form.includeData ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <label className="text-sm text-neutral-700">
+                Include data & metrics slides (charts, KPIs, statistics)
+              </label>
+            </div>
+
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={!canProceedStep1()}
+                onClick={() => {
+                  setError(null);
+                  setStep(2);
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Review
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 2: Review & Generate ─────────────────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-4">
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onConfirm={handleGenerate}
+              onBack={() => setStep(1)}
+              loading={generating}
+              buttonLabel="Generate Presentation"
+            />
+          </div>
+        )}
+      </div>
 
       {/* Output */}
       {presentation && (
