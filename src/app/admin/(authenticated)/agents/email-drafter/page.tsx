@@ -32,25 +32,6 @@ type GenerateApiResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
-// Spec-aligned email purpose options
-const EMAIL_PURPOSE_OPTIONS = [
-  { value: "delivery", label: "Project delivery" },
-  { value: "follow-up", label: "Follow-up" },
-  { value: "introduction", label: "New proposal / Introduction" },
-  { value: "status-update", label: "Status update" },
-  { value: "brief-confirmation", label: "Issue escalation" },
-  { value: "thank-you", label: "Thank you" },
-  { value: "meeting-request", label: "Introduction" },
-  { value: "revision-response", label: "Invoice / Revision" },
-  { value: "custom", label: "Other" },
-] as const;
-
-const TONE_DIRECTION_OPTIONS = [
-  { value: "formal", label: "Formal" },
-  { value: "friendly", label: "Warm professional" },
-  { value: "urgent", label: "Direct" },
-] as const;
-
 const TONE_DESCRIPTIONS: Record<EmailTone, string> = {
   formal: "Official correspondence, contracts, sensitive negotiations",
   friendly: "Regular project updates, good news, warm professional",

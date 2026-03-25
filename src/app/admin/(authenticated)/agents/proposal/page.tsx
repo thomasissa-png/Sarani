@@ -471,28 +471,64 @@ export default function ProposalAgentPage() {
         {/* ── Step 1: Configure ─────────────────────────────────────────── */}
         {step === 1 && (
           <div className="space-y-5">
-            {/* Needs / brief */}
+            {/* Client pain point — required, most critical */}
             <FormField
-              label="Needs / Brief"
+              label="Client Pain Point"
               required
-              helperText="Describe what the prospect needs. The more context you provide, the more tailored the proposal will be."
+              helperText="This is the opening argument of the proposal. Without a specific pain, the proposal starts with Sarani's capabilities — the wrong starting point. The pain must be the client's pain, not a generic industry pain."
             >
               <TextareaWithCount
-                value={form.prospectNeeds}
+                value={form.clientPainPoint}
                 onChange={(val) =>
-                  setForm((prev) => ({ ...prev, prospectNeeds: val }))
+                  setForm((prev) => ({ ...prev, clientPainPoint: val }))
                 }
-                placeholder="e.g. L'Oreal needs a creative agency for their 2027 European beauty campaign — 200 assets across 8 markets, video + social + print"
-                minLength={30}
+                placeholder="L'Oreal's internal studio is 4 weeks behind on regional campaign adaptation. Their agency takes 3 days for each revision, causing delays that cost them media placements."
+                minLength={20}
                 rows={4}
+              />
+            </FormField>
+
+            {/* Proposed solution — required */}
+            <FormField
+              label="Proposed Solution"
+              required
+              helperText="What specifically Sarani is proposing to do. Not the full service menu — the specific answer to the specific pain described above."
+            >
+              <TextareaWithCount
+                value={form.proposedSolution}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, proposedSolution: val }))
+                }
+                placeholder="Sarani takes over the adaptation workflow for 5 EMEA markets. D+1 delivery, unlimited revisions, dedicated point of contact in Paris timezone."
+                minLength={20}
+                rows={4}
+              />
+            </FormField>
+
+            {/* Proposed investment — required */}
+            <FormField
+              label="Proposed Investment (EUR)"
+              required
+              helperText="The commercial anchor. Without it, the proposal has no closing argument."
+            >
+              <input
+                type="text"
+                value={form.proposedInvestment}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    proposedInvestment: e.target.value,
+                  }))
+                }
+                placeholder="8500 (monthly retainer)"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
               />
             </FormField>
 
             {/* Services requested */}
             <FormField
               label="Services Requested"
-              required
-              helperText="Select all services the prospect is interested in. Case studies matching these services will be automatically included."
+              helperText="Select relevant services. Case studies matching these services will be automatically included."
             >
               <div className="flex flex-wrap gap-2">
                 {SERVICES_AVAILABLE.map((service) => {
@@ -515,59 +551,227 @@ export default function ProposalAgentPage() {
               </div>
             </FormField>
 
-            {/* Budget + Timeline */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* ── Recommended fields ──────────────────────────────────────── */}
+            <div className="border-t border-neutral-200 pt-5 space-y-5">
+              {/* Decision maker — recommended */}
               <FormField
-                label="Estimated Budget"
-                helperText="Optional. If known, helps calibrate the scope and pricing approach."
+                label={
+                  <>
+                    Decision Maker
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="Personalizes the proposal. Auto-filled from client record but overridable for a specific contact at a large company."
               >
                 <input
                   type="text"
-                  value={form.estimatedBudget}
+                  value={form.decisionMaker}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      estimatedBudget: e.target.value,
+                      decisionMaker: e.target.value,
                     }))
                   }
-                  placeholder="e.g. 50,000 EUR"
+                  placeholder="Sophie Martin, Head of Marketing EMEA"
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 />
               </FormField>
+
+              {/* Competitor in pitch — recommended */}
               <FormField
-                label="Timeline"
-                helperText="Optional. When does the prospect need this delivered?"
+                label={
+                  <>
+                    Competitor in Pitch
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="If Sarani knows it's competing against specific agencies, the proposal can address comparison points proactively."
               >
                 <input
                   type="text"
-                  value={form.timeline}
+                  value={form.competitorInPitch}
                   onChange={(e) =>
-                    setForm((prev) => ({ ...prev, timeline: e.target.value }))
+                    setForm((prev) => ({
+                      ...prev,
+                      competitorInPitch: e.target.value,
+                    }))
                   }
-                  placeholder="e.g. Q2 2026, 3 months"
+                  placeholder="e.g. WPP, Publicis, local agency name"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+
+              {/* Proof case reference — recommended */}
+              <FormField
+                label={
+                  <>
+                    Proof Case Reference
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="The single most persuasive element of any proposal. 'We did this for GEODIS (same industry, same pain) and here's the result' is worth more than 10 pages of capabilities."
+              >
+                <input
+                  type="text"
+                  value={form.proofCaseReference}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      proofCaseReference: e.target.value,
+                    }))
+                  }
+                  placeholder="GEODIS — 5,700 slides in 3 weeks"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+
+              {/* Proposal format — recommended */}
+              <FormField
+                label={
+                  <>
+                    Proposal Format
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="A slide deck for L'Oreal and a 3-paragraph email proposal for a mid-size brand are different instruments."
+              >
+                <select
+                  value={form.proposalFormat}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      proposalFormat: e.target.value as ProposalFormat,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {PROPOSAL_FORMAT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              {/* Timeline for decision — recommended */}
+              <FormField
+                label={
+                  <>
+                    Timeline for Decision
+                    <RecommendedBadge />
+                  </>
+                }
+                helperText="If there's a known deadline for the client to decide, this urgency can be woven into the closing argument."
+              >
+                <input
+                  type="text"
+                  value={form.timelineForDecision}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      timelineForDecision: e.target.value,
+                    }))
+                  }
+                  placeholder="Decision expected: April 15, 2026"
                   className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 />
               </FormField>
             </div>
 
-            {/* Competitor mentioned */}
-            <FormField
-              label="Competitor Mentioned"
-              helperText="Optional. If the prospect mentioned a competitor, the proposal will include differentiation points."
-            >
-              <input
-                type="text"
-                value={form.competitorMentioned}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    competitorMentioned: e.target.value,
-                  }))
-                }
-                placeholder="e.g. WPP, Publicis, local agency name"
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              />
-            </FormField>
+            {/* ── Advanced options (collapsible) ─────────────────────────── */}
+            <div className="border-t border-neutral-200 pt-4">
+              <button
+                type="button"
+                onClick={() => setAdvancedOpen(!advancedOpen)}
+                className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-brand-black transition-colors"
+              >
+                <span
+                  className="transition-transform"
+                  style={{
+                    display: "inline-block",
+                    transform: advancedOpen ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
+                >
+                  &#9654;
+                </span>
+                Advanced options
+              </button>
+              {advancedOpen && (
+                <div className="mt-4 space-y-5">
+                  <FormField
+                    label="Additional Proof Points"
+                    helperText="Specific metrics or outcomes not yet in the case study library: response time, client satisfaction scores, volume handled."
+                  >
+                    <TextareaWithCount
+                      value={form.additionalProofPoints}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          additionalProofPoints: val,
+                        }))
+                      }
+                      placeholder="e.g. 98% on-time delivery rate, 4.8/5 client satisfaction, 1,500+ assets per month capacity"
+                      rows={3}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Special Conditions"
+                    helperText="First project satisfaction guarantee, onboarding timeline, dedicated team structure — any specific commitments."
+                  >
+                    <TextareaWithCount
+                      value={form.specialConditions}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          specialConditions: val,
+                        }))
+                      }
+                      placeholder="e.g. 30-day satisfaction guarantee, dedicated team of 3, 2-week onboarding"
+                      rows={3}
+                    />
+                  </FormField>
+
+                  {/* Budget + Timeline (moved to advanced) */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      label="Estimated Budget Range"
+                      helperText="If known, helps calibrate the scope and pricing approach."
+                    >
+                      <input
+                        type="text"
+                        value={form.estimatedBudget}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            estimatedBudget: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g. 50,000 EUR"
+                        className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                      />
+                    </FormField>
+                    <FormField
+                      label="Delivery Timeline"
+                      helperText="When does the prospect need this delivered?"
+                    >
+                      <input
+                        type="text"
+                        value={form.timeline}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            timeline: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g. Q2 2026, 3 months"
+                        className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                      />
+                    </FormField>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Error */}
             {error && (

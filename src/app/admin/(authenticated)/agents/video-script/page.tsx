@@ -36,26 +36,6 @@ type GenerateApiResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
-// Spec-aligned platform options
-const PLATFORM_OPTIONS: { value: VideoPlatform; label: string }[] = [
-  { value: "tiktok", label: "TikTok" },
-  { value: "instagram", label: "Instagram Reels" },
-  { value: "youtube", label: "YouTube Shorts" },
-  { value: "youtube", label: "YouTube long-form" },
-  { value: "linkedin", label: "LinkedIn video" },
-  { value: "website", label: "Internal / Other" },
-];
-
-// Spec-aligned duration options
-const DURATION_OPTIONS = [
-  { value: "tiktok-15s", label: "15s" },
-  { value: "tiktok-30s", label: "30s" },
-  { value: "tiktok-60s", label: "60s" },
-  { value: "instagram-reel", label: "90s" },
-  { value: "youtube-short", label: "3-5min" },
-  { value: "youtube-long", label: "10min+" },
-] as const;
-
 // Script format options from specs
 const SCRIPT_FORMAT_OPTIONS = [
   "Voiceover",

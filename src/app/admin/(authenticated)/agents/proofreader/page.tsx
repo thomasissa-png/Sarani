@@ -30,11 +30,56 @@ type ReviewApiResponse = {
   usage: { inputTokens: number; outputTokens: number };
 };
 
+// Register options from specs
+const REGISTER_OPTIONS = ["Formal", "Standard", "Informal"] as const;
+
+// Review level options (spec: Surface / Deep / Complete)
+const REVIEW_LEVEL_OPTIONS = [
+  {
+    value: "surface",
+    label: "Surface",
+    description: "Spelling and grammar only",
+  },
+  {
+    value: "deep",
+    label: "Deep",
+    description: "Tone, style, and brand consistency",
+  },
+  {
+    value: "complete",
+    label: "Complete",
+    description: "Everything — spelling, grammar, tone, style, brand, glossary",
+  },
+] as const;
+
+type ReviewLevel = "surface" | "deep" | "complete";
+
+// Specific focus multi-select options from specs
+const SPECIFIC_FOCUS_OPTIONS = [
+  "Spelling",
+  "Grammar",
+  "Punctuation",
+  "Style consistency",
+  "Terminology",
+  "Formatting",
+  "Readability",
+  "Character count",
+] as const;
+
 type FormState = {
-  clientId: string;
+  // Required
   contentToReview: string;
-  contentType: ContentType;
   sourceLanguage: ProofreaderLanguage;
+  contentType: ContentType;
+  // Recommended
+  clientId: string;
+  register: string;
+  reviewLevel: ReviewLevel;
+  specificFocus: string[];
+  // Optional
+  knownIssues: string;
+  originalSource: string;
+  lengthConstraint: string;
   checkBrand: boolean;
   checkGlossary: boolean;
 };
@@ -43,7 +88,10 @@ type ActiveTab = "issues" | "improved" | "brand" | "glossary";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const STEPS = ["Select Client", "Configure", "Review & Generate"];
+const STEPS = ["Configure", "Review & Generate"];
+
+const GUIDANCE_MESSAGE =
+  "For a perfect proofread, I need to know the language, the register, and the content type. If there are client-specific terminology preferences or known inconsistencies to watch for, add them. The more context you give me, the fewer errors pass through to the client.";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -105,12 +153,21 @@ export default function ProofreaderPage() {
   // Client ref
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
+  // Advanced options toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   // Form state
   const [form, setForm] = useState<FormState>({
-    clientId: "",
     contentToReview: "",
-    contentType: "translation",
     sourceLanguage: "EN",
+    contentType: "presentation",
+    clientId: "",
+    register: "",
+    reviewLevel: "complete",
+    specificFocus: [],
+    knownIssues: "",
+    originalSource: "",
+    lengthConstraint: "",
     checkBrand: false,
     checkGlossary: false,
   });
@@ -143,18 +200,40 @@ export default function ProofreaderPage() {
     []
   );
 
+  // ── Toggle specific focus ─────────────────────────────────────────────
+
+  function toggleFocus(focus: string) {
+    setForm((prev) => {
+      const current = prev.specificFocus;
+      if (current.includes(focus)) {
+        return {
+          ...prev,
+          specificFocus: current.filter((f) => f !== focus),
+        };
+      }
+      return { ...prev, specificFocus: [...current, focus] };
+    });
+  }
+
   // ── Step validation ─────────────────────────────────────────────────────
 
   function canAdvanceFromStep(s: number): boolean {
-    // Step 0: client is optional for proofreader
-    if (s === 0) return true;
-    if (s === 1) return form.contentToReview.trim().length >= 20;
+    if (s === 0)
+      return (
+        form.contentToReview.trim().length >= 20 &&
+        !!form.sourceLanguage &&
+        !!form.contentType
+      );
     return true;
   }
 
   function getStepError(s: number): string | null {
-    if (s === 1 && form.contentToReview.trim().length < 20)
-      return "Content must be at least 20 characters to review.";
+    if (s === 0) {
+      if (form.contentToReview.trim().length < 20)
+        return "Content must be at least 20 characters to review.";
+      if (!form.sourceLanguage) return "Please select the content language.";
+      if (!form.contentType) return "Please select the content type.";
+    }
     return null;
   }
 
@@ -176,6 +255,14 @@ export default function ProofreaderPage() {
           sourceLanguage: form.sourceLanguage,
           checkBrand: form.checkBrand,
           checkGlossary: form.checkGlossary,
+          // Extended fields
+          register: form.register || undefined,
+          reviewLevel: form.reviewLevel,
+          specificFocus:
+            form.specificFocus.length > 0 ? form.specificFocus : undefined,
+          knownIssues: form.knownIssues || undefined,
+          originalSource: form.originalSource || undefined,
+          lengthConstraint: form.lengthConstraint || undefined,
         }),
       });
 
@@ -198,11 +285,6 @@ export default function ProofreaderPage() {
   // ── Build summary items ─────────────────────────────────────────────────
 
   function buildSummaryItems() {
-    const checks: string[] = [];
-    if (form.checkBrand) checks.push("Brand consistency");
-    if (form.checkGlossary) checks.push("Glossary compliance");
-    if (checks.length === 0) checks.push("Language only");
-
     return [
       {
         label: "Client",
@@ -213,7 +295,18 @@ export default function ProofreaderPage() {
         label: "Language",
         value: PROOFREADER_LANGUAGE_LABELS[form.sourceLanguage],
       },
-      { label: "Checks enabled", value: checks.join(", ") },
+      { label: "Review level", value: form.reviewLevel },
+      {
+        label: "Register",
+        value: form.register || "Not specified",
+      },
+      {
+        label: "Focus areas",
+        value:
+          form.specificFocus.length > 0
+            ? form.specificFocus.join(", ")
+            : "All",
+      },
       {
         label: "Content preview",
         value:
@@ -253,46 +346,23 @@ export default function ProofreaderPage() {
 
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
+        {/* Guidance message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+          <p className="text-sm text-blue-800 leading-relaxed">
+            {GUIDANCE_MESSAGE}
+          </p>
+        </div>
+
         <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* ── Step 0: Select Client (optional) ───────────────────────── */}
+        {/* ── Step 0: Configure ───────────────────────────────────────── */}
         {step === 0 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-brand-black">
-              Select Client
-            </h2>
-            <ClientSelector
-              value={form.clientId}
-              onChange={(id) => setForm((prev) => ({ ...prev, clientId: id }))}
-              required={false}
-              helperText="Optional. Selecting a client enables brand tone and glossary compliance checks."
-              onClientLoaded={handleClientLoaded}
-            />
-            <div className="flex justify-end pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setError(null);
-                  setStep(1);
-                }}
-                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
-              >
-                Next: Configure
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── Step 1: Configure ──────────────────────────────────────── */}
-        {step === 1 && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-brand-black">
               Configure Review
             </h2>
 
-            {selectedClient && (
-              <ClientContextPanel client={selectedClient} />
-            )}
+            {/* ── Required Fields ── */}
 
             {/* Content to review */}
             <FormField
@@ -314,38 +384,12 @@ export default function ProofreaderPage() {
               />
             </FormField>
 
-            {/* Content type + Language */}
+            {/* Language + Content type */}
             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                label="Content Type"
-                required
-                helperText="What kind of content is this? This helps the proofreader focus on the right criteria."
-              >
-                <select
-                  value={form.contentType}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      contentType: e.target.value as ContentType,
-                    }))
-                  }
-                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {CONTENT_TYPES.map((type) => (
-                    <option key={type} value={type}>
-                      {CONTENT_TYPE_LABELS[type]}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
               <FormField
                 label="Language"
                 required
-                helperText={
-                  selectedClient?.primaryLanguage
-                    ? `Auto-filled from ${selectedClient.name}'s primary language.`
-                    : "The language of the content being reviewed."
-                }
+                helperText="The language of the content determines which grammar, spelling, and style rules apply."
               >
                 <select
                   value={form.sourceLanguage}
@@ -364,26 +408,136 @@ export default function ProofreaderPage() {
                   ))}
                 </select>
               </FormField>
+
+              <FormField
+                label="Content Type"
+                required
+                helperText="A contract and a social post have different error priorities."
+              >
+                <select
+                  value={form.contentType}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      contentType: e.target.value as ContentType,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {CONTENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {CONTENT_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
             </div>
 
-            {/* Brand & Glossary checks */}
-            <div className="space-y-3">
-              <FormField
-                label="Quality Checks"
-                helperText={
-                  form.clientId
-                    ? "Enable additional checks based on client data."
-                    : "Select a client in Step 1 to enable these checks."
+            {/* ── Recommended Fields ── */}
+            <div className="border-t border-neutral-200 pt-4 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Recommended
+                </span>
+                <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full border border-orange-200">
+                  Recommended
+                </span>
+              </div>
+
+              {/* Client (recommended, not required for proofreader) */}
+              <ClientSelector
+                value={form.clientId}
+                onChange={(id) =>
+                  setForm((prev) => ({ ...prev, clientId: id }))
                 }
+                required={false}
+                helperText="Activates the client glossary (terms to use and not to use). Without it, the agent may 'correct' a brand-specific term."
+                onClientLoaded={handleClientLoaded}
+              />
+
+              {selectedClient && (
+                <ClientContextPanel client={selectedClient} />
+              )}
+
+              {/* Register + Review level */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  label="Register"
+                  helperText="Flags register inconsistencies within the document."
+                >
+                  <select
+                    value={form.register}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        register: e.target.value,
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    <option value="">Not specified</option>
+                    {REGISTER_OPTIONS.map((r) => (
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+
+                <FormField
+                  label="Review Level"
+                  helperText="How deep should the review go?"
+                >
+                  <select
+                    value={form.reviewLevel}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        reviewLevel: e.target.value as ReviewLevel,
+                      }))
+                    }
+                    className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    {REVIEW_LEVEL_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label} — {opt.description}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </div>
+
+              {/* Specific focus (multi-select chips) */}
+              <FormField
+                label="Specific Focus Areas"
+                helperText="Direct the agent's attention to specific areas. Select none for a comprehensive review."
               >
+                <div className="flex flex-wrap gap-2">
+                  {SPECIFIC_FOCUS_OPTIONS.map((focus) => (
+                    <button
+                      key={focus}
+                      type="button"
+                      onClick={() => toggleFocus(focus)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                        form.specificFocus.includes(focus)
+                          ? "bg-brand-black text-white border-brand-black"
+                          : "bg-white text-neutral-600 border-neutral-300 hover:border-neutral-400"
+                      }`}
+                    >
+                      {focus}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              {/* Brand & Glossary checks */}
+              {form.clientId && (
                 <div className="space-y-2">
                   <label
-                    className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                      form.clientId
-                        ? form.checkBrand
-                          ? "border-brand-cerulean bg-blue-50 cursor-pointer"
-                          : "border-neutral-200 hover:bg-neutral-50 cursor-pointer"
-                        : "border-neutral-100 bg-neutral-50 cursor-not-allowed opacity-60"
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      form.checkBrand
+                        ? "border-brand-cerulean bg-blue-50"
+                        : "border-neutral-200 hover:bg-neutral-50"
                     }`}
                   >
                     <input
@@ -395,7 +549,6 @@ export default function ProofreaderPage() {
                           checkBrand: e.target.checked,
                         }))
                       }
-                      disabled={!form.clientId}
                       className="mt-0.5 rounded border-neutral-300"
                     />
                     <div>
@@ -408,12 +561,10 @@ export default function ProofreaderPage() {
                     </div>
                   </label>
                   <label
-                    className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
-                      form.clientId
-                        ? form.checkGlossary
-                          ? "border-brand-cerulean bg-blue-50 cursor-pointer"
-                          : "border-neutral-200 hover:bg-neutral-50 cursor-pointer"
-                        : "border-neutral-100 bg-neutral-50 cursor-not-allowed opacity-60"
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      form.checkGlossary
+                        ? "border-brand-cerulean bg-blue-50"
+                        : "border-neutral-200 hover:bg-neutral-50"
                     }`}
                   >
                     <input
@@ -425,7 +576,6 @@ export default function ProofreaderPage() {
                           checkGlossary: e.target.checked,
                         }))
                       }
-                      disabled={!form.clientId}
                       className="mt-0.5 rounded border-neutral-300"
                     />
                     <div>
@@ -438,26 +588,94 @@ export default function ProofreaderPage() {
                     </div>
                   </label>
                 </div>
-              </FormField>
+              )}
+            </div>
+
+            {/* ── Optional Fields (collapsible) ── */}
+            <div className="border-t border-neutral-200 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-2 text-sm font-medium text-neutral-600 hover:text-brand-black transition-colors"
+              >
+                <span
+                  className={`transition-transform ${showAdvanced ? "rotate-90" : ""}`}
+                >
+                  &#9654;
+                </span>
+                Advanced options
+              </button>
+
+              {showAdvanced && (
+                <div className="mt-4 space-y-5">
+                  {/* Known issues */}
+                  <FormField
+                    label="Known Issues"
+                    helperText="If you already suspect specific problems, flagging them makes the review more targeted."
+                  >
+                    <TextareaWithCount
+                      value={form.knownIssues}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          knownIssues: val,
+                        }))
+                      }
+                      placeholder="The French version has inconsistent capitalization of 'Supply Chain', check every slide"
+                      rows={3}
+                    />
+                  </FormField>
+
+                  {/* Original source */}
+                  <FormField
+                    label="Original Source"
+                    helperText="For reviewing a translation: provide the source document so the QA agent can verify translation accuracy."
+                  >
+                    <TextareaWithCount
+                      value={form.originalSource}
+                      onChange={(val) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          originalSource: val,
+                        }))
+                      }
+                      placeholder="Paste the original source text for translation comparison..."
+                      rows={4}
+                    />
+                  </FormField>
+
+                  {/* Length constraint */}
+                  <FormField
+                    label="Length Constraint"
+                    helperText="For social posts and banners: the character limit. The agent will flag any element exceeding the allowed count."
+                  >
+                    <input
+                      type="text"
+                      value={form.lengthConstraint}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          lengthConstraint: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. 280 characters for Twitter, 2200 for Instagram"
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+                </div>
+              )}
             </div>
 
             {/* Step navigation */}
-            <div className="flex justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => setStep(0)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
-              >
-                Back
-              </button>
+            <div className="flex justify-end pt-2">
               <button
                 type="button"
                 onClick={() => {
-                  if (canAdvanceFromStep(1)) {
+                  if (canAdvanceFromStep(0)) {
                     setError(null);
-                    setStep(2);
+                    setStep(1);
                   } else {
-                    setError(getStepError(1));
+                    setError(getStepError(0));
                   }
                 }}
                 className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
@@ -468,8 +686,8 @@ export default function ProofreaderPage() {
           </div>
         )}
 
-        {/* ── Step 2: Review & Generate ──────────────────────────────── */}
-        {step === 2 && (
+        {/* ── Step 1: Review & Generate ──────────────────────────────── */}
+        {step === 1 && (
           <div className="space-y-5">
             <h2 className="text-lg font-semibold text-brand-black">
               Review & Generate
@@ -477,7 +695,7 @@ export default function ProofreaderPage() {
             <PreSubmitSummary
               items={buildSummaryItems()}
               onConfirm={handleReview}
-              onBack={() => setStep(1)}
+              onBack={() => setStep(0)}
               loading={reviewing}
               buttonLabel="Review Content"
             />
