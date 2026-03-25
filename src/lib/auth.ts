@@ -3,32 +3,30 @@ import { cookies } from "next/headers";
 const SESSION_COOKIE = "sarani_admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
+// ─── In-memory session store ────────────────────────────────────────────────
+// Maps opaque token → expiration timestamp.
+// In production with multiple instances, replace with Redis or DB lookup.
+
+const sessionStore = new Map<string, number>();
+
 /**
- * Generate a deterministic session token from the password.
- * Uses Web Crypto API (works in both Node.js and Edge runtime).
+ * Generate a cryptographically random opaque session token.
+ * No password or user data is encoded in the token.
  */
-async function generateSessionToken(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(`sarani-admin-${password}`);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+function generateOpaqueToken(): string {
+  return crypto.randomUUID();
 }
 
 /**
- * Synchronous token generation for middleware (no async subtle.digest).
- * Uses a simple string-based comparison instead.
+ * Clean up expired sessions (called lazily on auth checks).
  */
-function generateSessionTokenSync(password: string): string {
-  // Simple deterministic hash for middleware use
-  let hash = 0;
-  const str = `sarani-admin-${password}`;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash + char) | 0;
+function pruneExpiredSessions(): void {
+  const now = Date.now();
+  for (const [token, expiresAt] of sessionStore) {
+    if (expiresAt <= now) {
+      sessionStore.delete(token);
+    }
   }
-  // Combine with base64 of the password for uniqueness
-  return `s_${Math.abs(hash).toString(36)}_${btoa(str).slice(0, 32)}`;
 }
 
 export function verifyPassword(password: string): boolean {
@@ -41,10 +39,12 @@ export function verifyPassword(password: string): boolean {
 }
 
 export async function createSession(): Promise<void> {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminPassword) throw new Error("ADMIN_PASSWORD not set");
+  const token = generateOpaqueToken();
+  const expiresAt = Date.now() + SESSION_MAX_AGE * 1000;
 
-  const token = generateSessionTokenSync(adminPassword);
+  // Store token → expiry mapping
+  sessionStore.set(token, expiresAt);
+
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -57,19 +57,27 @@ export async function createSession(): Promise<void> {
 
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(SESSION_COOKIE);
+
+  // Remove from store if present
+  if (sessionCookie) {
+    sessionStore.delete(sessionCookie.value);
+  }
+
   cookieStore.delete(SESSION_COOKIE);
 }
 
 export async function isAuthenticated(): Promise<boolean> {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminPassword) return false;
+  pruneExpiredSessions();
 
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get(SESSION_COOKIE);
   if (!sessionCookie) return false;
 
-  const expectedToken = generateSessionTokenSync(adminPassword);
-  return sessionCookie.value === expectedToken;
+  const expiresAt = sessionStore.get(sessionCookie.value);
+  if (!expiresAt) return false;
+
+  return Date.now() < expiresAt;
 }
 
 /**
@@ -78,15 +86,18 @@ export async function isAuthenticated(): Promise<boolean> {
 export function isAuthenticatedFromCookie(
   cookieHeader: string | null
 ): boolean {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminPassword || !cookieHeader) return false;
+  if (!cookieHeader) return false;
+
+  pruneExpiredSessions();
 
   const parsedCookies = parseCookies(cookieHeader);
   const sessionValue = parsedCookies[SESSION_COOKIE];
   if (!sessionValue) return false;
 
-  const expectedToken = generateSessionTokenSync(adminPassword);
-  return sessionValue === expectedToken;
+  const expiresAt = sessionStore.get(sessionValue);
+  if (!expiresAt) return false;
+
+  return Date.now() < expiresAt;
 }
 
 function parseCookies(cookieHeader: string): Record<string, string> {
