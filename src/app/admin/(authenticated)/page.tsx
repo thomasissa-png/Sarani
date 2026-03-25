@@ -107,6 +107,26 @@ export default async function AdminDashboardPage() {
         <StatCard label="Outputs This Week" value={outputsThisWeekResult} />
       </div>
 
+      {/* Project Tracker CTA */}
+      <Link
+        href="/admin/tracker"
+        className="block rounded-xl border border-neutral-300 bg-white p-5 hover:border-brand-cerulean hover:shadow-sm transition-all group"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-black group-hover:text-brand-cerulean transition-colors">
+              Project Tracker
+            </h2>
+            <p className="text-neutral-500 text-sm mt-0.5">
+              Unified view across ClickUp, SharePoint &amp; Evoliz
+            </p>
+          </div>
+          <svg className="w-5 h-5 text-neutral-400 group-hover:text-brand-cerulean transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+      </Link>
+
       {/* Quick Actions — All agents */}
       <div>
         <h2 className="text-lg font-semibold text-brand-black mb-3">
