@@ -29,13 +29,19 @@ export default function LegalPage() {
           </p>
 
           {/* Table of Contents */}
-          <nav aria-label="Table of contents" className="mb-12">
+          <nav
+            aria-label="Table of contents"
+            className="mb-12 rounded-xl border border-neutral-200 bg-surface-elevated p-6"
+          >
+            <p className="mb-3 text-sm font-bold uppercase tracking-wider text-neutral-500">
+              Contents
+            </p>
             <ol className="list-inside list-decimal space-y-2 text-neutral-600">
               {TOC_ITEMS.map((item) => (
                 <li key={item.id}>
                   <a
                     href={`#${item.id}`}
-                    className="underline underline-offset-4 transition-colors hover:text-brand-black"
+                    className="underline underline-offset-4 transition-colors hover:text-brand-cerulean-dark"
                   >
                     {item.label}
                   </a>
@@ -45,7 +51,7 @@ export default function LegalPage() {
           </nav>
 
           {/* Section 1: Company Information */}
-          <section id="company-information" className="mb-12">
+          <section id="company-information" className="mb-12 scroll-mt-[calc(var(--header-height)+2rem)]">
             <h2 className="mb-4 text-2xl font-bold text-brand-black">
               Company Information
             </h2>
@@ -81,7 +87,7 @@ export default function LegalPage() {
           </section>
 
           {/* Section 2: Privacy Policy */}
-          <section id="privacy-policy" className="mb-12">
+          <section id="privacy-policy" className="mb-12 scroll-mt-[calc(var(--header-height)+2rem)]">
             <h2 className="mb-4 text-2xl font-bold text-brand-black">
               Privacy Policy
             </h2>
@@ -131,7 +137,7 @@ export default function LegalPage() {
           </section>
 
           {/* Section 3: Data Processing */}
-          <section id="data-processing" className="mb-12">
+          <section id="data-processing" className="mb-12 scroll-mt-[calc(var(--header-height)+2rem)]">
             <h2 className="mb-4 text-2xl font-bold text-brand-black">
               Data Processing
             </h2>
@@ -156,7 +162,7 @@ export default function LegalPage() {
           </section>
 
           {/* Section 4: Your Rights */}
-          <section id="your-rights" className="mb-12">
+          <section id="your-rights" className="mb-12 scroll-mt-[calc(var(--header-height)+2rem)]">
             <h2 className="mb-4 text-2xl font-bold text-brand-black">
               Your Rights (GDPR Articles 15-22)
             </h2>
@@ -197,7 +203,7 @@ export default function LegalPage() {
           </section>
 
           {/* Section 5: Framework Agreements & DPA */}
-          <section id="framework-agreements" className="mb-12">
+          <section id="framework-agreements" className="mb-12 scroll-mt-[calc(var(--header-height)+2rem)]">
             <h2 className="mb-4 text-2xl font-bold text-brand-black">
               Framework Agreements &amp; DPA
             </h2>
@@ -214,7 +220,7 @@ export default function LegalPage() {
           </section>
 
           {/* Section 6: Analytics */}
-          <section id="analytics" className="mb-12">
+          <section id="analytics" className="mb-12 scroll-mt-[calc(var(--header-height)+2rem)]">
             <h2 className="mb-4 text-2xl font-bold text-brand-black">
               Analytics
             </h2>
