@@ -7,6 +7,8 @@ import {
   jsonb,
   index,
   varchar,
+  integer,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 // ─── Client ─────────────────────────────────────────────────────────────────
@@ -118,6 +120,72 @@ export const users = pgTable(
   (table) => [index("idx_users_email").on(table.email)]
 );
 
+// ─── Sync Cache ─────────────────────────────────────────────────────────────
+// Caches external API responses (ClickUp, SharePoint, Evoliz) with TTL.
+
+export const syncCache = pgTable(
+  "sync_cache",
+  {
+    key: text("key").primaryKey(), // e.g. "clickup:spaces", "sharepoint:tracker:Sony"
+    source: varchar("source", { length: 20 }).notNull(), // "clickup" | "sharepoint" | "evoliz"
+    data: jsonb("data").notNull(), // cached JSON response
+    fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
+    ttlSeconds: integer("ttl_seconds").notNull().default(300),
+  },
+  (table) => [index("idx_sync_cache_source").on(table.source)]
+);
+
+// ─── Sync Logs ──────────────────────────────────────────────────────────────
+// Audit trail for all external API interactions (reads and writes).
+
+export const syncLogs = pgTable(
+  "sync_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: varchar("source", { length: 20 }).notNull(), // "clickup" | "sharepoint" | "evoliz"
+    action: varchar("action", { length: 50 }).notNull(), // "read_tasks" | "update_row" | "create_folder" etc.
+    entityId: text("entity_id"), // external ID of the affected entity
+    payload: jsonb("payload"), // request/response data for debugging
+    status: varchar("status", { length: 20 }).notNull().default("success"), // "success" | "error" | "retrying"
+    error: text("error"), // error message if status is "error"
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_sync_logs_source").on(table.source),
+    index("idx_sync_logs_created_at").on(table.createdAt),
+  ]
+);
+
+// ─── Quotes ─────────────────────────────────────────────────────────────────
+// Generated quote PDFs with snapshot of pricing data.
+
+export const quotes = pgTable(
+  "quotes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientName: text("client_name").notNull(),
+    projectName: text("project_name").notNull(),
+    items: jsonb("items").notNull().$type<QuoteLineItem[]>(),
+    total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull().default("EUR"),
+    pdfUrl: text("pdf_url"), // SharePoint URL or null if not yet uploaded
+    createdBy: text("created_by").notNull(), // user ID or email
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_quotes_client_name").on(table.clientName),
+    index("idx_quotes_created_by").on(table.createdBy),
+  ]
+);
+
+/** Shape of a single line item within a quote */
+export interface QuoteLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -128,3 +196,9 @@ export type ClientGlossaryEntry = typeof clientGlossaryEntries.$inferSelect;
 export type ContractTemplate = typeof contractTemplates.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+export type SyncCache = typeof syncCache.$inferSelect;
+export type NewSyncCache = typeof syncCache.$inferInsert;
+export type SyncLog = typeof syncLogs.$inferSelect;
+export type NewSyncLog = typeof syncLogs.$inferInsert;
+export type Quote = typeof quotes.$inferSelect;
+export type NewQuote = typeof quotes.$inferInsert;
