@@ -82,8 +82,12 @@ export async function POST(request: NextRequest) {
       day: "numeric",
     });
 
+    // Generate quote number
+    const quoteNumber = await generateQuoteNumber();
+
     // Generate PDF
     const pdfData: QuotePDFData = {
+      quoteNumber,
       date: dateStr,
       clientName: data.clientName,
       contactName: data.contactName,
@@ -139,6 +143,7 @@ export async function POST(request: NextRequest) {
     const [savedQuote] = await db
       .insert(quotes)
       .values({
+        quoteNumber,
         clientName: data.clientName,
         projectName: data.projectName,
         items: data.items,
@@ -154,8 +159,9 @@ export async function POST(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="quote_${savedQuote.id}.pdf"`,
+        "Content-Disposition": `attachment; filename="${quoteNumber}.pdf"`,
         "X-Quote-Id": savedQuote.id,
+        "X-Quote-Number": quoteNumber,
       },
     });
 

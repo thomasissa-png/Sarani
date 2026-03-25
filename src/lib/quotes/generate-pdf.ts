@@ -16,6 +16,7 @@ export interface QuoteLineItem {
 }
 
 export interface QuotePDFData {
+  quoteNumber: string;
   date: string;
   clientName: string;
   contactName: string;
@@ -198,6 +199,16 @@ export async function generateQuotePDF(
   }
 
   // ─── Date ────────────────────────────────────────────────────────────────
+
+  // Quote number (right-aligned)
+  const qnWidth = helveticaBold.widthOfTextAtSize(data.quoteNumber, 10);
+  currentPage.drawText(data.quoteNumber, {
+    x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth,
+    y,
+    size: 10,
+    font: helveticaBold,
+    color: COLOR_BLACK,
+  });
 
   currentPage.drawText(data.date, {
     x: MARGIN_LEFT,
