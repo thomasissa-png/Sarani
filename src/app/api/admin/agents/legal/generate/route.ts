@@ -46,10 +46,8 @@ function buildUserMessage(
   parts.push(`- Contact email: ${client.primaryContactEmail || "Not specified"}`);
   parts.push(``);
 
-  // Agency context (Sarani)
-  parts.push(`AGENCY (SERVICE PROVIDER):`);
-  parts.push(`- Name: Sarani`);
-  parts.push(`- Type: International Creative Agency`);
+  // Agency context (Sarani) — full legal details are in the system prompt
+  parts.push(`AGENCY (SERVICE PROVIDER): SARANI SASU (details in system prompt)`);
   parts.push(``);
 
   // Contract variables

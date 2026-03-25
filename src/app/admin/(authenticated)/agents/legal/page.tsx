@@ -432,7 +432,7 @@ export default function LegalAgentPage() {
                 {CONTRACT_TYPES.map((type) => (
                   <label
                     key={type}
-                    className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    className={`flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
                       form.contractType === type
                         ? "border-brand-cerulean bg-blue-50/50"
                         : "border-neutral-200 hover:border-neutral-300"
@@ -449,15 +449,19 @@ export default function LegalAgentPage() {
                           contractType: e.target.value as ContractType,
                         }))
                       }
-                      className="shrink-0"
+                      className="shrink-0 mt-0.5"
                     />
                     <div>
                       <span className="text-sm font-medium text-brand-black">
-                        {type}
+                        {CONTRACT_TYPE_LABELS[type]}
                       </span>
-                      <span className="text-xs text-neutral-500 ml-1">
-                        -- {CONTRACT_TYPE_LABELS[type]}
-                      </span>
+                      <p className="text-xs text-neutral-500 mt-0.5">
+                        {type === "SOW" && "Simple Sarani format (2-3 pages). Scope, deliverables, payment, signatures."}
+                        {type === "ServiceAgreement" && "Full enterprise format (8-15 pages). Definitions, IP, compliance, arbitration."}
+                        {type === "TalentAgreement" && "Talent/creator engagement. Events, production, rights management."}
+                        {type === "NDA" && "Confidentiality agreement between Sarani and a third party."}
+                        {type === "Freelance" && "Independent contractor engagement. IP assignment, payment, confidentiality."}
+                      </p>
                     </div>
                   </label>
                 ))}
