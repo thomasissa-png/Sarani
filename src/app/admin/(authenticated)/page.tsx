@@ -112,7 +112,12 @@ export default async function AdminDashboardPage() {
         <h2 className="text-lg font-semibold text-brand-black mb-3">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <QuickActionCard
+            label="Quick Brief"
+            href="/admin/quick-brief"
+            description="Paste & analyze"
+          />
           <QuickActionCard
             label="Project Manager"
             href="/admin/agents/pm"
