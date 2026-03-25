@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import {
@@ -17,6 +17,13 @@ import {
   type SeoBlogOutlineResponse,
   type SeoResponse,
 } from "@/lib/validations/seo";
+import {
+  ClientSelector,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -37,12 +44,16 @@ type FormState = {
   topic: string;
 };
 
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function SeoPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Client data
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -62,50 +73,39 @@ export default function SeoPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Smart defaults when client is loaded ─────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+  const handleClientLoaded = useCallback((client: Client | null) => {
+    setSelectedClient(client);
+    if (client?.primaryLanguage) {
+      const lang = client.primaryLanguage.toUpperCase();
+      const validLangs: SeoLanguage[] = ["EN", "FR", "ES", "DE", "IT", "PT", "NL", "AR", "ZH", "JA"];
+      if (validLangs.includes(lang as SeoLanguage)) {
+        setForm((prev) => ({ ...prev, language: lang as SeoLanguage }));
       }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  // ── Step validation ─────────────────────────────────────────────────────
+
+  function canProceedStep0(): boolean {
+    return !!form.clientId;
+  }
+
+  function canProceedStep1(): boolean {
+    return (
+      !!form.targetKeyword.trim() &&
+      form.topic.length >= 30
+    );
+  }
 
   // ── Handle generate ─────────────────────────────────────────────────────
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setResult(null);
     setResultType(null);
     setCopied(false);
-
-    if (!form.clientId) {
-      setError("Please select a client.");
-      return;
-    }
-
-    if (!form.targetKeyword.trim()) {
-      setError("Please enter a target keyword.");
-      return;
-    }
-
-    if (!form.topic.trim()) {
-      setError("Please enter a topic or brief.");
-      return;
-    }
-
     setGenerating(true);
 
     try {
@@ -160,6 +160,30 @@ export default function SeoPage() {
     URL.revokeObjectURL(url);
   }
 
+  // ── Build summary items ────────────────────────────────────────────────
+
+  function getSummaryItems() {
+    return [
+      { label: "Client", value: selectedClient?.name || "---" },
+      { label: "Content Type", value: SEO_CONTENT_TYPE_LABELS[form.contentType] },
+      { label: "Target Keyword", value: form.targetKeyword || "---" },
+      ...(form.secondaryKeywords
+        ? [{ label: "Secondary Keywords", value: form.secondaryKeywords }]
+        : []),
+      { label: "Language", value: SEO_LANGUAGE_LABELS[form.language] },
+      ...(form.contentType === "article"
+        ? [{ label: "Word Count", value: `${form.wordCount.toLocaleString()} words` }]
+        : []),
+      {
+        label: "Topic",
+        value:
+          form.topic.length > 80
+            ? form.topic.slice(0, 80) + "..."
+            : form.topic,
+      },
+    ];
+  }
+
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
@@ -181,210 +205,220 @@ export default function SeoPage() {
       </div>
 
       {/* Generation Form */}
-      <form
-        onSubmit={handleGenerate}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           New SEO Content
         </h2>
 
-        {/* Client select (required) */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client <span className="text-red-500">*</span>
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <select
-              id="client"
+        <StepIndicator steps={STEPS} currentStep={step} />
+
+        {/* ── Step 0: Select Client ─────────────────────────────────────── */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
               value={form.clientId}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, clientId: e.target.value }))
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
               }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">Select a client</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.industry})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+              required
+              helperText="Select the client to align SEO content with their brand voice and industry context."
+              onClientLoaded={handleClientLoaded}
+            />
 
-        {/* Content type and language */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="contentType"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Content Type
-            </label>
-            <select
-              id="contentType"
-              value={form.contentType}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  contentType: e.target.value as SeoContentType,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {SEO_CONTENT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {SEO_CONTENT_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="language"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Language
-            </label>
-            <select
-              id="language"
-              value={form.language}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  language: e.target.value as SeoLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {SEO_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {SEO_LANGUAGE_LABELS[lang]} ({lang})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Target keyword */}
-        <div>
-          <label
-            htmlFor="targetKeyword"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Target Keyword <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="targetKeyword"
-            type="text"
-            value={form.targetKeyword}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, targetKeyword: e.target.value }))
-            }
-            placeholder="e.g. best project management tools"
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          />
-        </div>
-
-        {/* Secondary keywords */}
-        <div>
-          <label
-            htmlFor="secondaryKeywords"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Secondary Keywords{" "}
-            <span className="text-neutral-400 font-normal">
-              (comma-separated)
-            </span>
-          </label>
-          <input
-            id="secondaryKeywords"
-            type="text"
-            value={form.secondaryKeywords}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                secondaryKeywords: e.target.value,
-              }))
-            }
-            placeholder="e.g. task management, team collaboration, productivity software"
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          />
-        </div>
-
-        {/* Word count (only for articles) */}
-        {form.contentType === "article" && (
-          <div>
-            <label
-              htmlFor="wordCount"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Target Word Count
-            </label>
-            <select
-              id="wordCount"
-              value={form.wordCount}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  wordCount: Number(e.target.value),
-                }))
-              }
-              className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {WORD_COUNT_OPTIONS.map((wc) => (
-                <option key={wc} value={wc}>
-                  {wc.toLocaleString()} words
-                </option>
-              ))}
-            </select>
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                disabled={!canProceedStep0()}
+                onClick={() => setStep(1)}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Configure
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Topic / brief */}
-        <div>
-          <label
-            htmlFor="topic"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Topic / Brief <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="topic"
-            value={form.topic}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, topic: e.target.value }))
-            }
-            placeholder="Describe the topic, target audience, key points to cover, and any specific requirements..."
-            rows={5}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
+        {/* ── Step 1: Configure ─────────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Content type and language */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Content Type"
+                required
+                helperText="Article generates full content. Meta-description creates SERP snippets. Keyword-research finds opportunities. Blog-outline creates a structured plan."
+              >
+                <select
+                  value={form.contentType}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      contentType: e.target.value as SeoContentType,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {SEO_CONTENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {SEO_CONTENT_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField
+                label="Language"
+                helperText="Auto-filled from client profile."
+              >
+                <select
+                  value={form.language}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      language: e.target.value as SeoLanguage,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {SEO_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {SEO_LANGUAGE_LABELS[lang]} ({lang})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
 
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
+            {/* Target keyword */}
+            <FormField
+              label="Target Keyword"
+              required
+              helperText="The primary keyword you want to rank for. Use 2-4 words for best results."
+            >
+              <input
+                type="text"
+                value={form.targetKeyword}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    targetKeyword: e.target.value,
+                  }))
+                }
+                placeholder="e.g. creative agency international"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Secondary keywords */}
+            <FormField
+              label="Secondary Keywords"
+              helperText="Comma-separated list of supporting keywords to include naturally in the content."
+            >
+              <input
+                type="text"
+                value={form.secondaryKeywords}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    secondaryKeywords: e.target.value,
+                  }))
+                }
+                placeholder="e.g. global creative production, multilingual design, cross-market campaigns"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Word count (only for articles) */}
+            {form.contentType === "article" && (
+              <FormField
+                label="Target Word Count"
+                helperText="Longer articles (1500+) tend to rank better for competitive keywords."
+              >
+                <select
+                  value={form.wordCount}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      wordCount: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full max-w-xs px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {WORD_COUNT_OPTIONS.map((wc) => (
+                    <option key={wc} value={wc}>
+                      {wc.toLocaleString()} words
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            )}
+
+            {/* Topic / brief */}
+            <FormField
+              label="Topic / Brief"
+              required
+              helperText="Describe the angle, target audience, and key points. The more context you provide, the better the output."
+            >
+              <TextareaWithCount
+                value={form.topic}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, topic: val }))
+                }
+                placeholder="e.g. Why international brands need a 24/7 creative agency — speed, quality, and cost advantages"
+                minLength={30}
+                rows={5}
+              />
+            </FormField>
+
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={!canProceedStep1()}
+                onClick={() => {
+                  setError(null);
+                  setStep(2);
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Review
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Generate"}
-          </button>
-        </div>
-      </form>
+        {/* ── Step 2: Review & Generate ─────────────────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-4">
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onConfirm={handleGenerate}
+              onBack={() => setStep(1)}
+              loading={generating}
+              buttonLabel="Generate"
+            />
+          </div>
+        )}
+      </div>
 
       {/* Result */}
       {result && resultType && (

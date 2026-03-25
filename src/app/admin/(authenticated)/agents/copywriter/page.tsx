@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import {
@@ -12,6 +12,13 @@ import {
   type ContentType,
   type CopywriterResponse,
 } from "@/lib/validations/copywriter";
+import {
+  ClientSelector,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -32,12 +39,36 @@ type FormState = {
   variantCount: number;
 };
 
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
+// ─── Topic placeholder examples per content type ────────────────────────────
+
+const TOPIC_PLACEHOLDERS: Partial<Record<ContentType, string>> = {
+  email:
+    "e.g. Welcome email for new GEODIS logistics partnership — introduce key account manager, highlight SLA commitments, schedule kickoff call",
+  tagline:
+    "e.g. Sarani unlimited creativity positioning — convey scale, speed, and AI-powered creative production for global brands",
+  "social-post":
+    "e.g. Instagram carousel for Sony ULT headphones launch — 5 slides, lifestyle + product shots, Gen Z audience",
+  "press-release":
+    "e.g. Sarani announces partnership with Publicis Groupe — AI creative production at scale for their global client portfolio",
+  "ad-copy":
+    "e.g. Google Ads campaign for Black Friday electronics deals — urgency messaging, price anchoring, multiple headline variants",
+  "blog-post":
+    "e.g. How AI is transforming creative production for global agencies — thought leadership piece, 1500 words, SEO-optimized",
+};
+
+const DEFAULT_TOPIC_PLACEHOLDER =
+  "e.g. Describe the content topic, context, and any specific angles or messages to include";
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function CopywriterPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Selected client object
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -56,47 +87,38 @@ export default function CopywriterPage() {
   const [result, setResult] = useState<CopywriterResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Step validation ─────────────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+  function isStep0Valid(): boolean {
+    return !!form.clientId;
+  }
+
+  function isStep1Valid(): boolean {
+    return (
+      form.topic.length >= 20 && !!form.targetAudience.trim()
+    );
+  }
+
+  // ── Client loaded callback — auto-fill language ───────────────────────
+
+  const handleClientLoaded = useCallback(
+    (client: Client | null) => {
+      setSelectedClient(client);
+      if (client?.primaryLanguage) {
+        const lang = client.primaryLanguage as SupportedLanguage;
+        if (SUPPORTED_LANGUAGES.includes(lang)) {
+          setForm((prev) => ({ ...prev, language: lang }));
+        }
       }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+    },
+    []
+  );
 
   // ── Handle generate ─────────────────────────────────────────────────────
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setResult(null);
-
-    if (!form.clientId) {
-      setError("Please select a client.");
-      return;
-    }
-
-    if (!form.topic.trim()) {
-      setError("Please enter a topic or brief.");
-      return;
-    }
-
-    if (!form.targetAudience.trim()) {
-      setError("Please describe the target audience.");
-      return;
-    }
 
     setGenerating(true);
 
@@ -132,6 +154,53 @@ export default function CopywriterPage() {
     }
   }
 
+  // ── Build summary items ───────────────────────────────────────────────
+
+  function getSummaryItems(): { label: string; value: string }[] {
+    const items: { label: string; value: string }[] = [
+      { label: "Client", value: selectedClient?.name || "---" },
+      {
+        label: "Content Type",
+        value: CONTENT_TYPE_LABELS[form.contentType],
+      },
+      {
+        label: "Topic",
+        value:
+          form.topic.length > 100
+            ? form.topic.slice(0, 100) + "..."
+            : form.topic,
+      },
+      { label: "Target Audience", value: form.targetAudience },
+      {
+        label: "Language",
+        value: `${LANGUAGE_LABELS[form.language]} (${form.language})`,
+      },
+      {
+        label: "Variants",
+        value:
+          form.variantCount === 1
+            ? "1 (primary only)"
+            : `${form.variantCount} (primary + ${form.variantCount - 1} variants)`,
+      },
+    ];
+
+    if (form.tone.trim()) {
+      items.push({ label: "Tone Override", value: form.tone });
+    }
+
+    if (form.keyMessages.trim()) {
+      items.push({
+        label: "Key Messages",
+        value:
+          form.keyMessages.length > 80
+            ? form.keyMessages.slice(0, 80) + "..."
+            : form.keyMessages,
+      });
+    }
+
+    return items;
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -153,224 +222,227 @@ export default function CopywriterPage() {
       </div>
 
       {/* Generation Form */}
-      <form
-        onSubmit={handleGenerate}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           New Content
         </h2>
 
-        {/* Client select (required) */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client <span className="text-red-500">*</span>
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <select
-              id="client"
+        <StepIndicator steps={STEPS} currentStep={step} />
+
+        {/* Step 0: Select Client */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
               value={form.clientId}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, clientId: e.target.value }))
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
               }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">Select a client...</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.industry})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Content type + Language */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="contentType"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Content Type <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="contentType"
-              value={form.contentType}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  contentType: e.target.value as ContentType,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {CONTENT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {CONTENT_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="language"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Language <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="language"
-              value={form.language}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  language: e.target.value as SupportedLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {LANGUAGE_LABELS[lang]} ({lang})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Topic textarea */}
-        <div>
-          <label
-            htmlFor="topic"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Topic / Brief <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="topic"
-            value={form.topic}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, topic: e.target.value }))
-            }
-            placeholder="Describe what the content should be about..."
-            rows={4}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Target audience */}
-        <div>
-          <label
-            htmlFor="targetAudience"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Target Audience <span className="text-red-500">*</span>
-          </label>
-          <input
-            id="targetAudience"
-            type="text"
-            value={form.targetAudience}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, targetAudience: e.target.value }))
-            }
-            placeholder="e.g., CMOs at mid-size SaaS companies, luxury retail consumers aged 25-40..."
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          />
-        </div>
-
-        {/* Key messages */}
-        <div>
-          <label
-            htmlFor="keyMessages"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Key Messages{" "}
-            <span className="text-neutral-400 font-normal">(optional)</span>
-          </label>
-          <textarea
-            id="keyMessages"
-            value={form.keyMessages}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, keyMessages: e.target.value }))
-            }
-            placeholder="List the key points or messages to include..."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Tone override + Variant count */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="tone"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Tone Override{" "}
-              <span className="text-neutral-400 font-normal">(optional)</span>
-            </label>
-            <input
-              id="tone"
-              type="text"
-              value={form.tone}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, tone: e.target.value }))
-              }
-              placeholder="e.g., Urgent and bold, Warm and conversational..."
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              onClientLoaded={handleClientLoaded}
+              helperText="Select the client. Their brand tone, voice guidelines, and primary language will be applied to the generated copy."
             />
-          </div>
-          <div>
-            <label
-              htmlFor="variantCount"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Variants (1-5)
-            </label>
-            <select
-              id="variantCount"
-              value={form.variantCount}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  variantCount: Number(e.target.value),
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n === 1 ? "1 (primary only)" : `${n} (primary + ${n - 1} variants)`}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={!isStep0Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Generate"}
-          </button>
-        </div>
-      </form>
+        {/* Step 1: Configure */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Content type + Language */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Content Type"
+                required
+                helperText="What kind of copy do you need? This shapes the structure, length, and format of the output."
+              >
+                <select
+                  value={form.contentType}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      contentType: e.target.value as ContentType,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {CONTENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {CONTENT_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label="Language"
+                required
+                helperText="Auto-filled from client profile. Change if you need copy in a different language."
+              >
+                <select
+                  value={form.language}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      language: e.target.value as SupportedLanguage,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {LANGUAGE_LABELS[lang]} ({lang})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            {/* Topic textarea */}
+            <FormField
+              label="Topic / Brief"
+              required
+              helperText="Describe what the content should be about. Include context, goals, and any specific angles."
+            >
+              <TextareaWithCount
+                value={form.topic}
+                onChange={(topic) =>
+                  setForm((prev) => ({ ...prev, topic }))
+                }
+                placeholder={
+                  TOPIC_PLACEHOLDERS[form.contentType] ||
+                  DEFAULT_TOPIC_PLACEHOLDER
+                }
+                minLength={20}
+                rows={4}
+              />
+            </FormField>
+
+            {/* Target audience */}
+            <FormField
+              label="Target Audience"
+              required
+              helperText="Who will read this content? The more specific, the better the tone and messaging."
+            >
+              <input
+                type="text"
+                value={form.targetAudience}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    targetAudience: e.target.value,
+                  }))
+                }
+                placeholder="e.g. CMOs at mid-size SaaS companies, luxury retail consumers aged 25-40, internal sales team..."
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Key messages */}
+            <FormField
+              label="Key Messages"
+              helperText="Optional. List the key points or messages the copy must include. One per line works best."
+            >
+              <TextareaWithCount
+                value={form.keyMessages}
+                onChange={(keyMessages) =>
+                  setForm((prev) => ({ ...prev, keyMessages }))
+                }
+                placeholder="e.g. 1. We produce creative 10x faster than traditional agencies&#10;2. AI-powered but human-reviewed quality&#10;3. Works with your existing brand guidelines"
+                rows={3}
+              />
+            </FormField>
+
+            {/* Tone override + Variant count */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Tone Override"
+                helperText="Optional. Overrides the client's default brand tone for this specific piece."
+              >
+                <input
+                  type="text"
+                  value={form.tone}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, tone: e.target.value }))
+                  }
+                  placeholder="e.g. Urgent and bold, Warm and conversational, Technical and precise..."
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+
+              <FormField
+                label="Variants"
+                helperText="Generate multiple versions to A/B test or pick the best one."
+              >
+                <select
+                  value={form.variantCount}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      variantCount: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>
+                      {n === 1
+                        ? "1 (primary only)"
+                        : `${n} (primary + ${n - 1} variants)`}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={!isStep1Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Review & Generate */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onBack={() => setStep(1)}
+              onConfirm={handleGenerate}
+              loading={generating}
+              buttonLabel="Generate"
+            />
+
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Output */}
       {result && <CopywriterOutput result={result} />}

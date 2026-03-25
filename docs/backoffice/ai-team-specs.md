@@ -20,7 +20,14 @@
 7. [Agent 5 — Legal IA](#7-agent-5--legal-ia)
 8. [Agent 6 — Social IA](#8-agent-6--social-ia)
 9. [Agent 7 — SEO IA](#9-agent-7--seo-ia)
-10. [Hypothèses à valider](#10-hypotheses-a-valider)
+10. [Agent 8 — Copywriter IA](#10-agent-8--copywriter-ia)
+11. [Agent 9 — Proposal/Pitch IA](#11-agent-9--proposalpitch-ia)
+12. [Agent 10 — Presentation IA](#12-agent-10--presentation-ia)
+13. [Agent 11 — Email Drafter IA](#13-agent-11--email-drafter-ia)
+14. [Agent 12 — Video Script IA](#14-agent-12--video-script-ia)
+15. [Agent 13 — QA/Proofreader IA](#15-agent-13--qaproofreader-ia)
+16. [UX Guidelines — Idiot-Proof Forms](#16-ux-guidelines--idiot-proof-forms)
+17. [Hypothèses à valider](#17-hypotheses-a-valider)
 
 ---
 
@@ -185,10 +192,14 @@ Sous-tâche simple                          Sous-tâche complexe
 │ Translator  │  │  Creative    │  │ Designer  │  │  Legal IA    │
 │             │  │  Strategist  │  │  IA       │  │              │
 └─────────────┘  └──────────────┘  └───────────┘  └──────────────┘
-┌─────────────┐  ┌──────────────┐
-│  Social IA  │  │   SEO IA     │
-│             │  │              │
-└─────────────┘  └──────────────┘
+┌─────────────┐  ┌──────────────┐  ┌───────────┐  ┌──────────────┐
+│  Social IA  │  │   SEO IA     │  │Copywriter │  │ Proposal/    │
+│             │  │              │  │    IA     │  │  Pitch IA    │
+└─────────────┘  └──────────────┘  └───────────┘  └──────────────┘
+┌─────────────┐  ┌──────────────┐  ┌───────────┐  ┌──────────────┐
+│Presentation │  │ Email Drafter│  │  Video    │  │     QA/      │
+│     IA      │  │      IA      │  │ Script IA │  │ Proofreader  │
+└─────────────┘  └──────────────┘  └───────────┘  └──────────────┘
           │
           ▼
 Output sauvegardé en BDD
@@ -200,7 +211,7 @@ PM IA agrège les outputs
 + prépare le rendu client
 ```
 
-**Règle d'orchestration** : seul le PM IA peut dispatch vers d'autres agents. Les autres agents ne s'invoquent pas entre eux directement — toutes les chaînes passent par le PM IA.
+**Règle d'orchestration** : seul le PM IA peut dispatch vers d'autres agents. Les autres agents ne s'invoquent pas entre eux directement — toutes les chaînes passent par le PM IA. Le PM IA peut dispatcher vers 12 agents spécialisés (Agents 2 à 13).
 
 ---
 
@@ -217,7 +228,13 @@ Hypothèses : 20 sessions/jour, mix de tâches (traduction courte, contrat, post
 | Legal IA | Claude Sonnet 4.5 | ~$0.015 | 50 req/mois | ~$0.75 |
 | Social IA | Claude Sonnet 4.5 | ~$0.006 | 120 req/mois | ~$0.72 |
 | SEO IA | Claude Sonnet 4.5 | ~$0.02 (article long) | 30 req/mois | ~$0.6 |
-| **Total** | — | — | — | **~$17/mois** |
+| Copywriter IA | Claude Sonnet 4.5 | ~$0.008 | 150 req/mois | ~$1.2 |
+| Proposal/Pitch IA | Claude Opus 4 | ~$0.08 | 20 req/mois | ~$1.6 |
+| Presentation IA | Claude Sonnet 4.5 | ~$0.02 (40 slides) | 40 req/mois | ~$0.8 |
+| Email Drafter IA | Claude Sonnet 4.5 | ~$0.006 | 200 req/mois | ~$1.2 |
+| Video Script IA | Claude Sonnet 4.5 | ~$0.01 | 100 req/mois | ~$1.0 |
+| QA/Proofreader IA | Claude Sonnet 4.5 | ~$0.01 | 150 req/mois | ~$1.5 |
+| **Total** | — | — | — | **~$23.57/mois** |
 
 [HYPOTHÈSE : ces estimations supposent un usage modéré (usage daily par 2 utilisateurs). Si 35 experts utilisent le back-office quotidiennement, multiplier par ~5-10. Budget reste raisonnable vs valeur produite.]
 
@@ -409,6 +426,12 @@ Then : il liste les informations manquantes avant de proposer une décomposition
 | Legal IA | Dispatch sous-brief | Brief contient un besoin contractuel |
 | Social IA | Dispatch sous-brief | Brief contient un besoin de contenu social |
 | SEO IA | Dispatch sous-brief | Brief contient un besoin éditorial/SEO |
+| Copywriter IA | Dispatch sous-brief | Brief contient un besoin de copy (email, tagline, ad copy, etc.) |
+| Proposal/Pitch IA | Dispatch sous-brief | Brief contient un besoin de proposition commerciale |
+| Presentation IA | Dispatch sous-brief | Brief contient un besoin de présentation slides |
+| Email Drafter IA | Dispatch sous-brief | Brief contient un besoin d'email client professionnel |
+| Video Script IA | Dispatch sous-brief | Brief contient un besoin de script vidéo |
+| QA/Proofreader IA | Dispatch en quality gate | Output d'un autre agent à vérifier avant livraison |
 | ClickUp API | Sync bidirectionnelle | A chaque création/mise à jour de tâche |
 
 **Règle** : le PM IA est le seul point d'entrée pour le dispatch. Il ne peut pas être appelé par un autre agent.
