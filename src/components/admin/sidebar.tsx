@@ -43,6 +43,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Projects", href: "/admin/projects", icon: "folder" },
   { label: "Clients", href: "/admin/clients", icon: "users" },
+  { label: "Users", href: "/admin/users", icon: "shield" },
 ];
 
 type AgentGroup = {

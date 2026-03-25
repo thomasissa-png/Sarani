@@ -102,6 +102,22 @@ export const contractTemplates = pgTable("contract_templates", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    passwordHash: text("password_hash").notNull(),
+    name: text("name").notNull(),
+    role: varchar("role", { length: 20 }).notNull().default("user"), // "admin" | "user"
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("idx_users_email").on(table.email)]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -110,3 +126,5 @@ export type AgentOutput = typeof agentOutputs.$inferSelect;
 export type NewAgentOutput = typeof agentOutputs.$inferInsert;
 export type ClientGlossaryEntry = typeof clientGlossaryEntries.$inferSelect;
 export type ContractTemplate = typeof contractTemplates.$inferSelect;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
