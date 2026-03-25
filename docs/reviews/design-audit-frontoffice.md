@@ -1,7 +1,8 @@
-# Design Audit — Sarani Front-office
+# Design Audit — Sarani Front-office (Pages 1–9)
+
 **Agent** : @design
 **Date** : 2026-03-25
-**Scope** : Pages 6 à 9 du site vitrine public
+**Scope** : Homepage, Header, Footer, About, Services (pages 1–5) + Work Listing, Work Detail, Pricing, Contact (pages 6–9)
 **Référence** : Design system V2 (globals.css), positionnement premium Sarani (project-context.md)
 
 ---

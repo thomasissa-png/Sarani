@@ -10,40 +10,40 @@ export function ClientContextPanel({ client }: { client: Client | null }) {
   if (!client) return null;
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+    <div className="bg-info-light border border-info rounded-lg p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-blue-500" />
-        <span className="text-sm font-semibold text-blue-900">
+        <div className="w-2 h-2 rounded-full bg-info" />
+        <span className="text-sm font-semibold text-info">
           Client context loaded — {client.name}
         </span>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
         <div>
-          <span className="font-medium text-blue-700">Industry</span>
-          <p className="text-blue-900 capitalize">{client.industry}</p>
+          <span className="font-medium text-info">Industry</span>
+          <p className="text-info capitalize">{client.industry}</p>
         </div>
         <div>
-          <span className="font-medium text-blue-700">Primary language</span>
-          <p className="text-blue-900">{client.primaryLanguage}</p>
+          <span className="font-medium text-info">Primary language</span>
+          <p className="text-info">{client.primaryLanguage}</p>
         </div>
         {client.brandTone && (
           <div className="col-span-2 md:col-span-1">
-            <span className="font-medium text-blue-700">Brand tone</span>
-            <p className="text-blue-900 line-clamp-2">{client.brandTone}</p>
+            <span className="font-medium text-info">Brand tone</span>
+            <p className="text-info line-clamp-2">{client.brandTone}</p>
           </div>
         )}
         {client.primaryColor && (
           <div className="flex items-center gap-2">
-            <span className="font-medium text-blue-700">Colors</span>
+            <span className="font-medium text-info">Colors</span>
             <div className="flex gap-1">
               <div
-                className="w-4 h-4 rounded border border-blue-300"
+                className="w-4 h-4 rounded border border-info"
                 style={{ backgroundColor: client.primaryColor }}
               />
               {client.secondaryColors?.split(",").map((c, i) => (
                 <div
                   key={i}
-                  className="w-4 h-4 rounded border border-blue-300"
+                  className="w-4 h-4 rounded border border-info"
                   style={{ backgroundColor: c.trim() }}
                 />
               ))}
@@ -52,15 +52,15 @@ export function ClientContextPanel({ client }: { client: Client | null }) {
         )}
         {client.fontName && (
           <div>
-            <span className="font-medium text-blue-700">Font</span>
-            <p className="text-blue-900">{client.fontName}</p>
+            <span className="font-medium text-info">Font</span>
+            <p className="text-info">{client.fontName}</p>
           </div>
         )}
       </div>
       {client.brandGuidelinesNotes && (
         <div className="text-xs">
-          <span className="font-medium text-blue-700">Guidelines</span>
-          <p className="text-blue-900 line-clamp-2">
+          <span className="font-medium text-info">Guidelines</span>
+          <p className="text-info line-clamp-2">
             {client.brandGuidelinesNotes}
           </p>
         </div>
@@ -166,13 +166,13 @@ export function FormField({
     <div>
       <label className="block text-sm font-medium text-neutral-700 mb-1">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-error ml-1">*</span>}
       </label>
       {helperText && (
         <p className="text-xs text-neutral-400 mb-1.5">{helperText}</p>
       )}
       {children}
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+      {error && <p className="text-xs text-error mt-1">{error}</p>}
     </div>
   );
 }
