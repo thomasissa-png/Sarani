@@ -35,10 +35,10 @@ export async function GET(
     const { filename } = await params;
     const decodedFilename = decodeURIComponent(filename);
 
-    // Validate filename — must be an .xlsx file
-    if (!decodedFilename.endsWith(".xlsx")) {
+    // Validate filename — must be a safe .xlsx filename with no path separators
+    if (!/^[^/\\]+\.xlsx$/.test(decodedFilename) || decodedFilename.includes("..")) {
       return NextResponse.json(
-        { error: "Invalid filename. Must be an .xlsx file." },
+        { error: "Invalid filename. Must be a safe .xlsx filename." },
         { status: 400 }
       );
     }

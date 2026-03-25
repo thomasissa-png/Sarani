@@ -295,20 +295,39 @@ export function getCustomFieldValue(
 }
 
 /**
+ * Set a custom field value on a task.
+ * Uses the clickupFetch wrapper for retry logic.
+ */
+export async function setCustomFieldValue(
+  taskId: string,
+  fieldId: string,
+  value: string | number
+): Promise<void> {
+  await clickupFetch<Record<string, unknown>>(
+    `/task/${taskId}/field/${fieldId}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ value }),
+    }
+  );
+}
+
+/**
  * Check if the ClickUp API is reachable and credentials are valid.
- * Returns a status object for health checks.
+ * Returns "not_configured" if env vars are missing (not an error -- expected state).
  */
 export async function checkHealth(): Promise<{
-  status: "connected" | "error";
+  status: "connected" | "not_configured" | "error";
   error?: string;
 }> {
-  try {
-    getApiKey();
-    getWorkspaceId();
-  } catch (e) {
+  // Check if env vars are present before attempting connection
+  const apiKey = process.env.CLICKUP_API_KEY;
+  const workspaceId = process.env.CLICKUP_WORKSPACE_ID;
+
+  if (!apiKey || !workspaceId) {
     return {
-      status: "error",
-      error: e instanceof Error ? e.message : "Missing credentials",
+      status: "not_configured",
+      error: "ClickUp credentials not set. ClickUp integration is disabled.",
     };
   }
 

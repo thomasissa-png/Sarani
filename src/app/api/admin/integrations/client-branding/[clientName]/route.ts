@@ -62,6 +62,14 @@ export async function GET(
       );
     }
 
+    // Validate clientName — no path traversal
+    if (/[/\\]/.test(decodedName) || decodedName.includes("..")) {
+      return NextResponse.json(
+        { error: "Invalid client name." },
+        { status: 400 }
+      );
+    }
+
     const cacheKey = `sharepoint:branding:${decodedName.toLowerCase()}`;
 
     const result = await fetchWithCache<BrandingResponse>({

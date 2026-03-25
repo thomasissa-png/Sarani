@@ -222,27 +222,54 @@ export async function listDriveItems(
 /**
  * Get the content (raw bytes) of a file in a drive.
  * Returns the response as an ArrayBuffer.
+ * Uses retry logic for 401 (token expiry), 429 (throttle), and 5xx errors.
  */
 export async function getFileContent(
   driveId: string,
   itemId: string
 ): Promise<ArrayBuffer> {
-  const token = await getAccessToken();
   const url = `${GRAPH_BASE_URL}/drives/${driveId}/items/${itemId}/content`;
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const fetchWithRetry = async (attempt: number): Promise<ArrayBuffer> => {
+    const token = await getAccessToken();
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-  if (!response.ok) {
-    throw new SharePointApiError(
-      `Failed to download file: ${response.status}`,
-      response.status,
-      null
-    );
-  }
+    // Token expired — refresh and retry once
+    if (response.status === 401 && attempt === 0) {
+      tokenCache = null;
+      return fetchWithRetry(1);
+    }
 
-  return response.arrayBuffer();
+    // Throttled — retry with backoff
+    if (response.status === 429 && attempt === 0) {
+      const retryAfter = response.headers.get("Retry-After");
+      const delayMs = retryAfter
+        ? parseInt(retryAfter, 10) * 1000
+        : RETRY_DELAY_MS;
+      await sleep(delayMs);
+      return fetchWithRetry(1);
+    }
+
+    // Server error — retry once
+    if (response.status >= 500 && attempt === 0) {
+      await sleep(RETRY_DELAY_MS);
+      return fetchWithRetry(1);
+    }
+
+    if (!response.ok) {
+      throw new SharePointApiError(
+        `Failed to download file: ${response.status}`,
+        response.status,
+        null
+      );
+    }
+
+    return response.arrayBuffer();
+  };
+
+  return fetchWithRetry(0);
 }
 
 /**
@@ -317,6 +344,61 @@ export async function createFolder(
       }),
     }
   );
+}
+
+// ─── Worksheet Discovery ────────────────────────────────────────────────────
+
+interface WorksheetInfo {
+  id: string;
+  name: string;
+  position: number;
+  visibility: string;
+}
+
+/**
+ * List all worksheets in an Excel workbook.
+ * Returns them sorted by position (first sheet first).
+ */
+export async function listWorksheets(
+  driveId: string,
+  itemId: string
+): Promise<WorksheetInfo[]> {
+  const data = await graphFetch<{
+    value: WorksheetInfo[];
+  }>(`/drives/${driveId}/items/${itemId}/workbook/worksheets`);
+  return data.value.sort((a, b) => a.position - b.position);
+}
+
+/**
+ * Resolve the best worksheet name for reading/writing.
+ * Uses the Graph API worksheets endpoint to list actual sheets,
+ * then picks the first one that matches a candidate list,
+ * or falls back to the very first sheet.
+ */
+export async function resolveSheetName(
+  driveId: string,
+  itemId: string,
+  candidates: readonly string[]
+): Promise<string> {
+  const sheets = await listWorksheets(driveId, itemId);
+  if (sheets.length === 0) {
+    throw new SharePointApiError(
+      "No worksheets found in workbook",
+      404,
+      null
+    );
+  }
+
+  // Try to match a candidate
+  const lowerCandidates = candidates.map((c) => c.toLowerCase());
+  for (const sheet of sheets) {
+    if (lowerCandidates.includes(sheet.name.toLowerCase())) {
+      return sheet.name;
+    }
+  }
+
+  // Fallback: use the first sheet
+  return sheets[0].name;
 }
 
 // ─── Excel Operations ───────────────────────────────────────────────────────
@@ -414,17 +496,21 @@ export async function getDriveItemByPath(
 
 /**
  * Check if the Microsoft Graph API is reachable and credentials are valid.
+ * Returns "not_configured" if env vars are missing (not an error -- expected state).
  */
 export async function checkHealth(): Promise<{
-  status: "connected" | "error";
+  status: "connected" | "not_configured" | "error";
   error?: string;
 }> {
-  try {
-    getConfig();
-  } catch (e) {
+  // Check if env vars are present before attempting connection
+  const tenantId = process.env.MICROSOFT_TENANT_ID;
+  const clientId = process.env.MICROSOFT_CLIENT_ID;
+  const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
+
+  if (!tenantId || !clientId || !clientSecret) {
     return {
-      status: "error",
-      error: e instanceof Error ? e.message : "Missing credentials",
+      status: "not_configured",
+      error: "Microsoft Graph credentials not set. SharePoint integration is disabled.",
     };
   }
 

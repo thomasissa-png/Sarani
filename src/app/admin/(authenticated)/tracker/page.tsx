@@ -55,11 +55,11 @@ const INVOICE_STATUSES = ["All", "Open PO", "Invoiced", "Paid", "Overdue"] as co
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function formatCurrency(value: number | null): string {
+function formatCurrency(value: number | null, currency = "EUR"): string {
   if (value === null) return "--";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "EUR",
+    currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);

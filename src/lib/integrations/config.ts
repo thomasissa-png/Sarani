@@ -144,7 +144,12 @@ export const CLICKUP_SPACES_WITHOUT_TRACKER = [
 
 // ─── Global Overview Tracker ─────────────────────────────────────────────────
 
-export const GLOBAL_OVERVIEW_FILENAME = "00. Global Overview.xlsx.xlsx";
+export const GLOBAL_OVERVIEW_FILENAME = "00. Global Overview.xlsx";
+
+// ─── Excel Sheet Name Candidates ────────────────────────────────────────────
+// Ordered list of worksheet names to try when reading Excel files.
+// Used by both the tracker route and the create-project route.
+export const EXCEL_SHEET_NAME_CANDIDATES = ["Sheet1", "Feuil1", "Feuille1"] as const;
 
 // ─── Cache TTL Configuration (seconds) ──────────────────────────────────────
 

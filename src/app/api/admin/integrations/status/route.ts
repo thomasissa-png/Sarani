@@ -40,21 +40,28 @@ export async function GET() {
       ),
     ]);
 
+    const mapStatus = (
+      result: { status: string; error?: string }
+    ): "connected" | "not_configured" | "error" => {
+      if (result.status === "connected") return "connected";
+      if (result.status === "not_configured") return "not_configured";
+      return "error";
+    };
+
     const integrations: IntegrationStatus[] = [
       {
         name: "ClickUp",
-        status: clickupResult.status === "connected" ? "connected" : "error",
+        status: mapStatus(clickupResult),
         ...(clickupResult.error ? { error: clickupResult.error } : {}),
       },
       {
         name: "SharePoint",
-        status:
-          sharepointResult.status === "connected" ? "connected" : "error",
+        status: mapStatus(sharepointResult),
         ...(sharepointResult.error ? { error: sharepointResult.error } : {}),
       },
       {
         name: "Evoliz",
-        status: evolizResult.status as "connected" | "not_configured" | "error",
+        status: mapStatus(evolizResult),
         ...(evolizResult.error ? { error: evolizResult.error } : {}),
       },
     ];
