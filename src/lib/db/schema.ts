@@ -163,6 +163,7 @@ export const quotes = pgTable(
   "quotes",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    quoteNumber: varchar("quote_number", { length: 20 }).notNull().unique(), // SAR-YYYY-XXXX
     clientName: text("client_name").notNull(),
     projectName: text("project_name").notNull(),
     items: jsonb("items").notNull().$type<QuoteLineItem[]>(),

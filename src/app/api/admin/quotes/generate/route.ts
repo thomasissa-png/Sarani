@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 import { getUserFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { quotes } from "@/lib/db/schema";
@@ -7,6 +8,27 @@ import { generateQuotePDF, type QuotePDFData } from "@/lib/quotes/generate-pdf";
 import { uploadFile } from "@/lib/integrations/sharepoint";
 import { logSync } from "@/lib/integrations/cache";
 import { SHAREPOINT_TRACKERS_DRIVE_ID } from "@/lib/integrations/config";
+
+// ─── Quote Number Generator ──────────────────────────────────────────────────
+
+async function generateQuoteNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+  const prefix = `SAR-${year}-`;
+
+  const result = await db.execute(
+    sql`SELECT "quote_number" FROM "quotes" WHERE "quote_number" LIKE ${prefix + "%"} ORDER BY "quote_number" DESC LIMIT 1`
+  );
+
+  const rows = result.rows as Array<{ quote_number: string }>;
+  let nextSeq = 1;
+  if (rows.length > 0) {
+    const lastNum = rows[0].quote_number;
+    const seq = parseInt(lastNum.split("-").pop() ?? "0", 10);
+    nextSeq = seq + 1;
+  }
+
+  return `${prefix}${String(nextSeq).padStart(4, "0")}`;
+}
 
 // ─── Validation ────────────────────────────────────────────────────────────
 

@@ -8,6 +8,18 @@ import type {
   TrackerResponse,
 } from "@/types/integrations";
 
+// ─── Sorting Types ──────────────────────────────────────────────────────────
+
+type SortableColumn = "client" | "project" | "status" | "totalValue" | "date";
+type SortDirection = "asc" | "desc";
+
+interface SortConfig {
+  column: SortableColumn;
+  direction: SortDirection;
+}
+
+const ITEMS_PER_PAGE = 50;
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface IntegrationStatus {
@@ -91,6 +103,24 @@ export default function TrackerPage() {
   const [invoiceFilter, setInvoiceFilter] = useState("All");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  // Sorting
+  const [sort, setSort] = useState<SortConfig | null>(null);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const toggleSort = useCallback((column: SortableColumn) => {
+    setSort((prev) => {
+      if (prev?.column === column) {
+        return prev.direction === "asc"
+          ? { column, direction: "desc" }
+          : null;
+      }
+      return { column, direction: "asc" };
+    });
+    setCurrentPage(1);
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -131,7 +161,7 @@ export default function TrackerPage() {
 
   const filteredProjects = useMemo(() => {
     if (!data) return [];
-    return data.projects.filter((p) => {
+    const filtered = data.projects.filter((p) => {
       if (
         search &&
         !p.project.toLowerCase().includes(search.toLowerCase()) &&
@@ -157,7 +187,57 @@ export default function TrackerPage() {
       }
       return true;
     });
-  }, [data, search, clientFilter, statusFilter, invoiceFilter]);
+
+    // Apply sorting
+    if (sort) {
+      filtered.sort((a, b) => {
+        let cmp = 0;
+        switch (sort.column) {
+          case "client":
+            cmp = a.client.localeCompare(b.client);
+            break;
+          case "project":
+            cmp = a.project.localeCompare(b.project);
+            break;
+          case "status":
+            cmp = a.status.localeCompare(b.status);
+            break;
+          case "totalValue":
+            cmp = (a.totalValue ?? 0) - (b.totalValue ?? 0);
+            break;
+          case "date":
+            cmp = (a.date || "").localeCompare(b.date || "");
+            break;
+        }
+        return sort.direction === "asc" ? cmp : -cmp;
+      });
+    }
+
+    return filtered;
+  }, [data, search, clientFilter, statusFilter, invoiceFilter, sort]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, clientFilter, statusFilter, invoiceFilter]);
+
+  // Pagination derived data
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)),
+    [filteredProjects.length]
+  );
+
+  const paginatedProjects = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProjects.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProjects, currentPage]);
+
+  const paginationLabel = useMemo(() => {
+    if (filteredProjects.length === 0) return "";
+    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const end = Math.min(currentPage * ITEMS_PER_PAGE, filteredProjects.length);
+    return `Showing ${start}-${end} of ${filteredProjects.length}`;
+  }, [filteredProjects.length, currentPage]);
 
   // Stats
   const stats = useMemo(() => {
@@ -377,19 +457,20 @@ export default function TrackerPage() {
               <caption className="sr-only">Project tracker data</caption>
               <thead>
                 <tr className="border-b border-neutral-200 text-left">
-                  <Th>Client</Th>
-                  <Th>Project</Th>
+                  <SortableTh column="client" sort={sort} onToggle={toggleSort}>Client</SortableTh>
+                  <SortableTh column="project" sort={sort} onToggle={toggleSort}>Project</SortableTh>
                   <Th>Contact</Th>
-                  <Th>Status</Th>
+                  <SortableTh column="status" sort={sort} onToggle={toggleSort}>Status</SortableTh>
                   <Th>Category</Th>
-                  <Th>Value</Th>
+                  <SortableTh column="totalValue" sort={sort} onToggle={toggleSort}>Value</SortableTh>
                   <Th>PO</Th>
                   <Th>Invoice</Th>
+                  <SortableTh column="date" sort={sort} onToggle={toggleSort}>Date</SortableTh>
                   <Th>Actions</Th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProjects.map((p, i) => (
+                {paginatedProjects.map((p, i) => (
                   <tr
                     key={`${p.client}-${p.project}-${i}`}
                     className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
@@ -434,6 +515,9 @@ export default function TrackerPage() {
                         <span className="text-neutral-400 text-xs">--</span>
                       )}
                     </td>
+                    <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                      {p.date || "--"}
+                    </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         {p.sharepointLink && (
@@ -468,13 +552,40 @@ export default function TrackerPage() {
               </tbody>
             </table>
           </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-neutral-200 bg-neutral-50">
+              <span className="text-sm text-neutral-500">{paginationLabel}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-neutral-600">
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Mobile Cards */}
       {!loading && !error && filteredProjects.length > 0 && (
         <div className="md:hidden space-y-3">
-          {filteredProjects.map((p, i) => (
+          {paginatedProjects.map((p, i) => (
             <div
               key={`mobile-${p.client}-${p.project}-${i}`}
               className="bg-white rounded-xl border border-neutral-300 p-4 space-y-3"
@@ -549,6 +660,30 @@ export default function TrackerPage() {
               </div>
             </div>
           ))}
+          {/* Mobile Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-1 py-3">
+              <span className="text-sm text-neutral-500">{paginationLabel}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -556,6 +691,47 @@ export default function TrackerPage() {
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
+
+function SortableTh({
+  children,
+  column,
+  sort,
+  onToggle,
+}: {
+  children: React.ReactNode;
+  column: SortableColumn;
+  sort: SortConfig | null;
+  onToggle: (column: SortableColumn) => void;
+}) {
+  const isActive = sort?.column === column;
+  return (
+    <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider whitespace-nowrap">
+      <button
+        type="button"
+        onClick={() => onToggle(column)}
+        className="inline-flex items-center gap-1 hover:text-brand-black transition-colors"
+      >
+        {children}
+        <SortIcon active={isActive} direction={isActive ? sort!.direction : null} />
+      </button>
+    </th>
+  );
+}
+
+function SortIcon({ active, direction }: { active: boolean; direction: SortDirection | null }) {
+  if (!active || !direction) {
+    return (
+      <svg className="w-3.5 h-3.5 opacity-30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M7 15l5 5 5-5" /><path d="M7 9l5-5 5 5" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-3.5 h-3.5 text-brand-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {direction === "asc" ? <path d="M7 14l5-5 5 5" /> : <path d="M7 10l5 5 5-5" />}
+    </svg>
+  );
+}
 
 function Th({ children }: { children: React.ReactNode }) {
   return (
