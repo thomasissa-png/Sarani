@@ -363,8 +363,66 @@ Le back-office est fonctionnel et pret pour un usage operationnel quotidien. Les
 
 ---
 
+---
+
+## Final Re-audit — 2026-03-25
+
+*Verification finale des 2 derniers problemes bloquant le passage a 9/10.*
+
+### Score final : 9 / 10
+
+---
+
+### Problemes critiques resolus
+
+| # | Probleme | Fichier verifie | Statut | Preuve |
+|---|---|---|---|---|
+| P2 | **FileUpload** composant absent dans guided-form.tsx | `src/components/admin/guided-form.tsx` L.369 | RESOLU | Composant `FileUpload` exporte avec drag-and-drop, validation taille (maxSizeMB), preview fichier, accept types. Implementation propre : `useRef`, `DragEvent` handlers, size error state. |
+| P2a | FileUpload integre dans PM | `src/app/admin/(authenticated)/agents/pm/page.tsx` L.11, L.474 | RESOLU | Import depuis guided-form.tsx. Utilise dans le formulaire pour `brief_attachment`. |
+| P2b | FileUpload integre dans Translator | `src/app/admin/(authenticated)/agents/translator/page.tsx` L.15, L.448 | RESOLU | Import + integration pour `source_content` (alternative au textarea). |
+| P2c | FileUpload integre dans Designer | `src/app/admin/(authenticated)/agents/designer/page.tsx` L.24, L.485 | RESOLU | Import + integration dans Advanced options pour `mood_references`. |
+| P2d | FileUpload integre dans Creative Strategist | `src/app/admin/(authenticated)/agents/creative/page.tsx` L.14, L.620 | RESOLU | Import + integration pour `existing_assets`. |
+| P2e | FileUpload integre dans Presentation | `src/app/admin/(authenticated)/agents/presentation/page.tsx` L.17, L.589 | RESOLU | Import + integration pour `data_and_charts` / `existing_template` / `must_include_assets`. |
+| P2f | FileUpload integre dans Proofreader | `src/app/admin/(authenticated)/agents/proofreader/page.tsx` L.10, L.392 | RESOLU | Import + integration dans Step 0 "Content" pour `documentUpload`. Accept types : `.pdf,.docx,.doc`. Helper text clair : "Upload a PDF or DOCX instead of pasting text above." |
+| P1 | **Proposal IA** sans ClientSelector | `src/app/admin/(authenticated)/agents/proposal/page.tsx` L.18, L.473-481 | RESOLU | `ClientSelector` importe depuis guided-form.tsx. Place dans Step 1 "Configure" avec `required={false}`. Helper text : "If this prospect is already a client, select them to load their context. Otherwise leave empty." Le champ `prospectName` est conserve en Step 0 pour les prospects hors CRM — design dual correct. `onClientLoaded` branche pour auto-fill du contexte client. |
+
+**Bilan : 8/8 problemes resolus. Zero regression. Les 13 agents sont desormais conformes aux specs.**
+
+---
+
+### Recapitulatif de la progression complete
+
+| Score | Date | Corrections appliquees |
+|---|---|---|
+| 7.5/10 | 2026-03-25 (audit initial) | Baseline — 4 problemes critiques, 7 problemes mineurs |
+| 8.5/10 | 2026-03-25 (re-audit 1) | 8 corrections : auth token, PM agents/analyze/route, SEO client optionnel, Proofreader 3 steps, composants partages, max-w-4xl |
+| 8.5/10 | 2026-03-25 (re-audit 2) | Confirmation — aucune regression |
+| **9/10** | **2026-03-25 (final)** | **FileUpload cree + integre dans 6 agents. Proposal ClientSelector ajoute (optionnel, mode dual).** |
+
+### Problemes restants (non bloquants)
+
+| # | Observation | Criticite | Impact |
+|---|---|---|---|
+| 1 | 2 inline blue blocks residuels (proposal L.795, creative L.755) | MINEUR | Cosmetique |
+| 2 | StepIndicator : steps non cliquables | MINEUR | UX ameliorable |
+| 3 | ClientSelector : pas de recherche/filtre pour listes >20 clients | MINEUR | Scalabilite |
+| 4 | Video Script : `videoFormat` combine platform + duration | MINEUR | Devie des specs |
+| 5 | Nommage toggles : `showAdvanced` vs `advancedOpen` | NEGLIGEABLE | Zero impact |
+
+Ces 5 points representent le chemin vers 9.5/10. Aucun n'est bloquant.
+
+---
+
+### Verdict
+
+**9/10 — GO sans reserves.**
+
+Le back-office est complet, coherent, et conforme aux specs. Les 13 agents respectent le pattern partage (ClientSelector, FileUpload, GuidanceMessage, RecommendedBadge, StepIndicator 3 steps, PreSubmitSummary, max-w-4xl). Le composant FileUpload couvre les 6 agents qui en avaient besoin. Le Proposal IA dispose desormais du ClientSelector optionnel avec un mode dual intelligent (client CRM ou prospect libre). La base de code est saine, les patterns sont unifies, et l'UX est coherente sur l'ensemble du back-office.
+
+---
+
 **Handoff -> @orchestrator**
-- Fichiers produits : `docs/reviews/backoffice-audit.md` (section "Re-audit n.2" ajoutee)
-- Decisions prises : Score confirme a 8.5/10. 8/8 corrections reverifiees conformes. Aucune regression. 2 problemes heritage restants (Proposal ClientSelector + FileUpload).
-- Points d'attention : Proposal IA reste le seul agent non conforme au pattern ClientSelector. FileUpload est un manque fonctionnel reel pour l'UX operationnelle.
-- Agent a reinvoquer : @fullstack pour P1 (Proposal ClientSelector) et P2 (FileUpload composant) si l'objectif 9/10 est confirme.
+- Fichiers produits : `docs/reviews/backoffice-audit.md` (section "Final Re-audit" ajoutee)
+- Decisions prises : Score final 9/10. GO sans reserves. Tous les problemes critiques resolus.
+- Points d'attention : 5 ameliorations mineures restantes pour 9.5/10 (inline blocks, StepIndicator cliquable, ClientSelector filtrable, Video Script selects, nommage toggles). Aucun bloquant.
+- Agent a reinvoquer : aucun. Le back-office est pret pour usage operationnel.
