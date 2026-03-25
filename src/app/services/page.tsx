@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "Services — Sarani Enterprise Creative",
   description:
-    "Strategic marketing, content creation, operational marketing, and on-demand production. 35 experts, 5 continents, 18 languages. No retainer required.",
+    "Strategic marketing, content creation, operational marketing, and on-demand production. 35+ experts, 5 continents, 18 languages. No retainer required.",
   openGraph: {
     title: "Services — Sarani Enterprise Creative",
     description:
@@ -135,7 +135,7 @@ export default function ServicesPage() {
             commitment. Fixed prices, published upfront.
           </p>
           <p className="mb-10 text-lg font-bold text-brand-white">
-            35 experts. 5 continents. 18 languages. 24/7.
+            35+ experts. 5 continents. 18 languages. 24/7.
           </p>
           <Button variant="primary" href="/contact">
             Start a project
