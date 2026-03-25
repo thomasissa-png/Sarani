@@ -41,7 +41,7 @@ Thomas (fondateur) et la responsable des opérations gèrent 15-20 projets clien
 
 ### Vision back-office
 
-Route `/admin` de l'app Next.js existante. Auth simple password partagé (v1). Les 7 agents IA forment une équipe virtuelle permanente — chaque agent a un profil métier précis, une interface dédiée, et une mémoire par client.
+Route `/admin` de l'app Next.js existante. Auth simple password partagé (v1). Les 13 agents IA forment une équipe virtuelle permanente — chaque agent a un profil métier précis, une interface dédiée, et une mémoire par client.
 
 ### Utilisateurs v1
 
