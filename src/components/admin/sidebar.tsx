@@ -42,6 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "grid" },
   { label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Projects", href: "/admin/projects", icon: "folder" },
+  { label: "Tracker", href: "/admin/tracker", icon: "activity" },
   { label: "Clients", href: "/admin/clients", icon: "users" },
   { label: "Users", href: "/admin/users", icon: "shield" },
 ];
@@ -167,6 +168,11 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
     "check-circle": (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    ),
+    activity: (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
     ),
   };
