@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
+import {
+  ClientSelector,
+  ClientContextPanel,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 import {
   SUPPORTED_LANGUAGES,
   LANGUAGE_LABELS,
@@ -36,12 +44,24 @@ type FormState = {
   variantCount: number;
 };
 
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
+const TONE_DESCRIPTIONS: Record<EmailTone, string> = {
+  formal: "Official correspondence, contracts",
+  friendly: "Regular project updates, good news",
+  urgent: "Deadline reminders, critical issues",
+};
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function EmailDrafterPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Client ref for context panel
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -61,60 +81,45 @@ export default function EmailDrafterPage() {
   const [result, setResult] = useState<EmailDrafterResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [activeVariant, setActiveVariant] = useState<number>(-1); // -1 = main
+  const [activeVariant, setActiveVariant] = useState<number>(-1);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Client loaded callback ──────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+  const handleClientLoaded = useCallback(
+    (client: Client | null) => {
+      setSelectedClient(client);
+      if (client?.primaryLanguage) {
+        const lang = client.primaryLanguage as SupportedLanguage;
+        if (SUPPORTED_LANGUAGES.includes(lang)) {
+          setForm((prev) => ({ ...prev, language: lang }));
+        }
       }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
-  }, []);
+    },
+    []
+  );
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  // ── Step validation ─────────────────────────────────────────────────────
 
-  // ── Auto-fill language from client ─────────────────────────────────────
+  function canAdvanceFromStep(s: number): boolean {
+    if (s === 0) return !!form.clientId;
+    if (s === 1) return form.context.trim().length >= 30;
+    return true;
+  }
 
-  useEffect(() => {
-    if (!form.clientId) return;
-    const client = clients.find((c) => c.id === form.clientId);
-    if (client?.primaryLanguage) {
-      const lang = client.primaryLanguage as SupportedLanguage;
-      if (SUPPORTED_LANGUAGES.includes(lang)) {
-        setForm((prev) => ({ ...prev, language: lang }));
-      }
-    }
-  }, [form.clientId, clients]);
+  function getStepError(s: number): string | null {
+    if (s === 0 && !form.clientId) return "Please select a client to continue.";
+    if (s === 1 && form.context.trim().length < 30)
+      return "Context must be at least 30 characters for a quality draft.";
+    return null;
+  }
 
   // ── Handle generate ─────────────────────────────────────────────────────
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setResult(null);
     setCopied(false);
     setActiveVariant(-1);
-
-    if (!form.clientId) {
-      setError("Please select a client.");
-      return;
-    }
-
-    if (!form.context.trim()) {
-      setError("Please describe the situation / context.");
-      return;
-    }
-
     setGenerating(true);
 
     try {
@@ -174,7 +179,7 @@ export default function EmailDrafterPage() {
     };
   }
 
-  // ── Copy to clipboard ──────────────────────────────────────────────────
+  // ── Copy to clipboard ────────────────────────────────────────────────────
 
   async function handleCopy() {
     const email = getActiveEmail();
@@ -197,6 +202,36 @@ export default function EmailDrafterPage() {
     await navigator.clipboard.writeText(plainText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  // ── Build summary items ─────────────────────────────────────────────────
+
+  function buildSummaryItems() {
+    return [
+      { label: "Client", value: selectedClient?.name || "—" },
+      { label: "Email type", value: EMAIL_TYPE_LABELS[form.emailType] },
+      { label: "Tone", value: EMAIL_TONE_LABELS[form.tone] },
+      { label: "Language", value: LANGUAGE_LABELS[form.language] },
+      {
+        label: "Context",
+        value:
+          form.context.length > 80
+            ? form.context.slice(0, 80) + "..."
+            : form.context,
+      },
+      {
+        label: "Recipient",
+        value:
+          form.recipientName && form.recipientRole
+            ? `${form.recipientName} (${form.recipientRole})`
+            : form.recipientName || form.recipientRole || "Not specified",
+      },
+      {
+        label: "Attachment mention",
+        value: form.includeAttachmentMention ? "Yes" : "No",
+      },
+      { label: "Variants", value: `${form.variantCount}` },
+    ];
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -222,238 +257,282 @@ export default function EmailDrafterPage() {
       </div>
 
       {/* Form */}
-      <form
-        onSubmit={handleGenerate}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
-        <h2 className="text-lg font-semibold text-brand-black">
-          New Email Draft
-        </h2>
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Client select (required) */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client <span className="text-red-500">*</span>
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <select
-              id="client"
+        {/* ── Step 0: Select Client ──────────────────────────────────── */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Select Client
+            </h2>
+            <ClientSelector
               value={form.clientId}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, clientId: e.target.value }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">Select a client...</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.industry})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Email type + Tone */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="emailType"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Email Type
-            </label>
-            <select
-              id="emailType"
-              value={form.emailType}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  emailType: e.target.value as EmailType,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {EMAIL_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {EMAIL_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-              Tone
-            </label>
-            <div className="flex items-center gap-4 pt-1.5">
-              {EMAIL_TONES.map((t) => (
-                <label
-                  key={t}
-                  className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="tone"
-                    value={t}
-                    checked={form.tone === t}
-                    onChange={() =>
-                      setForm((prev) => ({ ...prev, tone: t }))
-                    }
-                    className="border-neutral-300"
-                  />
-                  {EMAIL_TONE_LABELS[t]}
-                </label>
-              ))}
+              onChange={(id) => setForm((prev) => ({ ...prev, clientId: id }))}
+              required
+              helperText="Select the client this email is for. Their contact info, brand tone, and language will be loaded."
+              onClientLoaded={handleClientLoaded}
+            />
+            {/* Step navigation */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (canAdvanceFromStep(0)) {
+                    setError(null);
+                    setStep(1);
+                  } else {
+                    setError(getStepError(0));
+                  }
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                Next: Configure
+              </button>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Context textarea */}
-        <div>
-          <label
-            htmlFor="context"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Context <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="context"
-            value={form.context}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, context: e.target.value }))
-            }
-            placeholder="Describe the situation -- what happened, what needs to happen next..."
-            rows={5}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-          <p className="text-xs text-neutral-400 mt-1">
-            {form.context.length.toLocaleString()} / 5,000 characters
-          </p>
-        </div>
+        {/* ── Step 1: Configure ──────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Configure Email
+            </h2>
 
-        {/* Recipient name + role */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="recipientName"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Recipient Name{" "}
-              <span className="text-neutral-400 font-normal">(optional)</span>
-            </label>
-            <input
-              id="recipientName"
-              type="text"
-              value={form.recipientName}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  recipientName: e.target.value,
-                }))
-              }
-              placeholder="e.g., Sarah Chen"
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="recipientRole"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Recipient Role{" "}
-              <span className="text-neutral-400 font-normal">(optional)</span>
-            </label>
-            <input
-              id="recipientRole"
-              type="text"
-              value={form.recipientRole}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  recipientRole: e.target.value,
-                }))
-              }
-              placeholder="e.g., Marketing Director"
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-        </div>
+            {/* Client context reminder */}
+            <ClientContextPanel client={selectedClient} />
 
-        {/* Language + Variant count + Attachment */}
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label
-              htmlFor="language"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
+            {/* Email type */}
+            <FormField
+              label="Email Type"
+              required
+              helperText="What kind of email are you writing?"
             >
-              Language
-            </label>
-            <select
-              id="language"
-              value={form.language}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  language: e.target.value as SupportedLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {LANGUAGE_LABELS[lang]} ({lang})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="variantCount"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Variants
-            </label>
-            <select
-              id="variantCount"
-              value={form.variantCount}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  variantCount: Number(e.target.value),
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value={1}>1 version</option>
-              <option value={2}>2 versions</option>
-              <option value={3}>3 versions</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-              Options
-            </label>
-            <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer pt-1.5">
-              <input
-                type="checkbox"
-                checked={form.includeAttachmentMention}
+              <select
+                value={form.emailType}
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
-                    includeAttachmentMention: e.target.checked,
+                    emailType: e.target.value as EmailType,
                   }))
                 }
-                className="rounded border-neutral-300"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {EMAIL_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {EMAIL_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* Context */}
+            <FormField
+              label="Context"
+              required
+              helperText="Describe the situation in detail. The more context you provide, the better the email will be."
+            >
+              <TextareaWithCount
+                value={form.context}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, context: val }))
+                }
+                placeholder="e.g. We just delivered the 50 Black Friday banners to Sony — all 15 languages on time. Need to send delivery confirmation with download links and ask for feedback by Friday"
+                minLength={30}
+                maxLength={5000}
+                rows={5}
               />
-              Mention attachment
-            </label>
+            </FormField>
+
+            {/* Recipient name + role */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Recipient Name"
+                helperText="The person receiving this email"
+              >
+                <input
+                  type="text"
+                  value={form.recipientName}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      recipientName: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. Sarah Chen"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+              <FormField
+                label="Recipient Role"
+                helperText="Their job title or role"
+              >
+                <input
+                  type="text"
+                  value={form.recipientRole}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      recipientRole: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. Marketing Director"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+            </div>
+
+            {/* Language (auto-filled) */}
+            <FormField
+              label="Language"
+              helperText={
+                selectedClient?.primaryLanguage
+                  ? `Auto-filled from ${selectedClient.name}'s primary language. You can change it.`
+                  : "The language the email will be written in."
+              }
+            >
+              <select
+                value={form.language}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    language: e.target.value as SupportedLanguage,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {LANGUAGE_LABELS[lang]} ({lang})
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* Tone */}
+            <FormField
+              label="Tone"
+              required
+              helperText="Set the overall tone for this email."
+            >
+              <div className="space-y-2">
+                {EMAIL_TONES.map((t) => (
+                  <label
+                    key={t}
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      form.tone === t
+                        ? "border-brand-cerulean bg-blue-50"
+                        : "border-neutral-200 hover:bg-neutral-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="tone"
+                      value={t}
+                      checked={form.tone === t}
+                      onChange={() =>
+                        setForm((prev) => ({ ...prev, tone: t }))
+                      }
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-brand-black">
+                        {EMAIL_TONE_LABELS[t]}
+                      </span>
+                      <p className="text-xs text-neutral-500">
+                        {TONE_DESCRIPTIONS[t]}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </FormField>
+
+            {/* Attachment + Variants */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Options"
+                helperText="Additional email options"
+              >
+                <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer pt-1.5">
+                  <input
+                    type="checkbox"
+                    checked={form.includeAttachmentMention}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        includeAttachmentMention: e.target.checked,
+                      }))
+                    }
+                    className="rounded border-neutral-300"
+                  />
+                  Mention attachment
+                </label>
+              </FormField>
+              <FormField
+                label="Variants"
+                helperText="Generate alternative versions"
+              >
+                <select
+                  value={form.variantCount}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      variantCount: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  <option value={1}>1 version</option>
+                  <option value={2}>2 versions</option>
+                  <option value={3}>3 versions</option>
+                </select>
+              </FormField>
+            </div>
+
+            {/* Step navigation */}
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (canAdvanceFromStep(1)) {
+                    setError(null);
+                    setStep(2);
+                  } else {
+                    setError(getStepError(1));
+                  }
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                Next: Review
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ── Step 2: Review & Generate ──────────────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Review & Generate
+            </h2>
+            <PreSubmitSummary
+              items={buildSummaryItems()}
+              onConfirm={handleGenerate}
+              onBack={() => setStep(1)}
+              loading={generating}
+              buttonLabel="Draft Email"
+            />
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -461,18 +540,7 @@ export default function EmailDrafterPage() {
             {error}
           </div>
         )}
-
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Drafting..." : "Draft Email"}
-          </button>
-        </div>
-      </form>
+      </div>
 
       {/* Email Output */}
       {result && activeEmail && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import {
@@ -9,6 +9,14 @@ import {
   type SupportedLanguage,
   type TranslatorResponse,
 } from "@/lib/validations/translator";
+import {
+  ClientSelector,
+  ClientContextPanel,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -27,12 +35,16 @@ type FormState = {
   showGlossaryHits: boolean;
 };
 
+const STEPS = ["Select Client", "Configure", "Review & Translate"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function TranslatorPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Selected client object
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -54,44 +66,38 @@ export default function TranslatorPage() {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Step validation ─────────────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+  // Step 0 is always valid (client is optional for translator)
+  function isStep1Valid(): boolean {
+    return (
+      form.inputText.length >= 10 &&
+      form.sourceLanguage !== form.targetLanguage
+    );
+  }
+
+  // ── Client loaded callback — auto-fill source language ────────────────
+
+  const handleClientLoaded = useCallback(
+    (client: Client | null) => {
+      setSelectedClient(client);
+      if (client?.primaryLanguage) {
+        const lang = client.primaryLanguage as SupportedLanguage;
+        if (SUPPORTED_LANGUAGES.includes(lang)) {
+          setForm((prev) => ({ ...prev, sourceLanguage: lang }));
+        }
       }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+    },
+    []
+  );
 
   // ── Handle translate ──────────────────────────────────────────────────
 
-  async function handleTranslate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleTranslate() {
     setError(null);
     setResult(null);
     setSaved(false);
     setCopied(false);
-
-    if (!form.inputText.trim()) {
-      setError("Please enter text to translate.");
-      return;
-    }
-
-    if (form.sourceLanguage === form.targetLanguage) {
-      setError("Source and target language must be different.");
-      return;
-    }
 
     setTranslating(true);
 
@@ -152,10 +158,6 @@ export default function TranslatorPage() {
 
   async function handleSaveValidated() {
     if (!form.clientId || !result) return;
-
-    // In a full implementation, this would update the translation memory
-    // and potentially add new glossary entries. For now, we mark the output
-    // as validated by updating its status.
     setSaved(true);
   }
 
@@ -166,6 +168,38 @@ export default function TranslatorPage() {
       return text.replace(/\[\[(.+?)\]\]/g, "$1");
     }
     return text;
+  }
+
+  // ── Build summary items ───────────────────────────────────────────────
+
+  function getSummaryItems(): { label: string; value: string }[] {
+    const items = [
+      {
+        label: "Client",
+        value: selectedClient?.name || "No client (generic mode)",
+      },
+      {
+        label: "Source Language",
+        value: `${LANGUAGE_LABELS[form.sourceLanguage]} (${form.sourceLanguage})`,
+      },
+      {
+        label: "Target Language",
+        value: `${LANGUAGE_LABELS[form.targetLanguage]} (${form.targetLanguage})`,
+      },
+      {
+        label: "Text length",
+        value: `${form.inputText.length.toLocaleString()} characters`,
+      },
+      {
+        label: "Register",
+        value: form.formalRegister ? "Formal" : "Standard",
+      },
+      {
+        label: "Glossary hits",
+        value: form.showGlossaryHits ? "Shown" : "Hidden",
+      },
+    ];
+    return items;
   }
 
   // ── Render ────────────────────────────────────────────────────────────
@@ -189,173 +223,194 @@ export default function TranslatorPage() {
       </div>
 
       {/* Translation Form */}
-      <form
-        onSubmit={handleTranslate}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           New Translation
         </h2>
 
-        {/* Client select (optional) */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client{" "}
-            <span className="text-neutral-400 font-normal">
-              (optional — enables glossary)
-            </span>
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <select
-              id="client"
+        <StepIndicator steps={STEPS} currentStep={step} />
+
+        {/* Step 0: Select Client (optional) */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
               value={form.clientId}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, clientId: e.target.value }))
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
               }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">No client (generic translation)</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.industry})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Language selectors */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="sourceLanguage"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Source Language
-            </label>
-            <select
-              id="sourceLanguage"
-              value={form.sourceLanguage}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  sourceLanguage: e.target.value as SupportedLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {LANGUAGE_LABELS[lang]} ({lang})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="targetLanguage"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Target Language
-            </label>
-            <select
-              id="targetLanguage"
-              value={form.targetLanguage}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  targetLanguage: e.target.value as SupportedLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {SUPPORTED_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {LANGUAGE_LABELS[lang]} ({lang})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Input textarea */}
-        <div>
-          <label
-            htmlFor="inputText"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Text to translate
-          </label>
-          <textarea
-            id="inputText"
-            value={form.inputText}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, inputText: e.target.value }))
-            }
-            placeholder="Paste the text you want to translate..."
-            rows={8}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-          <p className="text-xs text-neutral-400 mt-1">
-            {form.inputText.length.toLocaleString()} characters
-          </p>
-        </div>
-
-        {/* Options */}
-        <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.formalRegister}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  formalRegister: e.target.checked,
-                }))
-              }
-              className="rounded border-neutral-300"
+              required={false}
+              onClientLoaded={handleClientLoaded}
+              helperText="Optional — selecting a client enables glossary matching and auto-fills the source language from their profile."
             />
-            Formal register
-          </label>
-          <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.showGlossaryHits}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  showGlossaryHits: e.target.checked,
-                }))
-              }
-              className="rounded border-neutral-300"
-            />
-            Show glossary hits
-          </label>
-        </div>
 
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={translating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {translating ? "Translating..." : "Translate"}
-          </button>
-        </div>
-      </form>
+        {/* Step 1: Configure */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Language selectors */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Source Language"
+                required
+                helperText="The language of the original text. Auto-filled from client profile when available."
+              >
+                <select
+                  value={form.sourceLanguage}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      sourceLanguage: e.target.value as SupportedLanguage,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {LANGUAGE_LABELS[lang]} ({lang})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label="Target Language"
+                required
+                helperText="The language to translate into."
+                error={
+                  form.sourceLanguage === form.targetLanguage
+                    ? "Source and target language must be different."
+                    : undefined
+                }
+              >
+                <select
+                  value={form.targetLanguage}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      targetLanguage: e.target.value as SupportedLanguage,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {LANGUAGE_LABELS[lang]} ({lang})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            {/* Input textarea */}
+            <FormField
+              label="Text to translate"
+              required
+              helperText="Paste the full text. The translator preserves formatting, handles idioms, and applies client glossary terms."
+            >
+              <TextareaWithCount
+                value={form.inputText}
+                onChange={(inputText) =>
+                  setForm((prev) => ({ ...prev, inputText }))
+                }
+                placeholder="Paste the text to translate — email, document, brief, or any content"
+                minLength={10}
+                rows={8}
+              />
+            </FormField>
+
+            {/* Options */}
+            <div className="flex items-center gap-6">
+              <FormField
+                label=""
+                helperText=""
+              >
+                <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.formalRegister}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        formalRegister: e.target.checked,
+                      }))
+                    }
+                    className="rounded border-neutral-300"
+                  />
+                  Formal register
+                </label>
+              </FormField>
+              <FormField
+                label=""
+                helperText=""
+              >
+                <label className="flex items-center gap-2 text-sm text-neutral-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.showGlossaryHits}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        showGlossaryHits: e.target.checked,
+                      }))
+                    }
+                    className="rounded border-neutral-300"
+                  />
+                  Show glossary hits
+                </label>
+              </FormField>
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={!isStep1Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Review & Translate */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onBack={() => setStep(1)}
+              onConfirm={handleTranslate}
+              loading={translating}
+              buttonLabel="Translate"
+            />
+
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Translation Result */}
       {result && (

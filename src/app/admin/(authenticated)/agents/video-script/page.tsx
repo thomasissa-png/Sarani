@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
+import {
+  ClientSelector,
+  ClientContextPanel,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 import {
   VIDEO_FORMATS,
   VIDEO_FORMAT_LABELS,
@@ -18,7 +26,6 @@ import {
   type VideoLanguage,
   type VideoScriptResponse,
   type VideoScene,
-  type VideoVariant,
 } from "@/lib/validations/video-script";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -41,12 +48,37 @@ type FormState = {
   variantCount: number;
 };
 
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
+const TONE_DESCRIPTIONS: Record<VideoTone, string> = {
+  entertaining: "Humor, trends, viral potential",
+  educational: "How-to, tips, tutorials",
+  inspirational: "Storytelling, emotion, aspirational",
+  promotional: "Product focus, offers, launches",
+};
+
+const FORMAT_DESCRIPTIONS: Record<VideoFormat, string> = {
+  "tiktok-15s": "Quick impact, single message, trending hooks",
+  "tiktok-30s": "Best for product showcases and trending hooks",
+  "tiktok-60s": "Mini-stories, tutorials, deeper engagement",
+  "instagram-reel": "Polished visuals, brand-forward, lifestyle content",
+  "youtube-short": "Vertical, snackable, discoverability-focused",
+  "youtube-long": "In-depth content, tutorials, brand storytelling",
+  corporate: "Professional tone, stakeholders, internal or external comms",
+  "ugc-brief": "Creator instructions, authentic style, performance-driven",
+  "product-demo": "Feature walkthrough, use cases, conversion-focused",
+};
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function VideoScriptPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Client ref
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -66,43 +98,48 @@ export default function VideoScriptPage() {
   const [result, setResult] = useState<VideoScriptResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Client loaded callback ──────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+  const handleClientLoaded = useCallback(
+    (client: Client | null) => {
+      setSelectedClient(client);
+      if (client?.primaryLanguage) {
+        const lang = client.primaryLanguage as VideoLanguage;
+        if (VIDEO_LANGUAGES.includes(lang)) {
+          setForm((prev) => ({ ...prev, language: lang }));
+        }
       }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
-  }, []);
+    },
+    []
+  );
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  // ── Step validation ─────────────────────────────────────────────────────
+
+  function canAdvanceFromStep(s: number): boolean {
+    if (s === 0) return !!form.clientId;
+    if (s === 1)
+      return (
+        form.topic.trim().length >= 30 && form.targetAudience.trim().length > 0
+      );
+    return true;
+  }
+
+  function getStepError(s: number): string | null {
+    if (s === 0 && !form.clientId) return "Please select a client to continue.";
+    if (s === 1) {
+      if (form.topic.trim().length < 30)
+        return "Topic must be at least 30 characters for a quality script.";
+      if (!form.targetAudience.trim())
+        return "Target audience is required. A video without a target audience is wasted content.";
+    }
+    return null;
+  }
 
   // ── Handle generate ─────────────────────────────────────────────────────
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setResult(null);
-
-    if (!form.clientId) {
-      setError("Please select a client.");
-      return;
-    }
-
-    if (!form.topic.trim()) {
-      setError("Please enter a topic.");
-      return;
-    }
-
     setGenerating(true);
 
     try {
@@ -138,6 +175,35 @@ export default function VideoScriptPage() {
     }
   }
 
+  // ── Build summary items ─────────────────────────────────────────────────
+
+  function buildSummaryItems() {
+    return [
+      { label: "Client", value: selectedClient?.name || "—" },
+      { label: "Format", value: VIDEO_FORMAT_LABELS[form.videoFormat] },
+      { label: "Platform", value: VIDEO_PLATFORM_LABELS[form.platform] },
+      { label: "Tone", value: VIDEO_TONE_LABELS[form.tone] },
+      { label: "Language", value: VIDEO_LANGUAGE_LABELS[form.language] },
+      {
+        label: "Topic",
+        value:
+          form.topic.length > 80
+            ? form.topic.slice(0, 80) + "..."
+            : form.topic,
+      },
+      { label: "Target audience", value: form.targetAudience },
+      {
+        label: "Key messages",
+        value: form.keyMessages
+          ? form.keyMessages.length > 60
+            ? form.keyMessages.slice(0, 60) + "..."
+            : form.keyMessages
+          : "None specified",
+      },
+      { label: "Variants", value: `${form.variantCount}` },
+    ];
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -160,246 +226,284 @@ export default function VideoScriptPage() {
         </Link>
       </div>
 
-      {/* Generation Form */}
-      <form
-        onSubmit={handleGenerate}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
-        <h2 className="text-lg font-semibold text-brand-black">New Script</h2>
+      {/* Form */}
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Client select (required) */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client <span className="text-red-500">*</span>
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <select
-              id="client"
+        {/* ── Step 0: Select Client ──────────────────────────────────── */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Select Client
+            </h2>
+            <ClientSelector
               value={form.clientId}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, clientId: e.target.value }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">Select a client</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.industry})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Video Format + Platform */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="videoFormat"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Video Format
-            </label>
-            <select
-              id="videoFormat"
-              value={form.videoFormat}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  videoFormat: e.target.value as VideoFormat,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {VIDEO_FORMATS.map((f) => (
-                <option key={f} value={f}>
-                  {VIDEO_FORMAT_LABELS[f]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="platform"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Platform
-            </label>
-            <select
-              id="platform"
-              value={form.platform}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  platform: e.target.value as VideoPlatform,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {VIDEO_PLATFORMS.map((p) => (
-                <option key={p} value={p}>
-                  {VIDEO_PLATFORM_LABELS[p]}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Language + Variant Count */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="language"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Language
-            </label>
-            <select
-              id="language"
-              value={form.language}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  language: e.target.value as VideoLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {VIDEO_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {VIDEO_LANGUAGE_LABELS[lang]} ({lang})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="variantCount"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Variants
-            </label>
-            <select
-              id="variantCount"
-              value={form.variantCount}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  variantCount: Number(e.target.value),
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value={1}>1 variant</option>
-              <option value={2}>2 variants</option>
-              <option value={3}>3 variants</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Tone */}
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 mb-2">
-            Tone
-          </label>
-          <div className="flex gap-3">
-            {VIDEO_TONES.map((t) => (
-              <label
-                key={t}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm cursor-pointer transition-colors ${
-                  form.tone === t
-                    ? "border-brand-cerulean bg-blue-50 text-brand-black font-medium"
-                    : "border-neutral-300 bg-white text-neutral-600 hover:bg-neutral-50"
-                }`}
+              onChange={(id) => setForm((prev) => ({ ...prev, clientId: id }))}
+              required
+              helperText="Select the client this video is for. Their brand context is essential for matching the right tone and messaging."
+              onClientLoaded={handleClientLoaded}
+            />
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (canAdvanceFromStep(0)) {
+                    setError(null);
+                    setStep(1);
+                  } else {
+                    setError(getStepError(0));
+                  }
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
               >
-                <input
-                  type="radio"
-                  name="tone"
-                  value={t}
-                  checked={form.tone === t}
+                Next: Configure
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 1: Configure ──────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Configure Script
+            </h2>
+
+            <ClientContextPanel client={selectedClient} />
+
+            {/* Video Format */}
+            <FormField
+              label="Video Format"
+              required
+              helperText="Choose the format that fits your content goal."
+            >
+              <select
+                value={form.videoFormat}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    videoFormat: e.target.value as VideoFormat,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {VIDEO_FORMATS.map((f) => (
+                  <option key={f} value={f}>
+                    {VIDEO_FORMAT_LABELS[f]}
+                  </option>
+                ))}
+              </select>
+              {/* Format description */}
+              <p className="text-xs text-neutral-500 mt-1.5 bg-neutral-50 px-3 py-1.5 rounded">
+                {FORMAT_DESCRIPTIONS[form.videoFormat]}
+              </p>
+            </FormField>
+
+            {/* Platform */}
+            <FormField
+              label="Platform"
+              required
+              helperText="Where will this video be published?"
+            >
+              <select
+                value={form.platform}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    platform: e.target.value as VideoPlatform,
+                  }))
+                }
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                {VIDEO_PLATFORMS.map((p) => (
+                  <option key={p} value={p}>
+                    {VIDEO_PLATFORM_LABELS[p]}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            {/* Topic */}
+            <FormField
+              label="Topic / Brief"
+              required
+              helperText="Describe the video concept, product, or message you want to convey."
+            >
+              <TextareaWithCount
+                value={form.topic}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, topic: val }))
+                }
+                placeholder="e.g. TikTok creator campaign for Sony ULT headphones — Gen Z audience, music festival season, street style angle"
+                minLength={30}
+                rows={4}
+              />
+            </FormField>
+
+            {/* Target Audience (REQUIRED) */}
+            <FormField
+              label="Target Audience"
+              required
+              helperText="Who is this video for? A video without a clear target audience is wasted content."
+            >
+              <input
+                type="text"
+                value={form.targetAudience}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    targetAudience: e.target.value,
+                  }))
+                }
+                placeholder="e.g. Gen Z women 18-24 interested in music festivals and street fashion"
+                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            </FormField>
+
+            {/* Tone */}
+            <FormField
+              label="Tone"
+              required
+              helperText="Set the overall vibe for the video."
+            >
+              <div className="space-y-2">
+                {VIDEO_TONES.map((t) => (
+                  <label
+                    key={t}
+                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      form.tone === t
+                        ? "border-brand-cerulean bg-blue-50"
+                        : "border-neutral-200 hover:bg-neutral-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="tone"
+                      value={t}
+                      checked={form.tone === t}
+                      onChange={() =>
+                        setForm((prev) => ({ ...prev, tone: t }))
+                      }
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-brand-black">
+                        {VIDEO_TONE_LABELS[t]}
+                      </span>
+                      <p className="text-xs text-neutral-500">
+                        {TONE_DESCRIPTIONS[t]}
+                      </p>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </FormField>
+
+            {/* Key Messages */}
+            <FormField
+              label="Key Messages"
+              helperText="Specific talking points, features, stats, or CTAs to include."
+            >
+              <TextareaWithCount
+                value={form.keyMessages}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, keyMessages: val }))
+                }
+                placeholder="e.g. Highlight the 30-hour battery life, show it surviving rain at a festival, mention the ULT button for extra bass"
+                rows={3}
+              />
+            </FormField>
+
+            {/* Language + Variants */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Language"
+                helperText={
+                  selectedClient?.primaryLanguage
+                    ? `Auto-filled from ${selectedClient.name}'s primary language.`
+                    : "Script language."
+                }
+              >
+                <select
+                  value={form.language}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      tone: e.target.value as VideoTone,
+                      language: e.target.value as VideoLanguage,
                     }))
                   }
-                  className="sr-only"
-                />
-                {VIDEO_TONE_LABELS[t]}
-              </label>
-            ))}
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {VIDEO_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {VIDEO_LANGUAGE_LABELS[lang]} ({lang})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField
+                label="Variants"
+                helperText="Generate alternative script versions."
+              >
+                <select
+                  value={form.variantCount}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      variantCount: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  <option value={1}>1 variant</option>
+                  <option value={2}>2 variants</option>
+                  <option value={3}>3 variants</option>
+                </select>
+              </FormField>
+            </div>
+
+            {/* Step navigation */}
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (canAdvanceFromStep(1)) {
+                    setError(null);
+                    setStep(2);
+                  } else {
+                    setError(getStepError(1));
+                  }
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                Next: Review
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Topic */}
-        <div>
-          <label
-            htmlFor="topic"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Topic / Brief <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="topic"
-            value={form.topic}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, topic: e.target.value }))
-            }
-            placeholder="Describe the video concept, product, or message..."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Target Audience */}
-        <div>
-          <label
-            htmlFor="targetAudience"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Target Audience{" "}
-            <span className="text-neutral-400 font-normal">(optional)</span>
-          </label>
-          <input
-            id="targetAudience"
-            type="text"
-            value={form.targetAudience}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                targetAudience: e.target.value,
-              }))
-            }
-            placeholder="e.g. Gen Z women 18-24, B2B decision makers, fitness enthusiasts..."
-            className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          />
-        </div>
-
-        {/* Key Messages */}
-        <div>
-          <label
-            htmlFor="keyMessages"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Key Messages{" "}
-            <span className="text-neutral-400 font-normal">(optional)</span>
-          </label>
-          <textarea
-            id="keyMessages"
-            value={form.keyMessages}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, keyMessages: e.target.value }))
-            }
-            placeholder="Specific talking points, features, stats, or CTAs to include..."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
+        {/* ── Step 2: Review & Generate ──────────────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Review & Generate
+            </h2>
+            <PreSubmitSummary
+              items={buildSummaryItems()}
+              onConfirm={handleGenerate}
+              onBack={() => setStep(1)}
+              loading={generating}
+              buttonLabel="Generate Script"
+            />
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -407,18 +511,7 @@ export default function VideoScriptPage() {
             {error}
           </div>
         )}
-
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Generate Script"}
-          </button>
-        </div>
-      </form>
+      </div>
 
       {/* Results */}
       {result && (

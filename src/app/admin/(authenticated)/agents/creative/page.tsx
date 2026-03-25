@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import {
@@ -8,6 +8,13 @@ import {
   type CreativeRecommendation,
   type TargetMarket,
 } from "@/lib/validations/creative";
+import {
+  ClientSelector,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -39,11 +46,16 @@ const INITIAL_FORM: FormState = {
 
 const CURRENCY_OPTIONS = ["USD", "EUR", "GBP", "AED", "CHF"] as const;
 
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function CreativeStrategistPage() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Selected client object
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
 
@@ -52,25 +64,25 @@ export default function CreativeStrategistPage() {
     useState<CreativeRecommendation | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Step validation ─────────────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
+  function isStep0Valid(): boolean {
+    return !!form.clientId;
+  }
+
+  function isStep1Valid(): boolean {
+    return (
+      form.campaignObjective.length >= 30 &&
+      form.targetMarkets.length > 0 &&
+      !!form.timeline.trim()
+    );
+  }
+
+  // ── Client loaded callback ────────────────────────────────────────────
+
+  const handleClientLoaded = useCallback((client: Client | null) => {
+    setSelectedClient(client);
   }, []);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
 
   // ── Toggle market ───────────────────────────────────────────────────────
 
@@ -85,27 +97,9 @@ export default function CreativeStrategistPage() {
 
   // ── Submit ──────────────────────────────────────────────────────────────
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     setError(null);
     setRecommendation(null);
-
-    if (!form.clientId) {
-      setError("Please select a client.");
-      return;
-    }
-    if (form.campaignObjective.length < 20) {
-      setError("Campaign objective must be at least 20 characters.");
-      return;
-    }
-    if (form.targetMarkets.length === 0) {
-      setError("Select at least one target market.");
-      return;
-    }
-    if (!form.timeline.trim()) {
-      setError("Timeline is required.");
-      return;
-    }
 
     setGenerating(true);
 
@@ -232,6 +226,45 @@ export default function CreativeStrategistPage() {
     URL.revokeObjectURL(url);
   }
 
+  // ── Build summary items ───────────────────────────────────────────────
+
+  function getSummaryItems(): { label: string; value: string }[] {
+    const items: { label: string; value: string }[] = [
+      { label: "Client", value: selectedClient?.name || "---" },
+      {
+        label: "Objective",
+        value:
+          form.campaignObjective.length > 100
+            ? form.campaignObjective.slice(0, 100) + "..."
+            : form.campaignObjective,
+      },
+      {
+        label: "Target Markets",
+        value: form.targetMarkets.join(", ") || "None",
+      },
+      { label: "Timeline", value: form.timeline || "Not set" },
+    ];
+
+    if (form.budgetAmount && Number(form.budgetAmount) > 0) {
+      items.push({
+        label: "Budget",
+        value: `${Number(form.budgetAmount).toLocaleString()} ${form.budgetCurrency}`,
+      });
+    }
+
+    if (form.constraints.trim()) {
+      items.push({
+        label: "Constraints",
+        value:
+          form.constraints.length > 80
+            ? form.constraints.slice(0, 80) + "..."
+            : form.constraints,
+      });
+    }
+
+    return items;
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -255,202 +288,200 @@ export default function CreativeStrategistPage() {
       </div>
 
       {/* Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           Campaign Brief
         </h2>
 
-        {/* Client select */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <div className="flex gap-2">
-              <select
-                id="client"
-                value={form.clientId}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, clientId: e.target.value }))
-                }
-                className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                <option value="">Select a client...</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.industry})
-                  </option>
-                ))}
-              </select>
-              <Link
-                href="/admin/clients/new"
-                className="px-3 py-2.5 text-sm font-medium text-brand-cerulean border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors whitespace-nowrap"
-              >
-                + New client
-              </Link>
-            </div>
-          )}
-        </div>
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Campaign objective */}
-        <div>
-          <label
-            htmlFor="objective"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Campaign Objective
-          </label>
-          <textarea
-            id="objective"
-            value={form.campaignObjective}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                campaignObjective: e.target.value,
-              }))
-            }
-            placeholder="What does the client want to achieve with this campaign?"
-            rows={4}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-          <p className="text-xs text-neutral-400 mt-1">
-            {form.campaignObjective.length} / 20 min characters
-          </p>
-        </div>
-
-        {/* Target markets */}
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 mb-2">
-            Target Markets
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {TARGET_MARKETS.map((market) => {
-              const selected = form.targetMarkets.includes(market);
-              return (
-                <button
-                  key={market}
-                  type="button"
-                  onClick={() => toggleMarket(market)}
-                  className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                    selected
-                      ? "bg-brand-black text-white border-brand-black"
-                      : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
-                  }`}
-                >
-                  {market}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Budget + Timeline */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="budget"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Budget (optional)
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="budget"
-                type="number"
-                value={form.budgetAmount}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    budgetAmount: e.target.value,
-                  }))
-                }
-                placeholder="Amount"
-                className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              />
-              <select
-                value={form.budgetCurrency}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    budgetCurrency: e.target.value,
-                  }))
-                }
-                className="w-20 px-2 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                {CURRENCY_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor="timeline"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Timeline
-            </label>
-            <input
-              id="timeline"
-              type="text"
-              value={form.timeline}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, timeline: e.target.value }))
+        {/* Step 0: Select Client */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
+              value={form.clientId}
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
               }
-              placeholder="e.g. Q2 2026, June-August 2026"
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              onClientLoaded={handleClientLoaded}
+              helperText="Select the client this campaign is for. Their brand tone, industry, and guidelines will shape the strategic recommendation."
             />
-          </div>
-        </div>
 
-        {/* Constraints */}
-        <div>
-          <label
-            htmlFor="constraints"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Constraints / Additional Context (optional)
-          </label>
-          <textarea
-            id="constraints"
-            value={form.constraints}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, constraints: e.target.value }))
-            }
-            placeholder="Competitors, market context, mandatories, restrictions..."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={!isStep0Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Get Recommendation"}
-          </button>
-        </div>
-      </form>
+        {/* Step 1: Configure */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Campaign objective */}
+            <FormField
+              label="Campaign Objective"
+              required
+              helperText="Describe what the client wants to achieve. Include the product/service, target outcome, and any geographic or audience scope."
+            >
+              <TextareaWithCount
+                value={form.campaignObjective}
+                onChange={(campaignObjective) =>
+                  setForm((prev) => ({ ...prev, campaignObjective }))
+                }
+                placeholder="e.g. Launch Adidas Superstar limited edition in 3 European markets with a street culture angle, targeting 18-25 sneakerheads, goal is 50K pairs sold in 8 weeks"
+                minLength={30}
+                rows={4}
+              />
+            </FormField>
+
+            {/* Target markets */}
+            <FormField
+              label="Target Markets"
+              required
+              helperText="Select all markets this campaign will run in. This shapes media mix, cultural references, and localization needs."
+              error={
+                form.targetMarkets.length === 0
+                  ? "Select at least one target market."
+                  : undefined
+              }
+            >
+              <div className="flex flex-wrap gap-2">
+                {TARGET_MARKETS.map((market) => {
+                  const selected = form.targetMarkets.includes(market);
+                  return (
+                    <button
+                      key={market}
+                      type="button"
+                      onClick={() => toggleMarket(market)}
+                      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                        selected
+                          ? "bg-brand-black text-white border-brand-black"
+                          : "bg-white text-neutral-700 border-neutral-300 hover:border-neutral-400"
+                      }`}
+                    >
+                      {market}
+                    </button>
+                  );
+                })}
+              </div>
+            </FormField>
+
+            {/* Budget + Timeline */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Budget"
+                helperText="Optional. Helps size the activation plan and channel recommendations."
+              >
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={form.budgetAmount}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        budgetAmount: e.target.value,
+                      }))
+                    }
+                    placeholder="Amount"
+                    className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  />
+                  <select
+                    value={form.budgetCurrency}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        budgetCurrency: e.target.value,
+                      }))
+                    }
+                    className="w-20 px-2 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  >
+                    {CURRENCY_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormField>
+
+              <FormField
+                label="Timeline"
+                required
+                helperText="When does the campaign need to launch and run? e.g. Q2 2026, June-August 2026"
+              >
+                <input
+                  type="text"
+                  value={form.timeline}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, timeline: e.target.value }))
+                  }
+                  placeholder="e.g. Q2 2026, June-August 2026"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+            </div>
+
+            {/* Constraints */}
+            <FormField
+              label="Constraints / Additional Context"
+              helperText="Optional. Competitors to avoid, market context, mandatory elements, brand restrictions, regulatory constraints."
+            >
+              <TextareaWithCount
+                value={form.constraints}
+                onChange={(constraints) =>
+                  setForm((prev) => ({ ...prev, constraints }))
+                }
+                placeholder="e.g. Must avoid any reference to competitor Nike. Regulatory restrictions on influencer disclosure in France. Client wants to reuse existing hero photography."
+                rows={3}
+              />
+            </FormField>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={!isStep1Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Review & Generate */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onBack={() => setStep(1)}
+              onConfirm={handleSubmit}
+              loading={generating}
+              buttonLabel="Get Recommendation"
+            />
+
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Output */}
       {recommendation && (

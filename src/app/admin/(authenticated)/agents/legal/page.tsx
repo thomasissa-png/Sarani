@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import {
@@ -11,6 +11,13 @@ import {
   type Currency,
   type GenerateContractResponse,
 } from "@/lib/validations/legal";
+import {
+  ClientSelector,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -52,12 +59,15 @@ const INITIAL_FORM: FormState = {
   language: "en",
 };
 
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function LegalAgentPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Client data
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
@@ -69,65 +79,47 @@ export default function LegalAgentPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Smart defaults when client is loaded ─────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
-
-  // Update selected client when clientId changes
-  useEffect(() => {
-    if (form.clientId) {
-      const client = clients.find((c) => c.id === form.clientId) || null;
+  const handleClientLoaded = useCallback(
+    (client: Client | null) => {
       setSelectedClient(client);
-    } else {
-      setSelectedClient(null);
-    }
-  }, [form.clientId, clients]);
+      if (client?.primaryLanguage) {
+        const lang = client.primaryLanguage.toLowerCase();
+        if (lang === "fr" || lang === "french") {
+          setForm((prev) => ({ ...prev, language: "fr" }));
+        } else {
+          setForm((prev) => ({ ...prev, language: "en" }));
+        }
+      }
+    },
+    []
+  );
+
+  // ── Step validation ─────────────────────────────────────────────────────
+
+  function canProceedStep0(): boolean {
+    return !!form.clientId;
+  }
+
+  function canProceedStep1(): boolean {
+    const amountNum = parseFloat(form.amount);
+    return (
+      form.projectDescription.length >= 20 &&
+      !isNaN(amountNum) &&
+      amountNum > 0 &&
+      form.deliverables.length >= 5 &&
+      !!form.startDate &&
+      !!form.endDate
+    );
+  }
 
   // ── Generate contract ─────────────────────────────────────────────────
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setResult(null);
     setCopied(false);
-
-    if (!form.clientId) {
-      setError("Please select a client.");
-      return;
-    }
-
-    const amountNum = parseFloat(form.amount);
-    if (isNaN(amountNum) || amountNum <= 0) {
-      setError("Please enter a valid positive amount.");
-      return;
-    }
-
-    if (form.projectDescription.length < 10) {
-      setError("Project description must be at least 10 characters.");
-      return;
-    }
-
-    if (form.deliverables.length < 5) {
-      setError("Please describe the deliverables.");
-      return;
-    }
-
     setGenerating(true);
 
     try {
@@ -138,7 +130,7 @@ export default function LegalAgentPage() {
           clientId: form.clientId,
           contractType: form.contractType,
           projectDescription: form.projectDescription,
-          amount: amountNum,
+          amount: parseFloat(form.amount),
           currency: form.currency,
           deliverables: form.deliverables,
           startDate: form.startDate,
@@ -173,7 +165,6 @@ export default function LegalAgentPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const textarea = document.createElement("textarea");
       textarea.value = result.contractText;
       document.body.appendChild(textarea);
@@ -200,6 +191,33 @@ export default function LegalAgentPage() {
     URL.revokeObjectURL(url);
   }
 
+  // ── Build summary items ────────────────────────────────────────────────
+
+  function getSummaryItems() {
+    return [
+      { label: "Client", value: selectedClient?.name || "—" },
+      {
+        label: "Legal Entity",
+        value: selectedClient?.legalEntityName || selectedClient?.name || "—",
+      },
+      { label: "Contract Type", value: CONTRACT_TYPE_LABELS[form.contractType] },
+      {
+        label: "Amount",
+        value: form.amount ? `${form.amount} ${form.currency}` : "—",
+      },
+      { label: "Start Date", value: form.startDate },
+      { label: "End Date", value: form.endDate },
+      { label: "Language", value: form.language === "en" ? "English" : "French" },
+      {
+        label: "Description",
+        value:
+          form.projectDescription.length > 80
+            ? form.projectDescription.slice(0, 80) + "..."
+            : form.projectDescription,
+      },
+    ];
+  }
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -221,316 +239,315 @@ export default function LegalAgentPage() {
       </div>
 
       {/* Contract Form */}
-      <form
-        onSubmit={handleGenerate}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           New Contract
         </h2>
 
-        {/* Client select */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <div className="flex gap-2">
-              <select
-                id="client"
-                value={form.clientId}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, clientId: e.target.value }))
-                }
-                className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                <option value="">Select a client...</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.industry})
-                  </option>
-                ))}
-              </select>
-              <Link
-                href="/admin/clients/new"
-                className="px-3 py-2.5 text-sm font-medium text-brand-cerulean border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors whitespace-nowrap"
-              >
-                + New client
-              </Link>
-            </div>
-          )}
-        </div>
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Client legal info banner */}
-        {selectedClient && (
-          <div className="bg-neutral-100 rounded-lg px-4 py-3 text-sm space-y-1">
-            <p className="font-medium text-neutral-700">Client Legal Info</p>
-            <div className="grid grid-cols-3 gap-2 text-neutral-600">
-              <span>
-                Entity:{" "}
-                <span className="font-medium text-brand-black">
-                  {selectedClient.legalEntityName || "Not set"}
-                </span>
-              </span>
-              <span>
-                Country:{" "}
-                <span className="font-medium text-brand-black">
-                  {selectedClient.legalCountry || "Not set"}
-                </span>
-              </span>
-              <span>
-                VAT:{" "}
-                <span className="font-medium text-brand-black">
-                  {selectedClient.vatNumber || "Not set"}
-                </span>
-              </span>
-            </div>
-            {!selectedClient.legalEntityName && (
-              <p className="text-amber-600 text-xs mt-1">
-                Legal entity name is missing. The contract will use the client
-                name instead. Consider updating the client record.
-              </p>
+        {/* ── Step 0: Select Client ─────────────────────────────────────── */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
+              value={form.clientId}
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
+              }
+              required
+              helperText="The contract will use the client's legal entity name and VAT number from their profile."
+              onClientLoaded={handleClientLoaded}
+            />
+
+            {/* Client legal info banner */}
+            {selectedClient && (
+              <div className="bg-neutral-100 rounded-lg px-4 py-3 text-sm space-y-1">
+                <p className="font-medium text-neutral-700">
+                  Client Legal Info
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-neutral-600">
+                  <span>
+                    Entity:{" "}
+                    <span className="font-medium text-brand-black">
+                      {selectedClient.legalEntityName || "Not set"}
+                    </span>
+                  </span>
+                  <span>
+                    Country:{" "}
+                    <span className="font-medium text-brand-black">
+                      {selectedClient.legalCountry || "Not set"}
+                    </span>
+                  </span>
+                  <span>
+                    VAT:{" "}
+                    <span className="font-medium text-brand-black">
+                      {selectedClient.vatNumber || "Not set"}
+                    </span>
+                  </span>
+                </div>
+                {!selectedClient.legalEntityName && (
+                  <p className="text-amber-600 text-xs mt-1">
+                    Legal entity name is missing. The contract will use the
+                    client name instead. Consider updating the client record.
+                  </p>
+                )}
+              </div>
             )}
+
+            {/* Next button */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                disabled={!canProceedStep0()}
+                onClick={() => setStep(1)}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Configure
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Contract type */}
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 mb-1.5">
-            Contract Type
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {CONTRACT_TYPES.map((type) => (
-              <label
-                key={type}
-                className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  form.contractType === type
-                    ? "border-brand-cerulean bg-blue-50/50"
-                    : "border-neutral-200 hover:border-neutral-300"
-                }`}
+        {/* ── Step 1: Configure ─────────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Contract type */}
+            <FormField
+              label="Contract Type"
+              required
+              helperText="Choose the type of contract. SOW is for project-based work, NDA for confidentiality, UGC for content creation rights, Freelance for contractor agreements."
+            >
+              <div className="grid grid-cols-2 gap-2">
+                {CONTRACT_TYPES.map((type) => (
+                  <label
+                    key={type}
+                    className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      form.contractType === type
+                        ? "border-brand-cerulean bg-blue-50/50"
+                        : "border-neutral-200 hover:border-neutral-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="contractType"
+                      value={type}
+                      checked={form.contractType === type}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          contractType: e.target.value as ContractType,
+                        }))
+                      }
+                      className="shrink-0"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-brand-black">
+                        {type}
+                      </span>
+                      <span className="text-xs text-neutral-500 ml-1">
+                        -- {CONTRACT_TYPE_LABELS[type]}
+                      </span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </FormField>
+
+            {/* Project description */}
+            <FormField
+              label="Project Description / Scope"
+              required
+              helperText="Describe the project scope clearly. This becomes the main body of the contract's scope section."
+            >
+              <TextareaWithCount
+                value={form.projectDescription}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, projectDescription: val }))
+                }
+                placeholder="e.g. Design and production of 50 Black Friday banners for Sony across 15 markets"
+                minLength={20}
+                rows={3}
+              />
+            </FormField>
+
+            {/* Amount + Currency + Language */}
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                label="Amount"
+                required
+                helperText="Total contract value before taxes."
               >
                 <input
-                  type="radio"
-                  name="contractType"
-                  value={type}
-                  checked={form.contractType === type}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.amount}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, amount: e.target.value }))
+                  }
+                  placeholder="15000"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+              <FormField label="Currency" required>
+                <select
+                  value={form.currency}
                   onChange={(e) =>
                     setForm((prev) => ({
                       ...prev,
-                      contractType: e.target.value as ContractType,
+                      currency: e.target.value as Currency,
                     }))
                   }
-                  className="shrink-0"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField
+                label="Language"
+                helperText="Auto-filled from client profile."
+              >
+                <select
+                  value={form.language}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      language: e.target.value as "en" | "fr",
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  <option value="en">English</option>
+                  <option value="fr">French</option>
+                </select>
+              </FormField>
+            </div>
+
+            {/* Deliverables */}
+            <FormField
+              label="Deliverables"
+              required
+              helperText="List all deliverables that will be included in the contract. Be specific about quantities and formats."
+            >
+              <TextareaWithCount
+                value={form.deliverables}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, deliverables: val }))
+                }
+                placeholder="e.g. 50 web banners in 5 formats, 10 social media posts, 1 hero video (30s)"
+                minLength={5}
+                rows={3}
+              />
+            </FormField>
+
+            {/* Start date + End date */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Start Date"
+                required
+                helperText="Contract effective date."
+              >
+                <input
+                  type="date"
+                  value={form.startDate}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, startDate: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 />
-                <div>
-                  <span className="text-sm font-medium text-brand-black">
-                    {type}
-                  </span>
-                  <span className="text-xs text-neutral-500 ml-1">
-                    -- {CONTRACT_TYPE_LABELS[type]}
-                  </span>
-                </div>
-              </label>
-            ))}
-          </div>
-        </div>
+              </FormField>
+              <FormField
+                label="End Date"
+                required
+                helperText="Contract end date."
+              >
+                <input
+                  type="date"
+                  value={form.endDate}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, endDate: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+            </div>
 
-        {/* Project description */}
-        <div>
-          <label
-            htmlFor="projectDescription"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Project Description / Scope
-          </label>
-          <textarea
-            id="projectDescription"
-            value={form.projectDescription}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                projectDescription: e.target.value,
-              }))
-            }
-            placeholder="Describe the project scope, objectives, and context..."
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
+            {/* Special clauses */}
+            <FormField
+              label="Special Clauses"
+              helperText="Any additional clauses, terms, or conditions to include. Leave empty if not needed."
+            >
+              <TextareaWithCount
+                value={form.specialClauses}
+                onChange={(val) =>
+                  setForm((prev) => ({ ...prev, specialClauses: val }))
+                }
+                placeholder="e.g. Exclusivity clause for Black Friday campaign period, NDA extension to subcontractors"
+                rows={2}
+              />
+            </FormField>
 
-        {/* Amount + Currency + Language */}
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label
-              htmlFor="amount"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Amount
-            </label>
-            <input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={form.amount}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, amount: e.target.value }))
-              }
-              placeholder="15000"
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="currency"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Currency
-            </label>
-            <select
-              id="currency"
-              value={form.currency}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  currency: e.target.value as Currency,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {CURRENCIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="language"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Language
-            </label>
-            <select
-              id="language"
-              value={form.language}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  language: e.target.value as "en" | "fr",
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="en">English</option>
-              <option value="fr">French</option>
-            </select>
-          </div>
-        </div>
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
 
-        {/* Deliverables */}
-        <div>
-          <label
-            htmlFor="deliverables"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Deliverables
-          </label>
-          <textarea
-            id="deliverables"
-            value={form.deliverables}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, deliverables: e.target.value }))
-            }
-            placeholder="List the deliverables (e.g., 50 web banners in 5 formats, 10 social media posts...)"
-            rows={3}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Start date + End date */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="startDate"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Start Date
-            </label>
-            <input
-              id="startDate"
-              type="date"
-              value={form.startDate}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, startDate: e.target.value }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="endDate"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              End Date
-            </label>
-            <input
-              id="endDate"
-              type="date"
-              value={form.endDate}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, endDate: e.target.value }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {/* Special clauses */}
-        <div>
-          <label
-            htmlFor="specialClauses"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Special Clauses{" "}
-            <span className="text-neutral-400 font-normal">(optional)</span>
-          </label>
-          <textarea
-            id="specialClauses"
-            value={form.specialClauses}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, specialClauses: e.target.value }))
-            }
-            placeholder="Any additional clauses, terms, or conditions to include..."
-            rows={2}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
+            {/* Navigation */}
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={!canProceedStep1()}
+                onClick={() => {
+                  setError(null);
+                  setStep(2);
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next: Review
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Generate Contract"}
-          </button>
-        </div>
-      </form>
+        {/* ── Step 2: Review & Generate ─────────────────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-4">
+            {/* Legal warning banner */}
+            <div className="bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 text-sm text-amber-800">
+              <span className="font-semibold">Legal disclaimer:</span> The
+              generated contract is a draft based on templates. It must be
+              reviewed by legal counsel before being sent to the client.
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
+            )}
+
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onConfirm={handleGenerate}
+              onBack={() => setStep(1)}
+              loading={generating}
+              buttonLabel="Generate Contract"
+            />
+          </div>
+        )}
+      </div>
 
       {/* Contract Output */}
       {result && (

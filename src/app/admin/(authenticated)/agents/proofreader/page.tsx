@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
+import {
+  ClientSelector,
+  ClientContextPanel,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 import {
   CONTENT_TYPES,
   CONTENT_TYPE_LABELS,
@@ -32,6 +40,10 @@ type FormState = {
 };
 
 type ActiveTab = "issues" | "improved" | "brand" | "glossary";
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -87,9 +99,11 @@ function getTypeBadge(type: ProofreadIssue["type"]): string {
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function ProofreaderPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Client ref
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -106,49 +120,49 @@ export default function ProofreaderPage() {
   const [result, setResult] = useState<ProofreadResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Client loaded callback ──────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
+  const handleClientLoaded = useCallback(
+    (client: Client | null) => {
+      setSelectedClient(client);
+      if (client?.primaryLanguage) {
+        const lang = client.primaryLanguage as ProofreaderLanguage;
+        if (PROOFREADER_LANGUAGES.includes(lang)) {
+          setForm((prev) => ({ ...prev, sourceLanguage: lang }));
+        }
       }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
-  }, []);
+      // Reset brand/glossary checks when client is deselected
+      if (!client) {
+        setForm((prev) => ({
+          ...prev,
+          checkBrand: false,
+          checkGlossary: false,
+        }));
+      }
+    },
+    []
+  );
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  // ── Step validation ─────────────────────────────────────────────────────
 
-  // Enable/disable brand and glossary checks based on client selection
-  useEffect(() => {
-    if (!form.clientId) {
-      setForm((prev) => ({
-        ...prev,
-        checkBrand: false,
-        checkGlossary: false,
-      }));
-    }
-  }, [form.clientId]);
+  function canAdvanceFromStep(s: number): boolean {
+    // Step 0: client is optional for proofreader
+    if (s === 0) return true;
+    if (s === 1) return form.contentToReview.trim().length >= 20;
+    return true;
+  }
+
+  function getStepError(s: number): string | null {
+    if (s === 1 && form.contentToReview.trim().length < 20)
+      return "Content must be at least 20 characters to review.";
+    return null;
+  }
 
   // ── Handle review ─────────────────────────────────────────────────────
 
-  async function handleReview(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleReview() {
     setError(null);
     setResult(null);
-
-    if (!form.contentToReview.trim()) {
-      setError("Please enter content to review.");
-      return;
-    }
-
     setReviewing(true);
 
     try {
@@ -181,6 +195,39 @@ export default function ProofreaderPage() {
     }
   }
 
+  // ── Build summary items ─────────────────────────────────────────────────
+
+  function buildSummaryItems() {
+    const checks: string[] = [];
+    if (form.checkBrand) checks.push("Brand consistency");
+    if (form.checkGlossary) checks.push("Glossary compliance");
+    if (checks.length === 0) checks.push("Language only");
+
+    return [
+      {
+        label: "Client",
+        value: selectedClient?.name || "No client (generic mode)",
+      },
+      { label: "Content type", value: CONTENT_TYPE_LABELS[form.contentType] },
+      {
+        label: "Language",
+        value: PROOFREADER_LANGUAGE_LABELS[form.sourceLanguage],
+      },
+      { label: "Checks enabled", value: checks.join(", ") },
+      {
+        label: "Content preview",
+        value:
+          form.contentToReview.length > 100
+            ? form.contentToReview.slice(0, 100) + "..."
+            : form.contentToReview,
+      },
+      {
+        label: "Content length",
+        value: `${form.contentToReview.length} characters`,
+      },
+    ];
+  }
+
   // ── Render ────────────────────────────────────────────────────────────
 
   return (
@@ -204,170 +251,238 @@ export default function ProofreaderPage() {
         </Link>
       </div>
 
-      {/* Review Form */}
-      <form
-        onSubmit={handleReview}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
-        <h2 className="text-lg font-semibold text-brand-black">New Review</h2>
+      {/* Form */}
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Client select (optional) */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client{" "}
-            <span className="text-neutral-400 font-normal">
-              (optional -- enables brand & glossary checks)
-            </span>
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <select
-              id="client"
+        {/* ── Step 0: Select Client (optional) ───────────────────────── */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Select Client
+            </h2>
+            <ClientSelector
               value={form.clientId}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, clientId: e.target.value }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">No client (language check only)</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.industry})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        {/* Content type + Language */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="contentType"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Content Type
-            </label>
-            <select
-              id="contentType"
-              value={form.contentType}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  contentType: e.target.value as ContentType,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {CONTENT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {CONTENT_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="sourceLanguage"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Language
-            </label>
-            <select
-              id="sourceLanguage"
-              value={form.sourceLanguage}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  sourceLanguage: e.target.value as ProofreaderLanguage,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {PROOFREADER_LANGUAGES.map((lang) => (
-                <option key={lang} value={lang}>
-                  {PROOFREADER_LANGUAGE_LABELS[lang]} ({lang})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Content to review */}
-        <div>
-          <label
-            htmlFor="contentToReview"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Content to review
-          </label>
-          <textarea
-            id="contentToReview"
-            value={form.contentToReview}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                contentToReview: e.target.value,
-              }))
-            }
-            placeholder="Paste the content you want to review..."
-            rows={10}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-          <p className="text-xs text-neutral-400 mt-1">
-            {form.contentToReview.length.toLocaleString()} characters
-          </p>
-        </div>
-
-        {/* Options */}
-        <div className="flex items-center gap-6">
-          <label
-            className={`flex items-center gap-2 text-sm cursor-pointer ${
-              form.clientId
-                ? "text-neutral-700"
-                : "text-neutral-400 cursor-not-allowed"
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={form.checkBrand}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  checkBrand: e.target.checked,
-                }))
-              }
-              disabled={!form.clientId}
-              className="rounded border-neutral-300"
+              onChange={(id) => setForm((prev) => ({ ...prev, clientId: id }))}
+              required={false}
+              helperText="Optional. Selecting a client enables brand tone and glossary compliance checks."
+              onClientLoaded={handleClientLoaded}
             />
-            Check brand consistency
-          </label>
-          <label
-            className={`flex items-center gap-2 text-sm cursor-pointer ${
-              form.clientId
-                ? "text-neutral-700"
-                : "text-neutral-400 cursor-not-allowed"
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={form.checkGlossary}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  checkGlossary: e.target.checked,
-                }))
-              }
-              disabled={!form.clientId}
-              className="rounded border-neutral-300"
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setStep(1);
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                Next: Configure
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 1: Configure ──────────────────────────────────────── */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Configure Review
+            </h2>
+
+            {selectedClient && (
+              <ClientContextPanel client={selectedClient} />
+            )}
+
+            {/* Content to review */}
+            <FormField
+              label="Content to Review"
+              required
+              helperText="Paste the content you want the proofreader to check."
+            >
+              <TextareaWithCount
+                value={form.contentToReview}
+                onChange={(val) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    contentToReview: val,
+                  }))
+                }
+                placeholder="Paste the content you want reviewed — translation, social post, article, email, contract, or any deliverable"
+                minLength={20}
+                rows={10}
+              />
+            </FormField>
+
+            {/* Content type + Language */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Content Type"
+                required
+                helperText="What kind of content is this? This helps the proofreader focus on the right criteria."
+              >
+                <select
+                  value={form.contentType}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      contentType: e.target.value as ContentType,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {CONTENT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {CONTENT_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField
+                label="Language"
+                required
+                helperText={
+                  selectedClient?.primaryLanguage
+                    ? `Auto-filled from ${selectedClient.name}'s primary language.`
+                    : "The language of the content being reviewed."
+                }
+              >
+                <select
+                  value={form.sourceLanguage}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      sourceLanguage: e.target.value as ProofreaderLanguage,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {PROOFREADER_LANGUAGES.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {PROOFREADER_LANGUAGE_LABELS[lang]} ({lang})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            {/* Brand & Glossary checks */}
+            <div className="space-y-3">
+              <FormField
+                label="Quality Checks"
+                helperText={
+                  form.clientId
+                    ? "Enable additional checks based on client data."
+                    : "Select a client in Step 1 to enable these checks."
+                }
+              >
+                <div className="space-y-2">
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                      form.clientId
+                        ? form.checkBrand
+                          ? "border-brand-cerulean bg-blue-50 cursor-pointer"
+                          : "border-neutral-200 hover:bg-neutral-50 cursor-pointer"
+                        : "border-neutral-100 bg-neutral-50 cursor-not-allowed opacity-60"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.checkBrand}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          checkBrand: e.target.checked,
+                        }))
+                      }
+                      disabled={!form.clientId}
+                      className="mt-0.5 rounded border-neutral-300"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-brand-black">
+                        Check brand consistency
+                      </span>
+                      <p className="text-xs text-neutral-500">
+                        Compare against client&apos;s brand tone and guidelines
+                      </p>
+                    </div>
+                  </label>
+                  <label
+                    className={`flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                      form.clientId
+                        ? form.checkGlossary
+                          ? "border-brand-cerulean bg-blue-50 cursor-pointer"
+                          : "border-neutral-200 hover:bg-neutral-50 cursor-pointer"
+                        : "border-neutral-100 bg-neutral-50 cursor-not-allowed opacity-60"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.checkGlossary}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          checkGlossary: e.target.checked,
+                        }))
+                      }
+                      disabled={!form.clientId}
+                      className="mt-0.5 rounded border-neutral-300"
+                    />
+                    <div>
+                      <span className="text-sm font-medium text-brand-black">
+                        Check glossary compliance
+                      </span>
+                      <p className="text-xs text-neutral-500">
+                        Verify all client-specific terms are used correctly
+                      </p>
+                    </div>
+                  </label>
+                </div>
+              </FormField>
+            </div>
+
+            {/* Step navigation */}
+            <div className="flex justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (canAdvanceFromStep(1)) {
+                    setError(null);
+                    setStep(2);
+                  } else {
+                    setError(getStepError(1));
+                  }
+                }}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                Next: Review
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 2: Review & Generate ──────────────────────────────── */}
+        {step === 2 && (
+          <div className="space-y-5">
+            <h2 className="text-lg font-semibold text-brand-black">
+              Review & Generate
+            </h2>
+            <PreSubmitSummary
+              items={buildSummaryItems()}
+              onConfirm={handleReview}
+              onBack={() => setStep(1)}
+              loading={reviewing}
+              buttonLabel="Review Content"
             />
-            Check glossary compliance
-          </label>
-        </div>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -375,18 +490,7 @@ export default function ProofreaderPage() {
             {error}
           </div>
         )}
-
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={reviewing}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {reviewing ? "Reviewing..." : "Review Content"}
-          </button>
-        </div>
-      </form>
+      </div>
 
       {/* Review Result */}
       {result && <ReviewOutput result={result} />}

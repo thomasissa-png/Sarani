@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import {
@@ -18,6 +18,14 @@ import {
   type ImagePrompt,
   type ColorEntry,
 } from "@/lib/validations/designer";
+import {
+  ClientSelector,
+  ClientContextPanel,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -38,12 +46,16 @@ type FormState = {
   platform: DesignPlatform;
 };
 
+const STEPS = ["Select Client", "Configure", "Review & Generate"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function DesignerPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Selected client object
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -62,29 +74,26 @@ export default function DesignerPage() {
   const [result, setResult] = useState<DesignerResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Step validation ─────────────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
+  function isStep0Valid(): boolean {
+    return !!form.clientId;
+  }
+
+  function isStep1Valid(): boolean {
+    const dims = getEffectiveDimensions();
+    return (
+      form.briefDescription.length >= 20 &&
+      !!dims &&
+      /^\d{2,5}x\d{2,5}$/.test(dims)
+    );
+  }
+
+  // ── Client loaded callback ────────────────────────────────────────────
+
+  const handleClientLoaded = useCallback((client: Client | null) => {
+    setSelectedClient(client);
   }, []);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
-
-  // ── Selected client brand info ──────────────────────────────────────────
-
-  const selectedClient = clients.find((c) => c.id === form.clientId);
 
   // ── Get effective dimensions ────────────────────────────────────────────
 
@@ -97,26 +106,9 @@ export default function DesignerPage() {
 
   // ── Handle generate ─────────────────────────────────────────────────────
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate() {
     setError(null);
     setResult(null);
-
-    if (!form.clientId) {
-      setError("Please select a client. Brand context is required for the designer.");
-      return;
-    }
-
-    if (!form.briefDescription.trim()) {
-      setError("Please describe the creative brief.");
-      return;
-    }
-
-    const dims = getEffectiveDimensions();
-    if (!dims || !/^\d{2,5}x\d{2,5}$/.test(dims)) {
-      setError("Please enter valid dimensions in WxH format (e.g. 1920x1080).");
-      return;
-    }
 
     setGenerating(true);
 
@@ -127,7 +119,7 @@ export default function DesignerPage() {
         body: JSON.stringify({
           clientId: form.clientId,
           assetType: form.assetType,
-          dimensions: dims,
+          dimensions: getEffectiveDimensions(),
           quantity: form.quantity,
           briefDescription: form.briefDescription,
           style: form.style,
@@ -149,6 +141,27 @@ export default function DesignerPage() {
     } finally {
       setGenerating(false);
     }
+  }
+
+  // ── Build summary items ───────────────────────────────────────────────
+
+  function getSummaryItems(): { label: string; value: string }[] {
+    const dims = getEffectiveDimensions();
+    return [
+      { label: "Client", value: selectedClient?.name || "---" },
+      { label: "Asset Type", value: ASSET_TYPE_LABELS[form.assetType] },
+      { label: "Dimensions", value: dims },
+      { label: "Variations", value: String(form.quantity) },
+      { label: "Style", value: STYLE_LABELS[form.style] },
+      { label: "Platform", value: PLATFORM_LABELS[form.platform] },
+      {
+        label: "Brief",
+        value:
+          form.briefDescription.length > 100
+            ? form.briefDescription.slice(0, 100) + "..."
+            : form.briefDescription,
+      },
+    ];
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -175,240 +188,239 @@ export default function DesignerPage() {
       </div>
 
       {/* Generation Form */}
-      <form
-        onSubmit={handleGenerate}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">
           New Design Brief
         </h2>
 
-        {/* Client select (required) */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client{" "}
-            <span className="text-red-500 font-normal">*</span>
-            <span className="text-neutral-400 font-normal ml-1">
-              (brand assets will be loaded)
-            </span>
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <select
-              id="client"
-              value={form.clientId}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, clientId: e.target.value }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              <option value="">Select a client...</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.industry})
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Brand preview (shown when client selected) */}
-        {selectedClient && (
-          <BrandPreview client={selectedClient} />
+        {/* Step 0: Select Client (with brand asset preview) */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
+              value={form.clientId}
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
+              }
+              onClientLoaded={handleClientLoaded}
+              helperText="Select the client. Their brand assets (colors, font, tone) will be loaded and applied to the design brief."
+            />
+
+            {/* Extra brand preview with colors and font */}
+            {selectedClient && <BrandPreview client={selectedClient} />}
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={!isStep0Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* Asset type + Style + Platform */}
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label
-              htmlFor="assetType"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Asset Type
-            </label>
-            <select
-              id="assetType"
-              value={form.assetType}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  assetType: e.target.value as AssetType,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {ASSET_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {ASSET_TYPE_LABELS[type]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="style"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Style
-            </label>
-            <select
-              id="style"
-              value={form.style}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  style: e.target.value as DesignStyle,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {STYLES.map((s) => (
-                <option key={s} value={s}>
-                  {STYLE_LABELS[s]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="platform"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Platform
-            </label>
-            <select
-              id="platform"
-              value={form.platform}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  platform: e.target.value as DesignPlatform,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {PLATFORMS.map((p) => (
-                <option key={p} value={p}>
-                  {PLATFORM_LABELS[p]}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {/* Step 1: Configure */}
+        {step === 1 && (
+          <div className="space-y-5">
+            {/* Asset type + Style + Platform */}
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                label="Asset Type"
+                required
+                helperText="What kind of visual asset do you need?"
+              >
+                <select
+                  value={form.assetType}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      assetType: e.target.value as AssetType,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {ASSET_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {ASSET_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
 
-        {/* Dimensions + Quantity */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="dimensions"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Dimensions
-            </label>
-            <select
-              id="dimensions"
-              value={form.dimensions}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  dimensions: e.target.value,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {DIMENSION_PRESETS.map((preset) => (
-                <option key={preset.value} value={preset.value}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-            {form.dimensions === "custom" && (
-              <input
-                type="text"
-                placeholder="e.g. 1200x800"
-                value={form.customDimensions}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    customDimensions: e.target.value,
-                  }))
+              <FormField
+                label="Style"
+                required
+                helperText="Visual style direction for the asset."
+              >
+                <select
+                  value={form.style}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      style: e.target.value as DesignStyle,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {STYLES.map((s) => (
+                    <option key={s} value={s}>
+                      {STYLE_LABELS[s]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+
+              <FormField
+                label="Platform"
+                required
+                helperText="Where will this asset be displayed?"
+              >
+                <select
+                  value={form.platform}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      platform: e.target.value as DesignPlatform,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {PLATFORMS.map((p) => (
+                    <option key={p} value={p}>
+                      {PLATFORM_LABELS[p]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            {/* Dimensions + Quantity */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Dimensions"
+                required
+                helperText="Choose a preset or enter custom WxH dimensions."
+                error={
+                  form.dimensions === "custom" &&
+                  form.customDimensions &&
+                  !/^\d{2,5}x\d{2,5}$/.test(form.customDimensions)
+                    ? "Use WxH format (e.g. 1200x800)"
+                    : undefined
                 }
-                className="w-full mt-2 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                <select
+                  value={form.dimensions}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      dimensions: e.target.value,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {DIMENSION_PRESETS.map((preset) => (
+                    <option key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </option>
+                  ))}
+                </select>
+                {form.dimensions === "custom" && (
+                  <input
+                    type="text"
+                    placeholder="e.g. 1200x800"
+                    value={form.customDimensions}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        customDimensions: e.target.value,
+                      }))
+                    }
+                    className="w-full mt-2 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  />
+                )}
+              </FormField>
+
+              <FormField
+                label="Number of Variations"
+                helperText="How many prompt variations to generate (1-6)."
+              >
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={form.quantity}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      quantity: parseInt(e.target.value) || 1,
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+            </div>
+
+            {/* Brief description */}
+            <FormField
+              label="Creative Brief"
+              required
+              helperText="Describe the visual: campaign theme, key message, target audience, specific elements to include. The more detail, the better the prompts."
+            >
+              <TextareaWithCount
+                value={form.briefDescription}
+                onChange={(briefDescription) =>
+                  setForm((prev) => ({ ...prev, briefDescription }))
+                }
+                placeholder="e.g. Black Friday promotional banner for Sony ULT headphones — dark background, product hero shot, urgency messaging, gold accents, price badge showing 30% off"
+                minLength={20}
+                rows={5}
               />
+            </FormField>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={!isStep1Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Review & Generate */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onBack={() => setStep(1)}
+              onConfirm={handleGenerate}
+              loading={generating}
+              buttonLabel="Generate"
+            />
+
+            {/* Error */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {error}
+              </div>
             )}
           </div>
-          <div>
-            <label
-              htmlFor="quantity"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Number of Variations
-            </label>
-            <input
-              id="quantity"
-              type="number"
-              min={1}
-              max={6}
-              value={form.quantity}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  quantity: parseInt(e.target.value) || 1,
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            />
-          </div>
-        </div>
-
-        {/* Brief description */}
-        <div>
-          <label
-            htmlFor="briefDescription"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Creative Brief
-          </label>
-          <textarea
-            id="briefDescription"
-            value={form.briefDescription}
-            onChange={(e) =>
-              setForm((prev) => ({
-                ...prev,
-                briefDescription: e.target.value,
-              }))
-            }
-            placeholder="Describe what you need: campaign theme, key message, visual direction, target audience, any specific elements to include..."
-            rows={5}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-          <p className="text-xs text-neutral-400 mt-1">
-            {form.briefDescription.length.toLocaleString()} characters
-          </p>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {error}
-          </div>
         )}
-
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={generating}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? "Generating..." : "Generate Brief"}
-          </button>
-        </div>
-      </form>
+      </div>
 
       {/* Output */}
       {result && <DesignerOutput result={result} />}

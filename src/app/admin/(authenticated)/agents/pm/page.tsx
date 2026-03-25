@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Client } from "@/lib/db/schema";
 import type { PMAnalysis, SuggestedTask } from "@/lib/validations/pm";
 import { PRIORITY_OPTIONS } from "@/lib/validations/pm";
+import {
+  ClientSelector,
+  FormField,
+  StepIndicator,
+  PreSubmitSummary,
+  TextareaWithCount,
+} from "@/components/admin/guided-form";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -49,12 +56,16 @@ const STATUS_ICONS: Record<string, { icon: string; color: string }> = {
   missing: { icon: "\u2717", color: "text-red-600" },
 };
 
+const STEPS = ["Select Client", "Configure", "Review & Analyze"];
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function PMAgentPage() {
-  // Clients data
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loadingClients, setLoadingClients] = useState(true);
+  // Step state
+  const [step, setStep] = useState(0);
+
+  // Selected client object
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -77,44 +88,30 @@ export default function PMAgentPage() {
   } | null>(null);
   const [dispatchError, setDispatchError] = useState<string | null>(null);
 
-  // ── Fetch clients ───────────────────────────────────────────────────────
+  // ── Step validation ─────────────────────────────────────────────────────
 
-  const fetchClients = useCallback(async () => {
-    try {
-      const res = await fetch("/api/admin/clients?status=active");
-      if (res.ok) {
-        const data = await res.json();
-        setClients(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-    } finally {
-      setLoadingClients(false);
-    }
+  function isStep0Valid(): boolean {
+    return !!form.clientId;
+  }
+
+  function isStep1Valid(): boolean {
+    return form.brief.length >= 30 && !!form.deadline;
+  }
+
+  // ── Client loaded callback ────────────────────────────────────────────
+
+  const handleClientLoaded = useCallback((client: Client | null) => {
+    setSelectedClient(client);
   }, []);
-
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
 
   // ── Analyze brief ─────────────────────────────────────────────────────
 
-  async function handleAnalyze(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleAnalyze() {
     setAnalyzeError(null);
     setAnalysis(null);
     setDispatchResult(null);
     setDispatchError(null);
     setSelectedTasks(new Set());
-
-    if (!form.clientId) {
-      setAnalyzeError("Please select a client.");
-      return;
-    }
-    if (form.brief.length < 20) {
-      setAnalyzeError("Brief must be at least 20 characters.");
-      return;
-    }
 
     setAnalyzing(true);
 
@@ -212,6 +209,23 @@ export default function PMAgentPage() {
     });
   }
 
+  // ── Build summary items for PreSubmitSummary ──────────────────────────
+
+  function getSummaryItems(): { label: string; value: string }[] {
+    return [
+      { label: "Client", value: selectedClient?.name || "—" },
+      {
+        label: "Brief",
+        value:
+          form.brief.length > 120
+            ? form.brief.slice(0, 120) + "..."
+            : form.brief,
+      },
+      { label: "Deadline", value: form.deadline || "Not set" },
+      { label: "Priority", value: PRIORITY_LABELS[form.priority] },
+    ];
+  }
+
   // ── Render ────────────────────────────────────────────────────────────
 
   return (
@@ -235,136 +249,131 @@ export default function PMAgentPage() {
       </div>
 
       {/* Brief Form */}
-      <form
-        onSubmit={handleAnalyze}
-        className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5"
-      >
+      <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
         <h2 className="text-lg font-semibold text-brand-black">New Brief</h2>
 
-        {/* Client select */}
-        <div>
-          <label
-            htmlFor="client"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Client
-          </label>
-          {loadingClients ? (
-            <div className="text-sm text-neutral-400">Loading clients...</div>
-          ) : (
-            <div className="flex gap-2">
-              <select
-                id="client"
-                value={form.clientId}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, clientId: e.target.value }))
-                }
-                className="flex-1 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                <option value="">Select a client...</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.industry})
-                  </option>
-                ))}
-              </select>
-              <Link
-                href="/admin/clients/new"
-                className="px-3 py-2.5 text-sm font-medium text-brand-cerulean border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors whitespace-nowrap"
-              >
-                + New client
-              </Link>
-            </div>
-          )}
-        </div>
+        <StepIndicator steps={STEPS} currentStep={step} />
 
-        {/* Brief textarea */}
-        <div>
-          <label
-            htmlFor="brief"
-            className="block text-sm font-medium text-neutral-700 mb-1.5"
-          >
-            Brief
-          </label>
-          <textarea
-            id="brief"
-            value={form.brief}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, brief: e.target.value }))
-            }
-            placeholder="Paste an email, describe the project, or write the brief..."
-            rows={6}
-            className="w-full px-4 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
-          <p className="text-xs text-neutral-400 mt-1">
-            {form.brief.length} / 20 min characters
-          </p>
-        </div>
-
-        {/* Deadline + Priority */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label
-              htmlFor="deadline"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Deadline
-            </label>
-            <input
-              id="deadline"
-              type="date"
-              value={form.deadline}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, deadline: e.target.value }))
+        {/* Step 0: Select Client */}
+        {step === 0 && (
+          <div className="space-y-4">
+            <ClientSelector
+              value={form.clientId}
+              onChange={(clientId) =>
+                setForm((prev) => ({ ...prev, clientId }))
               }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              onClientLoaded={handleClientLoaded}
+              helperText="Select the client this brief is for. Their brand context and active projects will inform the analysis."
             />
-          </div>
-          <div>
-            <label
-              htmlFor="priority"
-              className="block text-sm font-medium text-neutral-700 mb-1.5"
-            >
-              Priority
-            </label>
-            <select
-              id="priority"
-              value={form.priority}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  priority: e.target.value as FormState["priority"],
-                }))
-              }
-              className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-            >
-              {PRIORITY_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {PRIORITY_LABELS[p]}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Error */}
-        {analyzeError && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            {analyzeError}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={!isStep0Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={analyzing}
-            className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {analyzing ? "Analyzing..." : "Analyze Brief"}
-          </button>
-        </div>
-      </form>
+        {/* Step 1: Configure */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <FormField
+              label="Brief"
+              required
+              helperText="Paste an email, describe the project, or write the brief. The more detail you provide, the better the task decomposition."
+            >
+              <TextareaWithCount
+                value={form.brief}
+                onChange={(brief) => setForm((prev) => ({ ...prev, brief }))}
+                placeholder="e.g. Sony needs 50 Black Friday banners across 15 languages, delivery by Friday. Key visual: ULT headphones on dark background. Must include promotional pricing and urgency messaging."
+                minLength={30}
+                rows={6}
+              />
+            </FormField>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                label="Deadline"
+                helperText="When does the client need delivery? Defaults to tomorrow."
+              >
+                <input
+                  type="date"
+                  value={form.deadline}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, deadline: e.target.value }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                />
+              </FormField>
+
+              <FormField
+                label="Priority"
+                helperText="Affects task ordering and urgency flags on dispatched work."
+              >
+                <select
+                  value={form.priority}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      priority: e.target.value as FormState["priority"],
+                    }))
+                  }
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {PRIORITY_OPTIONS.map((p) => (
+                    <option key={p} value={p}>
+                      {PRIORITY_LABELS[p]}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(0)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                disabled={!isStep1Valid()}
+                className="px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Review & Analyze */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <PreSubmitSummary
+              items={getSummaryItems()}
+              onBack={() => setStep(1)}
+              onConfirm={handleAnalyze}
+              loading={analyzing}
+              buttonLabel="Analyze Brief"
+            />
+
+            {/* Error */}
+            {analyzeError && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                {analyzeError}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Analysis Results */}
       {analysis && (
