@@ -3,6 +3,7 @@ import { getUserFromSession } from "@/lib/auth";
 import {
   getDriveItemByPath,
   readExcelUsedRange,
+  resolveSheetName,
   SharePointApiError,
 } from "@/lib/integrations/sharepoint";
 import { fetchWithCache, logSync } from "@/lib/integrations/cache";
@@ -10,6 +11,7 @@ import {
   SHAREPOINT_TRACKERS_DRIVE_ID,
   TRACKERS_BASE_PATH,
   CACHE_TTL,
+  EXCEL_SHEET_NAME_CANDIDATES,
   getMappingByTrackerFilename,
 } from "@/lib/integrations/config";
 
@@ -58,33 +60,19 @@ export async function GET(
           filePath
         );
 
-        // Read the first sheet's used range
-        // Most tracker files use "Sheet1" or the first worksheet
-        // Graph API defaults to the first sheet if the name doesn't match
-        let rangeData;
-        try {
-          rangeData = await readExcelUsedRange(
-            SHAREPOINT_TRACKERS_DRIVE_ID,
-            item.id,
-            "Sheet1",
-          );
-        } catch {
-          // Try common French worksheet names as fallback
-          try {
-            rangeData = await readExcelUsedRange(
-              SHAREPOINT_TRACKERS_DRIVE_ID,
-              item.id,
-              "Feuil1",
-            );
-          } catch {
-            // Last resort: try "Feuille1"
-            rangeData = await readExcelUsedRange(
-              SHAREPOINT_TRACKERS_DRIVE_ID,
-              item.id,
-              "Feuille1",
-            );
-          }
-        }
+        // Resolve the actual worksheet name via Graph API (single call)
+        // instead of sequential try/catch fallbacks (P-03)
+        const sheetName = await resolveSheetName(
+          SHAREPOINT_TRACKERS_DRIVE_ID,
+          item.id,
+          EXCEL_SHEET_NAME_CANDIDATES
+        );
+
+        const rangeData = await readExcelUsedRange(
+          SHAREPOINT_TRACKERS_DRIVE_ID,
+          item.id,
+          sheetName,
+        );
 
         const allRows = rangeData.values;
         if (allRows.length === 0) {

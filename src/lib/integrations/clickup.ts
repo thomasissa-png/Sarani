@@ -286,9 +286,19 @@ export function getCustomFieldValue(
   if (typeof field.value === "string") return field.value;
 
   // Users fields return an array of user objects
+  // Q-03: Verify first element has `username` before casting
   if (Array.isArray(field.value)) {
-    const users = field.value as ClickUpUserField[];
-    return users.map((u) => u.username).join(", ");
+    if (
+      field.value.length > 0 &&
+      typeof field.value[0] === "object" &&
+      field.value[0] !== null &&
+      "username" in field.value[0]
+    ) {
+      const users = field.value as ClickUpUserField[];
+      return users.map((u) => u.username).join(", ");
+    }
+    // string[] or unknown array — join as strings
+    return field.value.map(String).join(", ");
   }
 
   return String(field.value);

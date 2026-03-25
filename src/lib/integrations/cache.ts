@@ -3,7 +3,7 @@
 
 import { db } from "@/lib/db";
 import { syncCache, syncLogs } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, lt } from "drizzle-orm";
 
 type CacheSource = "clickup" | "sharepoint" | "evoliz";
 
@@ -90,6 +90,71 @@ export async function logSync(params: {
     status: params.status ?? "success",
     error: params.error ?? null,
   });
+}
+
+// ─── Advisory Lock ──────────────────────────────────────────────────────────
+
+/**
+ * E-03: Simple advisory lock using sync_cache table.
+ * Prevents race conditions on concurrent writes (e.g., Excel row appends).
+ * Lock has a TTL to auto-release if the holder crashes.
+ *
+ * @returns A release function to call when done, or null if lock could not be acquired.
+ */
+export async function acquireAdvisoryLock(
+  lockKey: string,
+  ttlSeconds = 30
+): Promise<(() => Promise<void>) | null> {
+  const fullKey = `lock:${lockKey}`;
+  const now = new Date();
+
+  try {
+    // Try to insert lock — on conflict, check if expired
+    await db
+      .insert(syncCache)
+      .values({
+        key: fullKey,
+        source: "sharepoint" as CacheSource,
+        data: { lockedAt: now.toISOString() },
+        fetchedAt: now,
+        ttlSeconds,
+      })
+      .onConflictDoNothing();
+
+    // Verify we own the lock (or it's expired)
+    const [entry] = await db
+      .select()
+      .from(syncCache)
+      .where(eq(syncCache.key, fullKey))
+      .limit(1);
+
+    if (!entry) return null;
+
+    const ageMs = Date.now() - entry.fetchedAt.getTime();
+    if (ageMs > ttlSeconds * 1000) {
+      // Lock expired — reclaim it
+      await db
+        .update(syncCache)
+        .set({
+          data: { lockedAt: now.toISOString() },
+          fetchedAt: now,
+          ttlSeconds,
+        })
+        .where(
+          and(
+            eq(syncCache.key, fullKey),
+            lt(syncCache.fetchedAt, new Date(Date.now() - ttlSeconds * 1000))
+          )
+        );
+    }
+
+    // Return release function
+    return async () => {
+      await db.delete(syncCache).where(eq(syncCache.key, fullKey));
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**

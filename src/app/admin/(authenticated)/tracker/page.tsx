@@ -3,38 +3,12 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 
+import type {
+  TrackerProject,
+  TrackerResponse,
+} from "@/types/integrations";
+
 // ─── Types ──────────────────────────────────────────────────────────────────
-
-interface TrackerProject {
-  client: string;
-  project: string;
-  date: string;
-  contact: string;
-  status: string;
-  category: string;
-  sharepointLink: string;
-  totalValue: number | null;
-  poNumber: string;
-  invoiceStatus: string;
-  invoiceNumber: string;
-  clickupTaskUrl: string;
-  clickupStatus: string;
-}
-
-interface SourceMeta {
-  status: "live" | "stale" | "unavailable";
-  fetchedAt: string | null;
-  error?: string;
-}
-
-interface TrackerResponse {
-  projects: TrackerProject[];
-  sources: {
-    clickup: SourceMeta;
-    sharepoint: SourceMeta;
-    evoliz: SourceMeta;
-  };
-}
 
 interface IntegrationStatus {
   name: string;

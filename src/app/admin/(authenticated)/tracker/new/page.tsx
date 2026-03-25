@@ -155,8 +155,54 @@ export default function NewProjectPage() {
   };
 
   const handleRetryFailed = async () => {
-    // Re-submit the same form — the API handles each step independently
-    await handleCreate();
+    // E-09: Pass successful step results so the API can skip them
+    if (!result) return;
+
+    setError(null);
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/integrations/create-project", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName,
+          projectName,
+          contactName: contactName || undefined,
+          category: category || undefined,
+          division: division || undefined,
+          estimatedValue: estimatedValue ? parseFloat(estimatedValue) : undefined,
+          // Pass previous successful results so API can skip completed steps
+          previousResults: {
+            clickup: result.clickup.success
+              ? { taskId: result.clickup.taskId, url: result.clickup.url }
+              : undefined,
+            sharepoint: result.sharepoint.success
+              ? { folderUrl: result.sharepoint.folderUrl }
+              : undefined,
+            excel: result.excel.success
+              ? { row: result.excel.row }
+              : undefined,
+          },
+        }),
+      });
+
+      if (!res.ok && res.status !== 207) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error ?? `Failed (${res.status})`);
+      }
+
+      const data: CreateProjectResponse = await res.json();
+      // Merge: keep previously successful steps, update retried ones
+      setResult({
+        clickup: result.clickup.success ? result.clickup : data.clickup,
+        excel: result.excel.success ? result.excel : data.excel,
+        sharepoint: result.sharepoint.success ? result.sharepoint : data.sharepoint,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to retry");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const hasPartialFailure =

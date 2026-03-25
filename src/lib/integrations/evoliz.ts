@@ -146,13 +146,41 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// ─── Raw API Response Type ──────────────────────────────────────────────
+
+/**
+ * Q-02: Partial type for the raw Evoliz API invoice response.
+ * Fields are snake_case as returned by the API.
+ */
+interface RawEvolizInvoiceResponse {
+  invoiceid?: number;
+  id?: number;
+  document_number?: string;
+  invoice_number?: string;
+  external_reference?: string;
+  reference?: string;
+  client_name?: string;
+  client?: { name?: string } | null;
+  total_ttc?: number;
+  total?: number;
+  amount?: number;
+  currency?: string;
+  status?: string;
+  payment_status?: string;
+  documentdate?: string;
+  issue_date?: string;
+  date?: string;
+  due_date?: string | null;
+  paid_date?: string | null;
+}
+
 // ─── Response Normalization ─────────────────────────────────────────────────
 
 /**
  * Normalize a raw Evoliz API invoice response to our internal type.
  * The Evoliz API returns snake_case fields — we normalize to camelCase.
  */
-function normalizeInvoice(raw: Record<string, unknown>): EvolizInvoice {
+function normalizeInvoice(raw: RawEvolizInvoiceResponse): EvolizInvoice {
   const rawStatus = String(raw.status ?? raw.payment_status ?? "draft").toLowerCase();
   let status: EvolizPaymentStatus;
 
@@ -214,7 +242,7 @@ export async function getInvoices(
   const path = `/invoices${queryString ? `?${queryString}` : ""}`;
 
   const data = await evolizFetch<{
-    data: Record<string, unknown>[];
+    data: RawEvolizInvoiceResponse[];
     meta?: { total: number };
   }>(path, config);
 
@@ -231,7 +259,7 @@ export async function getInvoice(
   const config = getConfigOrNull();
   if (!config) return null;
 
-  const raw = await evolizFetch<Record<string, unknown>>(
+  const raw = await evolizFetch<RawEvolizInvoiceResponse>(
     `/invoices/${id}`,
     config
   );

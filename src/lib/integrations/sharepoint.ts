@@ -222,24 +222,39 @@ export async function listDriveItems(
 /**
  * Get the content (raw bytes) of a file in a drive.
  * Returns the response as an ArrayBuffer.
- * Uses retry logic for 401 (token expiry), 429 (throttle), and 5xx errors.
+ * B-04/E-02: Uses the same retry logic as graphFetch (401/429/5xx).
  */
 export async function getFileContent(
   driveId: string,
   itemId: string
 ): Promise<ArrayBuffer> {
-  const url = `${GRAPH_BASE_URL}/drives/${driveId}/items/${itemId}/content`;
+  const path = `/drives/${driveId}/items/${itemId}/content`;
+  const url = `${GRAPH_BASE_URL}${path}`;
 
   const fetchWithRetry = async (attempt: number): Promise<ArrayBuffer> => {
     const token = await getAccessToken();
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
+      redirect: "follow",
     });
 
     // Token expired — refresh and retry once
     if (response.status === 401 && attempt === 0) {
       tokenCache = null;
-      return fetchWithRetry(1);
+      const newToken = await getAccessToken();
+      // Retry immediately with new token
+      const retryResponse = await fetch(url, {
+        headers: { Authorization: `Bearer ${newToken}` },
+        redirect: "follow",
+      });
+      if (!retryResponse.ok) {
+        throw new SharePointApiError(
+          `Failed to download file after token refresh: ${retryResponse.status}`,
+          retryResponse.status,
+          null
+        );
+      }
+      return retryResponse.arrayBuffer();
     }
 
     // Throttled — retry with backoff
