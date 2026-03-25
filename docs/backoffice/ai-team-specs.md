@@ -1019,3 +1019,640 @@ Then : le Designer IA génère un wireframe visuel haute-fidélité (image PNG)
 | Guidelines très strictes (ex: usage logo interdit sur certains fonds) | Guidelines injectées textuellement. Avertissement : "Brand guidelines are applied via prompt only. Human review required before client delivery." |
 
 ---
+
+## 7. Agent 5 — Legal IA
+
+### 7.1 Persona utilisateur
+
+**Qui l'utilise** : Thomas (fondateur) et la responsable des opérations.
+
+**Quand** : À chaque nouveau projet (SOW), campagne UGC (contrat UGC), collaboration freelance (contrat freelance), ou demande de NDA. Usage : 5-10 contrats/mois estimé.
+
+**Pourquoi** : Chaque contrat généré par un avocat externe coûte entre 300€ et 1 000€ et prend 2-3 jours. Le Legal IA génère un contrat prêt-à-signer en 5 minutes sur base des templates validés par Thomas et son conseil juridique. La validation humaine reste obligatoire avant signature — l'agent génère, l'humain valide.
+
+**Douleur quotidienne résolue** : "TikTok valide un projet à 15 000€. Je dois envoyer un SOW signé dans 24h. Sans Legal IA, je passe 1h à ouvrir mon template Word, copier-coller les infos du brief, reformuler les clauses. Avec Legal IA, je remplis le formulaire en 5 minutes et le contrat est prêt."
+
+---
+
+### 7.2 User stories
+
+**US-LG-01 — Génération de contrat depuis template**
+```
+Given : l'opérateur sélectionne un client et un type de contrat (UGC / SOW / NDA / Freelance)
+  And : remplit les variables du formulaire (montant, scope, durée, livrables)
+When : il soumet le formulaire
+Then : le Legal IA injecte les variables dans le template correspondant
+  And : génère un contrat Word (.docx) complet
+  And : le contrat est affiché en preview dans l'UI
+  And : le .docx est téléchargeable immédiatement
+  And : le contrat est sauvegardé dans l'historique du client
+```
+
+**US-LG-02 — Gestion des templates**
+```
+Given : Thomas souhaite mettre à jour un template de contrat
+When : il accède à "Manage contract templates" dans le back-office
+Then : il peut uploader un nouveau template .docx avec des variables balisées (ex: {{client_name}}, {{amount}}, {{scope}})
+  And : le Legal IA reconnaît automatiquement les variables du template
+  And : le formulaire de génération s'adapte aux variables détectées
+```
+
+**US-LG-03 — Validation avant envoi**
+```
+Given : un contrat vient d'être généré
+When : l'opérateur lit le contrat en preview
+Then : il peut modifier des sections directement dans l'interface
+  And : une bannière de rappel s'affiche : "This contract has not been reviewed by legal counsel. Review before sending."
+  And : le statut du contrat est "Draft" jusqu'à ce qu'il soit marqué "Ready to send"
+```
+
+---
+
+### 7.3 Interface — Wireframe ASCII
+
+**Écran principal : New Contract**
+
+```
++-------------------------------------------------------------+
+| LEGAL IA                     [Manage templates] [History]   |
++-------------------------------------------------------------+
+|                                                             |
+|  Client                                                     |
+|  [Select client v]                                          |
+|  Legal entity: TikTok Technology Limited                    |
+|  Country: Ireland (EU)  VAT: IE9825613N                     |
+|                                                             |
+|  Contract type                                              |
+|  (o) SOW -- Statement of Work                              |
+|  ( ) UGC -- Creator Agreement                              |
+|  ( ) NDA -- Non-Disclosure Agreement                       |
+|  ( ) Freelance -- Independent Contractor                   |
+|                                                             |
+|  -- SOW variables --                                        |
+|  Project name           [Black Friday Campaign 2026]        |
+|  Scope of work          [50 web banners, 5 formats...]      |
+|  Total amount (EUR)     [15,000]                            |
+|  Payment terms          [50% upfront / 50% on delivery v]  |
+|  Delivery date          [2026-04-15]                        |
+|  Revisions included     [Unlimited v]                       |
+|  Governing law          [France v]                          |
+|                                                             |
+|                          [Generate contract ->]             |
++-------------------------------------------------------------+
+| PREVIEW                                    [Download .docx] |
++-------------------------------------------------------------+
+|  [Contract preview -- scrollable]                           |
+|                                                             |
+|  [!] This contract has not been reviewed by legal counsel. |
+|      Review before sending to client.                       |
+|                                                             |
+|  [Mark as "Ready to send"]                                  |
++-------------------------------------------------------------+
+```
+
+---
+
+### 7.4 Workflow détaillé
+
+1. L'opérateur sélectionne le client (données légales auto-chargées : raison sociale, TVA, pays)
+2. Sélectionne le type de contrat
+3. Remplit les variables du formulaire (scope, montant, dates, conditions)
+4. Le Legal IA injecte les variables dans le template .docx correspondant
+5. Preview du contrat dans l'UI
+6. L'opérateur vérifie, modifie si besoin
+7. Téléchargement .docx
+8. Marqué "Ready to send" après validation humaine
+9. Sauvegardé dans l'historique du client
+
+---
+
+### 7.5 Inputs / Outputs
+
+| Input | Type | Obligatoire |
+|-------|------|-------------|
+| Client | select | Oui |
+| Type de contrat | radio | Oui |
+| Variables contractuelles | formulaire dynamique | Oui (selon le template) |
+| Template actif | auto-sélectionné par type | Oui |
+
+| Output | Format | Description |
+|--------|--------|-------------|
+| Contrat généré | .docx téléchargeable | Prêt pour signature |
+| Preview | HTML rendu dans l'UI | Lecture avant téléchargement |
+| AgentOutput entry | jsonb + file ref | Historique sauvegardé |
+
+---
+
+### 7.6 Mémoire client
+
+| Donnée mémorisée | Source | Usage |
+|------------------|--------|-------|
+| Raison sociale exacte | Fiche client | Auto-remplie dans tous les contrats |
+| Numéro TVA | Fiche client | Auto-rempli dans les clauses fiscales |
+| Pays de la raison sociale | Fiche client | Détermination du droit applicable par défaut |
+| Contrat-cadre signé | Fiche client | Si existant, SOW fait référence au cadre |
+| Historique contrats | AgentOutput[] | Cohérence des conditions (montants, termes) |
+
+---
+
+### 7.7 Interactions inter-agents
+
+| Agent | Type | Déclencheur |
+|-------|------|-------------|
+| PM IA | Réception de sous-brief | PM IA dispatche un besoin contractuel |
+| Translator | Coordination possible | Contrat à traduire (ex: SOW en anglais pour client allemand) |
+
+---
+
+### 7.8 Stack technique
+
+| Élément | Choix | Justification |
+|---------|-------|---------------|
+| Modèle IA | Claude Sonnet 4.5 | Injection de variables dans templates structurés — tâche de substitution précise, pas de raisonnement complexe. Sonnet suffit et est plus économique. |
+| Template format | .docx avec variables balisées | Compatible avec les outils de travail habituels (Word, Notion, email) |
+| Parsing/generation .docx | docx.js (node) | Remplacement des variables et génération du fichier |
+| System prompt | Basé sur @legal agent existant | Adaptation au contexte Sarani (types de contrats, clauses standard) |
+| Coût estimé | ~$0.015/requête | [HYPOTHÈSE : voir section 2.4] |
+
+---
+
+### 7.9 Edge cases
+
+| Situation | Comportement attendu |
+|-----------|---------------------|
+| Client sans données légales (raison sociale manquante) | Avertissement : "Legal entity information is incomplete for this client. Please update the client record before generating a contract." Champs manquants listés. |
+| Template demandé non disponible | Message : "This contract template is not available. Contact Thomas to upload it in 'Manage templates'." |
+| Montant nul ou négatif | Erreur de validation avant soumission : "Amount must be greater than 0." |
+| Variable critique non remplie (ex: scope vide) | Erreur de validation : les champs obligatoires sont bloquants avant génération. |
+| Contrat pour un pays hors UE (ex: client US) | Avertissement : "Client is based outside the EU. Verify governing law and applicable regulations before sending." |
+| Modification post-génération créant une incohérence | Bannière : "You have modified this contract manually. Ensure consistency with the original template terms." |
+
+---
+
+## 8. Agent 6 — Social IA
+
+### 8.1 Persona utilisateur
+
+**Qui l'utilise** : Thomas (fondateur), la responsable des opérations, et (v2) un community manager dédié si embauché.
+
+**Quand** : Chaque semaine pour préparer le contenu LinkedIn de Sarani. En v1, focus LinkedIn uniquement. L'humain valide et publie manuellement — l'agent génère, l'humain décide.
+
+**Pourquoi** : Sarani a 1 000 abonnés LinkedIn (base existante) et un potentiel de croissance organique fort sur ce canal (cible Sophie = Head of Marketing, présente sur LinkedIn). Produire 3-4 posts LinkedIn par semaine + un calendrier éditorial mensuel = 3-4h de travail. Le Social IA réduit cela à 45 minutes de validation.
+
+**Douleur quotidienne résolue** : "Je dois publier sur LinkedIn 3x/semaine pour garder notre visibilité mais je n'ai pas le temps de rédiger. Le Social IA me propose le calendrier du mois, les sujets, les formats, et le texte complet. Je lis, j'ajuste 2-3 mots, je publie. Fait en 15 minutes au lieu de 3 heures."
+
+---
+
+### 8.2 User stories
+
+**US-SOC-01 — Génération de calendrier éditorial mensuel**
+```
+Given : l'opérateur ouvre le Social IA
+  And : sélectionne le mois cible et la fréquence souhaitée (ex: 3 posts/semaine)
+When : il soumet le formulaire
+Then : le Social IA génère un calendrier éditorial complet pour le mois
+  And : chaque post a une date, un sujet, un format (texte long / carrousel / vidéo / image), et un angle
+  And : les sujets sont variés (proof cases, thought leadership, team, behind the scenes, offer)
+  And : le calendrier est affiché dans un tableau et téléchargeable en .csv ou .docx
+```
+
+**US-SOC-02 — Génération de post individuel**
+```
+Given : l'opérateur sélectionne un sujet (libre ou depuis le calendrier)
+  And : précise le format et l'angle (optionnel)
+When : il soumet le formulaire
+Then : le Social IA génère le texte complet du post LinkedIn
+  And : le post respecte le ton Sarani (Assured, Direct, Warm — brand-voice.md)
+  And : le post inclut : hook première ligne, corps, CTA, hashtags suggérés
+  And : le texte est affiché dans l'UI, éditable, et copiable en 1 clic
+```
+
+**US-SOC-03 — Validation et queue de publication**
+```
+Given : un post est généré et validé par l'opérateur
+When : il clique "Add to queue"
+Then : le post est sauvegardé avec sa date de publication prévue
+  And : la queue est visible dans un planning mensuel
+  And : l'opérateur publie manuellement au moment prévu (pas de publication automatique v1)
+  And : chaque post peut être marqué "Published" après publication manuelle
+```
+
+**US-SOC-04 — Réutilisation des case studies**
+```
+Given : des case studies Sarani sont disponibles (TikTok, Sony, GEODIS, Adidas...)
+When : l'opérateur demande un post sur un client
+Then : le Social IA utilise les données réelles du case study (chiffres, contexte, résultats)
+  And : aucune donnée inventée -- si les chiffres manquent, ils sont demandés avant génération
+  And : les preuves chiffrées sont mises en avant (tone: Evidence-first)
+```
+
+---
+
+### 8.3 Interface — Wireframe ASCII
+
+**Écran principal : Content Planner**
+
+```
++-------------------------------------------------------------+
+| SOCIAL IA (LinkedIn)                          [History]     |
++-------------------------------------------------------------+
+|  [Generate calendar]  [New post]  [Queue (3)]               |
++-------------------------------------------------------------+
+| CONTENT QUEUE -- April 2026                                 |
++-------------------------------------------------------------+
+| Date    | Subject                | Format    | Status       |
+|---------|-----------------------|-----------|--------------|
+| Apr 1   | TikTok 1500+ vids/mth  | Long text | Draft        |
+| Apr 3   | D+1 promise -- how?    | Carousel  | Validated    |
+| Apr 5   | Team spotlight: Tokyo  | Image     | Published    |
+| Apr 8   | Sony Black Friday case | Long text | Draft        |
++-------------------------------------------------------------+
+|                          [+ New post]  [Generate calendar]  |
++-------------------------------------------------------------+
+```
+
+**Formulaire : New post**
+
+```
++-------------------------------------------------------------+
+| NEW LINKEDIN POST                                           |
++-------------------------------------------------------------+
+|                                                             |
+|  Topic / Angle                                              |
+|  +--------------------------------------------------+      |
+|  | What is this post about?                         |      |
+|  | ex: Sony Black Friday case study, D+1 promise... |      |
+|  +--------------------------------------------------+      |
+|                                                             |
+|  Format                                                     |
+|  (o) Long text (1000-1500 chars)                           |
+|  ( ) Short text (under 500 chars)                          |
+|  ( ) Carousel script (text per slide)                      |
+|                                                             |
+|  Tone emphasis                                              |
+|  [Evidence-first v]  (default -- can override)             |
+|                                                             |
+|  Scheduled date                                             |
+|  [Date picker]                                              |
+|                                                             |
+|                              [Generate post ->]             |
+|                                                             |
++-------------------------------------------------------------+
+| OUTPUT                                                      |
++-------------------------------------------------------------+
+|  Hook: "TikTok needed 1,500+ videos edited per month..."   |
+|  [Full post text -- editable]                              |
+|                                                             |
+|  Suggested hashtags: #ContentMarketing #AgenceCreative...  |
+|                                                             |
+|  Characters: 1,243 / 3,000                                 |
+|                                                             |
+|  [Copy to clipboard]  [Add to queue]  [Regenerate]         |
++-------------------------------------------------------------+
+```
+
+---
+
+### 8.4 Workflow détaillé
+
+1. L'opérateur ouvre le Social IA
+2. Option A : génère un calendrier mensuel → valide les sujets proposés
+3. Option B : génère directement un post individuel sur un sujet précis
+4. Le Social IA accède aux case studies Sarani (docs/copy/case-studies-content.md) pour les preuves
+5. Génération du texte respectant brand-voice.md (Assured, Direct, Warm, Evidence-first)
+6. L'opérateur lit, modifie si nécessaire
+7. "Add to queue" : le post est planifié avec sa date
+8. Publication manuelle à la date prévue (v1 = pas d'API LinkedIn)
+9. Marqué "Published" après publication
+
+---
+
+### 8.5 Inputs / Outputs
+
+| Input | Type | Obligatoire |
+|-------|------|-------------|
+| Topic / Angle | textarea | Oui |
+| Format | radio | Non (défaut Long text) |
+| Tone emphasis | select | Non (défaut Evidence-first) |
+| Scheduled date | date | Non |
+| Données case study | auto-injectées | Non (si client sélectionné) |
+
+| Output | Format | Description |
+|--------|--------|-------------|
+| Texte du post | texte affiché (éditable) | Hook + corps + CTA + hashtags |
+| Calendrier éditorial | tableau affiché + .csv ou .docx | Planning mensuel complet |
+| Queue entry | BDD | Post planifié avec date |
+| AgentOutput entry | jsonb | Historique sauvegardé |
+
+---
+
+### 8.6 Mémoire client (Sarani — pas de contexte client ici)
+
+Cet agent travaille pour le compte de Sarani elle-même (pas pour un client). La mémoire porte sur :
+
+| Donnée mémorisée | Source | Usage |
+|------------------|--------|-------|
+| Ton de marque Sarani | brand-voice.md | Injecté dans chaque requête |
+| Case studies publiés | docs/copy/case-studies-content.md | Preuves factuelles pour les posts |
+| Posts générés et validés | Queue BDD | Cohérence éditoriale, pas de répétition |
+| Posts publiés | Queue BDD (statut Published) | Historique pour varier les sujets |
+
+---
+
+### 8.7 Interactions inter-agents
+
+| Agent | Type | Déclencheur |
+|-------|------|-------------|
+| PM IA | Réception de sous-brief | PM IA dispatche un besoin contenu social |
+| SEO IA | Coordination possible | Sujets blog réutilisés en posts LinkedIn |
+
+---
+
+### 8.8 Stack technique
+
+| Élément | Choix | Justification |
+|---------|-------|---------------|
+| Modèle IA | Claude Sonnet 4.5 | Génération de contenu court-moyen, ton à respecter. Sonnet suffit. |
+| System prompt | Basé sur brand-voice.md + guidelines LinkedIn | Ton Sarani verrouillé, format LinkedIn respecté |
+| Injection case studies | Contexte documentaire statique | case-studies-content.md injecté comme référence |
+| LinkedIn API | Non utilisée en v1 | Publication manuelle. API LinkedIn v2 pour v2 (planification automatique). |
+| Export calendrier | .csv + .docx | Compatibilité avec les outils de l'équipe |
+| Coût estimé | ~$0.006/requête | [HYPOTHÈSE : voir section 2.4] |
+
+---
+
+### 8.9 Edge cases
+
+| Situation | Comportement attendu |
+|-----------|---------------------|
+| Sujet trop sensible (ex: commenter une actualité négative du secteur) | Social IA génère mais ajoute une note : "This post references a sensitive topic. Review carefully before publishing." |
+| Données case study manquantes (chiffres non disponibles) | Social IA demande les chiffres avant de générer. Ne fabrique pas de métriques. |
+| Calendrier avec trop de répétition de sujets | Algorithme de diversification : détecte les sujets des 30 derniers jours, évite les doublons |
+| Tone drift (post trop commercial) | Vérification automatique : si le post contient plus de 2 mentions de prix ou offres, avertissement "This post may feel too promotional for organic LinkedIn." |
+| Extension à Instagram ou Twitter en v2 | [HYPOTHÈSE : architecture modulaire — chaque réseau = un module de formatting. Le contenu est généré une fois et reformaté par réseau. A spécifier en v2.] |
+
+---
+
+## 9. Agent 7 — SEO IA
+
+### 9.1 Persona utilisateur
+
+**Qui l'utilise** : Thomas et la responsable des opérations.
+
+**Quand** : Pour alimenter le blog Sarani, améliorer le référencement du site, et produire du contenu qui attire les Sophie en phase de recherche ("creative agency enterprise", "agence créative international", etc.).
+
+**Pourquoi** : Sarani part de zéro en SEO (aucune stratégie en place, trafic organique non mesuré). Le blog est le levier principal d'acquisition organique à 6-12 mois. Produire un article SEO de qualité (1 500-2 500 mots, optimisé) prend 4-6h. Le SEO IA réduit cela à 30 minutes de validation.
+
+**Douleur quotidienne résolue** : "Je sais que je dois publier des articles SEO pour générer du trafic mais personne n'a le temps. Le SEO IA me propose les sujets du mois basés sur les mots-clés, rédige les articles optimisés, et je n'ai qu'à valider. En 30 minutes par article au lieu de 5 heures."
+
+---
+
+### 9.2 User stories
+
+**US-SEO-01 — Proposition de sujets d'articles**
+```
+Given : l'opérateur ouvre le SEO IA
+  And : indique la période (mois cible) et le volume de publications souhaité
+When : il soumet le formulaire
+Then : le SEO IA propose 5-10 sujets d'articles
+  And : chaque sujet inclut : titre suggéré, mot-clé principal, volume de recherche estimé [HYPOTHESE], intention de recherche, angle différenciant
+  And : les sujets sont alignés avec le positionnement Sarani (enterprise, D+1, international)
+  And : l'opérateur valide ou rejette chaque sujet
+```
+
+**US-SEO-02 — Rédaction d'article optimisé**
+```
+Given : un sujet est validé par l'opérateur
+  And : le mot-clé principal et les mots-clés secondaires sont confirmés
+When : l'opérateur lance la rédaction
+Then : le SEO IA rédige un article complet (1,500-2,500 mots)
+  And : le titre respecte la structure SEO (H1, H2, H3 balisés)
+  And : le mot-clé principal apparaît dans le titre, le premier paragraphe, et naturellement dans le corps
+  And : l'article inclut : introduction avec hook, corps argumenté, conclusion avec CTA vers sarani.studio
+  And : le texte respecte le ton Sarani (brand-voice.md)
+  And : l'article est affiché dans l'UI et exportable en .md ou .docx
+```
+
+**US-SEO-03 — Optimisation méta-données**
+```
+Given : un article est rédigé
+When : l'opérateur demande l'optimisation SEO
+Then : le SEO IA génère le meta title (50-60 chars), la meta description (150-160 chars), le slug URL
+  And : les métadonnées sont vérifiées en nombre de caractères et affichées dans un preview simulant un résultat Google
+  And : les métadonnées sont exportables pour intégration dans le CMS
+```
+
+**US-SEO-04 — Audit SEO rapide d'une page existante**
+```
+Given : l'opérateur colle l'URL ou le contenu d'une page existante du site Sarani
+When : il soumet pour audit
+Then : le SEO IA identifie les opportunités d'optimisation (title, density, structure H, inbound links manquants, longueur)
+  And : les recommandations sont classées par priorité (P1 bloquant, P2 important, P3 nice-to-have)
+```
+
+---
+
+### 9.3 Interface — Wireframe ASCII
+
+**Écran principal : SEO Content**
+
+```
++-------------------------------------------------------------+
+| SEO IA                          [Article drafts] [Audit]   |
++-------------------------------------------------------------+
+|  [Suggest topics]   [Write article]   [Optimize meta]      |
++-------------------------------------------------------------+
+| SUGGEST TOPICS                                              |
++-------------------------------------------------------------+
+|                                                             |
+|  Month target          Posts per month                      |
+|  [April 2026 v]        [4 v]                               |
+|                                                             |
+|  Focus (optional)                                           |
+|  [enterprise creative agency, D+1 delivery...]             |
+|                                                             |
+|                          [Suggest topics ->]                |
+|                                                             |
++-------------------------------------------------------------+
+| SUGGESTED TOPICS                                            |
++-------------------------------------------------------------+
+| # | Title (suggested)                  | Keyword     | OK? |
+|---|------------------------------------|-----------  |----|
+| 1 | How to brief a creative agency...  | creative... | [v] |
+| 2 | Enterprise design at startup speed | enterprise  | [v] |
+| 3 | 5 signs your agency is too slow    | agency slow | [ ] |
+| 4 | Black Friday creative: case study  | black friday | [v] |
++-------------------------------------------------------------+
+|                         [Write validated topics ->]         |
++-------------------------------------------------------------+
+```
+
+**Formulaire : Write article**
+
+```
++-------------------------------------------------------------+
+| WRITE ARTICLE                                               |
++-------------------------------------------------------------+
+|                                                             |
+|  Title (H1)                                                 |
+|  [How to brief a creative agency for D+1 delivery]         |
+|                                                             |
+|  Primary keyword                                            |
+|  [brief creative agency]                                    |
+|                                                             |
+|  Secondary keywords (optional, comma-separated)            |
+|  [creative agency brief, agency briefing template...]       |
+|                                                             |
+|  Target length                                              |
+|  (o) 1,500 words   ( ) 2,000 words   ( ) 2,500 words       |
+|                                                             |
+|  Include CTA to                                             |
+|  (o) Contact form  ( ) Pricing page  ( ) Case studies      |
+|                                                             |
+|                            [Write article ->]               |
++-------------------------------------------------------------+
+```
+
+---
+
+### 9.4 Workflow détaillé
+
+1. L'opérateur ouvre le SEO IA et demande des suggestions de sujets
+2. Le SEO IA s'appuie sur le positionnement Sarani + les mots-clés identifiés dans docs/seo/
+3. L'opérateur valide les sujets retenus
+4. Pour chaque sujet validé : rédaction d'un article complet
+5. Génération automatique des métadonnées SEO (meta title, description, slug)
+6. Preview de l'article dans l'UI
+7. Export en .md (pour intégration directe Next.js) ou .docx
+8. Publication dans le CMS/blog par l'opérateur (étape manuelle)
+9. Possibilité d'audit SEO sur articles existants
+
+---
+
+### 9.5 Inputs / Outputs
+
+| Input | Type | Obligatoire |
+|-------|------|-------------|
+| Mois cible | select | Oui (pour suggestions) |
+| Volume articles | select | Non (défaut 4/mois) |
+| Titre (H1) | text | Oui (pour rédaction) |
+| Mot-clé principal | text | Oui |
+| Mots-clés secondaires | text (CSV) | Non |
+| Longueur cible | radio | Non (défaut 1 500 mots) |
+| CTA cible | radio | Non (défaut Contact form) |
+
+| Output | Format | Description |
+|--------|--------|-------------|
+| Suggestions de sujets | tableau affiché | 5-10 sujets avec metadata SEO |
+| Article complet | texte structuré + .md ou .docx | Article prêt à publier |
+| Meta title / description / slug | texte + preview | Métadonnées SEO |
+| Rapport d'audit | liste priorisée | Recommandations P1/P2/P3 |
+| AgentOutput entry | jsonb | Historique sauvegardé |
+
+---
+
+### 9.6 Mémoire agent (Sarani — pas de contexte client)
+
+| Donnée mémorisée | Source | Usage |
+|------------------|--------|-------|
+| Positionnement Sarani | brand-platform.md | Alignement éditorial |
+| Ton de marque | brand-voice.md | Registre des articles |
+| Mots-clés existants | docs/seo/keyword-map.md (si disponible) | Base de travail |
+| Articles publiés | Queue BDD (statut Published) | Éviter les doublons, construire le maillage |
+| Metadata templates | docs/seo/metadata-templates.md | Format SEO respecté |
+
+---
+
+### 9.7 Interactions inter-agents
+
+| Agent | Type | Déclencheur |
+|-------|------|-------------|
+| PM IA | Réception de sous-brief | PM IA dispatche un besoin SEO/blog |
+| Social IA | Coordination possible | Article de blog réutilisé en post LinkedIn |
+
+---
+
+### 9.8 Stack technique
+
+| Élément | Choix | Justification |
+|---------|-------|---------------|
+| Modèle IA | Claude Sonnet 4.5 | Rédaction longue forme structurée. Sonnet produit des articles de qualité éditoriale avec bonne gestion du contexte long. |
+| System prompt | Basé sur @seo agent existant + brand-voice.md | Ton Sarani + contraintes SEO techniques |
+| Injection contexte | brand-platform.md + brand-voice.md + keyword-map.md | Articles alignés stratégie |
+| Export | .md (Next.js ready) + .docx | Deux formats selon le workflow |
+| Coût estimé | ~$0.02/requête (article 2K mots) | [HYPOTHÈSE : voir section 2.4] |
+
+---
+
+### 9.9 Edge cases
+
+| Situation | Comportement attendu |
+|-----------|---------------------|
+| Mot-clé trop concurrentiel (ex: "creative agency") | SEO IA signale : "This keyword has very high competition. Consider a long-tail variant." Propose 3 alternatives. |
+| Doublon avec un article déjà publié | Détection et avertissement : "A similar article was published on [date]. Consider a different angle or an update of the existing article." |
+| Article produit sans keyword-map disponible | SEO IA travaille sur base du positionnement Sarani uniquement. Note : "No keyword map found — topics based on brand positioning only. Run a keyword research first for better SEO impact." |
+| Longueur demandée irréaliste (ex: 10 000 mots) | Limitée à 3 000 mots max en v1. Message : "Maximum article length is 3,000 words. Consider splitting into a series." |
+| CTA vers une page non existante | Vérification : si la page cible n'existe pas dans le site, avertissement avant génération. |
+
+---
+
+## 10. Hypotheses a valider
+
+> Ce bloc liste toutes les hypothèses non confirmées de ce document. Chaque hypothèse doit être validée par Thomas ou la responsable des opérations avant le début du développement.
+
+| # | Hypothèse | Agent(s) concerné(s) | Impact si invalide | Responsable validation |
+|---|-----------|----------------------|-------------------|------------------------|
+| H-01 | Coûts IA estimés à ~$17/mois pour 2 utilisateurs (voir section 2.4) | Tous | Budget IA à revoir | Thomas |
+| H-02 | GPT-Image-1 (OpenAI) est le meilleur modèle pour la génération d'images brand-constrained | Designer IA | Choix API image à revalider | Thomas + test pratique |
+| H-03 | Les contrats Sarani (SOW, UGC, NDA, Freelance) sont disponibles en format .docx avec variables balisées | Legal IA | Blocker -- Legal IA ne fonctionne pas sans templates | Thomas |
+| H-04 | La segmentation en chunks de 8K tokens pour les documents longs fonctionne sans perte de cohérence | Translator | Qualité traduction dégradée sur longs documents | @fullstack + test |
+| H-05 | Google Slides API peut être utilisée pour exporter des slides en format editable (v2 Designer IA) | Designer IA v2 | Export slides limité à PDF/PNG en v1 | @fullstack |
+| H-06 | Supabase Storage ou Cloudflare R2 comme solution de stockage des fichiers générés | Designer IA, Legal IA | Stockage fichiers à redécider avec @fullstack | @fullstack |
+| H-07 | ClickUp API v2 permet la création de tâches avec le niveau de détail requis par le PM IA | PM IA | Sync ClickUp à respec si API limitée | Thomas (tester avec ses credentials) |
+| H-08 | Data Processing Agreement avec Anthropic suffisant pour traiter des briefs clients potentiellement sensibles | Tous (données client) | Risque juridique -- à valider avec conseil avant go-live | Thomas + legal counsel |
+| H-09 | La keyword-map SEO sera disponible avant le démarrage du SEO IA (docs/seo/keyword-map.md non encore produit) | SEO IA | SEO IA fonctionne en mode dégradé (positionnement Sarani uniquement) | @seo agent |
+| H-10 | 35 experts Sarani utilisent le back-office quotidiennement (vs 2 utilisateurs en v1) | Tous | Coûts IA x5-10 si adoption large | Thomas (décision de rollout) |
+
+---
+
+## Handoff
+
+---
+**Handoff -> @agent-factory**
+- Fichiers produits : /home/user/Sarani/docs/backoffice/ai-team-specs.md
+- Décisions prises :
+  - 7 agents spécifiés avec personas, user stories Given/When/Then, wireframes ASCII, workflows, inputs/outputs, mémoire client, stack technique et edge cases
+  - PM IA = seul orchestrateur, point d'entrée unique pour le dispatch
+  - Mémoire par client via fiche client centralisée (brand book, glossaire, legal, historique)
+  - Formulaires structurés pour les tâches récurrentes + chat libre en complément
+  - Output format standard : téléchargeable + BDD + sync ClickUp optionnelle
+  - Modèles IA : Claude Sonnet 4.5 pour la majorité, Claude Opus 4 pour le Creative Strategist, GPT-Image-1 [HYPOTHÈSE] pour le Designer IA
+  - Auth simple password partagé (v1) -- décision validée dans project-context.md
+  - Budget IA estimé ~$17/mois pour usage modéré (2 utilisateurs) -- [HYPOTHÈSE H-01]
+- Points d'attention :
+  - H-03 est un hard blocker pour Legal IA : Thomas doit fournir les templates .docx avant le dev
+  - H-08 (DPA Anthropic) est un risque juridique à adresser avant go-live -- voir legal-audit.md
+  - H-07 (ClickUp API) à tester avec les credentials Thomas avant d'intégrer la sync
+  - Le Designer IA nécessite un choix de modèle image à valider sur des tests pratiques (H-02)
+  - La section "Client Brand Assets" de la fiche client est critique pour le Designer IA -- son absence dégrade significativement la qualité des outputs
+---
+
+**Handoff -> @fullstack**
+- Fichiers produits : /home/user/Sarani/docs/backoffice/ai-team-specs.md
+- Décisions prises :
+  - Architecture : route /admin dans l'app Next.js existante (validé project-context.md)
+  - Auth : simple password partagé (middleware Next.js sur /admin)
+  - BDD : nouvelles tables Client, AgentOutput, ClientGlossaryEntry, ContractTemplate (voir section 2.2)
+  - APIs tierces : Anthropic (Claude Sonnet + Opus), OpenAI [HYPOTHÈSE image], ClickUp API v2
+  - Export fichiers : mammoth.js (DOCX parsing), docx.js (DOCX generation), PDF generation [à choisir]
+  - Stockage fichiers générés : Supabase Storage ou Cloudflare R2 [HYPOTHÈSE H-06 -- à décider]
+  - 7 interfaces à développer : une par agent + la fiche client + le tracker projets du PM IA
+- Points d'attention :
+  - La fiche client (section 2.1) est le composant fondation -- à développer en premier avant les agents
+  - Le PM IA (Agent 1) est le composant le plus complexe à cause de l'orchestration multi-agents
+  - Le Legal IA (Agent 5) est bloqué par H-03 (templates .docx manquants) -- développer l'interface en premier, intégrer les templates quand disponibles
+  - Segmentation chunks pour Translator (H-04) à tester en conditions réelles
+  - Tous les outputs IA doivent être sauvegardés en BDD avant d'être affichés (pas de perte si timeout réseau)
+---
+
+---
