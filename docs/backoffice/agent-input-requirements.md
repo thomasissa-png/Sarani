@@ -509,7 +509,45 @@ This document defines the optimal inputs for each of the 13 Sarani back-office a
 
 ## Agent 12 — Video Script IA
 
-*(Sections to follow)*
+**Why this agent needs these inputs:** At 1,500 videos per month, there is no time for a script that misses the format. A TikTok script that runs 90 seconds will be cut; a product demo that has no hook in the first 3 seconds will be scrolled past. The Video Script IA needs to know the platform, the duration, the format, and the hook strategy before writing a single line — because a video script is not prose, it is a time-coded blueprint for a production team.
+
+### Message de guidance (displayed at the top of the form)
+
+> "At Sarani, we produce 1,500+ videos per month. Every script must be production-ready: right duration, right format, strong hook in the first 3 seconds. Tell me the platform, the exact duration, what happens on screen, and what the video must make the viewer do or feel. I'll write a script the editor can follow without questions."
+
+### Inputs requis (mandatory — blocks submission)
+
+| Field | Type | Why it's mandatory | Placeholder / example |
+|-------|------|--------------------|-----------------------|
+| `client` | Select (client record) | Loads brand voice, tone, and any visual identity constraints. A script for TikTok's own channel and a script for a GEODIS product video have different register, energy, and production constraints. | Select client → TikTok |
+| `platform` | Select (TikTok / Instagram Reels / YouTube Shorts / YouTube long-form / LinkedIn video / Internal / Other) | Platform defines format rules, caption behavior, safe zones, and viewer attention patterns. A TikTok script written without understanding the platform's compression of narrative will not perform. | TikTok |
+| `video_duration` | Select (15s / 30s / 60s / 90s / 3-5min / 10min+) | Duration is the hard constraint around which everything else is built. A 15-second TikTok requires a completely different structure from a 5-minute YouTube explainer. The script must fit the time slot exactly. | 60s |
+| `video_concept` | Textarea | What is this video about? What happens visually and verbally? Without the concept, the agent writes a script without a story. | "TikTok creator shows how to use TikTok's creative toolkit to produce a brand campaign in 24 hours. POV: content creator at their desk. Fast cuts. Text overlays on each feature." |
+
+### Inputs recommandés (strongly advised — improves output quality significantly)
+
+| Field | Type | What it improves | Placeholder / example |
+|-------|------|------------------|-----------------------|
+| `hook_direction` | Textarea | The first 3 seconds of a TikTok either stop the scroll or lose the viewer forever. Without a hook direction, the agent generates an average opening. With a specific hook direction, it opens with intention. | "Start with a problem: 'Most brands spend 6 weeks on a campaign that should take 6 hours.'" |
+| `script_format` | Select (Voiceover / On-camera presenter / Text overlays only / Dialogue / Hybrid) | Determines how the script is written. A voiceover script and a text-overlay-only script have different syntax and rhythm entirely. | Text overlays with voiceover |
+| `cta` | Text | Every video must end with one action. Without a CTA, the video closes as entertainment, not communication. | "Follow for more — link in bio for your free consultation" |
+| `language` | Select (EN / FR / IT / ES / DE) | The script language. Critical for TikTok's multilingual content pipelines where the same video may need scripts in 3 languages. | EN |
+
+### Inputs optionnels
+
+| Field | Type | What it enriches |
+|-------|------|-----------------|
+| `visual_direction` | Textarea | Shot list suggestions, visual style references, transitions to use or avoid. Makes the script a more complete production brief. |
+| `music_mood` | Text | Music tempo and energy affects script pacing. A slow ballad and a 140bpm EDM track require different delivery cadences. |
+| `caption_style` | Select (Auto-captions / Styled text overlays / None) | Affects how the copy elements of the script are formatted and timed. |
+| `series_context` | Textarea | If this is episode N in a series, the script should reference continuity. "Last week we showed X — today we go deeper on Y." |
+| `existing_reference_script` | Textarea | A script from a previous video in the same series or style. Used to match established cadence and structure. |
+
+### Auto-detected from client record
+
+- `client.brand_tone` → calibrates energy, formality, and vocabulary
+- `client.primary_language` → default script language
+- `client.agent_outputs[]` (Video Script type) → last scripts for this client reviewed for style and continuity
 
 ---
 
