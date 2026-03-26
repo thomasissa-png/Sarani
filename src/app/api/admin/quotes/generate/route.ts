@@ -19,7 +19,7 @@ async function generateQuoteNumber(): Promise<string> {
     sql`SELECT "quote_number" FROM "quotes" WHERE "quote_number" LIKE ${prefix + "%"} ORDER BY "quote_number" DESC LIMIT 1`
   );
 
-  const rows = result.rows as Array<{ quote_number: string }>;
+  const rows = result as unknown as Array<{ quote_number: string }>;
   let nextSeq = 1;
   if (rows.length > 0) {
     const lastNum = rows[0].quote_number;

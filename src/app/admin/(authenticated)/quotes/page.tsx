@@ -14,6 +14,7 @@ interface LineItem {
 
 interface QuoteRecord {
   id: string;
+  quoteNumber: string;
   clientName: string;
   projectName: string;
   items: LineItem[];
@@ -72,6 +73,9 @@ export default function QuotesPage() {
   const [scope, setScope] = useState("");
   const [currency, setCurrency] = useState("EUR");
   const [items, setItems] = useState<LineItem[]>([createEmptyItem()]);
+
+  // Preview state
+  const [showPreview, setShowPreview] = useState(false);
 
   // Filter for past quotes
   const [quoteClientFilter, setQuoteClientFilter] = useState("");
@@ -133,22 +137,45 @@ export default function QuotesPage() {
 
   const grandTotal = items.reduce((sum, item) => sum + item.total, 0);
 
-  // ─── Submit ─────────────────────────────────────────────────────────────
+  // ─── Validation ────────────────────────────────────────────────────────
 
-  const handleGenerate = async () => {
+  const validateForm = (): boolean => {
     setError(null);
     setSuccess(null);
 
     if (!clientName || !contactName || !projectName || !description || !scope) {
       setError("All fields are required.");
-      return;
+      return false;
     }
 
     const validItems = items.filter((i) => i.description.trim());
     if (validItems.length === 0) {
       setError("At least one line item with a description is required.");
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  // ─── Preview ──────────────────────────────────────────────────────────
+
+  const handlePreview = () => {
+    if (validateForm()) {
+      setShowPreview(true);
+    }
+  };
+
+  const handleEditFromPreview = () => {
+    setShowPreview(false);
+  };
+
+  // ─── Submit (from preview confirmation) ──────────────────────────────
+
+  const handleConfirmGenerate = async () => {
+    setError(null);
+    setSuccess(null);
+
+    const validItems = items.filter((i) => i.description.trim());
 
     setGenerating(true);
     try {
@@ -177,11 +204,12 @@ export default function QuotesPage() {
       }
 
       // Download the PDF
+      const quoteNum = res.headers.get("X-Quote-Number") ?? "quote";
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `quote_${projectName.replace(/\s+/g, "_")}.pdf`;
+      a.download = `${quoteNum}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -190,9 +218,11 @@ export default function QuotesPage() {
       const spUrl = res.headers.get("X-SharePoint-Url");
       setSuccess(
         spUrl
-          ? "Quote generated and uploaded to SharePoint."
-          : "Quote generated. SharePoint upload skipped (check logs)."
+          ? `Quote ${quoteNum} generated and uploaded to SharePoint.`
+          : `Quote ${quoteNum} generated. SharePoint upload skipped (check logs).`
       );
+
+      setShowPreview(false);
 
       // Refresh quotes list
       fetchQuotes();
@@ -473,43 +503,135 @@ export default function QuotesPage() {
           </div>
         </div>
 
-        {/* Error / Success */}
-        {error && (
+        {/* Error (shown in form when not in preview mode) */}
+        {error && !showPreview && (
           <div className="bg-error-light border border-error rounded-lg px-4 py-3 text-sm text-error">
             {error}
           </div>
         )}
-        {success && (
+        {success && !showPreview && (
           <div className="bg-success-light border border-success rounded-lg px-4 py-3 text-sm text-success">
             {success}
           </div>
         )}
 
-        {/* Indeterminate progress bar during generation */}
-        {generating && (
-          <div className="h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
-            <div className="h-full w-1/3 rounded-full bg-brand-cerulean animate-[indeterminate_1.5s_ease-in-out_infinite]" />
+        {/* Submit / Preview toggle */}
+        {!showPreview && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handlePreview}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+            >
+              Preview Quote
+            </button>
           </div>
         )}
-
-        {/* Submit */}
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={generating}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating && (
-              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            )}
-            {generating ? "Generating PDF..." : "Generate PDF"}
-          </button>
-        </div>
       </div>
+
+      {/* Preview Card */}
+      {showPreview && (
+        <div className="bg-white rounded-xl border-2 border-brand-cerulean p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-brand-black">Quote Preview</h2>
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-info-light text-info">
+              Draft
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+            <div>
+              <p className="text-neutral-400 text-xs font-medium uppercase">Client</p>
+              <p className="text-brand-black font-medium mt-0.5">{clientName}</p>
+            </div>
+            <div>
+              <p className="text-neutral-400 text-xs font-medium uppercase">Contact</p>
+              <p className="text-brand-black font-medium mt-0.5">{contactName}</p>
+            </div>
+            <div>
+              <p className="text-neutral-400 text-xs font-medium uppercase">Currency</p>
+              <p className="text-brand-black font-medium mt-0.5">{currency}</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-neutral-400 text-xs font-medium uppercase">Project</p>
+            <p className="text-brand-black font-medium mt-0.5">{projectName}</p>
+          </div>
+
+          {/* Items summary */}
+          <div className="border border-neutral-200 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-[1fr_80px_100px_100px] bg-neutral-100 px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
+              <span>Item</span>
+              <span>Qty</span>
+              <span>Unit Price</span>
+              <span>Total</span>
+            </div>
+            {items
+              .filter((i) => i.description.trim())
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-[1fr_80px_100px_100px] px-3 py-2 border-t border-neutral-100 text-sm"
+                >
+                  <span className="text-brand-black truncate">{item.description}</span>
+                  <span className="text-neutral-600">{item.quantity}</span>
+                  <span className="text-neutral-600">{formatCurrency(item.unitPrice, currency)}</span>
+                  <span className="font-medium text-brand-black">{formatCurrency(item.total, currency)}</span>
+                </div>
+              ))}
+            <div className="grid grid-cols-[1fr_100px] px-3 py-2.5 bg-neutral-100 border-t border-neutral-200">
+              <span className="text-sm font-bold text-brand-black">Grand Total</span>
+              <span className="text-sm font-bold text-brand-black">{formatCurrency(grandTotal, currency)}</span>
+            </div>
+          </div>
+
+          {/* Error / Success inside preview */}
+          {error && (
+            <div className="bg-error-light border border-error rounded-lg px-4 py-3 text-sm text-error">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-success-light border border-success rounded-lg px-4 py-3 text-sm text-success">
+              {success}
+            </div>
+          )}
+
+          {/* Progress bar */}
+          {generating && (
+            <div className="h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
+              <div className="h-full w-1/3 rounded-full bg-brand-cerulean animate-[indeterminate_1.5s_ease-in-out_infinite]" />
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleEditFromPreview}
+              disabled={generating}
+              className="px-5 py-2.5 text-sm font-semibold text-brand-black border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmGenerate}
+              disabled={generating}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generating && (
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              )}
+              {generating ? "Generating..." : "Download PDF"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Past Quotes */}
       <div className="space-y-4">
@@ -551,6 +673,9 @@ export default function QuotesPage() {
                   <thead>
                     <tr className="border-b border-neutral-200 text-left">
                       <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Quote #
+                      </th>
+                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                         Date
                       </th>
                       <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
@@ -573,6 +698,9 @@ export default function QuotesPage() {
                         key={q.id}
                         className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
                       >
+                        <td className="px-5 py-3.5 text-sm font-mono text-neutral-600 whitespace-nowrap">
+                          {q.quoteNumber}
+                        </td>
                         <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
                           {formatDate(q.createdAt)}
                         </td>
@@ -615,7 +743,8 @@ export default function QuotesPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-xs text-neutral-400">{formatDate(q.createdAt)}</p>
+                      <p className="text-xs font-mono text-neutral-500">{q.quoteNumber}</p>
+                      <p className="text-xs text-neutral-400 mt-0.5">{formatDate(q.createdAt)}</p>
                       <p className="text-sm font-medium text-brand-black mt-0.5">
                         {q.clientName}
                       </p>
