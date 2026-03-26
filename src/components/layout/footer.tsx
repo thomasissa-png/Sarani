@@ -5,6 +5,7 @@ const ABOUT_LINKS = [
   { href: "/services", label: "How we work" },
   { href: "/about", label: "About us" },
   { href: "/work", label: "Portfolio" },
+  { href: "/blog", label: "Blog" },
   { href: "/#faq", label: "FAQ" },
   { href: "/pricing", label: "Pricing" },
 ] as const;
@@ -50,7 +51,8 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
 export function Footer() {
   return (
     <footer className="w-full bg-brand-black" role="contentinfo">
-      <div className="mx-auto max-w-screen-xl px-5 pt-16 pb-12 md:px-8">
+      {/* pb-24 on mobile to clear the sticky CTA bar, pb-12 on desktop */}
+      <div className="mx-auto max-w-screen-xl px-5 pt-16 pb-24 md:px-8 md:pb-12">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Col 1 — Brand */}
           <div className="col-span-2 md:col-span-1">

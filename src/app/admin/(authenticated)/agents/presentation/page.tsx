@@ -248,6 +248,22 @@ export default function PresentationAgentPage() {
     }
   }
 
+  function handleDownloadHTML() {
+    if (!presentation) return;
+    const html = generatePresentationHTML({
+      presentation,
+      clientName: selectedClient?.name,
+      presentationType: form.presentationType || undefined,
+    });
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${presentation.title.toLowerCase().replace(/\s+/g, "-").slice(0, 40)}-sarani.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ── Copy all as markdown ──────────────────────────────────────────────
 
   function buildMarkdown(pres: PresentationOutput): string {
@@ -695,6 +711,7 @@ export default function PresentationAgentPage() {
           onCopyAll={handleCopyAll}
           onDownload={handleDownload}
           onPreviewHTML={handlePreviewHTML}
+          onDownloadHTML={handleDownloadHTML}
           onDownloadPDF={handleDownloadPDF}
           copied={copied}
         />
@@ -714,6 +731,7 @@ function PresentationPreview({
   onCopyAll,
   onDownload,
   onPreviewHTML,
+  onDownloadHTML,
   onDownloadPDF,
   copied,
 }: {
@@ -725,6 +743,7 @@ function PresentationPreview({
   onCopyAll: () => void;
   onDownload: () => void;
   onPreviewHTML: () => void;
+  onDownloadHTML: () => void;
   onDownloadPDF: () => void;
   copied: boolean;
 }) {
@@ -759,6 +778,12 @@ function PresentationPreview({
             className="px-3 py-1.5 text-sm font-medium border border-brand-cerulean text-brand-cerulean rounded-lg hover:bg-blue-50 transition-colors"
           >
             Preview HTML
+          </button>
+          <button
+            onClick={onDownloadHTML}
+            className="px-3 py-1.5 text-sm font-medium border border-brand-cerulean text-brand-cerulean rounded-lg hover:bg-blue-50 transition-colors"
+          >
+            Download HTML
           </button>
           <button
             onClick={onDownloadPDF}

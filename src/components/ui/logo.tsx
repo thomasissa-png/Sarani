@@ -1,49 +1,40 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
-  /** "dark" = black text (for light bg), "light" = white text (for dark bg) */
+  /** "dark" = dark logo (for light bg), "light" = white logo (for dark bg) */
   variant?: "dark" | "light";
-  /** Width in px */
+  /** Width in px — height is auto-calculated from aspect ratio */
   width?: number;
+  /** Override the default link target (defaults to "/") */
+  href?: string;
   className?: string;
 }
 
 /**
- * Sarani logo — SVG text with 3 colored dots (red, yellow, blue)
- * clustered in a triangle above the "i", matching the official logo.
+ * Sarani logo — uses the real PNG logo files.
+ * - "light" variant: white text + colored dots (for dark backgrounds)
+ * - "dark" variant: black text + colored dots (for light backgrounds)
  */
-export function Logo({ variant = "dark", width = 120, className }: LogoProps) {
-  const textColor = variant === "dark" ? "#000000" : "#ffffff";
-  const height = Math.round(width * 0.38);
+export function Logo({ variant = "dark", width = 120, href = "/", className }: LogoProps) {
+  const height = Math.round(width / 2.6);
+  const src = variant === "light" ? "/sarani-logo-white.png" : "/sarani-logo-black.png";
 
   return (
-    <Link href="/" aria-label="Sarani — Back to homepage" className={cn("block", className)}>
-      <svg
+    <Link
+      href={href}
+      aria-label={href === "/" ? "Sarani — Back to homepage" : "Sarani — Back to dashboard"}
+      className={cn("inline-flex items-center shrink-0", className)}
+    >
+      <Image
+        src={src}
+        alt="Sarani"
         width={width}
         height={height}
-        viewBox="0 0 120 46"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        {/* 3 colored dots clustered above the "i" — triangle arrangement */}
-        <circle cx="105" cy="3" r="2.8" fill="#da5126" /> {/* Red — top right */}
-        <circle cx="98" cy="9" r="2.8" fill="#f1c217" />  {/* Yellow — bottom left */}
-        <circle cx="106" cy="9" r="2.8" fill="#0babe8" />  {/* Blue — bottom right */}
-        {/* Text "sarani" */}
-        <text
-          x="2"
-          y="38"
-          fontFamily="var(--font-outfit), Outfit, sans-serif"
-          fontSize="34"
-          fontWeight="700"
-          fill={textColor}
-          letterSpacing="-0.5"
-        >
-          sarani
-        </text>
-      </svg>
+        className="h-auto"
+        priority
+      />
     </Link>
   );
 }

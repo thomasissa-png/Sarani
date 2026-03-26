@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -16,6 +17,7 @@ type ClientFormProps = {
   onSubmit: (data: ClientFormData) => Promise<void>;
   submitLabel: string;
   loading?: boolean;
+  cancelHref?: string;
 };
 
 export function ClientForm({
@@ -23,6 +25,7 @@ export function ClientForm({
   onSubmit,
   submitLabel,
   loading,
+  cancelHref,
 }: ClientFormProps) {
   const {
     register,
@@ -155,7 +158,15 @@ export function ClientForm({
       </FormSection>
 
       {/* Submit */}
-      <div className="flex justify-end pt-4 border-t border-neutral-200">
+      <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200">
+        {cancelHref && (
+          <Link
+            href={cancelHref}
+            className="px-6 py-2.5 text-sm font-semibold rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+          >
+            Cancel
+          </Link>
+        )}
         <button
           type="submit"
           disabled={loading}

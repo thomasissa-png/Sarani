@@ -64,6 +64,7 @@ export default function NewClientPage() {
         onSubmit={handleSubmit}
         submitLabel="Create Client"
         loading={loading}
+        cancelHref="/admin/clients"
       />
     </div>
   );

@@ -241,7 +241,7 @@ export function PreSubmitSummary({
       <h3 className="text-sm font-bold text-warning-text">
         Review before generating
       </h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map((item) => (
           <div key={item.label}>
             <span className="text-xs font-medium text-warning-text">

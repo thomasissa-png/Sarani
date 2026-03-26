@@ -3,7 +3,7 @@ run = "npm run dev"
 channel = "stable-24_05"
 [deployment]
 run = ["sh", "-c", "PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js"]
-build = ["sh", "-c", "npm install && npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/"]
+build = ["sh", "-c", "npm install && NODE_OPTIONS='--max-old-space-size=1536' npm run build && mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public"]
 [[ports]]
 localPort = 3000
 externalPort = 80

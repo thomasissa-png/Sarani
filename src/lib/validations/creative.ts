@@ -76,6 +76,14 @@ export const toneGuidanceSchema = z.object({
   brandAlignment: z.string(),
 });
 
+export const moodBoardReferenceSchema = z.object({
+  imageDescription: z.string(),
+  visualStyle: z.string(),
+  relevance: z.string(),
+  referenceUrl: z.string().nullable(),
+  colorPalette: z.string(),
+});
+
 export const creativeRecommendationSchema = z.object({
   executiveSummary: z.string(),
   problemStatement: z.string(),
@@ -84,6 +92,7 @@ export const creativeRecommendationSchema = z.object({
   creativeAngles: z.array(creativeAngleSchema),
   activationPlan: activationPlanSchema,
   toneGuidance: toneGuidanceSchema,
+  moodBoard: z.array(moodBoardReferenceSchema).optional().default([]),
   competitiveContext: z.string(),
   hypotheses: z.array(z.string()),
 });
@@ -94,3 +103,4 @@ export type CreativeRecommendation = z.infer<
 export type CreativeAngle = z.infer<typeof creativeAngleSchema>;
 export type KeyMessage = z.infer<typeof keyMessageSchema>;
 export type ActivationPhase = z.infer<typeof activationPhaseSchema>;
+export type MoodBoardReference = z.infer<typeof moodBoardReferenceSchema>;

@@ -139,10 +139,6 @@ export default function HomePage() {
           </div>
         </FadeInUp>
         <Testimonials />
-        {/* Client logos strip */}
-        <div className="mt-12">
-          <ClientLogos />
-        </div>
       </Section>
 
       {/* -- Section 8: FAQ -- */}

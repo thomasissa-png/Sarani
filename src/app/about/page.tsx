@@ -24,9 +24,6 @@ const TEAM_STATS: Stat[] = [
 ];
 
 const KEY_NUMBERS: Stat[] = [
-  { value: "35+", label: "In-house experts" },
-  { value: "5", label: "Continents covered" },
-  { value: "18", label: "Languages supported" },
   { value: "D+1", label: "Standard delivery" },
   { value: "60%", label: "Average savings vs agencies" },
   { value: "1,500+", label: "Deliverables per month" },
@@ -180,7 +177,7 @@ export default function AboutPage() {
           <h2 className="mb-10 text-center text-3xl font-bold text-brand-black sm:text-4xl">
             Sarani by the numbers
           </h2>
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             {KEY_NUMBERS.map((stat) => (
               <div
                 key={stat.label}

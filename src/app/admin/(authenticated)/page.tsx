@@ -107,12 +107,52 @@ export default async function AdminDashboardPage() {
         <StatCard label="Outputs This Week" value={outputsThisWeekResult} />
       </div>
 
-      {/* Quick Actions */}
+      {/* Project Tracker CTA */}
+      <Link
+        href="/admin/tracker"
+        className="block rounded-xl border border-neutral-300 bg-white p-5 hover:border-brand-cerulean hover:shadow-sm transition-all group"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-black group-hover:text-brand-cerulean transition-colors">
+              Project Tracker
+            </h2>
+            <p className="text-neutral-500 text-sm mt-0.5">
+              Unified view across ClickUp, SharePoint &amp; Evoliz
+            </p>
+          </div>
+          <svg className="w-5 h-5 text-neutral-400 group-hover:text-brand-cerulean transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+      </Link>
+
+      {/* Quote Generator CTA */}
+      <Link
+        href="/admin/quotes"
+        className="block rounded-xl border border-neutral-300 bg-white p-5 hover:border-brand-cerulean hover:shadow-sm transition-all group"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-black group-hover:text-brand-cerulean transition-colors">
+              Quote Generator
+            </h2>
+            <p className="text-neutral-500 text-sm mt-0.5">
+              Create professional PDF quotes and upload to SharePoint
+            </p>
+          </div>
+          <svg className="w-5 h-5 text-neutral-400 group-hover:text-brand-cerulean transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+      </Link>
+
+      {/* Quick Actions — All agents */}
       <div>
         <h2 className="text-lg font-semibold text-brand-black mb-3">
-          Quick Actions
+          Agents
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <QuickActionCard
             label="Quick Brief"
             href="/admin/quick-brief"
@@ -129,6 +169,31 @@ export default async function AdminDashboardPage() {
             description="Translate content"
           />
           <QuickActionCard
+            label="Copywriter"
+            href="/admin/agents/copywriter"
+            description="Write copy"
+          />
+          <QuickActionCard
+            label="Creative"
+            href="/admin/agents/creative"
+            description="Strategy & brief"
+          />
+          <QuickActionCard
+            label="Designer"
+            href="/admin/agents/designer"
+            description="Generate visuals"
+          />
+          <QuickActionCard
+            label="SEO"
+            href="/admin/agents/seo"
+            description="Optimize content"
+          />
+          <QuickActionCard
+            label="Social"
+            href="/admin/agents/social"
+            description="Social posts"
+          />
+          <QuickActionCard
             label="Email Drafter"
             href="/admin/agents/email-drafter"
             description="Draft emails"
@@ -137,6 +202,26 @@ export default async function AdminDashboardPage() {
             label="Video Script"
             href="/admin/agents/video-script"
             description="Generate scripts"
+          />
+          <QuickActionCard
+            label="Proposal"
+            href="/admin/agents/proposal"
+            description="Write proposals"
+          />
+          <QuickActionCard
+            label="Presentation"
+            href="/admin/agents/presentation"
+            description="Build decks"
+          />
+          <QuickActionCard
+            label="Legal"
+            href="/admin/agents/legal"
+            description="Draft contracts"
+          />
+          <QuickActionCard
+            label="Proofreader"
+            href="/admin/agents/proofreader"
+            description="Review & correct"
           />
         </div>
       </div>
@@ -148,10 +233,10 @@ export default async function AdminDashboardPage() {
             Recent Outputs
           </h2>
           <Link
-            href="/admin/clients"
+            href="/admin/projects"
             className="text-sm text-brand-cerulean hover:underline"
           >
-            View all clients
+            View all outputs
           </Link>
         </div>
 
@@ -268,7 +353,7 @@ function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     done: "bg-success-light text-success",
     processing: "bg-info-light text-info",
-    pending: "bg-warning-light text-warning",
+    pending: "bg-warning-light text-warning-text",
     error: "bg-error-light text-error",
   };
 

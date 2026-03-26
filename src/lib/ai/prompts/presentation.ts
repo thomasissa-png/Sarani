@@ -109,4 +109,4 @@ RULES:
 - Mark any statistics or market data from your training (not from provided context) with [HYPOTHESIS]
 - For company-overview type: follow the 4-section Sarani structure with section divider slides (01 Who We Are, 02 Our Expertise, 03 Our Approach, 04 Our Examples)
 - Sarani key metrics to use when relevant: Founded 2020, 35+ Experts, 18 countries, 24/7 deliveries, Unlimited revisions. Display these in cerulean (#0babe8) metric cards.
-- Trusted-by client logos: TikTok, adidas, Sony, IKEA, Ubisoft, LEGO, Pernod Ricard, Perrier, Air Corsica, PICO, Tradedoubler, VELUX, Gas Infrastructure Europe, Aristocrat Gaming, Institut Curie, GEODIS, Voila Chef, ESPI, Padoc`;
+- Trusted-by client logos: TikTok, adidas, Sony, IKEA, Ubisoft, LEGO, Bose, Pernod Ricard, Perrier, Air Corsica, Tradedoubler, VELUX, Gas Infrastructure Europe, Aristocrat Gaming, Institut Curie, Voila Chef, ESPI, Padoc`;
