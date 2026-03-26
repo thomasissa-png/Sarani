@@ -148,6 +148,45 @@ export default function TrackerPage() {
     }
   }, []);
 
+  const syncAndFetch = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Sync clients from ClickUp → DB
+      const syncRes = await fetch("/api/admin/integrations/sync-clients", {
+        method: "POST",
+      });
+      if (!syncRes.ok) {
+        const syncErr = await syncRes.json().catch(() => ({}));
+        throw new Error(syncErr.error || `Sync failed (${syncRes.status})`);
+      }
+
+      // 2. Fetch fresh tracker data (force-refresh invalidates cache) + status
+      const [trackerRes, statusRes] = await Promise.all([
+        fetch("/api/admin/integrations/tracker", {
+          headers: { "x-force-refresh": "true" },
+        }),
+        fetch("/api/admin/integrations/status"),
+      ]);
+
+      if (!trackerRes.ok) {
+        throw new Error(`Failed to fetch tracker data (${trackerRes.status})`);
+      }
+
+      const trackerData: TrackerResponse = await trackerRes.json();
+      setData(trackerData);
+
+      if (statusRes.ok) {
+        const statusData: StatusResponse = await statusRes.json();
+        setApiStatus(statusData);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
@@ -311,7 +350,7 @@ export default function TrackerPage() {
             New Project
           </Link>
           <button
-            onClick={fetchData}
+            onClick={syncAndFetch}
             disabled={loading}
             className="px-4 py-2 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >

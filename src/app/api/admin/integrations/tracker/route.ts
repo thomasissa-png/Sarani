@@ -12,7 +12,7 @@ import {
   resolveSheetName,
 } from "@/lib/integrations/sharepoint";
 import { getInvoices, type EvolizInvoice } from "@/lib/integrations/evoliz";
-import { fetchWithCache, logSync } from "@/lib/integrations/cache";
+import { fetchWithCache, invalidateCache, logSync } from "@/lib/integrations/cache";
 import {
   SHAREPOINT_TRACKERS_DRIVE_ID,
   TRACKERS_BASE_PATH,
@@ -229,12 +229,22 @@ async function fetchEvolizInvoices(): Promise<{
 
 // ─── Route Handler ──────────────────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // Auth check
     const session = await getUserFromSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // If force-refresh header is set, invalidate all tracker caches
+    const forceRefresh = request.headers.get("x-force-refresh") === "true";
+    if (forceRefresh) {
+      await Promise.all([
+        invalidateCache("tracker:clickup_all_tasks"),
+        invalidateCache("tracker:sharepoint_all_excel"),
+        invalidateCache("tracker:evoliz_invoices"),
+      ]);
     }
 
     // Fetch all 3 sources in parallel
