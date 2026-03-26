@@ -18,6 +18,7 @@ type PricingItem = {
   name: string;
   price: string;
   priceUsd?: string;
+  note?: string;
 };
 
 type PricingCategory = {
@@ -63,6 +64,14 @@ function IconTrendingUp() {
   );
 }
 
+function IconLanguages() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" />
+    </svg>
+  );
+}
+
 function IconZap() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -93,7 +102,7 @@ const PRICING_CATEGORIES: PricingCategory[] = [
       { name: "Basic video edit", price: "85\u00A0€", priceUsd: "$\u00A095" },
       { name: "Social media video (30s)", price: "360\u00A0€", priceUsd: "$\u00A0400" },
       { name: "Sizzle reel", price: "360–900\u00A0€", priceUsd: "$\u00A0400–1,000" },
-      { name: "Video turnkey", price: "3,800–99,800\u00A0€", priceUsd: "$\u00A04,200–110,000" },
+      { name: "Video turnkey", price: "from 3,800\u00A0€", priceUsd: "from $\u00A04,200", note: "Contact us for production packages and complex productions." },
     ],
   },
   {
@@ -106,12 +115,21 @@ const PRICING_CATEGORIES: PricingCategory[] = [
     ],
   },
   {
+    title: "Copy & Translation",
+    icon: <IconLanguages />,
+    accent: "border-t-brand-cerulean",
+    items: [
+      { name: "Translation", price: "0.12\u00A0€/word", priceUsd: "$\u00A00.14/word", note: "e.g. 1,000-word document = 120\u00A0€ / $\u00A0140" },
+      { name: "Copywriting", price: "0.25\u00A0€/word", priceUsd: "$\u00A00.28/word", note: "e.g. 500-word landing page = 125\u00A0€ / $\u00A0140" },
+    ],
+  },
+  {
     title: "Operations & Marketing",
     icon: <IconTrendingUp />,
     accent: "border-t-brand-flame",
     items: [
       { name: "LinkedIn management", price: "1,800–2,500\u00A0€/month", priceUsd: "$\u00A02,000–2,750/month" },
-      { name: "Paid ads fee", price: "8% of budget" },
+      { name: "Paid ads fee", price: "8% of budget", note: "e.g. 10,000\u00A0€ budget = 800\u00A0€/month" },
       { name: "SEO", price: "custom quote" },
     ],
   },
@@ -127,14 +145,15 @@ const PRICING_CATEGORIES: PricingCategory[] = [
 type ComparisonRow = {
   label: string;
   sarani: string;
+  superside: string;
   agency: string;
 };
 
 const COMPARISON_ROWS: ComparisonRow[] = [
-  { label: "Banner", sarani: "155–470\u00A0€ / $\u00A0170–520", agency: "500–2,000\u00A0€" },
-  { label: "Revisions", sarani: "Unlimited", agency: "200–800\u00A0€ each" },
-  { label: "Turnaround", sarani: "24 hours", agency: "10–15 days" },
-  { label: "Commitment", sarani: "None", agency: "Retainer required" },
+  { label: "Entry price", sarani: "155\u00A0€/project", superside: "$10,000/month minimum", agency: "Custom retainer" },
+  { label: "Revisions", sarani: "Unlimited", superside: "Included (subscription)", agency: "200–800\u00A0€ each" },
+  { label: "Turnaround", sarani: "24 hours", superside: "24–48 hours", agency: "10–15 days" },
+  { label: "Commitment", sarani: "None", superside: "$6K–$100K/month subscription", agency: "Retainer required" },
 ];
 
 const FAQ_ITEMS = [
@@ -221,8 +240,8 @@ export default function PricingPage() {
           ))}
         </div>
 
-        {/* Second row: 2 columns on desktop, centered */}
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:mx-auto lg:max-w-[calc(66.666%+0.75rem)]">
+        {/* Second row: 3 columns on desktop */}
+        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {PRICING_CATEGORIES.slice(3).map((category) => (
             <PricingCard key={category.title} category={category} />
           ))}
@@ -245,16 +264,19 @@ export default function PricingPage() {
           </p>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] border-collapse text-left">
+            <table className="w-full min-w-[600px] border-collapse text-left">
               <thead>
                 <tr>
-                  <th className="px-6 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
+                  <th className="px-5 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
                     &nbsp;
                   </th>
-                  <th className="rounded-t-lg bg-brand-lemon/10 px-6 py-4 text-sm font-bold uppercase tracking-wider text-brand-lemon">
+                  <th className="rounded-t-lg bg-brand-lemon/10 px-5 py-4 text-sm font-bold uppercase tracking-wider text-brand-lemon">
                     Sarani
                   </th>
-                  <th className="px-6 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
+                  <th className="px-5 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
+                    Superside
+                  </th>
+                  <th className="px-5 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
                     Network Agency
                   </th>
                 </tr>
@@ -265,13 +287,16 @@ export default function PricingPage() {
                     key={row.label}
                     className={i < COMPARISON_ROWS.length - 1 ? "border-b border-neutral-800" : ""}
                   >
-                    <td className="px-6 py-4 font-bold text-brand-white">
+                    <td className="px-5 py-4 font-bold text-brand-white">
                       {row.label}
                     </td>
-                    <td className="bg-brand-lemon/10 px-6 py-4 font-bold text-brand-lemon">
+                    <td className="bg-brand-lemon/10 px-5 py-4 font-bold text-brand-lemon">
                       {row.sarani}
                     </td>
-                    <td className="px-6 py-4 text-neutral-500 line-through decoration-neutral-700">
+                    <td className="px-5 py-4 text-neutral-500">
+                      {row.superside}
+                    </td>
+                    <td className="px-5 py-4 text-neutral-500 line-through decoration-neutral-700">
                       {row.agency}
                     </td>
                   </tr>
@@ -353,15 +378,20 @@ function PricingCard({ category }: { category: PricingCategory }) {
         {category.items.map((item) => (
           <li
             key={item.name}
-            className="flex items-baseline justify-between gap-4 border-b border-neutral-200 pb-3 last:border-0 last:pb-0"
+            className="border-b border-neutral-200 pb-3 last:border-0 last:pb-0"
           >
-            <span className="text-neutral-600">{item.name}</span>
-            <span className="shrink-0 text-right">
-              <span className="font-bold text-brand-black">{item.price}</span>
-              {item.priceUsd && (
-                <span className="block text-xs text-neutral-400">{item.priceUsd}</span>
-              )}
-            </span>
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-neutral-600">{item.name}</span>
+              <span className="shrink-0 text-right">
+                <span className="font-bold text-brand-black">{item.price}</span>
+                {item.priceUsd && (
+                  <span className="block text-xs text-neutral-400">{item.priceUsd}</span>
+                )}
+              </span>
+            </div>
+            {item.note && (
+              <p className="mt-1 text-xs text-neutral-500 italic">{item.note}</p>
+            )}
           </li>
         ))}
       </ul>
