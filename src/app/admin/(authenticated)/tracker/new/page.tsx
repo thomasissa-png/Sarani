@@ -399,7 +399,13 @@ export default function NewProjectPage() {
           )}
 
           {allSuccess && (
-            <div className="pt-2">
+            <div className="pt-2 flex items-center gap-3">
+              <Link
+                href="/admin/tracker"
+                className="px-4 py-2 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                View in Tracker
+              </Link>
               <button
                 type="button"
                 onClick={() => {

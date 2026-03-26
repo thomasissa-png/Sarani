@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -79,6 +80,15 @@ export default function QuotesPage() {
 
   // Filter for past quotes
   const [quoteClientFilter, setQuoteClientFilter] = useState("");
+
+  // Pre-fill from query params (e.g. from Tracker "Generate Quote" link)
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const qClient = searchParams.get("client");
+    const qProject = searchParams.get("project");
+    if (qClient) setClientName(qClient);
+    if (qProject) setProjectName(qProject);
+  }, [searchParams]);
 
   const fetchClients = useCallback(async () => {
     try {
