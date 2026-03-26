@@ -9,9 +9,33 @@ import {
   AGENT_TYPE_LABELS,
   type TemplateType,
   type TeamTemplate,
+  type AgentType,
 } from "@/lib/teams/templates";
 
 // ─── Template Icons ─────────────────────────────────────────────────────────
+
+// ─── Custom Step Type ────────────────────────────────────────────────────────
+
+interface CustomStep {
+  id: string;
+  agentType: AgentType;
+  label: string;
+}
+
+const AVAILABLE_AGENTS: AgentType[] = [
+  "creative_strategist",
+  "copywriter",
+  "seo",
+  "social",
+  "qa",
+  "video_script",
+  "translator",
+  "project_manager",
+];
+
+function generateStepId(): string {
+  return Math.random().toString(36).slice(2, 10);
+}
 
 const TEMPLATE_ICONS: Record<TemplateType, React.ReactNode> = {
   social_media: (
@@ -44,6 +68,11 @@ const TEMPLATE_ICONS: Record<TemplateType, React.ReactNode> = {
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   ),
+  custom: (
+    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  ),
 };
 
 // ─── Page Component ─────────────────────────────────────────────────────────
@@ -54,11 +83,17 @@ export default function NewTeamPage() {
   // Step: 0 = template picker, 1 = form
   const [step, setStep] = useState(0);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateType | null>(null);
+  const isCustom = selectedTemplate === "custom";
 
   // Form state
   const [name, setName] = useState("");
   const [clientId, setClientId] = useState("");
   const [brief, setBrief] = useState("");
+
+  // Custom steps state
+  const [customSteps, setCustomSteps] = useState<CustomStep[]>([
+    { id: generateStepId(), agentType: "creative_strategist", label: "" },
+  ]);
 
   // Data
   const [clients, setClients] = useState<Client[]>([]);
@@ -86,6 +121,11 @@ export default function NewTeamPage() {
 
   function handleSelectTemplate(type: TemplateType) {
     setSelectedTemplate(type);
+    if (type === "custom") {
+      setCustomSteps([
+        { id: generateStepId(), agentType: "creative_strategist", label: "" },
+      ]);
+    }
     setStep(1);
   }
 
@@ -93,10 +133,27 @@ export default function NewTeamPage() {
     e.preventDefault();
     if (!selectedTemplate || !clientId || !name.trim() || !brief.trim()) return;
 
+    if (isCustom) {
+      const validSteps = customSteps.filter((s) => s.label.trim());
+      if (validSteps.length === 0) return;
+    }
+
     setSubmitting(true);
     setError(null);
 
-    const template = TEAM_TEMPLATES[selectedTemplate];
+    const stepsPayload = isCustom
+      ? customSteps
+          .filter((s) => s.label.trim())
+          .map((s, i) => ({
+            agentType: s.agentType,
+            stepOrder: i + 1,
+            label: s.label.trim(),
+          }))
+      : TEAM_TEMPLATES[selectedTemplate as Exclude<TemplateType, "custom">].steps.map((s) => ({
+            agentType: s.agentType,
+            stepOrder: s.stepOrder,
+            label: s.label,
+          }));
 
     try {
       const res = await fetch("/api/admin/teams", {
@@ -107,11 +164,7 @@ export default function NewTeamPage() {
           clientId,
           templateType: selectedTemplate,
           brief: brief.trim(),
-          steps: template.steps.map((s) => ({
-            agentType: s.agentType,
-            stepOrder: s.stepOrder,
-            label: s.label,
-          })),
+          steps: stepsPayload,
         }),
       });
 
@@ -128,12 +181,19 @@ export default function NewTeamPage() {
     }
   }
 
-  const selectedTemplateData = selectedTemplate
+  const selectedTemplateData = selectedTemplate && selectedTemplate !== "custom"
     ? TEAM_TEMPLATES[selectedTemplate]
     : null;
 
+  const customStepsValid = isCustom
+    ? customSteps.filter((s) => s.label.trim()).length > 0
+    : true;
+
   const formValid =
-    name.trim().length > 0 && clientId.length > 0 && brief.trim().length >= 20;
+    name.trim().length > 0 &&
+    clientId.length > 0 &&
+    brief.trim().length >= 20 &&
+    customStepsValid;
 
   return (
     <div className="space-y-6">
@@ -153,7 +213,7 @@ export default function NewTeamPage() {
           <p className="text-neutral-500 text-sm mt-0.5">
             {step === 0
               ? "Choose a project template"
-              : `Configure your ${selectedTemplateData?.name} team`}
+              : `Configure your ${isCustom ? "Custom" : selectedTemplateData?.name} team`}
           </p>
         </div>
       </div>
@@ -161,7 +221,9 @@ export default function NewTeamPage() {
       {/* Step 0: Template Picker */}
       {step === 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {(Object.values(TEAM_TEMPLATES) as TeamTemplate[]).map((tmpl) => (
+          {(Object.values(TEAM_TEMPLATES) as TeamTemplate[])
+            .filter((tmpl) => tmpl.type !== "custom")
+            .map((tmpl) => (
             <button
               key={tmpl.type}
               onClick={() => handleSelectTemplate(tmpl.type)}
@@ -188,21 +250,42 @@ export default function NewTeamPage() {
               </div>
             </button>
           ))}
+
+          {/* Custom Team card */}
+          <button
+            onClick={() => handleSelectTemplate("custom")}
+            className="bg-white border border-dashed border-neutral-300 rounded-xl p-5 text-left hover:border-brand-cerulean hover:shadow-sm transition-all group"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-sky-50 text-brand-cerulean flex items-center justify-center group-hover:bg-brand-cerulean group-hover:text-white transition-colors">
+                {TEMPLATE_ICONS.custom}
+              </div>
+              <h3 className="font-semibold text-brand-black">Custom Team</h3>
+            </div>
+            <p className="text-sm text-neutral-500 mb-4 line-clamp-2">
+              Build your own team with custom agents and steps
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="px-2 py-0.5 bg-neutral-100 text-neutral-500 text-xs rounded-full">
+                You choose the agents
+              </span>
+            </div>
+          </button>
         </div>
       )}
 
       {/* Step 1: Configuration Form */}
-      {step === 1 && selectedTemplateData && (
+      {step === 1 && (selectedTemplateData || isCustom) && (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Selected template summary */}
           <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-brand-cerulean text-white flex items-center justify-center shrink-0">
-              {TEMPLATE_ICONS[selectedTemplate!]}
+              {selectedTemplate ? TEMPLATE_ICONS[selectedTemplate] : null}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-brand-black">
-                  {selectedTemplateData.name}
+                  {isCustom ? "Custom Team" : selectedTemplateData?.name}
                 </h3>
                 <button
                   type="button"
@@ -216,13 +299,99 @@ export default function NewTeamPage() {
                 </button>
               </div>
               <p className="text-sm text-neutral-600 mt-0.5">
-                {selectedTemplateData.steps.length} steps:{" "}
-                {selectedTemplateData.steps
-                  .map((s) => s.label)
-                  .join(" -> ")}
+                {isCustom
+                  ? `${customSteps.filter((s) => s.label.trim()).length} custom step(s) configured`
+                  : `${selectedTemplateData?.steps.length} steps: ${selectedTemplateData?.steps.map((s) => s.label).join(" -> ")}`}
               </p>
             </div>
           </div>
+
+          {/* Custom step builder */}
+          {isCustom && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-brand-black">
+                Define your steps
+              </label>
+              {customSteps.map((cs, idx) => (
+                <div
+                  key={cs.id}
+                  className="flex items-start gap-2 bg-white border border-neutral-300 rounded-lg p-3"
+                >
+                  <span className="w-6 h-6 rounded-full bg-neutral-100 text-neutral-500 flex items-center justify-center text-xs font-bold shrink-0 mt-1">
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <select
+                      value={cs.agentType}
+                      onChange={(e) => {
+                        const val = e.target.value as AgentType;
+                        setCustomSteps((prev) =>
+                          prev.map((s) =>
+                            s.id === cs.id ? { ...s, agentType: val } : s
+                          )
+                        );
+                      }}
+                      className="px-3 py-2 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                      aria-label={`Agent type for step ${idx + 1}`}
+                    >
+                      {AVAILABLE_AGENTS.map((a) => (
+                        <option key={a} value={a}>
+                          {AGENT_TYPE_LABELS[a]}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={cs.label}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomSteps((prev) =>
+                          prev.map((s) =>
+                            s.id === cs.id ? { ...s, label: val } : s
+                          )
+                        );
+                      }}
+                      placeholder="Step label (e.g. Brand audit)"
+                      className="px-3 py-2 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                      aria-label={`Label for step ${idx + 1}`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (customSteps.length <= 1) return;
+                      setCustomSteps((prev) =>
+                        prev.filter((s) => s.id !== cs.id)
+                      );
+                    }}
+                    disabled={customSteps.length <= 1}
+                    className="p-1.5 text-neutral-400 hover:text-red-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0 mt-1"
+                    aria-label={`Remove step ${idx + 1}`}
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setCustomSteps((prev) => [
+                    ...prev,
+                    {
+                      id: generateStepId(),
+                      agentType: "copywriter",
+                      label: "",
+                    },
+                  ])
+                }
+                className="text-sm font-medium text-brand-cerulean hover:underline"
+              >
+                + Add step
+              </button>
+            </div>
+          )}
 
           {/* Team Name */}
           <div className="space-y-2">
