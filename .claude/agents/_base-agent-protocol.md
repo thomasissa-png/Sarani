@@ -165,12 +165,16 @@ Quand on passe un livrable existant à améliorer :
 
 ## Auto-évaluation (standard)
 
+**Objectif qualité : 9/10 minimum (4.5/5 sur chaque critère).** Chaque livrable sera évalué par @reviewer sur 5 critères (Complétude, Cohérence, Actionnabilité, Messages, Spécificité) avec un seuil de validation à 4.5/5. Un livrable sous ce seuil sera renvoyé pour corrections (max 3 itérations). Viser l'excellence dès la première passe.
+
 Avant de livrer, répondre mentalement à ces questions :
 
 ### Questions génériques (obligatoires pour tous)
-□ Ce livrable est-il spécifique à CE projet ou pourrait-il s'appliquer à n'importe quel autre ?
-□ Résiste-t-il à la question "pourquoi pas l'inverse ?" sur chaque choix majeur ?
-□ Un concurrent direct lirait-il ça et serait-il préoccupé ?
+□ Ce livrable est-il spécifique à CE projet ou pourrait-il s'appliquer à n'importe quel autre ? (critère Spécificité)
+□ Résiste-t-il à la question "pourquoi pas l'inverse ?" sur chaque choix majeur ? (critère Actionnabilité)
+□ Un concurrent direct lirait-il ça et serait-il préoccupé ? (critère Complétude)
+□ Ai-je explicitement référencé les livrables amont et aligné mes décisions ? (critère Cohérence)
+□ Ai-je signalé toutes les données manquantes et marqué les hypothèses ? (critère Messages)
 
 **Partie variable** : chaque agent a ≥5 questions spécifiques à son domaine.
 

@@ -48,7 +48,7 @@ Un champ "rempli" ne signifie pas "exploitable". L'orchestrateur doit évaluer l
 | **Objectif 6 mois** | "Croître" / "Avoir des utilisateurs" | "500 utilisateurs actifs payants, MRR 5K€" |
 | **KPI North Star** | "Le chiffre d'affaires" — trop large | "Nombre de dashboards créés par semaine" |
 | **Ton de marque** | "Professionnel" — dit tout et rien | "Expert et bienveillant : on guide sans jargon, on rassure sans simplifier" |
-| **Stack technique** | "Next.js" — une seule info | "Frontend Next.js App Router, Supabase, Stripe, Auth Clerk, Deploy Replit" |
+| **Stack technique** | "Next.js" — une seule info | "Frontend Next.js App Router, PostgreSQL Replit, Stripe, Auth Clerk, Deploy Replit" |
 | **Secteur** | "Tech" / "SaaS" — trop large | "Analytics marketing pour PME françaises 10-50 employés" |
 
 ### Protocole quand un champ est insuffisant
@@ -223,7 +223,7 @@ L'orchestrateur a deux modes d'exécution :
 1. **Toujours sauvegarder** `docs/orchestration-plan.md` après chaque phase (point de reprise)
 2. **Toujours scorer** chaque livrable dans le tableau Performance (voir CLAUDE.md — scoring automatique)
 3. **BLOQUER automatiquement** si :
-   - Un agent score <3 sur un critère → relancer avec prompt correctif AVANT de continuer
+   - Un agent score <4.5/5 en moyenne → relancer avec prompt correctif (max 3 itérations) AVANT de continuer
    - Une contradiction est détectée entre livrables → arbitrer selon priorité (persona > objectif > budget), documenter
    - Un champ critique manque pour un agent aval → demander à l'utilisateur (seule interruption autorisée)
    - **Détection de drift** : après chaque phase, vérifier que le persona principal et le KPI North Star dans les livrables produits sont toujours alignés avec ceux définis dans `project-context.md`. Si divergence → BLOQUER, signaler le drift, corriger avant de continuer
@@ -393,19 +393,33 @@ Avant de passer à la Phase 1, l'orchestrateur DOIT :
 4. Si l'utilisateur demande des ajustements → relancer les agents Phase 0 concernés, puis re-valider
 5. Documenter la validation dans `project-context.md` : `| orchestrator | [DATE] | Phase 0 validée | Positionnement, persona, NSM confirmés par l'utilisateur |`
 
+**Phase 0b — Création d'agents spécialisés (conditionnelle) :**
+Après le checkpoint Phase 0, vérifier si les livrables de Phase 0 contiennent des recommandations d'agents spécialisés :
+1. Lire `docs/strategy/brand-platform.md` → section "Agents spécialisés recommandés"
+2. Lire `docs/product/functional-specs.md` ou `docs/product/product-vision.md` → section "Agents spécialisés recommandés"
+3. Si des recommandations existent → lancer `@agent-factory` en mode "Création depuis specs projet" pour créer les agents recommandés AVANT Phase 1
+4. Après création → réinventarier les agents disponibles et ajuster le plan d'orchestration pour les intégrer dans les phases suivantes
+5. Si aucune recommandation → passer directement à Phase 1
+
 **Phase 1 — Expérience :**
 `ux` → `design`
 [PARALLELE] `copywriter` peut démarrer en parallèle de `ux` si `brand-platform.md` existe
 
 **Phase 2 — Développement :**
-`infrastructure` (setup initial : skeleton, env vars, CI/CD lint→test→build, config Replit) → `fullstack` + `ia` (en parallèle si specs IA claires) → `qa` → `infrastructure` (finalisation : monitoring post-launch, performance, sécurité — le déploiement est géré par Replit, pas par @infrastructure)
+`infrastructure` (setup initial : skeleton, env vars, CI/CD lint→test→build, config Replit) → `fullstack` + `ia` (en parallèle si specs IA claires) → `ux` (revue post-implémentation : comparer wireframes vs code réel, produire `docs/ux/ux-review.md`) → `qa` (inclure les écarts UX détectés dans les tests E2E) → `infrastructure` (finalisation : monitoring post-launch, performance, sécurité — le déploiement est géré par Replit, pas par @infrastructure)
+
+**Phase 2b — Agents spécialisés UX (conditionnelle) :**
+Après la revue UX, vérifier si `docs/ux/user-flows.md` contient une section "Agents spécialisés recommandés". Si oui et que ces agents n'ont pas été créés en Phase 0b → lancer `@agent-factory`.
 
 **Phase 3 — Contenu :**
-`copywriter` → `seo` → `geo`
-[PARALLELE] Si `copywriter` a déjà livré en Phase 1, passer directement à `seo`
+`copywriter` → [PARALLELE] `seo` + `geo` (les deux dépendent de copywriter mais pas l'un de l'autre)
+[PARALLELE] Si `copywriter` a déjà livré en Phase 1, lancer `seo` + `geo` directement en parallèle
+Après Phase 3 : vérifier que les livrables @seo, @copywriter et @geo incluent des workflows d'automatisation pour le contenu récurrent. Si une stratégie recommande "publier X articles/semaine" sans documenter l'automatisation → relancer l'agent (CLAUDE.md — Automatisation par défaut du contenu récurrent)
 
 **Phase 4 — Acquisition :**
-`growth` → `social`
+[PARALLELE] `growth` + `social` (si `brand-platform.md` existe — les deux s'y réfèrent indépendamment)
+`growth` → `social` (sinon — social a besoin du cadrage canaux de growth)
+Après Phase 4 : même vérification d'automatisation contenu pour @growth et @social
 
 **Phase 5 — Conformité :**
 `legal` (si non démarré en Phase 0)
@@ -483,6 +497,7 @@ Pour chaque critère, la réponse est OUI ou NON. Pas de "à peu près" ni de "p
 | 6 | Infra supporte la stack | Les choix d'hébergement/config de @infrastructure sont-ils compatibles avec la stack choisie par @fullstack ? | @infrastructure |
 | 7 | Persona cohérent | Le persona utilisé dans les livrables aval est-il le même que celui défini en Phase 0 (pas de drift) ? | Agent en drift |
 | 8 | KPI North Star cohérent | Les métriques citées dans les livrables aval sont-elles alignées avec le KPI défini par @data-analyst ? | Agent en drift |
+| 9 | Automatisation contenu | Chaque stratégie contenu récurrent (blog, social, email) inclut-elle un workflow d'automatisation IA ? (CLAUDE.md — Automatisation par défaut) | @seo, @social, @copywriter, @growth |
 
 **Protocole d'enrichissement du project-context :**
 
@@ -561,6 +576,14 @@ Quand un agent échoue définitivement (2 tentatives épuisées) :
 
 Produire `project-synthesis.md` : récapitulatif de tous les livrables, décisions prises, prochaines étapes et agents recommandés pour la suite.
 
+### Mise à jour du nom de branche (obligatoire à chaque changement)
+
+Si la branche de développement a changé depuis la dernière session (nouvelle branche créée ou merge) :
+1. `Grep` l'ancien nom de branche dans tout le repo
+2. Remplacer par le nouveau dans : `index.html`, `INSTALL.md`, `install.sh`, `update.sh`, `project-context.md` (mémo de reprise)
+3. Vérifier avec un second `Grep` qu'aucune référence à l'ancienne branche ne subsiste
+4. Commiter ce changement avec le reste de la synthèse
+
 ### Métriques d'orchestration obligatoires
 
 Inclure dans `project-synthesis.md` un bloc de métriques pour mesurer la performance de l'orchestration elle-même :
@@ -584,7 +607,7 @@ Inclure dans `project-synthesis.md` un bloc de métriques pour mesurer la perfor
 | Métrique | Seuil acceptable | Seuil critique (escalade utilisateur) |
 |---|---|---|
 | Échecs Task (après 2 tentatives) | ≤ 1 agent | ≥ 3 agents |
-| Score moyen des livrables | ≥ 3.5/5 | < 2.5/5 |
+| Score moyen des livrables | ≥ 4.5/5 | < 3.5/5 |
 | Drift détecté | 0 | ≥ 2 instances |
 | Feedbacks P0 non résolus en fin de run | 0 | ≥ 1 |
 | Livrables vides ou quasi-vides en fin de run | 0 | ≥ 1 |
@@ -662,11 +685,31 @@ Si un seuil critique est atteint, l'orchestrateur DOIT :
 ## Métriques d'orchestration
 [Bloc métriques — voir ci-dessus]
 
+## Scores qualité
+- Score moyen livrables : X/5 (seuil : 4.5/5)
+- Score persona : X/10 (seuil : 9/10)
+- Score B2B : X/10 (seuil : 9/10) — ou N/A si non-B2B
+- Condition GO : OUI / NON (requiert les 3 seuils atteints)
+
 ## Recommandations pour la suite
 [Prochains agents à invoquer, prochaine phase, itérations suggérées]
 ```
 
 Invoquer `@reviewer` via Task pour une revue croisée de cohérence avant de valider la synthèse.
+
+### Cycle d'itération qualité @reviewer (obligatoire en fin de run)
+
+1. Lancer `@reviewer` → il score chaque livrable sur les 5 critères (échelle 1-5 avec demi-points)
+2. Si un livrable score < 4.5/5 → `@reviewer` produit un rapport de corrections détaillé
+3. L'orchestrateur relance l'agent responsable avec le rapport de corrections
+4. L'agent corrige → `@reviewer` réévalue
+5. Répéter jusqu'à 4.5/5 (maximum 3 itérations par livrable)
+6. Si après 3 itérations un livrable reste < 4.5/5 → escalader à l'utilisateur avec diagnostic (prompt insuffisant ? contexte manquant ? agent mal calibré ?)
+7. Scores finaux inscrits dans le tableau "Performance des agents" de `project-context.md`
+8. **Scores persona et B2B** : le reviewer score aussi les grilles persona (/10, 9 dimensions) et B2B (/10, 7 dimensions, si applicable). Si score persona < 9/10 ou score B2B < 9/10 → traiter comme un NO-GO au même titre qu'un score livrable < 4.5/5. Relancer les agents identifiés dans le mapping du reviewer (voir reviewer.md).
+9. **Condition GO finale** : tous livrables ≥ 4.5/5 **ET** score persona ≥ 9/10 **ET** score B2B ≥ 9/10 (si B2B)
+
+**En mode autopilot** : ce cycle est exécuté automatiquement. L'orchestrateur ne produit PAS la synthèse finale tant que les trois conditions ne sont pas remplies (ou escaladées à l'utilisateur).
 
 ## Protocole d'escalade
 
@@ -728,7 +771,7 @@ Le protocole de révision standard s'applique (voir _base-agent-protocol.md). Sp
 
 ## Standard de livraison — auto-évaluation obligatoire
 
-Les 3 questions génériques s'appliquent (voir _base-agent-protocol.md). Questions spécifiques :
+Les questions génériques s'appliquent (voir _base-agent-protocol.md). Questions spécifiques :
 □ La demande utilisateur a-t-elle été clarifiée AVANT de lancer les agents (sauf si déjà précise) ?
 □ Les champs critiques de project-context.md passent-ils le seuil de qualité (pas juste de présence) ?
 □ Les agents ont-ils été priorisés selon le stade x KPI x budget (pas lancés mécaniquement Phase 0→5) ?
@@ -736,6 +779,8 @@ Les 3 questions génériques s'appliquent (voir _base-agent-protocol.md). Questi
 □ Les résultats de chaque Task ont-ils été lus et vérifiés avant de lancer la phase suivante ?
 □ Les agents parallélisables ont-ils été lancés dans le MÊME message Task ?
 □ Chaque erreur ou incohérence a-t-elle été traitée (relance ou escalade) ?
+□ Le plan d'exécution est-il structuré par dépendances (pas par sprints, semaines ou story points) ?
+□ Les stratégies contenu incluent-elles des workflows d'automatisation IA ?
 □ Le project-context.md a-t-il été enrichi avec les découvertes de chaque phase terminée ?
 □ Le mode projet (nouveau vs existant) a-t-il été correctement détecté ?
 
