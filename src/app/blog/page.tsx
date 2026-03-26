@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
-import { blogPosts, formatBlogDate } from "@/data/blog-posts";
+import { blogPosts, getBlogCategories } from "@/data/blog-posts";
+import { BlogCategoryFilter } from "@/components/blog/BlogCategoryFilter";
 
 export const metadata: Metadata = {
   title: "Blog — Creative Production Insights for Enterprise Teams",
@@ -17,52 +17,32 @@ export const metadata: Metadata = {
 };
 
 export default function BlogPage() {
+  const categories = getBlogCategories();
+
   return (
     <div className="pt-[var(--header-height)]">
       <Section ariaLabel="Blog articles">
-        <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl">
-          Blog
+        <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">
+          Insights from 5 Continents
         </h1>
-        <p className="mb-12 max-w-2xl text-lg text-neutral-600">
-          Insights on enterprise creative production. How global brands scale
-          content, manage agencies, and deliver faster.
+        <p className="mb-10 max-w-2xl text-lg leading-relaxed text-neutral-600">
+          How enterprise teams like TikTok, Sony, and GEODIS scale creative
+          production. Operational insights, pricing analysis, and the standards
+          we see shaping the industry.
         </p>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => (
-            <Link
-              key={post.slug}
-              href={`/blog/${post.slug}`}
-              className="group flex flex-col rounded-2xl border border-neutral-200 bg-brand-white p-6 transition-all duration-200 hover:border-brand-flame hover:shadow-lg"
-            >
-              <span className="mb-3 inline-block self-start rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium uppercase tracking-wider text-neutral-600">
-                {post.category}
-              </span>
-              <h2 className="mb-3 text-xl font-bold text-brand-black transition-colors duration-150 group-hover:text-brand-flame">
-                {post.title}
-              </h2>
-              <p className="mb-6 flex-1 text-sm leading-relaxed text-neutral-600">
-                {post.excerpt}
-              </p>
-              <div className="flex items-center justify-between text-xs text-neutral-400">
-                <time dateTime={post.publishedAt}>
-                  {formatBlogDate(post.publishedAt)}
-                </time>
-                <span>{post.readTime}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {/* Category filter */}
+        <BlogCategoryFilter categories={categories} posts={blogPosts} />
       </Section>
 
       {/* Footer CTA */}
       <Section ariaLabel="Start your project">
         <div className="text-center">
           <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
-            Ready to scale your creative production?
+            Your next campaign starts with a brief
           </h2>
           <p className="mx-auto mb-8 max-w-xl text-neutral-500">
-            First project satisfaction or no invoice.
+            D+1 delivery. Fixed prices. First project satisfaction or no invoice.
           </p>
           <Button variant="primary" href="/contact">
             Start a project

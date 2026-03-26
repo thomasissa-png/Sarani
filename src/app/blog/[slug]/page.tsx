@@ -148,7 +148,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <div className="pt-[var(--header-height)]">
         {/* Article header */}
         <Section ariaLabel="Article header" tight>
-          <div className="mx-auto max-w-3xl">
+          <div className="mx-auto max-w-2xl">
             <Link
               href="/blog"
               className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition-colors duration-150 hover:text-brand-flame"
@@ -192,18 +192,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         {/* Article content */}
         <Section ariaLabel="Article content" tight>
-          <article className="mx-auto max-w-3xl">
+          <article className="mx-auto max-w-2xl text-base leading-[1.8] sm:text-lg sm:leading-[1.8]">
             {renderContent(post.content)}
           </article>
         </Section>
 
-        {/* CTA */}
+        {/* CTA — thought leadership tone, not sales pitch */}
         <Section ariaLabel="Start your project" className="bg-neutral-50">
-          <div className="text-center">
+          <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
-              Ready to scale your creative production?
+              If your team is facing this challenge, we can help
             </h2>
-            <p className="mx-auto mb-8 max-w-xl text-neutral-500">
+            <p className="mx-auto mb-8 max-w-xl leading-relaxed text-neutral-500">
+              35 experts across 5 continents. D+1 delivery. Fixed prices.
               First project satisfaction or no invoice.
             </p>
             <Button variant="primary" href="/contact">
@@ -216,7 +217,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         {relatedPosts.length > 0 && (
           <Section ariaLabel="Related articles">
             <h2 className="mb-8 text-2xl font-bold text-brand-black">
-              More from the blog
+              Related reading
             </h2>
             <div className="grid gap-8 sm:grid-cols-2">
               {relatedPosts.map((related) => (

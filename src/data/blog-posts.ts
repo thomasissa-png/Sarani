@@ -84,7 +84,7 @@ If we can sustain 1,500+ edits per month for one of the most demanding platforms
     readTime: "3 min read",
     metaTitle: "How We Deliver 1,500+ Creatives Per Month for TikTok",
     metaDescription:
-      "Behind the scenes of Sarani's TikTok operation: 300-500 video edits per week, relay teams across 5 continents, $20 per video. Here is how high-volume creative production works.",
+      "Behind Sarani's TikTok operation: 300-500 video edits per week, relay teams across 5 continents, $20 per video. How high-volume production works.",
   },
   {
     slug: "how-enterprise-teams-scale-creative-production",
@@ -500,7 +500,7 @@ Yes. GEODIS's 5,700-slide rebrand was delivered at a fixed price of 8,500€. La
     slug: "fixed-pricing-vs-retainers-what-global-brands-prefer",
     title: "Fixed Pricing vs Retainers: What Global Brands Actually Prefer",
     excerpt:
-      "We have worked with both models. After serving TikTok, Sony, and GEODIS, the data is clear — fixed pricing wins for enterprise creative production. Here is why.",
+      "Retainers promise predictability but deliver scope creep. After serving TikTok, Sony, and GEODIS, the data is clear — fixed pricing wins for enterprise creative production. Here is why.",
     content: `Every enterprise marketing lead has lived through this: a retainer that looked reasonable in January is 40% over budget by June. Scope creep, change orders, and "out of scope" emails turn a predictable cost into a quarterly negotiation.
 
 After producing thousands of assets for global brands, we have seen both models from the inside. Here is what the data shows.
@@ -523,11 +523,29 @@ GEODIS experienced this firsthand. Their previous agency quoted 80,000 euros and
 
 **The bottom line**
 
-Retainers protect the agency. Fixed pricing protects the client. For enterprise teams managing multi-market campaigns with unpredictable volume, fixed pricing removes the friction between "we need this" and "it is done."`,
+Retainers protect the agency. Fixed pricing protects the client. For enterprise teams managing multi-market campaigns with unpredictable volume, fixed pricing removes the friction between "we need this" and "it is done."
+
+**FAQ**
+
+**Is fixed pricing really cheaper than a retainer for enterprise?**
+
+It depends on your volume pattern. GEODIS saved over 90% compared to their previous retainer quote — 8,500€ vs 80,000€ for 350 presentations. For teams with variable monthly volume, fixed pricing eliminates the cost of unused capacity. For teams with constant high volume, the math is worth running — but the transparency advantage remains.
+
+**How does Sarani handle revisions under fixed pricing?**
+
+Unlimited revisions are included in every fixed price. TikTok ran 24 revision rounds on a single 360€ video — no additional charge. The price you approve at briefing is the price on the invoice, regardless of how many iterations the creative requires.
+
+**Can fixed pricing scale for large campaigns?**
+
+Yes. Sony needed 125 banners across 15 languages for Black Friday. Each banner was priced at 150€, delivered same-day. The model scales by multiplying units, not by renegotiating contracts. Large projects are quoted as a single fixed-price deliverable, confirmed before work begins.
+
+**What if the first project is not up to standard?**
+
+First project satisfaction or no invoice. If the output does not meet your expectations, there is no charge. That guarantee removes the switching cost of evaluating a new creative partner.`,
     author: "Sarani Team",
     publishedAt: "2026-03-05",
     category: "Industry Insights",
-    readTime: "4 min read",
+    readTime: "5 min read",
     metaTitle: "Fixed Pricing vs Retainers: What Global Brands Actually Prefer",
     metaDescription:
       "Retainers protect agencies. Fixed pricing protects clients. After serving TikTok, Sony, and GEODIS, here is why enterprise teams prefer fixed pricing for creative production.",
@@ -544,9 +562,25 @@ export function getAllBlogSlugs(): string[] {
   return blogPosts.map((post) => post.slug);
 }
 
-/** Get related blog posts (all except the current one) */
+/** Get unique blog categories (preserves insertion order) */
+export function getBlogCategories(): string[] {
+  return [...new Set(blogPosts.map((post) => post.category))];
+}
+
+/** Get related blog posts — same category first, max 2 */
 export function getRelatedBlogPosts(currentSlug: string): BlogPost[] {
-  return blogPosts.filter((post) => post.slug !== currentSlug);
+  const current = blogPosts.find((post) => post.slug === currentSlug);
+  if (!current) return [];
+
+  const others = blogPosts.filter((post) => post.slug !== currentSlug);
+  const sameCategory = others.filter(
+    (post) => post.category === current.category
+  );
+  const differentCategory = others.filter(
+    (post) => post.category !== current.category
+  );
+
+  return [...sameCategory, ...differentCategory].slice(0, 2);
 }
 
 /** Format a date string to readable format */
