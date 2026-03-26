@@ -11,7 +11,7 @@
 - **Nom du projet** :
 - **URL (si existante)** :
 - **Secteur** :
-- **Stade** : [ ] Idée  [ ] MVP  [ ] Beta  [ ] Production  [ ] Croissance
+- **Stade** : [ ] Idée  [ ] V1  [ ] Production  [ ] Croissance
 - **Date de début** :
 
 ---
