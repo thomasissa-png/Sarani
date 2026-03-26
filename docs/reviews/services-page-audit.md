@@ -1,7 +1,7 @@
-# Services Page Audit — Sarani
+# Services Page Audit — `src/app/services/page.tsx`
 *Produced by @creative-strategy + @design — 2026-03-26*
-*File audited: `src/app/services/page.tsx`*
 *Persona lens: Sophie, 38, Head of Marketing, global enterprise*
+*References: brand-platform.md, brand-voice.md, design-system.md, project-context.md*
 
 ---
 
@@ -11,13 +11,13 @@
 
 | # | Criterion | Score | Comment |
 |---|-----------|-------|---------|
-| 1 | Positioning | 7/10 | D+1 and fixed prices appear in the closing section but are buried — they are not in the hero. Sophie lands on a page that lists services without immediately reading the enterprise promise. The meta description correctly signals "no retainer required" but the H1 ("What we do. All of it.") opens on capability, not competitive differentiation. |
-| 2 | Persona fit | 6/10 | Sophie's core frustrations (slow agencies, revision billing, opaque pricing) are addressed only indirectly. The proof points hit the right clients and volumes but the page never names her pain explicitly. "On time" in section 2 is close, but "The brief before the brief" as a section label is agency-jargon and will not resonate with a Head of Marketing managing 3 simultaneous campaigns. |
-| 3 | Social proof | 8/10 | Strong. TikTok (1,500+ edits/month), Sony (same-day banners), GEODIS (350 presentations, 3 weeks), Adidas, LEGO, 51M views — all named, all specific. Minor issues: the Sony on-demand proof point says "150€" but brand-platform.md and brand-voice.md consistently use "155€". One discrepancy damages the evidence-first standard. |
-| 4 | CTA & Conversion | 6/10 | Each service block ends with a "Start a project" button — four identical CTAs in sequence. No funnel logic: Sophie may want to see pricing before committing, or explore work. The closing section has a "View pricing" secondary CTA, but it is below the fold and visually subordinate. No "See our work" CTA anywhere on the page despite brand-voice.md mandating it as a standard secondary CTA. |
-| 5 | Differentiation | 5/10 | The page describes what Sarani does but not structurally why it can do it faster and cheaper. The 35-person / 5-continent / 18-language / 24/7 relay mechanism — the core structural proof — only appears in the closing section. At section level, each block reads as a capability menu, not a competitive statement. Sophie could read this page and still not understand why Sarani delivers in 24h when others take two weeks. |
+| 1 | **Positioning** | 7/10 | D+1, fixed prices, and no-retainer appear — but only in the closing section. The hero H1 ("What we do. All of it.") opens on capability breadth, not on the enterprise-speed positioning. Sophie arrives from a referral or search expecting to read *why this agency is different*. The first thing she reads is a catalog opener. The meta description is stronger than the H1 itself. The fourth pillar — unlimited revisions — is entirely absent from the page. |
+| 2 | **Persona fit** | 6/10 | Sophie's core frustrations (slow turnaround, revision billing, opaque pricing, agencies that don't understand 24/7 campaign rhythms) are addressed only implicitly through proof points. The page never names her pain. "The brief before the brief" (section 1 headline) is agency jargon. Sophie does not think in those terms — she thinks "I need assets by tomorrow." The on-demand section headline ("Need something that doesn't fit a category?") signals uncertainty, not confidence — wrong register for a Head of Marketing managing 5M€ budgets. |
+| 3 | **Social proof** | 8/10 | Strong. Named clients, real volumes, verifiable numbers in every section. TikTok (1,500+ edits/month, 51M views), Sony (same-day banners), GEODIS (350 presentations / 5,700 slides / 3 weeks), Adidas Arena, LEGO Champs-Élysées — all specific. One factual discrepancy: the on-demand proof point states "150€" for Sony banners; brand-platform.md and brand-voice.md consistently use "155€." A single wrong number undermines the evidence-first standard, particularly for Marc (Procurement) who cross-checks every figure. |
+| 4 | **CTA & Conversion** | 5/10 | Four identical "Start a project" buttons appear sequentially — one at the end of each service block — before the closing section adds a fifth. CTA fatigue is severe. By button three, the CTA has become wallpaper. No secondary path is offered mid-page (no "View pricing," no "See our work") until the very end of the page. No anchor navigation allows a Sophie who already knows she needs video editing to skip directly to that section. The conversion funnel treats all visitors as identical — it is not segmented by intent. |
+| 5 | **Differentiation** | 5/10 | The page catalogues what Sarani does. It does not explain the structural mechanism that makes 24-hour delivery possible. The 35-person / 5-continent / time-zone-relay model — the one argument no competitor can copy — appears only in the closing section. At section level, each block reads as a capability menu. A competitor could copy this page structure and swap in their own client names. The white space of differentiation is not weaponised. |
 
-**Strategy subtotal: 32/50 → 6.4/10**
+**Strategy subtotal: 31/50 → 6.2/10**
 
 ---
 
@@ -25,13 +25,13 @@
 
 | # | Criterion | Score | Comment |
 |---|-----------|-------|---------|
-| 6 | Visual hierarchy | 7/10 | The left-border-accent pattern (4px colored bar + H2 + subtitle + proof block) is clear and scannable. Four identical block structures in sequence create monotony — the eye stops being guided after block two. The hero lacks visual weight: centered H1 + paragraph with no supporting visual, number, or accent element creates a flat entry point. |
-| 7 | Design system compliance | 9/10 | Token usage is accurate: `bg-brand-flame/10`, `text-brand-cerulean-dark`, `bg-brand-black` closing section. Typography hierarchy (bold H1 70px → H2 40px → body 18px) follows the scale. The accent colors rotate correctly across sections (Flame → Cerulean → Lemon → Flame). Minor: the "35+ experts" line in the closing section uses "+" which deviates from the standard "35 experts" verbatim unit in brand-voice.md §3.2. |
-| 8 | Responsive (320px) | 7/10 | Grid collapses correctly (`sm:grid-cols-2 lg:grid-cols-3`). The `max-w-4xl` container and `max-w-3xl` hero are viewport-appropriate. Risk point: the grouped services grid with 7 groups in Content Creation will stack to a very long vertical list on mobile with no visual breaks between groups. No `gap-y` distinction between group headers and items. Proof point boxes (`rounded-xl p-6`) at 320px may feel cramped — `p-6` is 24px on all sides, tight for long italic text. |
-| 9 | Accessibility | 6/10 | `ariaLabel` is passed to Section for landmark labeling — positive. Service items are rendered as `<ul><li>` — correct. Issues: group headers (`<h3>`) use `.text-sm.uppercase` which can fail WCAG contrast at `text-brand-flame-dark` / `text-brand-cerulean-dark` / `text-brand-lemon-dark` on white backgrounds (flame-dark and lemon-dark need verification). Proof point text uses `.italic.text-sm.text-neutral-700` on `bg-brand-flame/10` — at 10% opacity the background is near-white but the combination needs contrast check. No `aria-label` on CTA buttons: four buttons all read "Start a project" with no destination context for screen readers. |
-| 10 | Visual impact | 5/10 | The page is functional but not memorable. Four repeated block structures with muted accent backgrounds and italic proof quotes create a catalogue feel, not a brand statement. The hero has no visual hook — no number in large type, no client logo strip, no animation, no bold graphic element. Sophie, landing from a LinkedIn ad or referral, should feel "this is clearly enterprise-level" within 3 seconds. Currently she feels "this is a well-organised agency website." |
+| 6 | **Visual hierarchy** | 7/10 | The left-border-accent pattern (4px colored bar → H2 → subtitle → service grid → proof block → CTA) is logical and scannable. The problem: all four service sections follow the exact same visual rhythm. Sophie's eye stops being guided after block two — pattern recognition kicks in and she skims. No visual elevation moment (a stat callout in large type, a full-bleed client quote, a metrics strip) re-engages attention between sections. The hero is text-only, flat, and provides no visual entry point beyond the H1. |
+| 7 | **Design system compliance** | 8/10 | Token usage is accurate. `bg-brand-flame/10`, `text-brand-cerulean-dark`, `bg-brand-black` closing section all follow the palette rules. Accent color rotation (Flame → Cerulean → Lemon → Flame) is correct. `bg-surface-warm` alternation on even sections adds cadence. One flag: the closing section uses "35+ experts" with a "+" character — brand-voice.md §3.2 mandates the verbatim unit "35 experts, 5 continents, 18 languages, 24/7" without the "+". Minor, but it deviates from the approved vocabulary. |
+| 8 | **Responsive (320px)** | 7/10 | Service grid collapses correctly (`sm:grid-cols-2 lg:grid-cols-3`). `max-w-3xl` / `max-w-4xl` containers are viewport-safe. Two risk points: (1) The Content Creation section has 7 sub-groups — on mobile, these stack into a very long vertical list with no visual break separating groups from items. (2) The hero H1 uses `text-5xl` at the base breakpoint with no `xs` step — at 320px with a long heading, word-wrapping may produce an awkward single-word orphan on the last line depending on font metrics. |
+| 9 | **Accessibility** | 6/10 | `ariaLabel` passed to `Section` components is correct for landmark labeling. `<ul><li>` for service items is semantically appropriate. Three issues: (1) Five `<Button>` elements with identical text "Start a project" and identical `href="/contact"` are indistinguishable to screen readers — each needs a unique `aria-label` (e.g., `"Start a content creation project"`). (2) Proof point blocks use `.text-neutral-700.italic.text-sm` on tinted backgrounds — the 10% opacity accent backgrounds are near-white but need contrast ratio verification against WCAG AA (4.5:1 minimum for small text). (3) Group headings (`<h3>` with `.text-sm.uppercase`) at accent colors on white backgrounds need contrast verification, particularly `text-brand-lemon-dark`. |
+| 10 | **Visual impact** | 5/10 | The page is clean and professional. It is not memorable. Four blocks of muted-tint proof quotes and grid service lists create a catalog feel, not a brand statement. Sophie, landing from a referral or a LinkedIn ad, should register "enterprise-level, fast, serious" within 3 seconds without reading. Currently she reads a well-structured agency website. No client logo strip, no hero metric in large type, no kinetic element, no single visual moment of elevation. The closing black section is the strongest beat on the page — Sophie has to scroll through the entire catalog to reach it. |
 
-**Design subtotal: 34/50 → 6.8/10**
+**Design subtotal: 33/50 → 6.6/10**
 
 ---
 
@@ -39,17 +39,19 @@
 
 | Block | Weight | Subtotal | Weighted |
 |-------|--------|----------|---------|
-| Strategy | 60% | 6.4/10 | 3.84 |
-| Design | 40% | 6.8/10 | 2.72 |
-| **Global** | | | **6.56/10** |
+| Strategy | 60% | 6.2/10 | 3.72 |
+| Design | 40% | 6.6/10 | 2.64 |
+| **Global** | | | **6.36 / 10** |
 
 ---
 
-## Top 5 Recommendations (by impact)
+## Top 5 Recommendations (ranked by impact)
 
-### Rec 1 — Rewrite the hero to lead with the structural differentiator [Impact: Critical]
+---
 
-**Problem:** H1 "What we do. All of it." opens on capability inventory. Sophie already knows agencies list services. She needs to know in 3 seconds why Sarani is structurally different.
+### Rec 1 — Rewrite the hero to lead with the structural differentiator [Critical]
+
+**Problem:** "What we do. All of it." opens on capability breadth. Sophie needs to know in 3 seconds what makes this agency structurally different from the four others she has reviewed this morning.
 
 **Proposed copy:**
 
@@ -57,107 +59,140 @@
 H1:
 Enterprise creative. Every format. Delivered in 24 hours.
 
-Subheadline:
-Strategy, content, distribution, on-demand production — handled by 35 experts across 5 continents, working in relay. No retainer. Fixed prices. First project satisfaction or no invoice.
+Subtitle:
+Strategy, content, distribution, on-demand production —
+produced by 35 experts across 5 continents, working in relay.
+No retainer. Fixed prices. First project satisfaction or no invoice.
 ```
 
-This hero immediately answers: what (creative), for whom (enterprise), how fast (24h), why credible (35 / 5 / relay), commercial terms (no retainer, fixed prices), and risk removal (guarantee).
+This hero answers: what (creative), for whom (enterprise), how fast (24h), why possible (35 / 5 continents / relay), commercial model (no retainer, fixed prices), and risk removal (guarantee). Every Sophie objection addressed before she scrolls.
 
 ---
 
-### Rec 2 — Fix the price discrepancy on the Sony proof point [Impact: High]
+### Rec 2 — Replace four identical CTAs with a conversion funnel by intent [High]
 
-**Problem:** The on-demand `proofPoint` reads "150€" — inconsistent with "155€" in brand-platform.md, brand-voice.md, and the pricing page. One wrong number destroys the evidence-first standard.
+**Problem:** Five "Start a project" buttons kill urgency. No mid-page path for Sophie in evaluation mode (needs proof) or Marc in validation mode (needs pricing).
+
+**Proposed layout (no-code wireframe):**
+
+```
+[Strategic Marketing block]   → CTA removed (Sophie is not ready at block 1)
+
+[Content Creation block]      → CTA: "See our work"    (/case-studies)
+                                    secondary: "Start a project"
+
+[Operational Marketing block] → CTA: "View pricing"    (/pricing)
+
+[On-Demand block]             → CTA: "Tell us what you need"  (/contact)
+                                    (impulse brief — this section attracts urgent requests)
+
+[Closing section]             → Primary: "Start a project"
+                                Secondary: "View pricing"
+                                Guarantee line: "First project satisfaction or no invoice."
+```
+
+This routes Sophie and Marc through the page by intent stage rather than repeating the same committed action at every scroll stop.
+
+---
+
+### Rec 3 — Add a structural proof mechanism to the page [High]
+
+**Problem:** The 24/7 relay model — the one argument no competitor can replicate — appears only in the closing section. Four service blocks describe *what* Sarani does but not *why* it delivers in 24 hours.
+
+**Proposed insert:** A lean full-width module between the service blocks and the closing section:
+
+```
+[Dark strip — bg-brand-black — full width]
+
+Why 24 hours is our default, not our premium.
+
+35 experts across 5 time zones work in relay.
+When Paris signs off, Dubai continues. When Dubai hands off, São Paulo picks up.
+Your brief never waits for a timezone to wake up.
+That is why D+1 delivery is the standard — not an add-on.
+
+[Link: Meet the team →]
+```
+
+This single module transforms the page from a catalog into a positioning statement.
+
+---
+
+### Rec 4 — Fix the 150€ / 155€ discrepancy immediately [High]
+
+**Problem:** The on-demand proof point reads "150€." Every other Sarani source (brand-platform.md, brand-voice.md, pricing page) consistently uses "155€." One wrong number damages the evidence-first standard and breaks trust with Marc, who cross-checks numbers.
 
 **Current:**
 ```
 "Request in the morning. Two proposals by afternoon. Delivery by the next morning. 150€."
 ```
 
-**Proposed:**
+**Corrected:**
 ```
 "Request in the morning. Two proposals by afternoon. Delivery by the next morning. 155€."
 ```
 
-Single character change — no structural impact.
+One character. Zero design impact. Apply immediately.
 
 ---
 
-### Rec 3 — Add the structural proof mechanism to each service block [Impact: High]
+### Rec 5 — Add a client logo strip below the hero [Medium]
 
-**Problem:** Each block describes what Sarani does but not the structural reason it can deliver faster than any other agency. The 24/7 relay mechanism only appears in the closing section.
+**Problem:** The hero is text-only. Sophie registers "professional agency" — not "enterprise-level partner." A visual trust signal is missing at the page's highest-attention moment.
 
-**Proposed addition:** A brief mechanism line beneath each section subtitle (max 20 words):
+**Proposed:** Horizontal strip of 5 client logos (TikTok, Sony, Adidas, GEODIS, L'Oréal) immediately below the hero subtitle. Style: monochrome (grayscale) at 60% opacity on white — the standard enterprise proof convention. Requires no copy change. Requires client logo assets (confirm availability).
 
-**Strategic Marketing block:**
+**Alternative if logos unavailable:** Promote the metrics strip from the closing section to below the hero:
+
 ```
-Subtitle addition: "35 experts, 5 continents — your brief never waits for a timezone."
-```
-
-**Content Creation block (already has it implicitly — reinforce):**
-```
-Current subtitle is correct. Add at the end: "Working in relay means your assets ship while your team sleeps."
+35 experts   ·   5 continents   ·   18 languages   ·   24/7
+Working in relay so your campaigns never stop.
 ```
 
-**Operational Marketing block:**
-```
-Subtitle addition: "Campaigns running 24/7 — managed by a team that works 24/7."
-```
+Zero new content required — it already exists. Move it up.
 
 ---
 
-### Rec 4 — Replace four identical CTAs with a logical conversion funnel [Impact: High]
+## Accessibility Fixes Required
 
-**Problem:** Four "Start a project" buttons in sequence create CTA fatigue. No funnel logic for Sophie who is in evaluation mode, not decision mode.
+**Immediate:** Add unique `aria-label` to each CTA button:
+```tsx
+// Strategic Marketing section
+<Button variant="primary" href="/contact" aria-label="Start a strategic marketing project">
 
-**Proposed layout change (no code — wireframe):**
+// Content Creation section
+<Button variant="primary" href="/contact" aria-label="Start a content creation project">
 
-```
-[Strategic Marketing block]
-  → CTA: "Start a project"    (Sophie who is ready)
+// Operational Marketing section
+<Button variant="primary" href="/contact" aria-label="Start an operational marketing project">
 
-[Content Creation block]
-  → CTA: "See our work"       (Sophie who needs proof before committing)
-
-[Operational Marketing block]
-  → CTA: "View pricing"       (Sophie checking the commercial model)
-
-[On-Demand block]
-  → CTA: "Start a project"    (impulse brief — this section is for urgent needs)
-
-[Closing section]
-  → Primary: "Start a project"
-  → Secondary: "View pricing"
+// On-Demand section
+<Button variant="primary" href="/contact" aria-label="Start an on-demand project">
 ```
 
-This routes Sophie and Marc through the page logically rather than hammering the same action four times.
+**Verify:** Run WCAG AA contrast check on:
+- `text-neutral-700` on `bg-brand-flame/10`, `bg-brand-cerulean/10`, `bg-brand-lemon/10`
+- `text-brand-lemon-dark` on white background (group heading)
 
----
-
-### Rec 5 — Add one high-impact visual anchor to the hero [Impact: Medium]
-
-**Problem:** The hero is text-only. At 7.5 seconds average landing page attention, Sophie needs a visual hook that confirms "enterprise, premium, fast" without reading a word.
-
-**Proposed (no code — design brief):**
-
-Add a horizontal strip of 4–5 client logos (TikTok, Sony, Adidas, GEODIS, L'Oréal) between the hero subtitle and the first service block. Style: monochrome (grayscale) logos at 60% opacity on white — the standard enterprise trust signal. This single element moves the page from "agency catalogue" to "enterprise partner page."
-
-Alternative if logos are unavailable: a 3-column metrics block in large type:
-
-```
-35 experts   |   18 languages   |   5 continents
-      Working 24/7 so your campaigns don't stop
-```
-
-This costs zero dev effort (already exists in closing section — move it to the hero).
+If contrast fails: move proof point text to `text-neutral-900`. No visual impact.
 
 ---
 
 ## Hypotheses to Validate
 
-- [HYPOTHÈSE] The Adidas Arena / LEGO Champs-Élysées references in the Content Creation proof point are accurate as stated — no URL or date provided to verify.
-- [HYPOTHÈSE] `text-brand-flame-dark`, `text-brand-cerulean-dark`, `text-brand-lemon-dark` tokens meet WCAG AA contrast on white backgrounds — needs contrast ratio verification against the design-tokens.json values.
+- [HYPOTHÈSE] Adidas Arena and LEGO Champs-Élysées references in Content Creation proof point are accurate as stated — no primary source provided for verification.
+- [HYPOTHÈSE] Accent color dark tokens (`text-brand-flame-dark`, `text-brand-cerulean-dark`, `text-brand-lemon-dark`) meet WCAG AA 4.5:1 on white — needs contrast check against design-tokens.json.
 
 ---
 
-*Handoff → @fullstack for implementation of copy changes (Rec 2 is one character, apply immediately). Rec 1 and Rec 4 are copy-only changes. Rec 5 requires logo assets from the client.*
+*Audit scope: copy, strategy, visual structure, accessibility. No code was modified.*
+
+---
+
+**Handoff → @fullstack**
+- Files produced: `docs/reviews/services-page-audit.md`
+- Apply Rec 4 (150€ → 155€) immediately — single character fix, no review required
+- Rec 1 and Rec 2 are copy and layout changes — apply after Sophie persona review with @copywriter
+- Rec 3 requires a new UI component (dark strip) — brief @design first
+- Rec 5 requires client logo assets — confirm with Thomas before implementing
+- Accessibility fixes (aria-labels) apply to all Button instances on the page — zero visual impact, apply in the same pass as Rec 4
