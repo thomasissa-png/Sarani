@@ -319,7 +319,7 @@ export default function ProjectBriefPage() {
           </label>
           <textarea
             value={brief}
-            onChange={(e) => { setBrief(e.target.value); setBriefTouched(true); }}
+            onChange={(e) => { setBrief(e.target.value); setBriefTouched(true); setCheckResult(null); }}
             rows={10}
             className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black font-mono placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
           />

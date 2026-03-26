@@ -125,6 +125,10 @@ export default function NewProjectPage() {
   const [briefTouched, setBriefTouched] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
 
+  // AI Brief Check
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<{ status: string; checks: { level: string; label: string; message: string }[]; summary: string } | null>(null);
+
   // Fetch clients from DB
   const fetchClients = useCallback(async () => {
     try {
@@ -407,10 +411,55 @@ export default function NewProjectPage() {
           </label>
           <textarea
             value={brief}
-            onChange={(e) => { setBrief(e.target.value); setBriefTouched(true); }}
+            onChange={(e) => { setBrief(e.target.value); setBriefTouched(true); setCheckResult(null); }}
             rows={12}
             className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black font-mono placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
           />
+          {/* AI Brief Check */}
+          <div className="flex items-center gap-3 mt-2">
+            <button
+              type="button"
+              onClick={async () => {
+                if (brief.length < 20) return;
+                setChecking(true); setCheckResult(null);
+                try {
+                  const res = await fetch("/api/admin/brief-check", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ brief, projectType, clientName }),
+                  });
+                  if (res.ok) setCheckResult(await res.json());
+                } catch { /* ignore */ } finally { setChecking(false); }
+              }}
+              disabled={checking || brief.length < 20}
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-brand-cerulean border border-brand-cerulean rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {checking ? "Checking..." : "Check with AI"}
+            </button>
+            <span className="text-xs text-neutral-400">Optional — flags missing info before you submit.</span>
+          </div>
+
+          {/* AI Check Results */}
+          {checkResult && (
+            <div className={`mt-2 rounded-lg border px-3 py-2.5 text-sm ${
+              checkResult.status === "ok" ? "bg-green-50 border-green-200 text-green-800"
+                : checkResult.status === "warning" ? "bg-amber-50 border-amber-200 text-amber-800"
+                : "bg-red-50 border-red-200 text-red-800"
+            }`}>
+              <p className="font-medium">{checkResult.status === "ok" ? "Brief looks good" : checkResult.summary}</p>
+              {checkResult.checks.length > 0 && (
+                <ul className="mt-1.5 space-y-1">
+                  {checkResult.checks.map((c: { level: string; label: string; message: string }, i: number) => (
+                    <li key={i} className="flex items-start gap-1.5 text-xs">
+                      <span className={`shrink-0 font-bold ${c.level === "error" ? "text-red-600" : "text-amber-600"}`}>{c.level === "error" ? "!" : "?"}</span>
+                      <span><strong>{c.label}</strong> — {c.message}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           <p className="text-xs text-neutral-400 mt-1">
             Markdown template — fill in the brackets. The brief will be included in the ClickUp task description.
           </p>
