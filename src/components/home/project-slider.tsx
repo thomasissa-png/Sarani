@@ -118,12 +118,8 @@ export function ProjectSlider() {
       >
         <div
           ref={trackRef}
-          className={`flex gap-6 ${shouldAnimate ? "animate-slideshow" : ""}`}
-          style={
-            shouldAnimate
-              ? undefined
-              : { animationPlayState: "paused" }
-          }
+          className={`flex gap-6 ${prefersReduced ? "" : "animate-slideshow"}`}
+          style={{ animationPlayState: paused ? "paused" : "running" }}
         >
           {PROJECTS.map((p) => (
             <ProjectCard key={`${p.client}-${p.title}`} {...p} />
