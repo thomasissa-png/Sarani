@@ -231,13 +231,13 @@ export const teamDeliverables = pgTable("team_deliverables", {
 
 ---
 
-## Section 7 — Open Questions for Thomas
+## Section 7 — Open Questions — Thomas's Answers
 
-1. **Step approval gate** — should Thomas be required to explicitly approve a step output before the next step unlocks, or should "Run Step N+1" be available immediately after Step N completes?
-2. **Parallel steps** — some templates could theoretically run steps in parallel (e.g. translation of multiple language pairs). Should the system support parallel execution, or strictly sequential for V1?
-3. **Brief override per step** — beyond the master brief, should Thomas be able to add step-specific instructions per agent at team creation time, or only at execution time?
-4. **Re-run a step** — if Thomas is unhappy with a step output, can he re-run it (overwriting the previous output)? Should previous outputs be versioned?
-5. **Custom template persistence** — when Thomas builds a "Custom team", should that configuration be saveable as a named template for future reuse?
-6. **Export format** — is `.docx` download a hard requirement for V1, or is copy-to-clipboard + `.txt` sufficient to start?
-7. **Client visibility** — should clients ever have read access to their team deliverables via a portal, or is this strictly an internal back-office tool?
-8. **Upstream context injection** — for long campaigns (6+ steps), injecting all previous outputs into each Claude call may hit token limits. Should we summarise upstream outputs, or pass them in full?
+1. **Step approval gate** — **MANUAL APPROVAL REQUIRED.** Thomas must explicitly review and approve each step output before the next step unlocks. No auto-chaining.
+2. **Parallel steps** — Strictly sequential for V1. Parallel can be added later.
+3. **Brief override per step** — To be decided during implementation.
+4. **Re-run a step** — **YES, with versioning and comments.** Thomas can re-run any step. Previous outputs are kept as versions. Thomas can add a comment explaining why re-run was needed (e.g. "Too formal, make it more casual").
+5. **Custom template persistence** — To be decided during implementation.
+6. **Export format** — To be decided during implementation.
+7. **Client visibility** — Strictly internal back-office tool for V1.
+8. **Upstream context injection** — **Show cost discretely.** Display estimated token cost for each step execution. Pass full upstream context but show the cost so Thomas can decide whether to proceed or summarise manually.
