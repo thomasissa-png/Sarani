@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
 
     const data = parsed.data;
 
-    // Find client mapping
+    // Find client mapping (uses 3-tier fuzzy match: exact → contains → first-word)
     const mapping = getMappingBySpaceName(data.clientName);
     // Fall back to "Other customers" if no direct mapping
     const effectiveMapping =
@@ -126,6 +126,12 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    console.log(
+      `[CreateProject] Client "${data.clientName}" → Space "${effectiveMapping.clickupSpaceName}" (${effectiveMapping.clickupSpaceId}), ` +
+      `Excel "${effectiveMapping.excelTrackerFilename}", SP folder "${effectiveMapping.sharepointCustomerFolder}"` +
+      (mapping ? "" : " [FALLBACK: Other customers]")
+    );
 
     const result: CreateProjectResponse = {
       clickup: { success: false },

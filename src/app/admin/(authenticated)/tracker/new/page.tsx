@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import {
+  CLIENT_MAPPINGS,
+  getMappingBySpaceName,
+} from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -250,6 +254,18 @@ export default function NewProjectPage() {
                 </option>
               ))}
             </select>
+            {clientName && (() => {
+              const m = getMappingBySpaceName(clientName);
+              const fallback = !m;
+              const effective = m ?? CLIENT_MAPPINGS.find((x) => x.clickupSpaceName === "Other customers");
+              if (!effective) return null;
+              return (
+                <p className={`text-xs mt-1 ${fallback ? "text-warning-text" : "text-neutral-400"}`}>
+                  {fallback ? "No direct mapping — " : ""}
+                  ClickUp: {effective.clickupSpaceName} · Excel: {effective.excelTrackerFilename} · SP: {effective.sharepointCustomerFolder}
+                </p>
+              );
+            })()}
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">

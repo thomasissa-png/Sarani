@@ -172,14 +172,39 @@ export const CACHE_TTL = {
 
 /**
  * Find the client mapping for a given ClickUp Space name.
+ * Uses a 3-tier match strategy:
+ *   1. Exact match (case-insensitive)
+ *   2. Contains match (space name contains mapping name, or vice versa)
+ *   3. First-word match (e.g. "CMC" matches "CMC Markets")
  * Returns undefined if no mapping exists (e.g. Brand Native, Sarani internal).
  */
 export function getMappingBySpaceName(
   spaceName: string
 ): ClientIntegrationMapping | undefined {
-  return CLIENT_MAPPINGS.find(
-    (m) => m.clickupSpaceName.toLowerCase() === spaceName.toLowerCase()
+  const lower = spaceName.toLowerCase().trim();
+  // 1. Exact match
+  const exact = CLIENT_MAPPINGS.find(
+    (m) => m.clickupSpaceName.toLowerCase() === lower
   );
+  if (exact) return exact;
+  // 2. Contains match (skip "Other customers" — too generic)
+  const contains = CLIENT_MAPPINGS.find((m) => {
+    const ml = m.clickupSpaceName.toLowerCase();
+    if (ml === "other customers") return false;
+    return lower.includes(ml) || ml.includes(lower);
+  });
+  if (contains) return contains;
+  // 3. First-word match (for cases like "CMC" matching "CMC Markets")
+  const firstWord = lower.split(/\s+/)[0];
+  if (firstWord.length >= 3) {
+    const byFirstWord = CLIENT_MAPPINGS.find((m) => {
+      const ml = m.clickupSpaceName.toLowerCase();
+      if (ml === "other customers") return false;
+      return ml.startsWith(firstWord) || firstWord.startsWith(ml.split(/\s+/)[0]);
+    });
+    if (byFirstWord) return byFirstWord;
+  }
+  return undefined;
 }
 
 /**
