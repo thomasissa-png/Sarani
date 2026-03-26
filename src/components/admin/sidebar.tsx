@@ -40,12 +40,11 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "grid" },
-  { label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
-  { label: "AI Briefs", href: "/admin/projects", icon: "folder" },
   { label: "Tracker", href: "/admin/tracker", icon: "activity" },
-  { label: "AI Teams", href: "/admin/teams", icon: "team" },
+  { label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
   { label: "Clients", href: "/admin/clients", icon: "users" },
+  { label: "AI Teams", href: "/admin/teams", icon: "team" },
   { label: "Users", href: "/admin/users", icon: "shield" },
 ];
 

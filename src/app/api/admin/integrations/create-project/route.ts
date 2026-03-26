@@ -48,6 +48,8 @@ function columnNumberToLetter(n: number): string {
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
+const PROJECT_TYPES = ["generic", "design", "video", "translation"] as const;
+
 const createProjectSchema = z.object({
   clientName: z.string().min(1, "Client name is required"),
   projectName: z.string().min(1, "Project name is required"),
@@ -55,6 +57,9 @@ const createProjectSchema = z.object({
   category: z.string().optional().default(""),
   division: z.string().optional().default(""),
   estimatedValue: z.number().optional(),
+  // Brief fields
+  projectType: z.enum(PROJECT_TYPES).optional().default("generic"),
+  brief: z.string().max(10000).optional().default(""),
   // E-09: Previous successful results to skip on retry
   previousResults: z.object({
     clickup: z.object({ taskId: z.string(), url: z.string() }).optional(),
@@ -81,6 +86,7 @@ interface ExcelResult extends StepResult {
 
 interface SharePointResult extends StepResult {
   folderUrl?: string;
+  briefFolderPath?: string;
 }
 
 interface CreateProjectResponse {
@@ -178,6 +184,8 @@ export async function POST(request: NextRequest) {
             data.category ? `Category: ${data.category}` : "",
             data.division ? `Division: ${data.division}` : "",
             data.estimatedValue ? `Estimated value: ${data.estimatedValue}` : "",
+            data.projectType && data.projectType !== "generic" ? `Type: ${data.projectType}` : "",
+            data.brief ? `\n---\n\n${data.brief}` : "",
           ]
             .filter(Boolean)
             .join("\n"),
@@ -262,9 +270,17 @@ export async function POST(request: NextRequest) {
       }
       folderUrl = folder.webUrl;
 
+      // Create "00. Brief" subfolder for attachments
+      try {
+        await createFolder(SHAREPOINT_ASSETS_DRIVE_ID, `${parentPath}/${folderName}`, "00. Brief");
+      } catch {
+        // May already exist — ignore
+      }
+
       result.sharepoint = {
         success: true,
         folderUrl,
+        briefFolderPath: `${parentPath}/${folderName}/00. Brief`,
       };
 
       await logSync({

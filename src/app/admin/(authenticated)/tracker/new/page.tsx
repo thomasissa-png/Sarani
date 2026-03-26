@@ -40,6 +40,69 @@ interface CreateProjectResponse {
   sharepoint: StepResult;
 }
 
+// ─── Brief Templates ─────────────────────────────────────────────────────────
+
+const PROJECT_TYPES = [
+  { value: "generic", label: "Other / General" },
+  { value: "design", label: "Graphic Design" },
+  { value: "video", label: "Video Editing" },
+  { value: "translation", label: "Translation" },
+] as const;
+
+const BRIEF_TEMPLATES: Record<string, string> = {
+  generic: `## Deliverables
+[What needs to be delivered — formats, sizes, quantity]
+
+## Message & Direction
+[Key message, CTA, creative direction]
+
+## References & Constraints
+[Brand guidelines, formats, mandatory elements, things to avoid]`,
+
+  design: `## Deliverables
+| Format | Dimensions | Quantity |
+|---|---|---|
+| [e.g. Web banner] | [px] | [n] |
+
+## Brand Constraints
+- Colors: [hex codes or "use existing brand guidelines"]
+- Fonts: [font names or "see attached brand guide"]
+- Logo: [attached / to be provided / use existing]
+
+## Message / Copy
+[Key message to convey — or "copy provided separately"]
+
+## References
+[URL or "see attached moodboard"]`,
+
+  video: `## Deliverables
+| Format | Duration | Aspect Ratio | Quantity |
+|---|---|---|---|
+| [e.g. Social reel] | [15s / 30s] | [9:16 / 16:9] | [n] |
+
+## Raw Footage
+[ ] Footage provided (see brief folder)
+[ ] Footage to be sourced by Sarani
+
+## Editing Instructions
+[Cuts, pacing, music, captions, subtitles, end card]
+
+## Delivery Format
+[MP4 H.264 / ProRes] — [resolution] — [file size limit if any]`,
+
+  translation: `## Languages
+Source: [e.g. EN] → Target: [e.g. FR, DE, ES]
+
+## Volume
+[Word count or "see attached file(s)"] — [n files]
+
+## Tone & Constraints
+[Formal / casual / technical] — [glossary / terms to avoid]
+
+## Delivery Format
+[Same as source / DOCX / CSV / InDesign package]`,
+};
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function NewProjectPage() {
@@ -57,6 +120,10 @@ export default function NewProjectPage() {
   const [category, setCategory] = useState("");
   const [division, setDivision] = useState("");
   const [estimatedValue, setEstimatedValue] = useState("");
+  const [projectType, setProjectType] = useState("generic");
+  const [brief, setBrief] = useState(BRIEF_TEMPLATES.generic);
+  const [briefTouched, setBriefTouched] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   // Fetch clients from DB
   const fetchClients = useCallback(async () => {
@@ -141,6 +208,8 @@ export default function NewProjectPage() {
           category: category || undefined,
           division: division || undefined,
           estimatedValue: estimatedValue ? parseFloat(estimatedValue) : undefined,
+          projectType,
+          brief: brief || undefined,
         }),
       });
 
@@ -306,6 +375,99 @@ export default function NewProjectPage() {
               className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
             />
           </div>
+        </div>
+
+        {/* Project Type + Brief */}
+        <div>
+          <label className="block text-sm font-medium text-brand-black mb-1.5">
+            Project Type
+          </label>
+          <select
+            value={projectType}
+            onChange={(e) => {
+              const newType = e.target.value;
+              setProjectType(newType);
+              // Replace template only if brief hasn't been modified
+              if (!briefTouched || brief === BRIEF_TEMPLATES[projectType]) {
+                setBrief(BRIEF_TEMPLATES[newType] || BRIEF_TEMPLATES.generic);
+                setBriefTouched(false);
+              }
+            }}
+            className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          >
+            {PROJECT_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-brand-black mb-1.5">
+            Brief
+          </label>
+          <textarea
+            value={brief}
+            onChange={(e) => { setBrief(e.target.value); setBriefTouched(true); }}
+            rows={12}
+            className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black font-mono placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
+          />
+          <p className="text-xs text-neutral-400 mt-1">
+            Markdown template — fill in the brackets. The brief will be included in the ClickUp task description.
+          </p>
+        </div>
+
+        {/* Attachments */}
+        <div>
+          <label className="block text-sm font-medium text-brand-black mb-1.5">
+            Attachments
+            <span className="text-neutral-400 font-normal ml-1">(uploaded to SharePoint brief folder)</span>
+          </label>
+          <div
+            className="border-2 border-dashed border-neutral-300 rounded-lg p-4 text-center hover:border-brand-cerulean transition-colors cursor-pointer"
+            onClick={() => document.getElementById("file-input")?.click()}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-brand-cerulean", "bg-blue-50"); }}
+            onDragLeave={(e) => { e.currentTarget.classList.remove("border-brand-cerulean", "bg-blue-50"); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.remove("border-brand-cerulean", "bg-blue-50");
+              const files = Array.from(e.dataTransfer.files).filter(f => f.size <= 100 * 1024 * 1024);
+              setAttachments(prev => [...prev, ...files].slice(0, 10));
+            }}
+          >
+            <input
+              id="file-input"
+              type="file"
+              multiple
+              className="hidden"
+              accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.mp4,.mov,.docx,.xlsx,.pptx,.zip"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                setAttachments(prev => [...prev, ...files].slice(0, 10));
+                e.target.value = "";
+              }}
+            />
+            <p className="text-sm text-neutral-500">
+              Drag & drop files here or <span className="text-brand-cerulean font-medium">browse</span>
+            </p>
+            <p className="text-xs text-neutral-400 mt-1">Max 100MB per file, 10 files. PDF, images, videos, Office docs.</p>
+          </div>
+          {attachments.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {attachments.map((f, i) => (
+                <li key={`${f.name}-${i}`} className="flex items-center justify-between text-sm bg-neutral-50 rounded-lg px-3 py-2">
+                  <span className="truncate text-brand-black">{f.name} <span className="text-neutral-400">({(f.size / 1024 / 1024).toFixed(1)} MB)</span></span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                    className="text-neutral-400 hover:text-error ml-2 shrink-0"
+                    aria-label={`Remove ${f.name}`}
+                  >
+                    &times;
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
