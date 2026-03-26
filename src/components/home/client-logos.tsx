@@ -17,19 +17,19 @@ interface ClientLogo {
 }
 
 const CLIENTS: ClientLogo[] = [
-  { name: "TikTok", src: "/client-logo-tiktok.png", width: 100, height: 28 },
-  { name: "Sony", src: "/client-logo-sony.png", width: 90, height: 20 },
-  { name: "Adidas", src: "/client-logo-adidas.png", width: 48, height: 32 },
-  { name: "LEGO", src: "/client-logo-lego.png", width: 48, height: 32 },
-  { name: "Bose", src: "/client-logo-bose.png", width: 90, height: 24 },
-  { name: "IKEA", src: "/client-logo-ikea.png", width: 48, height: 32 },
+  { name: "TikTok", src: "/client-logo-tiktok.png", width: 78, height: 32 },
+  { name: "Sony", src: "/client-logo-sony.png", width: 50, height: 28 },
+  { name: "Adidas", src: "/client-logo-adidas.png", width: 63, height: 38 },
+  { name: "LEGO", src: "/client-logo-lego.png", width: 60, height: 34 },
+  { name: "Bose", src: "/client-logo-bose.png", width: 48, height: 48 },
+  { name: "IKEA", src: "/client-logo-ikea.png", width: 51, height: 34 },
 ];
 
 function ClientItem({ client }: { client: ClientLogo }) {
   return (
     <span
       className="flex items-center justify-center select-none opacity-40 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
-      style={{ height: 48, minWidth: 60 }}
+      style={{ height: 52, minWidth: 60 }}
     >
       <Image
         src={client.src}
