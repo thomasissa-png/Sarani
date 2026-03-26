@@ -253,6 +253,7 @@ async function readTrackerFile(
 ): Promise<ExcelProject[]> {
   const filePath = `${TRACKERS_BASE_PATH}/${mapping.excelTrackerFilename}`;
   const item = await getDriveItemByPath(SHAREPOINT_TRACKERS_DRIVE_ID, filePath);
+  const fileWebUrl = item.webUrl || "";
 
   // List ALL worksheets in the workbook
   const sheets = await listWorksheets(SHAREPOINT_TRACKERS_DRIVE_ID, item.id);
@@ -288,6 +289,10 @@ async function readTrackerFile(
             ...p,
             // If the sheet name is different from the client name, add it as context
             category: p.category || sheet.name,
+            // Tag source for "Open Tracker" link
+            excelTrackerFile: mapping.excelTrackerFilename,
+            excelSheetName: sheet.name,
+            excelTrackerUrl: fileWebUrl,
           }));
         } catch (e) {
           console.error(

@@ -168,6 +168,9 @@ export function mergeData(
       invoiceNumber,
       clickupTaskUrl: clickupTask?.url ?? "",
       clickupStatus,
+      excelTrackerFile: ep.excelTrackerFile,
+      excelSheetName: ep.excelSheetName,
+      excelTrackerUrl: ep.excelTrackerUrl,
     };
   });
 
@@ -199,5 +202,32 @@ export function mergeData(
     });
   }
 
-  return [...excelMerged, ...clickupOnly];
+  // Deduplicate by client+project (keep first occurrence — Excel-enriched wins over ClickUp-only)
+  const seen = new Map<string, TrackerProject>();
+  for (const p of [...excelMerged, ...clickupOnly]) {
+    const key = `${p.client.toLowerCase().trim()}::${p.project.toLowerCase().trim()}`;
+    const existing = seen.get(key);
+    if (!existing) {
+      seen.set(key, p);
+    } else {
+      // Merge: keep richer data (prefer non-empty fields)
+      seen.set(key, {
+        ...existing,
+        status: existing.status || p.status,
+        date: existing.date || p.date,
+        contact: existing.contact || p.contact,
+        category: existing.category || p.category,
+        sharepointLink: existing.sharepointLink || p.sharepointLink,
+        totalValue: existing.totalValue ?? p.totalValue,
+        clickupTaskUrl: existing.clickupTaskUrl || p.clickupTaskUrl,
+        clickupStatus: existing.clickupStatus || p.clickupStatus,
+        invoiceStatus: existing.invoiceStatus || p.invoiceStatus,
+        invoiceNumber: existing.invoiceNumber || p.invoiceNumber,
+        excelTrackerFile: existing.excelTrackerFile || p.excelTrackerFile,
+        excelSheetName: existing.excelSheetName || p.excelSheetName,
+        excelTrackerUrl: existing.excelTrackerUrl || p.excelTrackerUrl,
+      });
+    }
+  }
+  return Array.from(seen.values());
 }

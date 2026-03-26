@@ -15,6 +15,12 @@ export interface ExcelProject {
   poNumber: string;
   invoiceNumber: string;
   invoiceStatus: string;
+  /** Excel tracker filename (source) */
+  excelTrackerFile?: string;
+  /** Excel sheet/tab name */
+  excelSheetName?: string;
+  /** SharePoint webUrl of the tracker file (for direct open) */
+  excelTrackerUrl?: string;
 }
 
 // ─── Column Mapping ─────────────────────────────────────────────────────────
@@ -102,6 +108,32 @@ export function cellToString(cell: string | number | boolean | null): string {
   return String(cell).trim();
 }
 
+/**
+ * Convert an Excel serial date number to a YYYY-MM-DD string.
+ * Excel epoch is 1900-01-01 (serial 1), with the Lotus 1-2-3 bug
+ * that counts 1900-02-29 as a valid date (so serials >= 61 are offset by 1).
+ * Returns the original string if the value is not a valid serial date.
+ */
+export function cellToDateString(cell: string | number | boolean | null): string {
+  if (cell === null || cell === undefined || cell === "") return "";
+  // If it's already a date-like string (contains "-" or "/"), return as-is
+  const str = String(cell).trim();
+  if (/[\/\-]/.test(str) && /[a-zA-Z]|\d{2}[\/\-]\d{2}/.test(str)) return str;
+  // If it's a number (Excel serial date), convert
+  const n = Number(cell);
+  if (!isNaN(n) && n > 30000 && n < 60000) {
+    // Excel serial date range: ~1982 to ~2063
+    // Adjust for Lotus 1-2-3 bug (serials >= 61 are off by 1 day)
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30)); // 1899-12-30
+    const date = new Date(excelEpoch.getTime() + n * 86400000);
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  return str;
+}
+
 export function cellToNumber(
   cell: string | number | boolean | null
 ): number | null {
@@ -163,7 +195,7 @@ export function parseExcelProjects(
     projects.push({
       client,
       project: projectName,
-      date: colDate !== -1 ? cellToString(row[colDate]) : "",
+      date: colDate !== -1 ? cellToDateString(row[colDate]) : "",
       contact: colContact !== -1 ? cellToString(row[colContact]) : "",
       status: colStatus !== -1 ? cellToString(row[colStatus]) : "",
       category: colCategory !== -1 ? cellToString(row[colCategory]) : "",

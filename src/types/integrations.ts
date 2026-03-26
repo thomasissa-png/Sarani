@@ -15,6 +15,12 @@ export interface TrackerProject {
   invoiceNumber: string;
   clickupTaskUrl: string;
   clickupStatus: string;
+  /** Excel tracker filename (for "Open Tracker" link) */
+  excelTrackerFile?: string;
+  /** Excel sheet/tab name (for deep-link to correct sheet) */
+  excelSheetName?: string;
+  /** SharePoint webUrl of the tracker file (for direct open) */
+  excelTrackerUrl?: string;
 }
 
 export interface SourceMeta {

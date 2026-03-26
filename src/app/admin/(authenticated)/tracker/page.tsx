@@ -48,6 +48,14 @@ const INVOICE_STATUSES = ["All", "Open PO", "Invoiced", "Paid", "Overdue"] as co
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "--";
+  // Try to parse YYYY-MM-DD or ISO date strings into a readable format
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr; // Return as-is if unparseable
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function formatCurrency(value: number | null, currency = "EUR"): string {
   if (value === null) return "--";
   return new Intl.NumberFormat("en-US", {
@@ -164,10 +172,30 @@ export default function TrackerPage() {
     setCurrentPage(1);
   }, []);
 
-  // Fast initial load — show cached data immediately
+  // Stale-while-revalidate: show cached data from localStorage instantly,
+  // then fetch fresh data in the background.
+  const TRACKER_CACHE_KEY = "tracker-cache";
+
   const fetchData = useCallback(async () => {
-    if (!data) setLoading(true);
-    else setRefreshing(true);
+    // 1. Hydrate from localStorage immediately (instant display)
+    if (!data) {
+      try {
+        const cached = localStorage.getItem(TRACKER_CACHE_KEY);
+        if (cached) {
+          const parsed: TrackerResponse = JSON.parse(cached);
+          setData(parsed);
+          setLoading(false);
+          // Mark as refreshing — fresh data is on the way
+          setRefreshing(true);
+        } else {
+          setLoading(true);
+        }
+      } catch {
+        setLoading(true);
+      }
+    } else {
+      setRefreshing(true);
+    }
     setError(null);
     try {
       const [trackerRes, statusRes] = await Promise.all([
@@ -182,6 +210,13 @@ export default function TrackerPage() {
       const trackerData: TrackerResponse = await trackerRes.json();
       setData(trackerData);
 
+      // Persist to localStorage for next instant load
+      try {
+        localStorage.setItem(TRACKER_CACHE_KEY, JSON.stringify(trackerData));
+      } catch {
+        // localStorage full or quota exceeded — ignore
+      }
+
       if (statusRes.ok) {
         const statusData: StatusResponse = await statusRes.json();
         setApiStatus(statusData);
@@ -192,7 +227,8 @@ export default function TrackerPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [data]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const syncAndFetch = useCallback(async () => {
     setRefreshing(true);
@@ -222,6 +258,11 @@ export default function TrackerPage() {
       const trackerData: TrackerResponse = await trackerRes.json();
       setData(trackerData);
 
+      // Persist to localStorage for next instant load
+      try {
+        localStorage.setItem(TRACKER_CACHE_KEY, JSON.stringify(trackerData));
+      } catch { /* ignore */ }
+
       if (statusRes.ok) {
         const statusData: StatusResponse = await statusRes.json();
         setApiStatus(statusData);
@@ -231,7 +272,7 @@ export default function TrackerPage() {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [TRACKER_CACHE_KEY]);
 
   useEffect(() => {
     fetchData();
@@ -847,7 +888,7 @@ export default function TrackerPage() {
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
-                        {p.date || "--"}
+                        {formatDate(p.date)}
                       </td>
                       {/* Fix #6 — Overflow menu for actions */}
                       <td className="px-5 py-3.5">
@@ -872,6 +913,18 @@ export default function TrackerPage() {
                                 <QuoteIcon />
                                 Generate Quote
                               </Link>
+                              {p.excelTrackerUrl && (
+                                <a
+                                  href={p.excelTrackerUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                                  onClick={() => setOpenActionMenu(null)}
+                                >
+                                  <SharePointIcon />
+                                  Open Tracker{p.excelSheetName ? ` (${p.excelSheetName})` : ""}
+                                </a>
+                              )}
                               {p.sharepointLink && (
                                 <a
                                   href={p.sharepointLink}
@@ -880,8 +933,8 @@ export default function TrackerPage() {
                                   className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                                   onClick={() => setOpenActionMenu(null)}
                                 >
-                                  <SharePointIcon />
-                                  Open in SharePoint
+                                  <ExternalLinkIcon />
+                                  Open Project Folder
                                 </a>
                               )}
                               {p.clickupTaskUrl && (
@@ -992,6 +1045,18 @@ export default function TrackerPage() {
                         <QuoteIcon />
                         Generate Quote
                       </Link>
+                      {p.excelTrackerUrl && (
+                        <a
+                          href={p.excelTrackerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                          onClick={() => setOpenActionMenu(null)}
+                        >
+                          <SharePointIcon />
+                          Open Tracker{p.excelSheetName ? ` (${p.excelSheetName})` : ""}
+                        </a>
+                      )}
                       {p.sharepointLink && (
                         <a
                           href={p.sharepointLink}
@@ -1000,8 +1065,8 @@ export default function TrackerPage() {
                           className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                           onClick={() => setOpenActionMenu(null)}
                         >
-                          <SharePointIcon />
-                          Open in SharePoint
+                          <ExternalLinkIcon />
+                          Open Project Folder
                         </a>
                       )}
                       {p.clickupTaskUrl && (
@@ -1048,7 +1113,7 @@ export default function TrackerPage() {
                 </div>
                 <div>
                   <span className="text-neutral-400">Date:</span>{" "}
-                  {p.date || "--"}
+                  {formatDate(p.date)}
                 </div>
                 <div>
                   <span className="text-neutral-400">PO:</span>{" "}
