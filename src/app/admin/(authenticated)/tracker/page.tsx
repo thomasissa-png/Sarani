@@ -111,20 +111,55 @@ export default function TrackerPage() {
   const [invoiceFilter, setInvoiceFilter] = useState("All");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Sorting
-  const [sort, setSort] = useState<SortConfig | null>(null);
+  // Column visibility (Fix #1 — reduce to 7 visible columns by default)
+  type HideableColumn = "contact" | "category" | "po";
+  const [hiddenColumns, setHiddenColumns] = useState<Set<HideableColumn>>(
+    () => new Set<HideableColumn>(["contact", "category", "po"])
+  );
+  const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
+
+  const toggleColumn = useCallback((col: HideableColumn) => {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(col)) next.delete(col);
+      else next.add(col);
+      return next;
+    });
+  }, []);
+
+  // Sorting (Fix #12 — persist in localStorage)
+  const [sort, setSort] = useState<SortConfig | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const stored = localStorage.getItem("tracker-sort");
+      if (stored) return JSON.parse(stored) as SortConfig;
+    } catch {
+      // ignore parse errors
+    }
+    return null;
+  });
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageInputValue, setPageInputValue] = useState("1");
 
   const toggleSort = useCallback((column: SortableColumn) => {
     setSort((prev) => {
+      let next: SortConfig | null;
       if (prev?.column === column) {
-        return prev.direction === "asc"
+        next = prev.direction === "asc"
           ? { column, direction: "desc" }
           : null;
+      } else {
+        next = { column, direction: "asc" };
       }
-      return { column, direction: "asc" };
+      // Fix #12 — persist sort preference
+      if (next) {
+        localStorage.setItem("tracker-sort", JSON.stringify(next));
+      } else {
+        localStorage.removeItem("tracker-sort");
+      }
+      return next;
     });
     setCurrentPage(1);
   }, []);
@@ -271,13 +306,29 @@ export default function TrackerPage() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
+    setPageInputValue("1");
   }, [search, clientFilter, statusFilter, invoiceFilter]);
+
+  // Sync page input with currentPage
+  useEffect(() => {
+    setPageInputValue(String(currentPage));
+  }, [currentPage]);
 
   // Pagination derived data
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)),
     [filteredProjects.length]
   );
+
+  // Page jump handler (Fix #4)
+  const handlePageJump = useCallback((value: string) => {
+    const page = parseInt(value, 10);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    } else {
+      setPageInputValue(String(currentPage));
+    }
+  }, [totalPages, currentPage]);
 
   const paginatedProjects = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -291,21 +342,34 @@ export default function TrackerPage() {
     return `Showing ${start}-${end} of ${filteredProjects.length}`;
   }, [filteredProjects.length, currentPage]);
 
-  // Stats
+  // Stats (Fix #9 — scoped to filtered projects when filters active)
+  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All";
   const stats = useMemo(() => {
-    if (!data) return { total: 0, totalValue: 0, open: 0, overdue: 0 };
-    const projects = data.projects;
+    if (!data) return { total: 0, totalValue: 0, open: 0, overdue: 0, globalTotal: 0 };
+    const source = filteredProjects;
     return {
-      total: projects.length,
-      totalValue: projects.reduce((sum, p) => sum + (p.totalValue ?? 0), 0),
-      open: projects.filter(
+      total: source.length,
+      totalValue: source.reduce((sum, p) => sum + (p.totalValue ?? 0), 0),
+      open: source.filter(
         (p) => p.status.toLowerCase() === "open" || p.status.toLowerCase() === "in progress"
       ).length,
-      overdue: projects.filter(
+      overdue: source.filter(
         (p) => p.invoiceStatus.toLowerCase() === "overdue"
       ).length,
+      globalTotal: data.projects.length,
     };
-  }, [data]);
+  }, [data, filteredProjects]);
+
+  // Clear all filters (Fix #11)
+  const clearAllFilters = useCallback(() => {
+    setSearch("");
+    setClientFilter("All");
+    setStatusFilter("All");
+    setInvoiceFilter("All");
+  }, []);
+
+  // Actions overflow menu per row (Fix #6)
+  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
 
   // Active filter count (for mobile badge)
   const activeFilterCount = useMemo(() => {
@@ -315,6 +379,16 @@ export default function TrackerPage() {
     if (invoiceFilter !== "All") count++;
     return count;
   }, [clientFilter, statusFilter, invoiceFilter]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setOpenActionMenu(null);
+      setColumnsDropdownOpen(false);
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   // Oldest fetch timestamp for "cached X min ago"
   const oldestFetch = useMemo(() => {
@@ -365,8 +439,13 @@ export default function TrackerPage() {
           <button
             onClick={syncAndFetch}
             disabled={loading || refreshing}
-            className="px-4 py-2 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-4 py-2 border border-neutral-300 bg-white text-brand-black text-sm font-semibold rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            {(loading || refreshing) && (
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
+            )}
             {loading || refreshing ? "Syncing..." : "Sync now"}
           </button>
         </div>
@@ -382,29 +461,40 @@ export default function TrackerPage() {
         </div>
       )}
 
-      {/* Status Bar */}
+      {/* Status Bar (Fix #10 — collapse when all connected) */}
       {apiStatus && (
-        <div className="flex flex-wrap gap-4 px-4 py-3 bg-white rounded-xl border border-neutral-300">
-          {apiStatus.integrations.map((integration) => (
-            <div key={integration.name} className="flex items-center gap-2 text-sm">
-              <span
-                className={`w-2 h-2 rounded-full ${getConnectionDot(integration.status)}`}
-              />
-              <span className="text-neutral-600">{integration.name}</span>
-              <span className="text-neutral-400 text-xs capitalize">
-                {integration.status === "not_configured"
-                  ? "not configured"
-                  : integration.status}
-              </span>
-            </div>
-          ))}
-        </div>
+        apiStatus.overall === "healthy" ? (
+          <div className="flex items-center gap-2 text-sm text-neutral-500">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            All integrations connected
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-4 px-4 py-3 bg-white rounded-xl border border-neutral-300">
+            {apiStatus.integrations.map((integration) => (
+              <div key={integration.name} className="flex items-center gap-2 text-sm">
+                <span
+                  className={`w-2 h-2 rounded-full ${getConnectionDot(integration.status)}`}
+                />
+                <span className="text-neutral-600">{integration.name}</span>
+                <span className="text-neutral-400 text-xs capitalize">
+                  {integration.status === "not_configured"
+                    ? "not configured"
+                    : integration.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
-      {/* Stats Summary */}
+      {/* Stats Summary (Fix #9 — scoped to filters) */}
       {!loading && data && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <StatCard label="Total Projects" value={String(stats.total)} />
+          <StatCard
+            label="Total Projects"
+            value={hasActiveFilters ? `${stats.total} of ${stats.globalTotal}` : String(stats.total)}
+            subtitle={hasActiveFilters ? "(filtered)" : undefined}
+          />
           <StatCard label="Total Value" value={formatCurrency(stats.totalValue)} />
           <StatCard label="Open / In Progress" value={String(stats.open)} />
           <StatCard
@@ -442,8 +532,8 @@ export default function TrackerPage() {
             )}
           </button>
         </div>
-        {/* Dropdown filters -- always visible on sm+, toggle on mobile */}
-        <div className={`${mobileFiltersOpen ? "flex" : "hidden"} sm:flex flex-col sm:flex-row gap-3`}>
+        {/* Desktop filters — always visible on sm+ */}
+        <div className="hidden sm:flex flex-row gap-3">
           <select
             value={clientFilter}
             onChange={(e) => setClientFilter(e.target.value)}
@@ -462,11 +552,18 @@ export default function TrackerPage() {
             aria-label="Filter by project status"
             className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
           >
-            {PROJECT_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s === "All" ? "All Statuses" : s}
-              </option>
-            ))}
+            {/* Fix #5 — separate quick filters from ClickUp statuses */}
+            <optgroup label="Quick filters">
+              <option value="All">All Statuses</option>
+              <option value="Active">Active (Open + In Progress)</option>
+            </optgroup>
+            <optgroup label="ClickUp statuses">
+              {CLICKUP_STATUS_MAPPINGS.map((m) => (
+                <option key={m.clickupStatus} value={m.clickupStatus}>
+                  {m.clickupStatus}
+                </option>
+              ))}
+            </optgroup>
           </select>
           <select
             value={invoiceFilter}
@@ -480,7 +577,107 @@ export default function TrackerPage() {
               </option>
             ))}
           </select>
+          {/* Fix #11 — Clear all filters link */}
+          {(activeFilterCount > 0 || search !== "") && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="text-sm text-brand-cerulean hover:text-brand-cerulean-dark font-medium transition-colors whitespace-nowrap"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
+        {/* Fix #7 — Mobile filters as overlay/bottom sheet */}
+        {mobileFiltersOpen && (
+          <div className="sm:hidden fixed inset-0 z-40 flex flex-col justify-end">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setMobileFiltersOpen(false)}
+              aria-hidden="true"
+            />
+            {/* Bottom sheet */}
+            <div className="relative bg-white rounded-t-2xl p-5 space-y-4 pb-8">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-brand-black">Filters</h3>
+                <button
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-full text-neutral-500 hover:bg-neutral-100 transition-colors"
+                  aria-label="Close filters"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                </button>
+              </div>
+              <div className="space-y-3">
+                <select
+                  value={clientFilter}
+                  onChange={(e) => setClientFilter(e.target.value)}
+                  aria-label="Filter by client"
+                  className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {clients.map((c) => (
+                    <option key={c} value={c}>
+                      {c === "All" ? "All Clients" : c}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  aria-label="Filter by project status"
+                  className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  <optgroup label="Quick filters">
+                    <option value="All">All Statuses</option>
+                    <option value="Active">Active (Open + In Progress)</option>
+                  </optgroup>
+                  <optgroup label="ClickUp statuses">
+                    {CLICKUP_STATUS_MAPPINGS.map((m) => (
+                      <option key={m.clickupStatus} value={m.clickupStatus}>
+                        {m.clickupStatus}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+                <select
+                  value={invoiceFilter}
+                  onChange={(e) => setInvoiceFilter(e.target.value)}
+                  aria-label="Filter by invoice status"
+                  className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {INVOICE_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s === "All" ? "All Invoices" : s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="flex-1 min-h-[44px] px-4 py-3 text-sm font-semibold bg-brand-black text-white rounded-lg hover:bg-neutral-800 transition-colors"
+                >
+                  Apply
+                </button>
+                {(activeFilterCount > 0 || search !== "") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearAllFilters();
+                      setMobileFiltersOpen(false);
+                    }}
+                    className="min-h-[44px] px-4 py-3 text-sm font-medium text-neutral-600 border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Error State */}
@@ -508,6 +705,16 @@ export default function TrackerPage() {
               ? "No projects match your filters."
               : "No projects found."}
           </p>
+          {/* Fix #11 — one-click reset in empty state */}
+          {data && data.projects.length > 0 && (activeFilterCount > 0 || search !== "") && (
+            <button
+              type="button"
+              onClick={clearAllFilters}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-brand-cerulean border border-brand-cerulean rounded-lg hover:bg-brand-cerulean/5 transition-colors"
+            >
+              Clear all filters
+            </button>
+          )}
           {data && data.projects.length === 0 && data.debug && (
             <div className="text-xs text-neutral-400 space-y-1">
               <p>ClickUp tasks: {data.debug.clickupTaskCount} | Excel projects: {data.debug.excelProjectCount} | Evoliz invoices: {data.debug.evolizInvoiceCount}</p>
@@ -531,6 +738,43 @@ export default function TrackerPage() {
       {/* Desktop Table */}
       {!loading && !error && filteredProjects.length > 0 && (
         <div className="hidden md:block bg-white rounded-xl border border-neutral-300 overflow-hidden">
+          {/* Fix #1 — Columns toggle dropdown */}
+          <div className="flex items-center justify-end px-5 py-2 border-b border-neutral-100">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setColumnsDropdownOpen((prev) => !prev); }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+                </svg>
+                Columns
+                {hiddenColumns.size < 3 && (
+                  <span className="text-neutral-400">({3 - hiddenColumns.size} extra)</span>
+                )}
+              </button>
+              {columnsDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg z-20 py-1">
+                  {(["contact", "category", "po"] as const).map((col) => (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleColumn(col); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                    >
+                      <span className={`w-4 h-4 rounded border flex items-center justify-center text-xs ${!hiddenColumns.has(col) ? "bg-brand-cerulean border-brand-cerulean text-white" : "border-neutral-300"}`}>
+                        {!hiddenColumns.has(col) && (
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                        )}
+                      </span>
+                      {col === "po" ? "PO" : col.charAt(0).toUpperCase() + col.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <caption className="sr-only">Project tracker data</caption>
@@ -538,103 +782,127 @@ export default function TrackerPage() {
                 <tr className="border-b border-neutral-200 text-left">
                   <SortableTh column="client" sort={sort} onToggle={toggleSort}>Client</SortableTh>
                   <SortableTh column="project" sort={sort} onToggle={toggleSort}>Project</SortableTh>
-                  <Th>Contact</Th>
+                  {!hiddenColumns.has("contact") && <Th>Contact</Th>}
                   <SortableTh column="status" sort={sort} onToggle={toggleSort}>Status</SortableTh>
-                  <Th>Category</Th>
+                  {!hiddenColumns.has("category") && <Th>Category</Th>}
                   <SortableTh column="totalValue" sort={sort} onToggle={toggleSort}>Value</SortableTh>
-                  <Th>PO</Th>
+                  {!hiddenColumns.has("po") && <Th>PO</Th>}
                   <Th>Invoice</Th>
                   <SortableTh column="date" sort={sort} onToggle={toggleSort}>Date</SortableTh>
                   <Th>Actions</Th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedProjects.map((p, i) => (
-                  <tr
-                    key={`${p.client}-${p.project}-${i}`}
-                    className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
-                  >
-                    <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
-                      {p.client}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
-                      {p.project}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
-                      {p.contact || "--"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {p.status ? (
-                        <span
-                          className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusBadgeClasses(p.status)}`}
-                        >
-                          {p.status}
-                        </span>
-                      ) : (
-                        <span className="text-neutral-400 text-xs">--</span>
+                {paginatedProjects.map((p, i) => {
+                  const rowKey = `${p.client}-${p.project}-${i}`;
+                  return (
+                    <tr
+                      key={rowKey}
+                      className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
+                        {p.client}
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
+                        {p.project}
+                      </td>
+                      {!hiddenColumns.has("contact") && (
+                        <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                          {p.contact || "--"}
+                        </td>
                       )}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
-                      {p.category || "--"}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-brand-black whitespace-nowrap font-medium">
-                      {formatCurrency(p.totalValue)}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
-                      {p.poNumber || "--"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      {p.invoiceStatus ? (
-                        <span
-                          className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus)}`}
-                        >
-                          {p.invoiceStatus}
-                        </span>
-                      ) : (
-                        <span className="text-neutral-400 text-xs">--</span>
+                      <td className="px-5 py-3.5">
+                        {p.status ? (
+                          <span
+                            className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusBadgeClasses(p.status)}`}
+                          >
+                            {p.status}
+                          </span>
+                        ) : (
+                          <span className="text-neutral-400 text-xs">--</span>
+                        )}
+                      </td>
+                      {!hiddenColumns.has("category") && (
+                        <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                          {p.category || "--"}
+                        </td>
                       )}
-                    </td>
-                    <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
-                      {p.date || "--"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
-                          className="text-neutral-400 hover:text-brand-cerulean transition-colors"
-                          title="Generate Quote"
-                        >
-                          <QuoteIcon />
-                        </Link>
-                        {p.sharepointLink && (
-                          <a
-                            href={p.sharepointLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-neutral-400 hover:text-brand-cerulean transition-colors"
-                            title="Open in SharePoint"
+                      <td className="px-5 py-3.5 text-sm text-brand-black whitespace-nowrap font-medium">
+                        {formatCurrency(p.totalValue)}
+                      </td>
+                      {!hiddenColumns.has("po") && (
+                        <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                          {p.poNumber || "--"}
+                        </td>
+                      )}
+                      <td className="px-5 py-3.5">
+                        {p.invoiceStatus ? (
+                          <span
+                            className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus)}`}
                           >
-                            <SharePointIcon />
-                          </a>
+                            {p.invoiceStatus}
+                          </span>
+                        ) : (
+                          <span className="text-neutral-400 text-xs">--</span>
                         )}
-                        {p.clickupTaskUrl && (
-                          <a
-                            href={p.clickupTaskUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-neutral-400 hover:text-brand-cerulean transition-colors"
-                            title="Open in ClickUp"
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                        {p.date || "--"}
+                      </td>
+                      {/* Fix #6 — Overflow menu for actions */}
+                      <td className="px-5 py-3.5">
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setOpenActionMenu(openActionMenu === rowKey ? null : rowKey); }}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                            aria-label="Project actions"
                           >
-                            <ExternalLinkIcon />
-                          </a>
-                        )}
-                        {!p.sharepointLink && !p.clickupTaskUrl && (
-                          <span className="text-neutral-300 text-xs">--</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                            </svg>
+                          </button>
+                          {openActionMenu === rowKey && (
+                            <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-neutral-200 rounded-lg shadow-lg z-30 py-1">
+                              <Link
+                                href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
+                                className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                                onClick={() => setOpenActionMenu(null)}
+                              >
+                                <QuoteIcon />
+                                Generate Quote
+                              </Link>
+                              {p.sharepointLink && (
+                                <a
+                                  href={p.sharepointLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                                  onClick={() => setOpenActionMenu(null)}
+                                >
+                                  <SharePointIcon />
+                                  Open in SharePoint
+                                </a>
+                              )}
+                              {p.clickupTaskUrl && (
+                                <a
+                                  href={p.clickupTaskUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                                  onClick={() => setOpenActionMenu(null)}
+                                >
+                                  <ExternalLinkIcon />
+                                  Open in ClickUp
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -651,8 +919,21 @@ export default function TrackerPage() {
                 >
                   Previous
                 </button>
-                <span className="text-sm text-neutral-600">
-                  {currentPage} / {totalPages}
+                {/* Fix #4 — Page jump input */}
+                <span className="inline-flex items-center gap-1 text-sm text-neutral-600">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={pageInputValue}
+                    onChange={(e) => setPageInputValue(e.target.value)}
+                    onBlur={(e) => handlePageJump(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handlePageJump((e.target as HTMLInputElement).value);
+                    }}
+                    className="w-12 text-center px-1 py-1 text-sm font-medium border border-neutral-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    aria-label="Go to page number"
+                  />
+                  <span>/ {totalPages}</span>
                 </span>
                 <button
                   type="button"
@@ -676,6 +957,7 @@ export default function TrackerPage() {
               key={`mobile-${p.client}-${p.project}-${i}`}
               className="bg-white rounded-xl border border-neutral-300 p-4 space-y-3"
             >
+              {/* Fix #6 — Overflow menu on mobile cards */}
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-neutral-400 font-medium">
@@ -685,35 +967,56 @@ export default function TrackerPage() {
                     {p.project}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link
-                    href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
-                    className="text-neutral-400 hover:text-brand-cerulean"
-                    title="Generate Quote"
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const key = `mobile-${p.client}-${p.project}-${i}`;
+                      setOpenActionMenu(openActionMenu === key ? null : key);
+                    }}
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                    aria-label="Project actions"
                   >
-                    <QuoteIcon />
-                  </Link>
-                  {p.sharepointLink && (
-                    <a
-                      href={p.sharepointLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-neutral-400 hover:text-brand-cerulean"
-                      title="SharePoint"
-                    >
-                      <SharePointIcon />
-                    </a>
-                  )}
-                  {p.clickupTaskUrl && (
-                    <a
-                      href={p.clickupTaskUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-neutral-400 hover:text-brand-cerulean"
-                      title="ClickUp"
-                    >
-                      <ExternalLinkIcon />
-                    </a>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
+                    </svg>
+                  </button>
+                  {openActionMenu === `mobile-${p.client}-${p.project}-${i}` && (
+                    <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-neutral-200 rounded-lg shadow-lg z-30 py-1">
+                      <Link
+                        href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
+                        className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                        onClick={() => setOpenActionMenu(null)}
+                      >
+                        <QuoteIcon />
+                        Generate Quote
+                      </Link>
+                      {p.sharepointLink && (
+                        <a
+                          href={p.sharepointLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                          onClick={() => setOpenActionMenu(null)}
+                        >
+                          <SharePointIcon />
+                          Open in SharePoint
+                        </a>
+                      )}
+                      {p.clickupTaskUrl && (
+                        <a
+                          href={p.clickupTaskUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+                          onClick={() => setOpenActionMenu(null)}
+                        >
+                          <ExternalLinkIcon />
+                          Open in ClickUp
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -733,6 +1036,7 @@ export default function TrackerPage() {
                   </span>
                 )}
               </div>
+              {/* Fix #2 — Date added to mobile cards */}
               <div className="grid grid-cols-2 gap-2 text-xs text-neutral-500">
                 <div>
                   <span className="text-neutral-400">Contact:</span>{" "}
@@ -743,36 +1047,55 @@ export default function TrackerPage() {
                   {formatCurrency(p.totalValue)}
                 </div>
                 <div>
-                  <span className="text-neutral-400">PO:</span>{" "}
-                  {p.poNumber || "--"}
+                  <span className="text-neutral-400">Date:</span>{" "}
+                  {p.date || "--"}
                 </div>
                 <div>
-                  <span className="text-neutral-400">Category:</span>{" "}
-                  {p.category || "--"}
+                  <span className="text-neutral-400">PO:</span>{" "}
+                  {p.poNumber || "--"}
                 </div>
               </div>
             </div>
           ))}
-          {/* Mobile Pagination */}
+          {/* Mobile Pagination — Fix #3 (44px touch targets) + Fix #4 (page jump) */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-1 py-3">
-              <span className="text-sm text-neutral-500">{paginationLabel}</span>
+            <div className="space-y-2 px-1 py-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-500">{paginationLabel}</span>
+                <span className="inline-flex items-center gap-1 text-sm text-neutral-600">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={pageInputValue}
+                    onChange={(e) => setPageInputValue(e.target.value)}
+                    onBlur={(e) => handlePageJump(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handlePageJump((e.target as HTMLInputElement).value);
+                    }}
+                    className="w-12 text-center px-1 py-1 text-sm font-medium border border-neutral-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    aria-label="Go to page number"
+                  />
+                  <span>/ {totalPages}</span>
+                </span>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-3 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
                   Previous
                 </button>
                 <button
                   type="button"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1.5 min-h-[44px] px-4 py-3 text-sm font-medium rounded-lg border border-neutral-300 bg-white text-brand-black hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6" /></svg>
                 </button>
               </div>
             </div>
@@ -837,15 +1160,20 @@ function Th({ children }: { children: React.ReactNode }) {
 function StatCard({
   label,
   value,
+  subtitle,
   variant = "default",
 }: {
   label: string;
   value: string;
+  subtitle?: string;
   variant?: "default" | "danger";
 }) {
   return (
     <div className="bg-white rounded-xl border border-neutral-300 px-4 py-3">
-      <p className="text-xs text-neutral-400 font-medium">{label}</p>
+      <p className="text-xs text-neutral-400 font-medium">
+        {label}
+        {subtitle && <span className="ml-1 text-neutral-300">{subtitle}</span>}
+      </p>
       <p
         className={`text-lg font-bold mt-0.5 ${
           variant === "danger" && value !== "0"
