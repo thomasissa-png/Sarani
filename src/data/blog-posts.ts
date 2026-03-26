@@ -38,7 +38,7 @@ That world is gone. Enterprise marketing teams now need 300+ assets per month ac
 
 **What enterprise teams actually want**
 
-After working with TikTok, Sony, GEODIS, Adidas, and LEGO, the pattern is clear. Enterprise marketing leads do not want a creative partner — they want a creative infrastructure. Predictable pricing. Predictable timelines. Unlimited capacity that scales with their calendar, not against it.
+After working with TikTok, Sony, GEODIS, Adidas, and Pernod Ricard, the pattern is clear. Enterprise marketing leads do not want a creative partner — they want a creative infrastructure. Predictable pricing. Predictable timelines. Unlimited capacity that scales with their calendar, not against it.
 
 The agencies that survive will be the ones that rebuild around throughput, not presentations. The rest will keep losing pitches to teams that simply deliver faster.`,
     author: "Sarani Team",
@@ -87,80 +87,94 @@ If we can sustain 1,500+ edits per month for one of the most demanding platforms
       "Behind the scenes of Sarani's TikTok operation: 300-500 video edits per week, relay teams across 5 continents, $20 per video. Here is how high-volume creative production works.",
   },
   {
-    slug: "superside-alternative-enterprise-creative-agency",
-    title: "Superside Alternative: The Enterprise Creative Agency That Delivers in 24 Hours",
+    slug: "how-enterprise-teams-scale-creative-production",
+    title: "How Enterprise Teams Scale Creative Production Without Subscription Lock-In",
     excerpt:
-      "Superside starts at $10,000 a month. If you need enterprise-quality creative without the subscription lock-in, here is what the alternative looks like — and why TikTok, Sony, and GEODIS chose it.",
-    content: `If you have looked at Superside, you already know you have a real production problem. You need more creative than your in-house team can handle, faster than any traditional agency can deliver, and at a volume that makes hourly billing absurd.
+      "Most enterprise marketing teams are over-paying for creative capacity they do not always use. Here is how global brands like TikTok, Sony, and GEODIS scale production without committing to a monthly subscription floor.",
+    content: `Enterprise marketing teams face a structural contradiction. Their creative volume is unpredictable — Black Friday peaks, product launches, reactive campaigns — but most creative partnerships are priced for predictability. Monthly subscriptions. Annual retainers. Commitments that assume a volume you cannot guarantee.
 
-Superside is a legitimate answer to that problem. But it is not the only one — and for many enterprise teams, it is not the right fit.
+The result: you either pay for capacity you do not use in slow months, or you scramble for capacity in peak ones.
 
-**The Superside model: what you get, what you pay**
+There is a model that resolves this contradiction. Here is how enterprise teams are using it.
 
-Superside operates on a subscription model. Plans start at roughly $10,000 per month and scale up from there. For that, you get dedicated creative capacity, a structured request queue, and a team that learns your brand over time.
+**The problem with subscription pricing at enterprise scale**
 
-If your volume is high enough to justify that monthly floor, Superside makes sense. If you are running 3-5 projects per month, you are paying for capacity you do not use.
+Subscription creative services are built for one use case: consistent, high-volume output of similar deliverable types. If you produce 200 social assets every month without exception, a flat monthly fee can be efficient.
 
-The other structural constraint: Superside is built for the US and Western European market. Response times, team composition, and timezone coverage reflect that. If your campaigns run across Asia-Pacific, the Middle East, or Latin America simultaneously, the relay structure matters more than it does for a single-market brand.
+Most enterprise marketing teams do not look like that. A campaign for Q4 requires 300 assets across 12 markets. January is quiet. March is reactive — three assets needed in 24 hours for a breaking news moment. June is a product launch with 80 deliverables in two weeks.
 
-**What enterprise teams actually need from a Superside alternative**
+Subscription pricing forces you to size your commitment to your peak volume. You pay for that peak every month, including the months you do not need it.
 
-After working with TikTok, Sony, Adidas, GEODIS, and Pernod Ricard, the requirements are consistent:
+**The per-project model: what enterprise procurement actually wants**
 
-1. **No subscription floor.** Sophie in marketing cannot justify a $10,000/month line item if the next quarter's campaign volume is uncertain. A brief that generates one invoice — and no invoice if the result is not right — fits procurement processes without negotiation.
+TikTok, Sony, GEODIS, and Pernod Ricard use Sarani on a per-project basis. No subscription. No monthly commitment. No renegotiation when the next campaign is larger or smaller than the last.
 
-2. **D+1 delivery.** Sony needed 125 banners across 15 languages for Black Friday. They briefed in the morning. We delivered the same day. That is not exceptional — it is how the model works. A team operating across 5 continents never stops between brief and delivery.
+Here is what that looks like in practice:
 
-3. **Unlimited revisions, included.** TikTok ran 24 revision rounds on a single 360-euro video. Under a subscription model, that iteration is theoretically included — but in practice, high revision volume creates friction. Under fixed pricing, iteration is built into the price because quality requires it.
+- Sony needed 125 banners across 15 languages for Black Friday. Brief in the morning. Every banner delivered the same day. One invoice: 155€ per banner, fixed. No retainer activated, no SOW renegotiated, no subscription seat resized.
 
-4. **Multilingual output.** 35 experts, 18 languages, 5 continents. This is not a list of services — it is how the team is built. When GEODIS needed 5,700 slides rebranded across multiple European markets, the multilingual capacity was operational from day one.
+- GEODIS needed 350 presentations rebranded across multiple European markets. Their previous vendor had quoted 80,000€ and 3 months. Sarani delivered 5,700 slides in 3 weeks for 8,500€. Fixed price, confirmed before the first slide was touched.
 
-**The pricing comparison**
+- TikTok needed 300–500 video edits per week — 1,500+ per month — for compliance and paid distribution. At 20€ per video, the unit economics are transparent. The volume scales with TikTok's calendar, not with a subscription contract.
 
-| | Superside | Sarani |
-| Entry point | ~$10,000/month subscription | 155€ per banner, per project |
-| Commitment | Monthly subscription | No commitment — pay per project |
-| Revisions | Included (subscription) | Unlimited, included in fixed price |
-| Delivery | 24-48 hours (standard) | D+1 guaranteed |
-| Languages | English-dominant | 18 languages natively |
-| Enterprise clients | Yes | TikTok, Sony, Adidas, GEODIS, L'Oréal |
+**What makes per-project pricing work at this volume**
 
-The correct comparison is not "Superside vs Sarani" — it is "which model matches your procurement reality." If your marketing budget is fixed and your volume is predictable, a subscription has advantages. If your campaign calendar is variable and your procurement team requires per-project justification, fixed pricing removes the friction.
+The obvious question: how does a per-project model sustain D+1 delivery at Sony's volume or TikTok's throughput?
 
-**What the first project looks like**
+The answer is the relay structure. Sarani operates across 5 continents — 35 experts working in timezone handoff. A brief submitted at any hour is active in production immediately. No queue. No waiting for the team to wake up.
 
-Sarani's guarantee is simple: if you are not satisfied with your first project, there is no invoice. This is not a marketing promise — it is the default contract term. For a Head of Marketing evaluating a new creative partner, it removes the risk of the first test entirely.
+This is why D+1 delivery does not require a subscription. The capacity is structural, not reserved. Every project brief triggers the same relay response regardless of whether you briefed yesterday or not for three months.
 
-Start with a banner. Or a presentation. Or a short-form video. One project, fixed price, D+1 delivery. If it is not right, you pay nothing and you know exactly what to tell the next agency.
+**Scaling up and scaling down: what procurement actually needs**
+
+Marc in procurement runs into a consistent problem with subscription creative services: the exit. Minimum contract periods. Cancellation clauses. "Strategic alignment" fees baked into the monthly cost regardless of output.
+
+Per-project pricing removes that problem entirely. The commitment ends when the deliverable is approved. The next project starts a new commitment. There is no exit to negotiate because there is no contract to exit.
+
+For enterprise teams building multi-agency creative structures — a brand specialist here, a production partner there, a regional agency for specific markets — per-project pricing makes it simple to route briefs to the most efficient partner without renegotiating seats, tiers, or annual commitments.
+
+**The volume threshold question**
+
+At what volume does per-project pricing become more expensive than a subscription?
+
+That calculation depends on your deliverable mix and revision patterns. For standard social assets and display banners at consistent monthly volume, a subscription can be more economical at scale. For mixed creative with variable volume — which describes most enterprise marketing calendars — per-project pricing eliminates the cost of unused capacity.
+
+TikTok's 1,500+ monthly edits at 20€/video is 30,000€/month. For that volume, a subscription seat might appear cheaper. But TikTok's volume is not guaranteed to be identical month over month — and the per-project model adjusts automatically. No renegotiation when volume drops. No penalty when volume spikes.
+
+**The first project test**
+
+For enterprise teams evaluating a new creative partner, the financial risk of the first project matters. Sarani's guarantee: if you are not satisfied with the first project, there is no invoice.
+
+That guarantee removes the switching cost of evaluation. Start with a single project — a banner, a presentation, a short-form video. D+1 delivery, fixed price, unlimited revisions. If the output is not right, you pay nothing. If it is right, you have a production partner you can brief tomorrow without activating a subscription.
 
 **FAQ**
 
-**Is Sarani a direct Superside competitor?**
+**How does per-project pricing scale for large campaigns?**
 
-Not exactly. Superside is a subscription creative service; Sarani is a per-project creative partner. The core difference is the commercial model. If you need predictable monthly capacity at $10K+, Superside is built for that. If you need high-quality creative on a project-by-project basis with no subscription floor, Sarani is the alternative.
+Large campaigns are quoted as a single fixed-price deliverable. GEODIS's 5,700-slide rebrand was 8,500€ confirmed before work began. Sony's 125 banners were 155€ each, quoted as a batch. Volume does not change the pricing model — it changes the total invoice, which is confirmed upfront.
 
-**Can Sarani handle the same volume as Superside?**
+**Does Sarani require a minimum number of projects per month?**
 
-Yes. Sarani delivers 1,500+ video edits per month for TikTok, 125 banners in a single day for Sony, and 5,700 slides in 3 weeks for GEODIS. Volume is not the constraint — the relay structure across 5 continents handles peak demand without overtime or delays.
+No minimum. TikTok briefs us every week. Other clients brief once a quarter. The model adapts to your calendar, not the other way around.
 
-**How does the 24-hour delivery work without a subscription?**
+**How are rush projects handled?**
 
-The relay model does not depend on a subscription — it depends on the team structure. 35 experts across 5 continents work in timezone handoffs. A brief submitted at any hour is picked up immediately by the region that is active. D+1 delivery is structural, not aspirational.
+D+1 delivery is the standard — not a rush premium. A brief submitted at any hour is picked up immediately by the active regional team. There is no expedite fee because speed is built into the relay model, not sold as an upgrade.
+
+**Can Sarani handle multilingual campaigns without additional cost?**
+
+18 languages and 5 continents are structural, not premium. GEODIS's multi-market rebrand was included in the fixed project price. Sony's 15-language Black Friday campaign was quoted per banner, not per language. Multilingual output is what the team is built for.
 
 **What types of creative does Sarani produce?**
 
-Social media assets, display banners, video editing and motion, presentations, brand identity, print materials, multilingual adaptations. The full scope is documented at sarani.studio/services.
-
-**Is there a minimum project size?**
-
-No. A single banner starts at 155€. A full rebranding campaign starts at 5,000€. There is no monthly minimum and no commitment required beyond the project itself.`,
+Social media assets, display banners, video editing and motion, presentations, brand identity, print materials, and multilingual adaptations. Full scope at sarani.studio/services.`,
     author: "Sarani Team",
     publishedAt: "2026-03-26",
-    category: "Competitive Analysis",
+    category: "Agency Model Analysis",
     readTime: "6 min read",
-    metaTitle: "Superside Alternative: Enterprise Creative Agency — 24-Hour Delivery",
+    metaTitle: "How Enterprise Teams Scale Creative Production Without Subscription Lock-In",
     metaDescription:
-      "Superside starts at $10,000/month. Sarani delivers enterprise-quality creative per project — D+1, unlimited revisions, fixed prices. Trusted by TikTok, Sony, GEODIS.",
+      "TikTok, Sony, and GEODIS scale creative production without a monthly subscription. Per-project fixed pricing, D+1 delivery, unlimited revisions — here is how the model works.",
   },
   {
     slug: "creative-agency-cost-enterprise-guide",
@@ -181,7 +195,7 @@ Network agencies (Publicis, WPP, Havas, Dentsu) typically price on annual retain
 The hidden cost: revision cycles, scope extensions, and "strategic meetings" consume a significant portion of the retainer hours before any production work begins.
 
 **2. Subscription design services**
-Subscription platforms (Superside, Design Pickle, ManyPixels, Penji) charge a flat monthly fee for unlimited requests within a defined queue. Entry points range from $499/month (SMB tier, ManyPixels) to $10,000+/month (enterprise tier, Superside).
+Subscription creative platforms charge a flat monthly fee for unlimited requests within a defined queue. Entry points range from $499/month (SMB tier) to $10,000+/month (enterprise tier).
 
 The hidden cost: if your monthly volume is variable, you pay for capacity you do not use in slow months. Subscription models also typically limit the number of active requests in queue — which creates bottlenecks during campaign peaks.
 
@@ -191,7 +205,7 @@ Fixed pricing per deliverable — a banner at 155€, a video edit at 20€, a f
 This is the model Sarani operates on. It is the only model where the unit economics are fully transparent before you approve the brief.
 
 **4. Freelance / marketplace**
-Platforms like 99designs, Upwork, or Fiverr offer individual freelancers at variable rates. Quality and turnaround are inconsistent. For isolated one-off projects, this can be cost-effective. For enterprise-scale production at volume, the coordination overhead negates the per-unit savings.
+Freelance marketplace platforms offer individual designers at variable rates. Quality and turnaround are inconsistent by nature. For isolated one-off projects, this can be cost-effective. For enterprise-scale production at volume, the coordination overhead and inconsistency negate the per-unit savings.
 
 **5. In-house creative team**
 A fully staffed in-house team (3–5 designers, 1–2 video editors, 1 creative director) typically costs 300,000–600,000€/year in salaries, tools, and management overhead. Output is capped by headcount and timezone. In-house teams struggle with peaks, multilingual adaptation, and production volume beyond their staffed capacity.
@@ -200,12 +214,12 @@ A fully staffed in-house team (3–5 designers, 1–2 video editors, 1 creative 
 
 These figures are drawn from documented Sarani engagements and publicly available competitor pricing. They are not estimates.
 
-| Deliverable | Traditional agency | Subscription (Superside) | Sarani fixed price |
-| Single display banner | 400–1,200€ | Included in subscription | 155–470€ |
-| 125 banners (Black Friday Sony) | 15,000–40,000€ | ~$10,000/month ongoing | 19,375–58,750€ total at rates above — Sony paid a fraction via Sarani |
+| Deliverable | Traditional agency | Subscription service | Sarani fixed price |
+| Single display banner | 400–1,200€ | Included in monthly subscription | 155–470€ |
+| 125 banners (Black Friday Sony) | 15,000–40,000€ | Monthly subscription ongoing | 155€/banner — Sony's campaign delivered same-day |
 | 350 presentations rebranded (GEODIS) | 80,000€ (quoted) | Subscription + overages | 8,500€ (delivered in 3 weeks) |
 | Video edit compliance (per video) | 150–400€ | Included in subscription | 20€ |
-| 1,500 video edits/month (TikTok) | 225,000–600,000€ | Multiple Superside enterprise seats | 30,000€/month |
+| 1,500 video edits/month (TikTok) | 225,000–600,000€ | Enterprise subscription tier | 30,000€/month |
 
 The 60% savings figure Sarani documents is not marketing copy — it reflects the gap between traditional agency billing and fixed-price production at volume.
 
@@ -243,11 +257,11 @@ For enterprise teams, the move toward per-project pricing is not about saving mo
 
 **How much does a creative agency cost for enterprise brands?**
 
-Traditional network agencies (WPP, Publicis, Havas) charge 50,000–500,000€+ per year in retainers. Subscription services like Superside start at $10,000/month. Per-project agencies like Sarani charge per deliverable: a banner starts at 155€, a full rebranding at 5,000€. The right model depends on your volume and procurement structure.
+Traditional network agencies (WPP, Publicis, Havas) charge 50,000–500,000€+ per year in retainers. Subscription creative services charge thousands per month regardless of actual volume used. Per-project agencies like Sarani charge per deliverable: a banner starts at 155€, a full rebranding at 5,000€. The right model depends on your volume and procurement structure.
 
 **Is a subscription model cheaper than per-project pricing?**
 
-It depends on your monthly volume. If you consistently need 100+ deliverables per month, a subscription can be cost-effective. If your volume is variable, per-project pricing eliminates the cost of unused capacity. At Sarani's rates, 1,500 video edits per month costs approximately 30,000€ — directly comparable to an enterprise subscription.
+It depends on your monthly volume. If you consistently need 100+ deliverables per month of the same type, a subscription can be cost-effective. If your volume is variable, per-project pricing eliminates the cost of unused capacity. At Sarani's rates, 1,500 video edits per month costs approximately 30,000€ — and scales down automatically in slower months.
 
 **What is included in Sarani's fixed prices?**
 
@@ -331,7 +345,7 @@ Traditional agencies are staffed for project capacity, not throughput. A senior 
 
 This is not a criticism — it is a structural reality. Agency staffing models optimize for quality of individual projects. The relay model optimizes for consistent output at volume across any time window.
 
-Subscription services like Superside have partially solved the timezone problem with distributed teams. The difference is the commercial model: a subscription creates a queue. A per-project model creates urgency — every brief is a commitment, not a position in a queue.
+Subscription creative services have partially addressed the timezone problem with distributed teams. The difference is the commercial model: a subscription creates a queue. A per-project model creates urgency — every brief is a commitment, not a position in a queue.
 
 **What you need to make D+1 work**
 
@@ -375,13 +389,13 @@ Yes. D+1 delivery is structural — it is not a premium tier. A 155€ banner ha
     title: "Fixed Price vs Subscription Creative Agency: Which Model Fits Enterprise?",
     excerpt:
       "Subscription creative services promise unlimited output for a flat monthly fee. Fixed-price agencies charge per deliverable. After working with TikTok, Sony, and GEODIS, here is what the data shows about which model serves enterprise teams better.",
-    content: `The creative agency market has split into two distinct models. On one side: subscription services (Superside, Design Pickle, ManyPixels, Penji) that charge a flat monthly fee for unlimited creative requests. On the other: per-project agencies that charge a fixed price per deliverable.
+    content: `The creative agency market has split into two distinct models. On one side: subscription services that charge a flat monthly fee for unlimited creative requests. On the other: per-project agencies that charge a fixed price per deliverable.
 
 Both models have genuine advantages. The right choice depends on the specifics of your procurement structure, campaign calendar, and volume patterns — not on which model has better marketing.
 
 **How subscription creative agencies work**
 
-Subscription models charge a recurring monthly fee — ranging from $499/month (ManyPixels SMB tier) to $10,000+/month (Superside enterprise tier) — in exchange for access to a creative team that works through a queue of your requests.
+Subscription models charge a recurring monthly fee — ranging from $499/month (SMB tier) to $10,000+/month (enterprise tier) — in exchange for access to a creative team that works through a queue of your requests.
 
 The core proposition: predictable monthly cost, no per-project negotiation, and theoretically unlimited creative output.
 
@@ -401,13 +415,13 @@ At what monthly volume does a subscription become more economical than fixed pri
 
 Using Sarani's rates as the fixed-price baseline:
 
-| Monthly volume | Sarani fixed price | Superside ($10K/month) | Break-even |
+| Monthly volume | Sarani fixed price | Subscription service ($10K/month tier) | Break-even |
 | 50 banners | 7,750€ | 10,000€ | Sarani cheaper |
-| 100 banners | 15,500€ | 10,000€ | Superside cheaper |
+| 100 banners | 15,500€ | 10,000€ | Subscription cheaper |
 | 500 video edits | 10,000€ | 10,000€ | Equal |
-| 1,500 video edits | 30,000€ | 10,000€ (1 seat) | Superside cheaper |
+| 1,500 video edits | 30,000€ | 10,000€ (1 seat) | Subscription cheaper |
 
-The break-even point depends entirely on deliverable type and volume. For high-volume video editing, a subscription makes mathematical sense at scale. For mixed creative at moderate volume — which describes most enterprise marketing teams outside pure content-production operations — per-project pricing is more economical.
+The break-even point depends entirely on deliverable type and volume. For high-volume video editing at consistent monthly levels, a subscription makes mathematical sense at scale. For mixed creative at moderate volume — which describes most enterprise marketing teams outside pure content-production operations — per-project pricing is more economical.
 
 **The procurement argument**
 
@@ -478,9 +492,9 @@ Yes. GEODIS's 5,700-slide rebrand was delivered at a fixed price of 8,500€. La
     publishedAt: "2026-03-26",
     category: "Industry Insights",
     readTime: "7 min read",
-    metaTitle: "Fixed Price vs Subscription Creative Agency: Which Fits Enterprise?",
+    metaTitle: "Fixed Price vs Subscription Creative Agency: Which Model Fits Enterprise?",
     metaDescription:
-      "Subscription creative agencies charge $10K/month. Fixed-price agencies charge per project. After serving TikTok, Sony, and GEODIS — here is which model actually fits enterprise teams.",
+      "Subscription creative services charge a monthly flat fee. Fixed-price agencies charge per deliverable. After serving TikTok, Sony, and GEODIS — here is which model fits enterprise teams.",
   },
   {
     slug: "fixed-pricing-vs-retainers-what-global-brands-prefer",
