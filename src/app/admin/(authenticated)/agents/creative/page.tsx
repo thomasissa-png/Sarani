@@ -7,6 +7,7 @@ import {
   TARGET_MARKETS,
   type CreativeRecommendation,
   type TargetMarket,
+  type MoodBoardReference,
 } from "@/lib/validations/creative";
 import {
   ClientSelector,
@@ -224,6 +225,19 @@ export default function CreativeStrategistPage() {
       angle.exampleExecutions.forEach((ex) => lines.push(`- ${ex}`));
       lines.push(``);
     });
+    if (rec.moodBoard && rec.moodBoard.length > 0) {
+      lines.push(`## Mood Board References`);
+      rec.moodBoard.forEach((ref, i) => {
+        lines.push(`### ${i + 1}. ${ref.imageDescription}`);
+        lines.push(`- **Style:** ${ref.visualStyle}`);
+        lines.push(`- **Colors:** ${ref.colorPalette}`);
+        lines.push(`- **Relevance:** ${ref.relevance}`);
+        if (ref.referenceUrl) {
+          lines.push(`- **Reference:** ${ref.referenceUrl}`);
+        }
+        lines.push(``);
+      });
+    }
     lines.push(`## Activation Plan`);
     rec.activationPlan.phases.forEach((phase) => {
       lines.push(`### ${phase.name} (${phase.duration})`);
@@ -865,6 +879,58 @@ function RecommendationOutput({
           ))}
         </div>
       </section>
+
+      {/* Mood Board */}
+      {rec.moodBoard && rec.moodBoard.length > 0 && (
+        <section>
+          <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-2">
+            Mood Board References ({rec.moodBoard.length})
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {rec.moodBoard.map((ref: MoodBoardReference, i: number) => {
+              const bgColors = [
+                "bg-gradient-to-br from-orange-50 to-rose-50 border-orange-200",
+                "bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200",
+                "bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200",
+                "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200",
+                "bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200",
+                "bg-gradient-to-br from-pink-50 to-fuchsia-50 border-pink-200",
+              ];
+              return (
+                <div
+                  key={i}
+                  className={`border rounded-lg p-4 space-y-2 ${bgColors[i % bgColors.length]}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium text-brand-black leading-snug">
+                      {ref.imageDescription}
+                    </p>
+                    {ref.referenceUrl && (
+                      <a
+                        href={ref.referenceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 text-xs font-medium text-brand-cerulean hover:underline"
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-xs bg-white/80 text-neutral-600 px-2 py-0.5 rounded">
+                      {ref.visualStyle}
+                    </span>
+                    <span className="text-xs bg-white/80 text-neutral-600 px-2 py-0.5 rounded">
+                      {ref.colorPalette}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-600">{ref.relevance}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Activation Plan */}
       <section>

@@ -68,9 +68,25 @@ OUTPUT FORMAT — You MUST respond with valid JSON matching this exact structure
     "avoidThis": ["What to avoid 1", "What to avoid 2"],
     "brandAlignment": "How the recommended tone connects to the client's existing brand voice"
   },
+  "moodBoard": [
+    {
+      "imageDescription": "A detailed description of the visual reference (photo, video, campaign still, design piece)",
+      "visualStyle": "The dominant visual style (e.g. minimalist, bold typography, cinematic, flat design, editorial)",
+      "relevance": "Why this reference is relevant to the recommended creative direction",
+      "referenceUrl": "A URL to a real accessible reference when possible (Unsplash, well-known campaign page, brand site). Use null if no real URL can be provided.",
+      "colorPalette": "Dominant colors in this reference (e.g. deep navy + warm gold + white)"
+    }
+  ],
   "competitiveContext": "Brief analysis of what competitors are doing in this space and how this recommendation differentiates. Mark unverifiable claims with [HYPOTHESIS].",
   "hypotheses": ["Any assumption made due to missing data, clearly stated"]
 }
+
+MOOD BOARD RULES:
+- Produce 4-6 mood board references that visually represent the recommended creative direction
+- Each reference must be a concrete, describable visual (not abstract concepts)
+- At least 2 references should include a referenceUrl to a real, accessible source (Unsplash photo URLs like https://unsplash.com/photos/[id], or well-known campaign pages)
+- References should span different media types: photography, typography, video stills, design layouts, color palettes
+- Each reference must clearly connect to one of the proposed creative angles
 
 RULES:
 - Every recommendation MUST reference the client's brand context (tone, colors, industry, guidelines)
