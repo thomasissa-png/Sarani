@@ -86,8 +86,23 @@ export default function QuotesPage() {
   useEffect(() => {
     const qClient = searchParams.get("client");
     const qProject = searchParams.get("project");
+    const qContact = searchParams.get("contact");
+    const qAmount = searchParams.get("amount");
+    const qCategory = searchParams.get("category");
     if (qClient) setClientName(qClient);
     if (qProject) setProjectName(qProject);
+    if (qContact) setContactName(qContact);
+    if (qCategory) setScope(qCategory);
+    // Auto-create a line item from tracker data
+    if (qProject && qAmount && parseFloat(qAmount) > 0) {
+      setItems([{
+        id: generateId(),
+        description: qProject,
+        quantity: 1,
+        unitPrice: parseFloat(qAmount),
+        total: parseFloat(qAmount),
+      }]);
+    }
   }, [searchParams]);
 
   const fetchClients = useCallback(async () => {

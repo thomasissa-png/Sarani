@@ -1,6 +1,7 @@
 // ─── Tracker Data Merge Logic ────────────────────────────────────────────────
 // M-02: Extracted from tracker/route.ts.
 // Merges Excel projects with ClickUp tasks and Evoliz invoices.
+// Matching strategy: client-scoped name match > fuzzy name match > unmatched
 
 import type { ClickUpTask } from "@/lib/integrations/clickup";
 import type { EvolizInvoice } from "@/lib/integrations/evoliz";
@@ -12,6 +13,12 @@ import { getMappingBySpaceId } from "@/lib/integrations/config";
 
 function normalizeForMatch(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Check if normalized string a contains normalized string b, or vice versa */
+function fuzzyMatch(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  return a.includes(b) || b.includes(a);
 }
 
 function mapEvolizStatus(status: string): string {
@@ -34,25 +41,44 @@ function mapEvolizStatus(status: string): string {
 
 /**
  * Merge data from Excel, ClickUp, and Evoliz into unified TrackerProject records.
- * Excel is the source of truth for project list. ClickUp and Evoliz enrich it.
  *
- * E-07/E-08: Uses arrays for multi-match scenarios, picks most relevant.
+ * Matching strategy (in priority order):
+ * 1. Exact name match (normalized)
+ * 2. Client-scoped fuzzy match: ClickUp task in same client space + partial name overlap
+ * 3. Unmatched Excel rows → shown with Excel data only
+ * 4. Unmatched ClickUp tasks → shown with ClickUp data only
  */
 export function mergeData(
   excelProjects: ExcelProject[],
   clickupTasks: ClickUpTask[],
   evolizInvoices: EvolizInvoice[]
 ): TrackerProject[] {
-  // Build ClickUp task lookup by normalized name (E-07: use array for multi-match)
+  // Build ClickUp task lookup:
+  // - By exact normalized name
+  // - By client (space) for fuzzy matching
   const tasksByName = new Map<string, ClickUpTask[]>();
+  const tasksByClient = new Map<string, ClickUpTask[]>();
+
   for (const task of clickupTasks) {
-    const key = normalizeForMatch(task.name);
-    const existing = tasksByName.get(key) ?? [];
-    existing.push(task);
-    tasksByName.set(key, existing);
+    // By name
+    const nameKey = normalizeForMatch(task.name);
+    const byName = tasksByName.get(nameKey) ?? [];
+    byName.push(task);
+    tasksByName.set(nameKey, byName);
+
+    // By client (space name from config mapping)
+    const mapping = getMappingBySpaceId(task.space?.id);
+    const clientKey = normalizeForMatch(
+      mapping?.clickupSpaceName ?? task.list?.name ?? ""
+    );
+    if (clientKey) {
+      const byClient = tasksByClient.get(clientKey) ?? [];
+      byClient.push(task);
+      tasksByClient.set(clientKey, byClient);
+    }
   }
 
-  // Build Evoliz invoice lookup by PO reference (E-08: use array for multi-match)
+  // Build Evoliz invoice lookup by PO reference
   const invoicesByPO = new Map<string, EvolizInvoice[]>();
   for (const inv of evolizInvoices) {
     if (inv.reference) {
@@ -63,22 +89,46 @@ export function mergeData(
     }
   }
 
-  // Track which ClickUp tasks have been matched to Excel rows
-  const matchedClickUpKeys = new Set<string>();
+  // Track matched ClickUp task IDs to identify unmatched ones later
+  const matchedTaskIds = new Set<string>();
+
+  /**
+   * Find the best ClickUp task match for an Excel project.
+   * Priority: exact name > same-client fuzzy name
+   */
+  function findClickUpMatch(ep: ExcelProject): ClickUpTask | undefined {
+    const nameKey = normalizeForMatch(ep.project);
+
+    // 1. Exact name match
+    const exactMatches = tasksByName.get(nameKey);
+    if (exactMatches?.length) {
+      return exactMatches.sort(
+        (a, b) => parseInt(b.date_updated) - parseInt(a.date_updated)
+      )[0];
+    }
+
+    // 2. Client-scoped fuzzy match
+    const clientKey = normalizeForMatch(ep.client);
+    const clientTasks = tasksByClient.get(clientKey);
+    if (clientTasks?.length) {
+      // Find tasks whose name partially overlaps with the Excel project name
+      const fuzzyMatches = clientTasks.filter((t) =>
+        fuzzyMatch(normalizeForMatch(t.name), nameKey)
+      );
+      if (fuzzyMatches.length) {
+        return fuzzyMatches.sort(
+          (a, b) => parseInt(b.date_updated) - parseInt(a.date_updated)
+        )[0];
+      }
+    }
+
+    return undefined;
+  }
 
   // 1. Start with Excel projects, enriched with ClickUp + Evoliz
   const excelMerged = excelProjects.map((ep) => {
-    // Match ClickUp task by project name (pick most recently updated)
-    const key = normalizeForMatch(ep.project);
-    const matchingTasks = tasksByName.get(key);
-    const clickupTask = matchingTasks
-      ? matchingTasks.sort(
-          (a, b) =>
-            parseInt(b.date_updated) - parseInt(a.date_updated)
-        )[0]
-      : undefined;
-
-    if (clickupTask) matchedClickUpKeys.add(key);
+    const clickupTask = findClickUpMatch(ep);
+    if (clickupTask) matchedTaskIds.add(clickupTask.id);
 
     // Match Evoliz invoice by PO number (pick latest non-draft)
     const matchingInvoices = ep.poNumber
@@ -122,17 +172,13 @@ export function mergeData(
   });
 
   // 2. Add ClickUp tasks that have NO matching Excel row
-  // This ensures projects appear even if Excel trackers are empty or unavailable
   const clickupOnly: TrackerProject[] = [];
-  for (const [key, tasks] of tasksByName) {
-    if (matchedClickUpKeys.has(key)) continue;
-    const task = tasks.sort(
-      (a, b) => parseInt(b.date_updated) - parseInt(a.date_updated)
-    )[0];
+  for (const task of clickupTasks) {
+    if (matchedTaskIds.has(task.id)) continue;
 
-    // Derive client name from ClickUp space ID → config mapping → list name
     const mapping = getMappingBySpaceId(task.space?.id);
-    const spaceName = mapping?.clickupSpaceName ?? task.list?.name ?? "Unknown";
+    const spaceName =
+      mapping?.clickupSpaceName ?? task.list?.name ?? "Unknown";
 
     clickupOnly.push({
       client: spaceName,

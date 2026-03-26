@@ -39,8 +39,11 @@ interface StatusResponse {
 
 const PROJECT_STATUSES = [
   "All",
+  "Active",
   ...CLICKUP_STATUS_MAPPINGS.map((m) => m.clickupStatus),
 ] as const;
+
+const ACTIVE_STATUSES = new Set(["open", "in progress"]);
 const INVOICE_STATUSES = ["All", "Open PO", "Invoiced", "Paid", "Overdue"] as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -100,10 +103,10 @@ export default function TrackerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
+  // Filters — default to Open + In progress only
   const [search, setSearch] = useState("");
   const [clientFilter, setClientFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("Active");
   const [invoiceFilter, setInvoiceFilter] = useState("All");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -215,7 +218,9 @@ export default function TrackerPage() {
         return false;
       }
       if (clientFilter !== "All" && p.client !== clientFilter) return false;
-      if (
+      if (statusFilter === "Active") {
+        if (!ACTIVE_STATUSES.has(p.status.toLowerCase())) return false;
+      } else if (
         statusFilter !== "All" &&
         p.status.toLowerCase() !== statusFilter.toLowerCase()
       ) {
@@ -581,7 +586,7 @@ export default function TrackerPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
                         <Link
-                          href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}`}
+                          href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
                           className="text-neutral-400 hover:text-brand-cerulean transition-colors"
                           title="Generate Quote"
                         >
@@ -668,7 +673,7 @@ export default function TrackerPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Link
-                    href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}`}
+                    href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
                     className="text-neutral-400 hover:text-brand-cerulean"
                     title="Generate Quote"
                   >
