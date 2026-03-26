@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
+import { ClientLogos } from "@/components/home/client-logos";
 
 export const metadata: Metadata = {
   title: "Services — Sarani Enterprise Creative",
   description:
-    "Strategic marketing, content creation, operational marketing, and on-demand production. 35+ experts, 5 continents, 18 languages. No retainer required.",
+    "Enterprise creative delivered in 24 hours. 35 experts across 5 continents work in relay — strategy, content, distribution, on-demand production. Fixed prices. Unlimited revisions.",
   openGraph: {
     title: "Services — Sarani Enterprise Creative",
     description:
-      "Strategic marketing, content creation, operational marketing, and on-demand production. No retainer required.",
+      "Enterprise creative delivered in 24 hours. 35 experts, 5 continents, working in relay. Fixed prices. Unlimited revisions.",
     url: "/services",
   },
 };
@@ -27,6 +28,8 @@ type ServiceSection = {
   subtitle: string;
   services: { group?: string; items: string[] }[];
   proofPoint: string;
+  /** Per-section CTA config — null means no CTA for this block */
+  cta: { label: string; href: string; ariaLabel: string; variant: "primary" | "secondary" | "ghost" } | null;
 };
 
 const SERVICE_SECTIONS: ServiceSection[] = [
@@ -43,6 +46,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
     ],
     proofPoint:
       "Sony\u2019s European TV line-up launched with 125 assets in 14 days. The production was fast because the brief was clear. Strategy first \u2014 execution follows.",
+    cta: null,
   },
   {
     id: "content-creation",
@@ -63,6 +67,12 @@ const SERVICE_SECTIONS: ServiceSection[] = [
     ],
     proofPoint:
       "TikTok trusted us with 1,500+ video edits a month. Adidas turned the Adidas Arena Paris into a giant shoebox \u2014 stadium wraps, decor, invitations, tickets, projections, and every collateral piece in between. LEGO took the Champs-\u00C9lys\u00E9es with a campaign, a web platform, and scenography we produced end-to-end.",
+    cta: {
+      label: "See our work",
+      href: "/work",
+      ariaLabel: "See content creation case studies",
+      variant: "secondary",
+    },
   },
   {
     id: "operational-marketing",
@@ -81,6 +91,12 @@ const SERVICE_SECTIONS: ServiceSection[] = [
     ],
     proofPoint:
       "TikTok\u2019s #RoadToParis video \u2014 produced for 360\u20AC \u2014 reached 51 million views. The TikTok Comedy Club contest generated 27 million views and a winner who sold out La Cigale in Paris.",
+    cta: {
+      label: "View pricing",
+      href: "/pricing",
+      ariaLabel: "View operational marketing pricing",
+      variant: "secondary",
+    },
   },
   {
     id: "on-demand",
@@ -95,6 +111,12 @@ const SERVICE_SECTIONS: ServiceSection[] = [
     ],
     proofPoint:
       "Sony needed Black Friday banners with a same-day turnaround. No standard brief, no standard process. Request in the morning. Two proposals by afternoon. Delivery by the next morning. 150\u20AC.",
+    cta: {
+      label: "Tell us what you need",
+      href: "/contact",
+      ariaLabel: "Send us a custom brief",
+      variant: "primary",
+    },
   },
 ];
 
@@ -108,46 +130,78 @@ export default function ServicesPage() {
       {/* Hero */}
       <Section ariaLabel="Services hero">
         <div className="mx-auto max-w-3xl text-center">
-          <h1 className="mb-6 text-5xl font-bold tracking-tight text-brand-black sm:text-6xl lg:text-7xl">
-            What we do. All of it.
+          <h1 className="mb-6 text-4xl font-bold tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
+            Enterprise creative. Every format.
+            <br />
+            Delivered in 24&nbsp;hours.
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-neutral-600">
-            Strategic marketing, content creation, operational marketing, and on-demand production
-            &mdash; available as a complete programme or &agrave; la carte. No retainer required.
+            Strategy, content, distribution, on-demand production &mdash;
+            produced by 35&nbsp;experts across 5&nbsp;continents, working in relay.
+            No retainer. Fixed prices. Unlimited revisions.
+            First project satisfaction or no invoice.
           </p>
+          <div className="mt-8">
+            <Button variant="secondary" href="/work" aria-label="See examples of our work">
+              See our work
+            </Button>
+          </div>
         </div>
       </Section>
+
+      {/* Client logos */}
+      <div className="border-t border-neutral-100">
+        <ClientLogos />
+      </div>
 
       {/* Service sections */}
       {SERVICE_SECTIONS.map((section) => (
         <ServiceBlock key={section.id} section={section} />
       ))}
 
-      {/* Closing section */}
-      <Section ariaLabel="Every service, any combination" className="bg-brand-black">
+      {/* Timezone relay module */}
+      <Section ariaLabel="How Sarani delivers in 24 hours" className="bg-brand-black">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="mb-6 text-3xl font-bold text-brand-white sm:text-4xl">
+            Why 24&nbsp;hours is our default, not our premium.
+          </h2>
+          <p className="mb-8 text-lg text-neutral-300">
+            35&nbsp;experts across 5&nbsp;time zones work in relay.
+            When Paris signs off, Dubai continues. When Dubai hands off,
+            S&atilde;o Paulo picks up. Your brief never waits for a timezone
+            to wake up. D+1 delivery is the standard &mdash; not an add-on.
+          </p>
+          <p className="mb-10 text-sm font-medium uppercase tracking-widest text-neutral-400">
+            35&nbsp;experts &middot; 5&nbsp;continents &middot; 18&nbsp;languages &middot; 24/7
+          </p>
+          <Button variant="ghost" href="/about" aria-label="Meet the Sarani team" className="text-brand-white hover:text-brand-white">
+            Meet the team &rarr;
+          </Button>
+        </div>
+      </Section>
+
+      {/* Closing section */}
+      <Section ariaLabel="Start working with Sarani" className="bg-surface-warm">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mb-6 text-3xl font-bold text-brand-black sm:text-4xl">
             Every service. Any combination.
           </h2>
-          <p className="mb-4 text-lg text-neutral-400">
+          <p className="mb-4 text-lg text-neutral-600">
             Sarani works as a full programme &mdash; strategy through operational execution &mdash;
             or as a single-service partner. You pick what you need. No retainer. No minimum
             commitment. Fixed prices, published upfront.
           </p>
-          <p className="mb-10 text-lg font-bold text-brand-white">
-            35+ experts. 5 continents. 18 languages. 24/7.
-          </p>
-          <Button variant="primary" href="/contact">
-            Start a project
-          </Button>
-          <p className="mt-3 text-sm text-neutral-400">
-            First project satisfaction or no invoice.
-          </p>
-          <div className="mt-6">
-            <Button variant="ghost" href="/pricing">
+          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <Button variant="primary" href="/contact" aria-label="Start a project with Sarani">
+              Start a project
+            </Button>
+            <Button variant="secondary" href="/pricing" aria-label="View all service pricing">
               View pricing
             </Button>
           </div>
+          <p className="mt-4 text-sm text-neutral-500">
+            First project satisfaction or no invoice.
+          </p>
         </div>
       </Section>
     </div>
@@ -205,12 +259,18 @@ function ServiceBlock({ section }: { section: ServiceSection }) {
           </p>
         </div>
 
-        {/* CTA */}
-        <div className="mt-8">
-          <Button variant="primary" href="/contact">
-            Start a project
-          </Button>
-        </div>
+        {/* CTA — contextual per section */}
+        {section.cta && (
+          <div className="mt-8">
+            <Button
+              variant={section.cta.variant}
+              href={section.cta.href}
+              aria-label={section.cta.ariaLabel}
+            >
+              {section.cta.label}
+            </Button>
+          </div>
+        )}
       </div>
     </Section>
   );
