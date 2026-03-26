@@ -190,7 +190,7 @@ That opacity is by design. Traditional agencies prefer retainers because retaine
 Understanding what a creative agency costs starts with understanding which pricing model you are evaluating.
 
 **1. Traditional agency retainer**
-Network agencies (Publicis, WPP, Havas, Dentsu) typically price on annual retainers. For enterprise clients, retainer agreements range from 50,000€ to 500,000€+ per year, depending on scope, team size, and geography. The retainer covers a defined number of hours per month — anything beyond that is billed as change orders at 150–250€/hour.
+Traditional network agencies typically price on annual retainers. For enterprise clients, retainer agreements range from 50,000€ to 500,000€+ per year, depending on scope, team size, and geography. The retainer covers a defined number of hours per month — anything beyond that is billed as change orders at 150–250€/hour.
 
 The hidden cost: revision cycles, scope extensions, and "strategic meetings" consume a significant portion of the retainer hours before any production work begins.
 
@@ -257,7 +257,7 @@ For enterprise teams, the move toward per-project pricing is not about saving mo
 
 **How much does a creative agency cost for enterprise brands?**
 
-Traditional network agencies (WPP, Publicis, Havas) charge 50,000–500,000€+ per year in retainers. Subscription creative services charge thousands per month regardless of actual volume used. Per-project agencies like Sarani charge per deliverable: a banner starts at 150€, a full rebranding at 5,000€. The right model depends on your volume and procurement structure.
+Traditional network agencies charge 50,000–500,000€+ per year in retainers. Subscription creative services charge thousands per month regardless of actual volume used. Per-project agencies like Sarani charge per deliverable: a banner starts at 150€, a full rebranding at 5,000€. The right model depends on your volume and procurement structure.
 
 **Is a subscription model cheaper than per-project pricing?**
 
