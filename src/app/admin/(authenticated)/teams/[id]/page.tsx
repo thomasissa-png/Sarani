@@ -174,11 +174,11 @@ export default function TeamDetailPage() {
 
     try {
       const res = await fetch(
-        `/api/admin/teams/${teamId}/steps/${stepId}/execute`,
+        `/api/admin/teams/${teamId}/steps/${stepId}/rerun`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rerunComment: rerunComment.trim() || undefined }),
+          body: JSON.stringify({ comment: rerunComment.trim() }),
         }
       );
 

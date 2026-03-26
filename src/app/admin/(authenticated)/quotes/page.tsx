@@ -74,8 +74,9 @@ function QuotesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Form state
-  const [clientName, setClientName] = useState("");
+  // Form state — select by ID, derive name
+  const [selectedClientId, setSelectedClientId] = useState("");
+  const clientName = clients.find((c) => c.id === selectedClientId)?.name ?? "";
   const [contactName, setContactName] = useState("");
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
@@ -92,12 +93,23 @@ function QuotesPage() {
   // Pre-fill from query params (e.g. from Tracker "Generate Quote" link)
   const searchParams = useSearchParams();
   useEffect(() => {
+    const qClientId = searchParams.get("clientId");
     const qClient = searchParams.get("client");
     const qProject = searchParams.get("project");
     const qContact = searchParams.get("contact");
     const qAmount = searchParams.get("amount");
     const qCategory = searchParams.get("category");
-    if (qClient) setClientName(qClient);
+
+    // Prefer clientId if available; fall back to matching by name
+    if (qClientId) {
+      setSelectedClientId(qClientId);
+    } else if (qClient && clients.length > 0) {
+      const matched = clients.find(
+        (c) => c.name.toLowerCase() === qClient.toLowerCase()
+      );
+      if (matched) setSelectedClientId(matched.id);
+    }
+
     if (qProject) setProjectName(qProject);
     if (qContact) setContactName(qContact);
     if (qCategory) setScope(qCategory);
@@ -111,7 +123,7 @@ function QuotesPage() {
         total: parseFloat(qAmount),
       }]);
     }
-  }, [searchParams]);
+  }, [searchParams, clients]);
 
   const fetchClients = useCallback(async () => {
     try {
@@ -176,7 +188,7 @@ function QuotesPage() {
     setError(null);
     setSuccess(null);
 
-    if (!clientName || !contactName || !projectName || !description || !scope) {
+    if (!selectedClientId || !contactName || !projectName || !description || !scope) {
       setError("All fields are required.");
       return false;
     }
@@ -287,13 +299,13 @@ function QuotesPage() {
               Client <span className="text-error">*</span>
             </label>
             <select
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
+              value={selectedClientId}
+              onChange={(e) => setSelectedClientId(e.target.value)}
               className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
             >
               <option value="">Select a client...</option>
               {clients.map((c) => (
-                <option key={c.id} value={c.name}>
+                <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
