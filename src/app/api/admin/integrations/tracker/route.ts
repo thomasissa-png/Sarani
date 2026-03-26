@@ -82,6 +82,7 @@ async function fetchClickUpTasks(): Promise<{
       },
     };
   } catch (error) {
+    console.error("[Tracker] ClickUp fetch error:", error);
     return {
       tasks: [],
       meta: {
@@ -139,6 +140,7 @@ async function fetchExcelTrackers(): Promise<{
       },
     };
   } catch (error) {
+    console.error("[Tracker] SharePoint/Excel fetch error:", error);
     return {
       projects: [],
       meta: {

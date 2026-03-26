@@ -68,7 +68,11 @@ export async function writeCache(
  * Invalidate (delete) a cache entry.
  */
 export async function invalidateCache(key: string): Promise<void> {
-  await db.delete(syncCache).where(eq(syncCache.key, key));
+  try {
+    await db.delete(syncCache).where(eq(syncCache.key, key));
+  } catch {
+    // Table may not exist yet — silently ignore
+  }
 }
 
 /**
@@ -175,8 +179,14 @@ export async function fetchWithCache<T>(params: {
   stale: boolean;
   fetchedAt: Date;
 }> {
-  // 1. Check cache
-  const cached = await readCache<T>(params.cacheKey);
+  // 1. Check cache (gracefully handle missing DB table)
+  let cached: { data: T; fetchedAt: Date; stale: boolean } | null = null;
+  try {
+    cached = await readCache<T>(params.cacheKey);
+  } catch (cacheError) {
+    // DB table may not exist yet (migrations not run) — skip cache
+    console.warn(`[Cache] readCache failed for ${params.cacheKey}:`, cacheError);
+  }
 
   if (cached && !cached.stale) {
     return {
@@ -191,8 +201,12 @@ export async function fetchWithCache<T>(params: {
   try {
     const data = await params.fetcher();
 
-    // 3. Update cache
-    await writeCache(params.cacheKey, params.source, data, params.ttlSeconds);
+    // 3. Update cache (non-blocking — don't fail the request if cache write fails)
+    try {
+      await writeCache(params.cacheKey, params.source, data, params.ttlSeconds);
+    } catch (cacheWriteError) {
+      console.warn(`[Cache] writeCache failed for ${params.cacheKey}:`, cacheWriteError);
+    }
 
     return {
       data,
