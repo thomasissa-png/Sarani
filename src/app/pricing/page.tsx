@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 type PricingItem = {
   name: string;
   price: string;
+  priceUsd?: string;
 };
 
 type PricingCategory = {
@@ -76,12 +77,12 @@ const PRICING_CATEGORIES: PricingCategory[] = [
     icon: <IconPalette />,
     accent: "border-t-brand-flame",
     items: [
-      { name: "Static banner", price: "155\u00A0€" },
-      { name: "Banner adaptation", price: "35\u00A0€/size" },
-      { name: "Full rebranding", price: "from 5,000\u00A0€" },
-      { name: "Infographic", price: "180\u00A0€ + 35\u00A0€/lang" },
-      { name: "Newsletter", price: "450–600\u00A0€/edition" },
-      { name: "Website", price: "5,000–8,000\u00A0€" },
+      { name: "Static banner", price: "155\u00A0€", priceUsd: "$\u00A0170" },
+      { name: "Banner adaptation", price: "35\u00A0€/size", priceUsd: "$\u00A040/size" },
+      { name: "Full rebranding", price: "from 5,000\u00A0€", priceUsd: "from $\u00A05,500" },
+      { name: "Infographic", price: "180\u00A0€ + 35\u00A0€/lang", priceUsd: "$\u00A0200 + $\u00A040/lang" },
+      { name: "Newsletter", price: "450–600\u00A0€/edition", priceUsd: "$\u00A0500–660/edition" },
+      { name: "Website", price: "5,000–8,000\u00A0€", priceUsd: "$\u00A05,500–8,800" },
     ],
   },
   {
@@ -89,10 +90,10 @@ const PRICING_CATEGORIES: PricingCategory[] = [
     icon: <IconVideo />,
     accent: "border-t-brand-cerulean",
     items: [
-      { name: "Basic video edit", price: "85\u00A0€" },
-      { name: "Social media video (30s)", price: "360\u00A0€" },
-      { name: "Sizzle reel", price: "360–900\u00A0€" },
-      { name: "Video turnkey", price: "3,800–99,800\u00A0€" },
+      { name: "Basic video edit", price: "85\u00A0€", priceUsd: "$\u00A095" },
+      { name: "Social media video (30s)", price: "360\u00A0€", priceUsd: "$\u00A0400" },
+      { name: "Sizzle reel", price: "360–900\u00A0€", priceUsd: "$\u00A0400–1,000" },
+      { name: "Video turnkey", price: "3,800–99,800\u00A0€", priceUsd: "$\u00A04,200–110,000" },
     ],
   },
   {
@@ -100,8 +101,8 @@ const PRICING_CATEGORIES: PricingCategory[] = [
     icon: <IconPresentation />,
     accent: "border-t-brand-lemon",
     items: [
-      { name: "Per slide", price: "30\u00A0€" },
-      { name: "Full deck (reference)", price: "from 360\u00A0€" },
+      { name: "Per slide", price: "30\u00A0€", priceUsd: "$\u00A035" },
+      { name: "Full deck (reference)", price: "from 360\u00A0€", priceUsd: "from $\u00A0400" },
     ],
   },
   {
@@ -109,7 +110,7 @@ const PRICING_CATEGORIES: PricingCategory[] = [
     icon: <IconTrendingUp />,
     accent: "border-t-brand-flame",
     items: [
-      { name: "LinkedIn management", price: "1,800–2,500\u00A0€/month" },
+      { name: "LinkedIn management", price: "1,800–2,500\u00A0€/month", priceUsd: "$\u00A02,000–2,750/month" },
       { name: "Paid ads fee", price: "8% of budget" },
       { name: "SEO", price: "custom quote" },
     ],
@@ -130,7 +131,7 @@ type ComparisonRow = {
 };
 
 const COMPARISON_ROWS: ComparisonRow[] = [
-  { label: "Banner", sarani: "155–470\u00A0€", agency: "500–2,000\u00A0€" },
+  { label: "Banner", sarani: "155–470\u00A0€ / $\u00A0170–520", agency: "500–2,000\u00A0€" },
   { label: "Revisions", sarani: "Unlimited", agency: "200–800\u00A0€ each" },
   { label: "Turnaround", sarani: "24 hours", agency: "10–15 days" },
   { label: "Commitment", sarani: "None", agency: "Retainer required" },
@@ -355,8 +356,11 @@ function PricingCard({ category }: { category: PricingCategory }) {
             className="flex items-baseline justify-between gap-4 border-b border-neutral-200 pb-3 last:border-0 last:pb-0"
           >
             <span className="text-neutral-600">{item.name}</span>
-            <span className="shrink-0 font-bold text-brand-black">
-              {item.price}
+            <span className="shrink-0 text-right">
+              <span className="font-bold text-brand-black">{item.price}</span>
+              {item.priceUsd && (
+                <span className="block text-xs text-neutral-400">{item.priceUsd}</span>
+              )}
             </span>
           </li>
         ))}

@@ -15,13 +15,15 @@ interface ClientLogo {
   height: number;
 }
 
+const LOGO_HEIGHT = 28;
+
 const CLIENTS: ClientLogo[] = [
-  { name: "TikTok", src: "/client-logo-tiktok.png", width: 90, height: 28 },
-  { name: "Sony", src: "/client-logo-sony.png", width: 80, height: 28 },
-  { name: "Adidas", src: "/client-logo-adidas.png", width: 40, height: 40 },
-  { name: "LEGO", src: "/client-logo-lego.png", width: 44, height: 44 },
-  { name: "Bose", src: "/client-logo-bose.png", width: 80, height: 28 },
-  { name: "IKEA", src: "/client-logo-ikea.png", width: 44, height: 44 },
+  { name: "TikTok", src: "/client-logo-tiktok.png", width: 90, height: LOGO_HEIGHT },
+  { name: "Sony", src: "/client-logo-sony.png", width: 80, height: LOGO_HEIGHT },
+  { name: "Adidas", src: "/client-logo-adidas.png", width: 40, height: LOGO_HEIGHT },
+  { name: "LEGO", src: "/client-logo-lego.png", width: 44, height: LOGO_HEIGHT },
+  { name: "Bose", src: "/client-logo-bose.png", width: 80, height: LOGO_HEIGHT },
+  { name: "IKEA", src: "/client-logo-ikea.png", width: 44, height: LOGO_HEIGHT },
 ];
 
 function ClientItem({ client }: { client: ClientLogo }) {
@@ -35,8 +37,7 @@ function ClientItem({ client }: { client: ClientLogo }) {
         alt={client.name}
         width={client.width}
         height={client.height}
-        className="h-auto object-contain"
-        style={{ maxHeight: 40 }}
+        className="h-7 w-auto object-contain"
       />
     </span>
   );

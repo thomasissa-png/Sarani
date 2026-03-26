@@ -55,7 +55,7 @@ export function AnimatedHeroDots() {
 
 /* ---------- Pre-headline ---------- */
 
-const PRE_HEADLINE = "TIKTOK. SONY. ADIDAS. GEODIS.";
+const PRE_HEADLINE = "TIKTOK. SONY. ADIDAS. LEGO.";
 
 /* ---------- Value props ---------- */
 
