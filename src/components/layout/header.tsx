@@ -111,9 +111,11 @@ export function Header() {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-[var(--z-header)] transition-all duration-250 ease-in-out",
-        scrolled
-          ? "bg-brand-white/90 backdrop-blur-[12px] border-b border-neutral-300"
-          : "bg-transparent border-b border-transparent"
+        mobileOpen
+          ? "bg-brand-white border-b border-transparent"
+          : scrolled
+            ? "bg-brand-white/90 backdrop-blur-[12px] border-b border-neutral-300"
+            : "bg-transparent border-b border-transparent"
       )}
     >
       <nav
