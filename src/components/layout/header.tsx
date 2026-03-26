@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
@@ -199,93 +199,105 @@ export function Header() {
         </div>
       </nav>
 
-      {/* Mobile overlay menu — full-screen with backdrop */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            ref={mobileMenuRef}
-            id="mobile-menu"
-            className="fixed inset-0 z-[var(--z-overlay)] flex flex-col bg-brand-white md:hidden"
-            aria-hidden={!mobileOpen}
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Top bar — logo + close */}
-            <div className="flex h-[var(--header-height)] items-center justify-between px-5">
-              <Logo variant="dark" width={100} />
-              <button
-                type="button"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-cerulean text-brand-white"
-                onClick={() => setMobileOpen(false)}
-                aria-label="Close menu"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Nav links — left-aligned with active state */}
-            <nav className="flex-1 flex flex-col justify-center px-8">
-              <ul className="flex flex-col gap-6" role="list">
-                {NAV_LINKS.filter((l) => l.href !== "/contact").map((link, i) => (
-                  <motion.li
-                    key={link.href}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 + i * 0.06, duration: 0.35 }}
-                  >
-                    <Link
-                      href={link.href}
-                      onClick={() => handleNavClick(link.label)}
-                      className={cn(
-                        "text-3xl font-bold transition-colors duration-150",
-                        pathname === link.href
-                          ? "text-brand-flame"
-                          : "text-brand-black hover:text-brand-flame"
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  </motion.li>
-                ))}
-              </ul>
-            </nav>
-
-            {/* Bottom CTA — pinned */}
-            <motion.div
-              className="px-8 pb-10 pt-4"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25, duration: 0.35 }}
-            >
-              <Button
-                variant="primary"
-                href="/contact"
-                className="w-full text-center"
-                onClick={() => handleNavClick("start_a_project")}
-              >
-                Start a project
-              </Button>
-              <p className="mt-3 text-center text-sm text-neutral-500">
-                First project satisfaction or no invoice.
-              </p>
-            </motion.div>
-          </motion.div>
+      {/* Mobile overlay menu — always in DOM, toggled via CSS (no mount delay) */}
+      <div
+        ref={mobileMenuRef}
+        id="mobile-menu"
+        className={cn(
+          "fixed inset-0 z-[var(--z-overlay)] flex flex-col bg-brand-white md:hidden",
+          "transition-[opacity,visibility] duration-200 ease-out",
+          mobileOpen
+            ? "opacity-100 visible"
+            : "opacity-0 invisible"
         )}
-      </AnimatePresence>
+        aria-hidden={!mobileOpen}
+      >
+        {/* Top bar — logo + close */}
+        <div className="flex h-[var(--header-height)] items-center justify-between px-5">
+          <Logo variant="dark" width={100} />
+          <button
+            type="button"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-cerulean text-brand-white"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Nav links — left-aligned with active state */}
+        <nav className="flex-1 flex flex-col justify-center px-8">
+          <ul className="flex flex-col gap-6" role="list">
+            {NAV_LINKS.filter((l) => l.href !== "/contact").map((link, i) => (
+              <motion.li
+                key={link.href}
+                initial={false}
+                animate={
+                  mobileOpen
+                    ? { opacity: 1, x: 0 }
+                    : { opacity: 0, x: -20 }
+                }
+                transition={{
+                  delay: mobileOpen ? 0.05 + i * 0.06 : 0,
+                  duration: mobileOpen ? 0.35 : 0.15,
+                }}
+              >
+                <Link
+                  href={link.href}
+                  onClick={() => handleNavClick(link.label)}
+                  className={cn(
+                    "text-3xl font-bold transition-colors duration-150",
+                    pathname === link.href
+                      ? "text-brand-flame"
+                      : "text-brand-black hover:text-brand-flame"
+                  )}
+                >
+                  {link.label}
+                </Link>
+              </motion.li>
+            ))}
+          </ul>
+        </nav>
+
+        {/* Bottom CTA — pinned */}
+        <motion.div
+          className="px-8 pb-10 pt-4"
+          initial={false}
+          animate={
+            mobileOpen
+              ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: 16 }
+          }
+          transition={{
+            delay: mobileOpen ? 0.25 : 0,
+            duration: mobileOpen ? 0.35 : 0.15,
+          }}
+        >
+          <Button
+            variant="primary"
+            href="/contact"
+            className="w-full text-center"
+            onClick={() => handleNavClick("start_a_project")}
+          >
+            Start a project
+          </Button>
+          <p className="mt-3 text-center text-sm text-neutral-500">
+            First project satisfaction or no invoice.
+          </p>
+        </motion.div>
+      </div>
     </header>
   );
 }
