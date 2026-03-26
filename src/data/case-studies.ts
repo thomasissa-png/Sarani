@@ -341,6 +341,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "ikea-billyotheque",
+    image: "/images/case-ikea-billyotheque.jpg",
     client: "IKEA",
     deliverable: "Event installation + creative production",
     volume: "Full installation suite",
@@ -367,6 +368,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "crocs-tiktok-times-square",
+    image: "/images/case-crocs-times-square.jpg",
     client: "Crocs x TikTok",
     deliverable: "Out-of-home creative production",
     volume: "OOH campaign suite",
@@ -393,6 +395,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "ikea-summer-tour",
+    image: "/images/case-ikea-summer-tour.jpg",
     client: "IKEA",
     deliverable: "Tour creative production",
     volume: "Full creative suite",
