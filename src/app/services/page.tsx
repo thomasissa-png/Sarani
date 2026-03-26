@@ -63,7 +63,6 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       { group: "Copy", items: ["Copywriting", "Translations"] },
       { group: "Presentation", items: ["Pitch Decks", "Templates", "Media Kits", "Adaptations"] },
       { group: "Web", items: ["Landing Pages", "Newsletters", "Websites", "UX"] },
-      { group: "Virtualisation", items: ["Art Galleries", "Corporate Spaces", "Leisure", "Virtual Showrooms"] },
     ],
     proofPoint:
       "TikTok\u2019s Gaming Showcase: 300 million views across 3 markets. TikTok\u2019s #GimmeTheMic Germany: 94 million views for 3,800\u20AC. Adidas turned the Adidas Arena Paris into a giant shoebox \u2014 stadium wraps, decor, invitations, tickets, projections, and every collateral piece. Sony\u2019s European TV launch: 125 assets across 15 languages in 2 weeks. GEODIS: 5,700 slides rebranded in 3 weeks for 8,500\u20AC. LEGO took the Champs-\u00C9lys\u00E9es with a campaign, a web platform, and scenography we produced end-to-end.",
