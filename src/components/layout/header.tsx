@@ -202,11 +202,15 @@ export function Header() {
       {/* Mobile overlay menu — full-screen with backdrop */}
       <AnimatePresence>
         {mobileOpen && (
-          <div
+          <motion.div
             ref={mobileMenuRef}
             id="mobile-menu"
             className="fixed inset-0 z-[var(--z-overlay)] flex flex-col bg-brand-white md:hidden"
             aria-hidden={!mobileOpen}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
           >
             {/* Top bar — logo + close */}
             <div className="flex h-[var(--header-height)] items-center justify-between px-5">
@@ -279,7 +283,7 @@ export function Header() {
                 First project satisfaction or no invoice.
               </p>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </header>

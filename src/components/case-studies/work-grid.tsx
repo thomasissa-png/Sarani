@@ -32,11 +32,12 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
     ? caseStudies.find((cs) => cs.slug === expandedSlug) ?? null
     : null;
 
-  // Scroll the detail panel into view when expanded
+  // Scroll the detail panel into view and move focus when expanded
   useEffect(() => {
     if (expandedSlug && detailRef.current) {
       setTimeout(() => {
         detailRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        detailRef.current?.focus();
       }, 100);
     }
   }, [expandedSlug]);
@@ -88,6 +89,7 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
           <button
             key={cs.slug}
             type="button"
+            aria-expanded={expandedSlug === cs.slug}
             onClick={() => handleCardClick(cs)}
             className={`group relative flex flex-col rounded-2xl border bg-brand-white p-8 text-left transition-all duration-200 hover:shadow-md ${
               expandedSlug === cs.slug
@@ -134,7 +136,8 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
       {expandedStudy && (
         <div
           ref={detailRef}
-          className="mt-8 rounded-2xl border border-brand-flame/20 bg-brand-white p-8 shadow-lg md:p-12 animate-in fade-in slide-in-from-top-4 duration-300"
+          tabIndex={-1}
+          className="mt-8 rounded-2xl border border-brand-flame/20 bg-brand-white p-5 shadow-lg sm:p-8 md:p-12 animate-in fade-in slide-in-from-top-4 duration-300 outline-none"
         >
           {/* Header */}
           <div className="mb-8 flex items-start justify-between gap-4">
@@ -162,11 +165,11 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
           </div>
 
           {/* Stats */}
-          <div className="mb-8 grid grid-cols-3 gap-4">
+          <div className="mb-8 grid grid-cols-3 gap-2 sm:gap-4">
             {expandedStudy.stats.map((stat) => (
-              <div key={stat.label} className="rounded-xl bg-surface-elevated p-4 text-center">
-                <p className="text-2xl font-bold text-brand-black sm:text-3xl">{stat.value}</p>
-                <p className="mt-1 text-xs font-medium text-neutral-500">{stat.label}</p>
+              <div key={stat.label} className="min-w-0 rounded-xl bg-surface-elevated p-3 text-center sm:p-4">
+                <p className="truncate text-lg font-bold text-brand-black sm:text-2xl lg:text-3xl">{stat.value}</p>
+                <p className="mt-1 text-[10px] font-medium leading-tight text-neutral-500 sm:text-xs">{stat.label}</p>
               </div>
             ))}
           </div>
