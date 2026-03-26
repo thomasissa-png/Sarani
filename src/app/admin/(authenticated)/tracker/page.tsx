@@ -101,6 +101,7 @@ export default function TrackerPage() {
   const [data, setData] = useState<TrackerResponse | null>(null);
   const [apiStatus, setApiStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Filters — default to Open + In progress only
@@ -128,8 +129,10 @@ export default function TrackerPage() {
     setCurrentPage(1);
   }, []);
 
+  // Fast initial load — show cached data immediately
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    if (!data) setLoading(true);
+    else setRefreshing(true);
     setError(null);
     try {
       const [trackerRes, statusRes] = await Promise.all([
@@ -152,11 +155,12 @@ export default function TrackerPage() {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, []);
+  }, [data]);
 
   const syncAndFetch = useCallback(async () => {
-    setLoading(true);
+    setRefreshing(true);
     setError(null);
     try {
       // 1. Sync clients from ClickUp → DB
@@ -190,7 +194,7 @@ export default function TrackerPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -360,13 +364,23 @@ export default function TrackerPage() {
           </Link>
           <button
             onClick={syncAndFetch}
-            disabled={loading}
+            disabled={loading || refreshing}
             className="px-4 py-2 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Syncing..." : "Sync now"}
+            {loading || refreshing ? "Syncing..." : "Sync now"}
           </button>
         </div>
       </div>
+
+      {/* Refresh indicator — shown when data exists but is being updated */}
+      {refreshing && data && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-brand-cerulean/10 rounded-lg text-sm text-brand-cerulean-dark">
+          <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
+          Refreshing data from ClickUp, SharePoint &amp; Evoliz...
+        </div>
+      )}
 
       {/* Status Bar */}
       {apiStatus && (

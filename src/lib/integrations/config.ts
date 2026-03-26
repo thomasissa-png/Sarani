@@ -161,11 +161,11 @@ export const EXCEL_SHEET_NAME_CANDIDATES = ["Sheet1", "Feuil1", "Feuille1"] as c
 
 export const CACHE_TTL = {
   /** ClickUp API responses */
-  clickup: 300, // 5 minutes
+  clickup: 600, // 10 minutes
   /** Evoliz API responses */
-  evoliz: 300, // 5 minutes
-  /** SharePoint Excel reads (expensive API calls) */
-  sharepoint: 900, // 15 minutes
+  evoliz: 600, // 10 minutes
+  /** SharePoint Excel reads (very expensive — 50+ sheets across 9 files) */
+  sharepoint: 3600, // 1 hour (force-refresh via "Sync now" button)
 } as const;
 
 // ─── Helper Functions ────────────────────────────────────────────────────────

@@ -225,11 +225,14 @@ async function readTrackerFile(
 
   const allProjects: ExcelProject[] = [];
 
-  // Read each sheet in parallel (except dashboard sheets)
-  const sheetResults = await Promise.allSettled(
-    sheets
-      .filter((sheet) => !shouldSkipSheet(sheet.name))
-      .map(async (sheet) => {
+  // Read sheets in batches of 5 to avoid SharePoint Graph rate limiting
+  const dataSheets = sheets.filter((sheet) => !shouldSkipSheet(sheet.name));
+  const BATCH = 5;
+
+  for (let i = 0; i < dataSheets.length; i += BATCH) {
+    const batch = dataSheets.slice(i, i + BATCH);
+    const batchResults = await Promise.allSettled(
+      batch.map(async (sheet) => {
         try {
           const rangeData = await readExcelUsedRange(
             SHAREPOINT_TRACKERS_DRIVE_ID,
@@ -260,11 +263,12 @@ async function readTrackerFile(
           return [];
         }
       })
-  );
+    );
 
-  for (const result of sheetResults) {
-    if (result.status === "fulfilled") {
-      allProjects.push(...result.value);
+    for (const result of batchResults) {
+      if (result.status === "fulfilled") {
+        allProjects.push(...result.value);
+      }
     }
   }
 
