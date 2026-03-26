@@ -6,6 +6,7 @@ import type { ClickUpTask } from "@/lib/integrations/clickup";
 import type { EvolizInvoice } from "@/lib/integrations/evoliz";
 import type { ExcelProject } from "@/lib/integrations/excel-parser";
 import type { TrackerProject } from "@/types/integrations";
+import { getMappingBySpaceId } from "@/lib/integrations/config";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -62,15 +63,22 @@ export function mergeData(
     }
   }
 
-  return excelProjects.map((ep) => {
+  // Track which ClickUp tasks have been matched to Excel rows
+  const matchedClickUpKeys = new Set<string>();
+
+  // 1. Start with Excel projects, enriched with ClickUp + Evoliz
+  const excelMerged = excelProjects.map((ep) => {
     // Match ClickUp task by project name (pick most recently updated)
-    const matchingTasks = tasksByName.get(normalizeForMatch(ep.project));
+    const key = normalizeForMatch(ep.project);
+    const matchingTasks = tasksByName.get(key);
     const clickupTask = matchingTasks
       ? matchingTasks.sort(
           (a, b) =>
             parseInt(b.date_updated) - parseInt(a.date_updated)
         )[0]
       : undefined;
+
+    if (clickupTask) matchedClickUpKeys.add(key);
 
     // Match Evoliz invoice by PO number (pick latest non-draft)
     const matchingInvoices = ep.poNumber
@@ -112,4 +120,38 @@ export function mergeData(
       clickupStatus,
     };
   });
+
+  // 2. Add ClickUp tasks that have NO matching Excel row
+  // This ensures projects appear even if Excel trackers are empty or unavailable
+  const clickupOnly: TrackerProject[] = [];
+  for (const [key, tasks] of tasksByName) {
+    if (matchedClickUpKeys.has(key)) continue;
+    const task = tasks.sort(
+      (a, b) => parseInt(b.date_updated) - parseInt(a.date_updated)
+    )[0];
+
+    // Derive client name from ClickUp space ID → config mapping → list name
+    const mapping = getMappingBySpaceId(task.space?.id);
+    const spaceName = mapping?.clickupSpaceName ?? task.list?.name ?? "Unknown";
+
+    clickupOnly.push({
+      client: spaceName,
+      project: task.name,
+      date: task.date_created
+        ? new Date(parseInt(task.date_created)).toISOString().split("T")[0]
+        : "",
+      contact: task.assignees?.[0]?.username ?? "",
+      status: task.status?.status ?? "",
+      category: "",
+      sharepointLink: "",
+      totalValue: null,
+      poNumber: "",
+      invoiceStatus: "",
+      invoiceNumber: "",
+      clickupTaskUrl: task.url ?? "",
+      clickupStatus: task.status?.status ?? "",
+    });
+  }
+
+  return [...excelMerged, ...clickupOnly];
 }

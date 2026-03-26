@@ -243,7 +243,7 @@ export async function GET(request: Request) {
       await Promise.all([
         invalidateCache("tracker:clickup_all_tasks"),
         invalidateCache("tracker:sharepoint_all_excel"),
-        invalidateCache("tracker:evoliz_invoices"),
+        invalidateCache("tracker:evoliz_all_invoices"),
       ]);
     }
 
@@ -278,6 +278,12 @@ export async function GET(request: Request) {
         clickup: clickupResult.meta,
         sharepoint: excelResult.meta,
         evoliz: evolizResult.meta,
+      },
+      debug: {
+        clickupTaskCount: clickupResult.tasks.length,
+        excelProjectCount: excelResult.projects.length,
+        evolizInvoiceCount: evolizResult.invoices.length,
+        mergedProjectCount: projects.length,
       },
     };
 

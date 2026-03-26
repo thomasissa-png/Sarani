@@ -30,4 +30,10 @@ export interface TrackerResponse {
     sharepoint: SourceMeta;
     evoliz: SourceMeta;
   };
+  debug?: {
+    clickupTaskCount: number;
+    excelProjectCount: number;
+    evolizInvoiceCount: number;
+    mergedProjectCount: number;
+  };
 }

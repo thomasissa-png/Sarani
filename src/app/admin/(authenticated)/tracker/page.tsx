@@ -479,12 +479,29 @@ export default function TrackerPage() {
 
       {/* Empty State */}
       {!loading && !error && filteredProjects.length === 0 && (
-        <div className="bg-white rounded-xl border border-neutral-300 py-16 text-center">
-          <p className="text-neutral-400 text-sm">
+        <div className="bg-white rounded-xl border border-neutral-300 py-16 text-center space-y-3">
+          <p className="text-neutral-500 text-sm font-medium">
             {data && data.projects.length > 0
               ? "No projects match your filters."
-              : "No projects found. Sync your integrations to get started."}
+              : "No projects found."}
           </p>
+          {data && data.projects.length === 0 && data.debug && (
+            <div className="text-xs text-neutral-400 space-y-1">
+              <p>ClickUp tasks: {data.debug.clickupTaskCount} | Excel projects: {data.debug.excelProjectCount} | Evoliz invoices: {data.debug.evolizInvoiceCount}</p>
+              {data.sources?.clickup?.status === "unavailable" && (
+                <p className="text-red-400">ClickUp: {data.sources.clickup.error || "unavailable"}</p>
+              )}
+              {data.sources?.sharepoint?.status === "unavailable" && (
+                <p className="text-red-400">SharePoint: {data.sources.sharepoint.error || "unavailable"}</p>
+              )}
+              {data.sources?.evoliz?.status === "unavailable" && (
+                <p className="text-red-400">Evoliz: {data.sources.evoliz.error || "unavailable"}</p>
+              )}
+            </div>
+          )}
+          {data && data.projects.length === 0 && (
+            <p className="text-neutral-400 text-xs">Click &quot;Sync now&quot; to fetch projects from ClickUp and SharePoint.</p>
+          )}
         </div>
       )}
 
