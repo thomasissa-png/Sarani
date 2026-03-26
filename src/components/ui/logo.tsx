@@ -26,6 +26,11 @@ export function Logo({ variant = "dark", width = 120, href = "/", className }: L
       href={href}
       aria-label={href === "/" ? "Sarani — Back to homepage" : "Sarani — Back to dashboard"}
       className={cn("inline-flex items-center shrink-0", className)}
+      onClick={() => {
+        if (href === "/" && typeof window !== "undefined" && window.location.pathname === "/") {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      }}
     >
       <Image
         src={src}
