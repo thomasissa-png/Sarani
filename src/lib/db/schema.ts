@@ -187,6 +187,75 @@ export interface QuoteLineItem {
   total: number;
 }
 
+// ─── Project Teams ──────────────────────────────────────────────────────────
+
+export const projectTeams = pgTable(
+  "project_teams",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id),
+    templateType: varchar("template_type", { length: 50 }), // social_media | seo_content | brand_identity | video | translation | ad_campaign | custom
+    brief: text("brief").notNull(),
+    status: varchar("status", { length: 20 })
+      .notNull()
+      .default("draft"), // draft | in_progress | completed | archived
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_project_teams_client").on(table.clientId),
+    index("idx_project_teams_status").on(table.status),
+  ]
+);
+
+// ─── Team Steps ─────────────────────────────────────────────────────────────
+
+export const teamSteps = pgTable(
+  "team_steps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => projectTeams.id, { onDelete: "cascade" }),
+    stepOrder: integer("step_order").notNull(),
+    agentType: varchar("agent_type", { length: 50 }).notNull(), // creative_strategist | copywriter | seo | social | qa | video_script | translator | project_manager
+    label: text("label").notNull(),
+    status: varchar("status", { length: 20 })
+      .notNull()
+      .default("pending"), // pending | running | completed | failed
+    input: jsonb("input").$type<Record<string, unknown>>(),
+    output: text("output"),
+    tokenCost: integer("token_cost"),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+  },
+  (table) => [index("idx_team_steps_team").on(table.teamId)]
+);
+
+// ─── Team Deliverables ──────────────────────────────────────────────────────
+
+export const teamDeliverables = pgTable(
+  "team_deliverables",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    stepId: uuid("step_id")
+      .notNull()
+      .references(() => teamSteps.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    content: text("content").notNull(),
+    format: varchar("format", { length: 20 })
+      .notNull()
+      .default("markdown"), // markdown | plain_text | json
+    version: integer("version").notNull().default(1),
+    rerunComment: text("rerun_comment"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("idx_team_deliverables_step").on(table.stepId)]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -203,3 +272,9 @@ export type SyncLog = typeof syncLogs.$inferSelect;
 export type NewSyncLog = typeof syncLogs.$inferInsert;
 export type Quote = typeof quotes.$inferSelect;
 export type NewQuote = typeof quotes.$inferInsert;
+export type ProjectTeam = typeof projectTeams.$inferSelect;
+export type NewProjectTeam = typeof projectTeams.$inferInsert;
+export type TeamStep = typeof teamSteps.$inferSelect;
+export type NewTeamStep = typeof teamSteps.$inferInsert;
+export type TeamDeliverable = typeof teamDeliverables.$inferSelect;
+export type NewTeamDeliverable = typeof teamDeliverables.$inferInsert;

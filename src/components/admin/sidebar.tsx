@@ -43,6 +43,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "AI Briefs", href: "/admin/projects", icon: "folder" },
   { label: "Tracker", href: "/admin/tracker", icon: "activity" },
+  { label: "AI Teams", href: "/admin/teams", icon: "team" },
   { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
   { label: "Clients", href: "/admin/clients", icon: "users" },
   { label: "Users", href: "/admin/users", icon: "shield" },
@@ -179,6 +180,11 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
     activity: (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+      </svg>
+    ),
+    team: (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" /><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="19" cy="7" r="2.5" /><path d="M22 17.5a3 3 0 0 0-3-3h-.5" /><circle cx="5" cy="7" r="2.5" /><path d="M2 17.5a3 3 0 0 1 3-3h.5" />
       </svg>
     ),
   };
