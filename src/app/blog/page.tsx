@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
-import { blogPosts, getBlogCategories } from "@/data/blog-posts";
+import { getSortedBlogPosts, getBlogCategories } from "@/data/blog-posts";
 import { BlogCategoryFilter } from "@/components/blog/BlogCategoryFilter";
 
 export const metadata: Metadata = {
@@ -32,7 +32,7 @@ export default function BlogPage() {
         </p>
 
         {/* Category filter */}
-        <BlogCategoryFilter categories={categories} posts={blogPosts} />
+        <BlogCategoryFilter categories={categories} posts={getSortedBlogPosts()} />
       </Section>
 
       {/* Footer CTA */}

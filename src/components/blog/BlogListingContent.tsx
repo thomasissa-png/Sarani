@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { blogPosts, formatBlogDate } from "@/data/blog-posts";
+import { getSortedBlogPosts, formatBlogDate } from "@/data/blog-posts";
+
+const blogPosts = getSortedBlogPosts();
 
 const ALL_CATEGORY = "All";
 

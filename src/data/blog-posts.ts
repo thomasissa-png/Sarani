@@ -559,7 +559,14 @@ export function getBlogPostBySlug(slug: string): BlogPost | undefined {
 
 /** Get all slugs for generateStaticParams */
 export function getAllBlogSlugs(): string[] {
-  return blogPosts.map((post) => post.slug);
+  return getSortedBlogPosts().map((post) => post.slug);
+}
+
+/** Get all posts sorted by date (most recent first) */
+export function getSortedBlogPosts(): BlogPost[] {
+  return [...blogPosts].sort(
+    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
 }
 
 /** Get unique blog categories (preserves insertion order) */
