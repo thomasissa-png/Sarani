@@ -58,10 +58,10 @@ Five categories cover the full thematic scope of Sarani's blog, each with a dist
 **Keyword group:** how to brief a creative agency, creative brief template, how to manage an outsourced creative team
 **Article cadence target:** 2 articles/quarter
 
-### Category 5 — Competitive Analysis
-**Focus:** Agency comparisons, alternative guides, market landscape reviews. High commercial intent.
-**Persona:** Sophie or Marc actively evaluating creative agency options.
-**Keyword group:** superside alternative, agency comparison, creative agency pricing guide
+### Category 5 — Agency Model Analysis
+**Focus:** Agency model comparisons, pricing structures, creative outsourcing decision frameworks. High commercial intent.
+**Persona:** Sophie or Marc actively evaluating creative agency options and models.
+**Keyword group:** per project creative agency enterprise, agency model comparison, creative agency pricing guide, how to choose a creative agency
 **Article cadence target:** 1 article/quarter (evergreen, updated annually)
 
 ---
@@ -77,7 +77,7 @@ Articles are ordered by production priority (P1 first). P1 articles target the f
 | 1 | Why Enterprise Teams Are Leaving Traditional Agencies | Enterprise Creative Ops | why enterprise teams leave traditional agencies | why-enterprise-teams-are-leaving-traditional-agencies | **EXISTS** |
 | 2 | How We Deliver 1,500+ Creatives Per Month for TikTok | Behind the Scenes | how to produce 1000 creatives per month | how-we-deliver-1500-creatives-per-month-for-tiktok | **EXISTS** |
 | 3 | Fixed Pricing vs Retainers: What Global Brands Actually Prefer | Industry Insights | fixed pricing vs agency retainer enterprise | fixed-pricing-vs-retainers-what-global-brands-prefer | **EXISTS** |
-| 4 | The Best Superside Alternative for Enterprise Teams in 2026 | Competitive Analysis | superside alternative | superside-alternative-enterprise-creative-agency | **TO PRODUCE** |
+| 4 | How Enterprise Teams Scale Creative Production Without Subscription Lock-In | Agency Model Analysis | how to choose between subscription and per-project creative agency | how-enterprise-teams-scale-creative-production | **TO PRODUCE** |
 | 5 | How Much Does a Creative Agency Actually Cost? An Enterprise Guide | Industry Insights | how much does a creative agency cost | creative-agency-cost-enterprise-guide | **TO PRODUCE** |
 | 6 | How D+1 Delivery Works: Inside Sarani's 24-Hour Creative Production Model | Behind the Scenes | agency 24 hour delivery creative | how-24-hour-creative-delivery-works | **TO PRODUCE** |
 | 7 | Fixed Price vs Subscription: Why Enterprise Brands Are Ditching Retainers | Industry Insights | fixed price creative agency | fixed-price-vs-subscription-creative-agency | **TO PRODUCE** |
@@ -98,7 +98,7 @@ Articles are ordered by production priority (P1 first). P1 articles target the f
 |---|---|---|---|---|---|
 | 13 | How to Manage a Creative Agency Relationship at Enterprise Scale | Practical Guides | how to manage creative agency at scale | manage-creative-agency-enterprise-scale | TO PRODUCE |
 | 14 | The Enterprise Creative Production Workflow: From Brief to Delivery in 24 Hours | Enterprise Creative Ops | creative production workflow large brand | enterprise-creative-production-workflow | TO PRODUCE |
-| 15 | Design Pickle Alternative: What Enterprise Brands Need That Subscription Services Can't Deliver | Competitive Analysis | design outsourcing service | design-pickle-alternative-enterprise | TO PRODUCE |
+| 15 | What Enterprise Brands Actually Need From a Creative Partner (That Subscription Services Don't Offer) | Agency Model Analysis | design outsourcing service | what-enterprise-brands-need-from-a-creative-partner | TO PRODUCE |
 | 16 | How Global Brands Handle Content for 15+ Markets Simultaneously | Enterprise Creative Ops | global creative agency international team | global-brands-content-production-15-markets | TO PRODUCE |
 | 17 | What Does "Unlimited Revisions" Actually Mean? An Agency Transparency Guide | Industry Insights | unlimited revisions creative agency | unlimited-revisions-creative-agency-guide | TO PRODUCE |
 | 18 | How to Select a Creative Agency for Enterprise: The 8-Point Checklist | Practical Guides | outsource creative work enterprise | how-to-select-creative-agency-enterprise | TO PRODUCE |
@@ -124,8 +124,8 @@ Articles are ordered by production priority (P1 first). P1 articles target the f
 | creative agency no retainer | Article 3 (existing) | /blog/fixed-pricing-vs-retainers-what-global-brands-prefer |
 | how much does a creative agency cost | Article 5 | /blog/creative-agency-cost-enterprise-guide |
 | multilingual creative agency | Article 12 | /blog/multilingual-creative-agency-enterprise |
-| superside alternative | Article 4 | /blog/superside-alternative-enterprise-creative-agency |
-| unlimited design subscription alternative | Article 4 (secondary) | /blog/superside-alternative-enterprise-creative-agency |
+| per project creative agency enterprise | Article 4 | /blog/how-enterprise-teams-scale-creative-production |
+| how to choose between subscription and per-project creative agency | Article 4 (secondary) | /blog/how-enterprise-teams-scale-creative-production |
 
 ---
 
@@ -148,7 +148,7 @@ Each article must contain exactly one primary contextual link to a commercial pa
 |---|---|
 | Agency model / why outsource | `/services` |
 | Pricing / cost comparison | `/pricing` |
-| Superside / competitor comparison | `/contact` (start a project) |
+| How to choose a creative agency model | `/contact` (start a project) |
 | How Sarani works / case study | `/work/[relevant-slug]` |
 | Brief / workflow guides | `/contact` |
 
@@ -158,7 +158,7 @@ Each article links to 2–3 thematically related articles within the blog to bui
 Example cluster — "Agency Model" cluster:
 - Article 1 (why enterprise teams leave agencies) → links to Article 3 (fixed pricing vs retainers) + Article 5 (cost guide) + `/pricing`
 - Article 3 (fixed pricing vs retainers) → links to Article 1 (why leave agencies) + Article 7 (fixed price vs subscription) + `/pricing`
-- Article 5 (cost guide) → links to Article 3 (fixed pricing) + Article 4 (Superside alternative) + `/contact`
+- Article 5 (cost guide) → links to Article 3 (fixed pricing) + Article 4 (how enterprise teams scale creative production) + `/contact`
 
 **Rule 3 — The pillar page concept for the blog**
 The blog index (`/blog`) is the content pillar. Every article links back to at least one related article. The homepage links to the blog via a "Latest insights" or "From the blog" section (3 most recent articles).
@@ -229,7 +229,7 @@ Implementation: this data is already available in `BlogPost` interface (`publish
 
 ### 6.2 FAQPage schema (for pricing and comparison articles)
 
-Articles 4 (Superside alternative), 5 (agency cost guide), and 17 (unlimited revisions guide) should implement `FAQPage` JSON-LD. Each FAQ section in the article body maps to a Question/Answer pair:
+Articles 4 (how enterprise teams scale creative production), 5 (agency cost guide), and 17 (unlimited revisions guide) should implement `FAQPage` JSON-LD. Each FAQ section in the article body maps to a Question/Answer pair:
 
 ```json
 {
@@ -241,7 +241,7 @@ Articles 4 (Superside alternative), 5 (agency cost guide), and 17 (unlimited rev
       "name": "How much does a creative agency cost for enterprise brands?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Enterprise creative agency costs vary widely. Traditional network agencies (WPP, Publicis) charge 50,000–500,000€+ in annual retainers. Subscription services like Superside start at $10,000/month. Sarani offers per-project fixed pricing: a banner starts at 155€, a full rebranding at 5,000€."
+        "text": "Enterprise creative agency costs vary widely. Traditional network agencies (WPP, Publicis, Havas) charge 50,000–500,000€+ in annual retainers. Subscription services charge thousands per month regardless of actual volume. Sarani offers per-project fixed pricing: a banner starts at 155€, a full rebranding at 5,000€ — no subscription, no retainer, no minimum commitment."
       }
     }
   ]
@@ -381,7 +381,7 @@ Blog articles are server-rendered (SSG via `generateStaticParams`) — performan
 |---|---|---|
 | W6 — SEO keyword map | `docs/seo/keyword-map.md` | **DONE** |
 | W6 — Blog architecture | `docs/seo/blog-architecture.md` | **DONE** |
-| W7–W8 — First 4 SEO articles (AI-produced) | Articles 4, 5, 6, 7 from the 20-article plan | Handoff → @copywriter |
+| W7–W8 — First 4 SEO articles (AI-produced) | Articles 4 (how enterprise teams scale creative production), 5 (cost guide), 6 (D+1 delivery), 7 (fixed price vs subscription) | Handoff → @copywriter |
 | W8–W9 — GEO/LLM optimization layer | FAQPage schema + structured content on blog | Handoff → @geo |
 | W9–W10 — Ongoing 2 articles/month | Autonomous pipeline | Handoff → @seo + @ia |
 

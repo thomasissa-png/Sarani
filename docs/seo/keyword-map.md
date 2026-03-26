@@ -83,9 +83,9 @@ WebSearch confirmed: the enterprise creative and design outsourcing space is dom
 | # | Keyword | Volume Est. | Difficulty Est. | Intent | Current Ranking | Target Page | Priority |
 |---|---|---|---|---|---|---|---|
 | 19 | enterprise creative agency 24 hour delivery | Niche [HYPOTHESE] | Low (15) | Commercial | N/A | Homepage / Blog | P1 |
-| 20 | unlimited design subscription alternative enterprise | Niche [HYPOTHESE] | Low (20) | Commercial | N/A | Blog article | P1 |
+| 20 | per project creative agency enterprise | Niche [HYPOTHESE] | Low (20) | Commercial | N/A | Blog article | P1 |
 
-**Rationale:** Group E targets enterprise teams actively evaluating creative models — specifically those questioning the value of locked-in monthly subscriptions. "Unlimited design subscription alternative enterprise" captures high-intent commercial traffic from buyers who have already identified a problem with their current model. Sarani's per-project positioning (no monthly floor, no commitment) is the direct answer. These keywords have low difficulty because the SERP is dominated by generic comparison content that doesn't speak to enterprise procurement realities.
+**Rationale:** Group E targets enterprise teams actively evaluating creative models — specifically those questioning the value of locked-in monthly subscriptions. "Per project creative agency enterprise" captures high-intent commercial traffic from buyers who understand the subscription model doesn't fit their procurement reality. Sarani's per-project positioning (no monthly floor, no commitment, fixed prices) is the direct and differentiating answer. These keywords have low difficulty because the SERP is dominated by generic comparison content that doesn't speak to enterprise procurement realities.
 
 ---
 
