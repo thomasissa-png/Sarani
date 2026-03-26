@@ -172,6 +172,9 @@ These rules apply to every piece of Sarani copy — website, email, LinkedIn, UI
 | "Tailored to your needs" | Filler phrase | Describe what is actually tailored |
 | "We believe / we think" | Hedges the claim | State the claim directly |
 | "Don't hesitate to" | Passive, dated | "Send us a brief" / "Start a project" |
+| Competitor names (Superside, Design Pickle, ManyPixels, Penji, etc.) | Sarani is a leader — leaders don't name competitors. It signals insecurity. | "Traditional agencies" (generic category). Focus on our strengths and client results, never on what others do. |
+| "Alternative to [competitor]" | Same as above — positions us as a follower | Lead with our proposition: "Enterprise creative, delivered in 24 hours" |
+| "[Competitor] vs Sarani" | Comparison framing diminishes our brand | Delete entirely — we don't compare, we demonstrate |
 
 ### 3.4 Punctuation and capitalisation
 - **Em dashes (—):** Use to connect a claim to its proof. "Sony's Black Friday banners — delivered the same day." Preferred over parentheses in marketing copy.

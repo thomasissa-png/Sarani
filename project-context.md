@@ -33,6 +33,7 @@
 - **3 mots qui ne DÉFINISSENT PAS la marque** : Cheap, Not-business-first, Slow
 - **Concurrent principal** : Grandes agences de communication réseau (Publicis, WPP, Havas, Dentsu) et agences indépendantes premium
 - **Notre différence clé vs lui** : Positionnement qualité-prix imbattable grâce à une ultra-agilité opérationnelle — service 24/7, livraison D+1, révisions illimitées, prix fixes transparents, équipe internationale sur 5 continents travaillant en relais jour/nuit. Les grands réseaux ne peuvent pas offrir ce rythme à cause de leur structure lourde. Preuve : bannières Sony Black Friday livrées le jour même (155€), 5700 slides GEODIS en 3 semaines (8500€), 1500+ vidéos TikTok/mois (20$/vidéo).
+- **RÈGLE ABSOLUE — Zéro mention de concurrents directs** : Sarani est une grande agence internationale leader. On ne cite JAMAIS de concurrent par son nom (Superside, Design Pickle, ManyPixels, Penji, ou tout autre). On parle de nos forces, de nos résultats, de nos clients — pas de ce que font les autres. La comparaison se fait uniquement avec "les agences traditionnelles" en tant que catégorie générique, jamais avec des noms spécifiques. Cette règle s'applique à TOUS les contenus : site web, blog, SEO, social, propositions commerciales, pages pricing.
 
 ---
 
