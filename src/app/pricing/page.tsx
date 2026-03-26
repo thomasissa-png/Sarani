@@ -142,18 +142,17 @@ const PRICING_CATEGORIES: PricingCategory[] = [
   },
 ];
 
-type ComparisonRow = {
-  label: string;
-  sarani: string;
-  superside: string;
-  agency: string;
+type ProofPoint = {
+  metric: string;
+  detail: string;
+  client: string;
 };
 
-const COMPARISON_ROWS: ComparisonRow[] = [
-  { label: "Entry price", sarani: "155\u00A0€/project", superside: "$10,000/month minimum", agency: "Custom retainer" },
-  { label: "Revisions", sarani: "Unlimited", superside: "Included (subscription)", agency: "200–800\u00A0€ each" },
-  { label: "Turnaround", sarani: "24 hours", superside: "24–48 hours", agency: "10–15 days" },
-  { label: "Commitment", sarani: "None", superside: "$6K–$100K/month subscription", agency: "Retainer required" },
+const PROOF_POINTS: ProofPoint[] = [
+  { metric: "155\u00A0€", detail: "per banner — delivered same day", client: "Sony Black Friday" },
+  { metric: "8,500\u00A0€", detail: "for 350 presentations in 3 weeks", client: "GEODIS rebrand" },
+  { metric: "$20", detail: "per video — 1,500+ per month", client: "TikTok compliance edits" },
+  { metric: "60%", detail: "average savings vs previous agency", client: "Enterprise clients" },
 ];
 
 const FAQ_ITEMS = [
@@ -253,56 +252,33 @@ export default function PricingPage() {
         </p>
       </Section>
 
-      {/* Comparison Section — visual */}
-      <Section ariaLabel="Pricing comparison" className="bg-brand-black">
+      {/* Proof Points — results speak louder than comparisons */}
+      <Section ariaLabel="Results" className="bg-brand-black">
         <div className="mx-auto max-w-3xl">
           <h2 className="mb-3 text-center text-3xl font-bold text-brand-white sm:text-4xl">
             The numbers speak.
           </h2>
           <p className="mb-10 text-center text-neutral-400">
-            GEODIS: 350 presentations, 3 weeks, 8,500€. Their previous agency quoted 80,000€.
+            Real prices. Real clients. Real deadlines met.
           </p>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[600px] border-collapse text-left">
-              <thead>
-                <tr>
-                  <th className="px-5 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
-                    &nbsp;
-                  </th>
-                  <th className="rounded-t-lg bg-brand-lemon/10 px-5 py-4 text-sm font-bold uppercase tracking-wider text-brand-lemon">
-                    Sarani
-                  </th>
-                  <th className="px-5 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
-                    Superside
-                  </th>
-                  <th className="px-5 py-4 text-sm font-medium uppercase tracking-wider text-neutral-500">
-                    Network Agency
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON_ROWS.map((row, i) => (
-                  <tr
-                    key={row.label}
-                    className={i < COMPARISON_ROWS.length - 1 ? "border-b border-neutral-800" : ""}
-                  >
-                    <td className="px-5 py-4 font-bold text-brand-white">
-                      {row.label}
-                    </td>
-                    <td className="bg-brand-lemon/10 px-5 py-4 font-bold text-brand-lemon">
-                      {row.sarani}
-                    </td>
-                    <td className="px-5 py-4 text-neutral-500">
-                      {row.superside}
-                    </td>
-                    <td className="px-5 py-4 text-neutral-500 line-through decoration-neutral-700">
-                      {row.agency}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {PROOF_POINTS.map((proof) => (
+              <div
+                key={proof.client}
+                className="rounded-xl border border-neutral-800 p-6 text-center"
+              >
+                <p className="text-3xl font-bold text-brand-lemon sm:text-4xl">
+                  {proof.metric}
+                </p>
+                <p className="mt-2 text-base text-brand-white">
+                  {proof.detail}
+                </p>
+                <p className="mt-1 text-sm text-neutral-500">
+                  {proof.client}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </Section>
