@@ -21,8 +21,10 @@
 | 0 | Strategy Foundations | COMPLETE | @creative-strategy, @product-manager, @data-analyst | None |
 | 1 | Design & Content Foundations | COMPLETE | @design, @copywriter, @ux, @seo, @geo, @legal, @growth | Phase 0 |
 | 2 | Functional Specifications | COMPLETE | @product-manager, @qa, @data-analyst | Phase 1 |
-| 3 | Development (Code) | NOT STARTED | @fullstack, @infrastructure | Phase 2 |
-| 4 | QA & Pre-Launch | NOT STARTED | @qa, @infrastructure, @legal | Phase 3 |
+| 3 | Development (Code) — Phase 1 Site | COMPLETE | @fullstack, @infrastructure | Phase 2 |
+| 3b | Phase 2 — Autonomous Pipeline (LinkedIn + SEO + GEO) | COMPLETE | @social, @seo, @copywriter, @geo | Phase 3 |
+| 3c | Phase 3 — Back-Office V1 (ClickUp + SharePoint + Evoliz + Tracker + Quotes) | COMPLETE | @fullstack, @product-manager, @infrastructure, @agent-factory | Phase 3 |
+| 4 | QA & Pre-Launch | NOT STARTED | @qa, @infrastructure, @legal | Phase 3c |
 | 5 | Launch & Post-Launch | NOT STARTED | @orchestrator, @reviewer, @data-analyst, @growth, @social | Phase 4 |
 
 ---
