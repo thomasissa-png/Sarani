@@ -9,7 +9,7 @@ import {
 import {
   getDriveItemByPath,
   readExcelUsedRange,
-  resolveSheetName,
+  listWorksheets,
 } from "@/lib/integrations/sharepoint";
 import { getInvoices, type EvolizInvoice } from "@/lib/integrations/evoliz";
 import { fetchWithCache, invalidateCache, logSync } from "@/lib/integrations/cache";
@@ -19,7 +19,6 @@ import {
   CACHE_TTL,
   CLIENT_MAPPINGS,
   CLICKUP_SPACES_WITHOUT_TRACKER,
-  EXCEL_SHEET_NAME_CANDIDATES,
   type ClientIntegrationMapping,
 } from "@/lib/integrations/config";
 import type {
@@ -152,27 +151,78 @@ async function fetchExcelTrackers(): Promise<{
   }
 }
 
+/** Sheet names to skip — these are dashboards/summaries, not project data */
+const SKIP_SHEET_PATTERNS = [
+  "performance",
+  "dashboard",
+  "summary",
+  "overview",
+  "template",
+  "config",
+  "instructions",
+];
+
+function shouldSkipSheet(name: string): boolean {
+  const lower = name.toLowerCase().trim();
+  return SKIP_SHEET_PATTERNS.some((p) => lower.includes(p));
+}
+
+/**
+ * Read ALL sheets in a tracker file.
+ * Each sheet = a division (e.g. "Sony France", "Sony Professional").
+ * Skips dashboard/performance sheets.
+ */
 async function readTrackerFile(
   mapping: ClientIntegrationMapping
 ): Promise<ExcelProject[]> {
   const filePath = `${TRACKERS_BASE_PATH}/${mapping.excelTrackerFilename}`;
   const item = await getDriveItemByPath(SHAREPOINT_TRACKERS_DRIVE_ID, filePath);
 
-  // Resolve actual sheet name via Graph API
-  const sheetName = await resolveSheetName(
-    SHAREPOINT_TRACKERS_DRIVE_ID,
-    item.id,
-    EXCEL_SHEET_NAME_CANDIDATES
+  // List ALL worksheets in the workbook
+  const sheets = await listWorksheets(SHAREPOINT_TRACKERS_DRIVE_ID, item.id);
+
+  const allProjects: ExcelProject[] = [];
+
+  // Read each sheet in parallel (except dashboard sheets)
+  const sheetResults = await Promise.allSettled(
+    sheets
+      .filter((sheet) => !shouldSkipSheet(sheet.name))
+      .map(async (sheet) => {
+        try {
+          const rangeData = await readExcelUsedRange(
+            SHAREPOINT_TRACKERS_DRIVE_ID,
+            item.id,
+            sheet.name
+          );
+
+          // Use sheet name as division/subdivision of the client
+          // e.g. "Sony France" → client stays "Sony", but we can track division
+          const fallbackClient = mapping.clickupSpaceName;
+          const projects = parseExcelProjects(rangeData.values, fallbackClient);
+
+          // Tag each project with the sheet/division name for better matching
+          return projects.map((p) => ({
+            ...p,
+            // If the sheet name is different from the client name, add it as context
+            category: p.category || sheet.name,
+          }));
+        } catch (e) {
+          console.error(
+            `[Tracker] Failed to read sheet "${sheet.name}" in ${mapping.excelTrackerFilename}:`,
+            e instanceof Error ? e.message : e
+          );
+          return [];
+        }
+      })
   );
 
-  const rangeData = await readExcelUsedRange(
-    SHAREPOINT_TRACKERS_DRIVE_ID,
-    item.id,
-    sheetName
-  );
+  for (const result of sheetResults) {
+    if (result.status === "fulfilled") {
+      allProjects.push(...result.value);
+    }
+  }
 
-  // M-02: Delegate parsing to shared excel-parser module
-  return parseExcelProjects(rangeData.values, mapping.clickupSpaceName);
+  return allProjects;
 }
 
 async function fetchEvolizInvoices(): Promise<{

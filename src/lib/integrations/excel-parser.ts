@@ -21,23 +21,25 @@ export interface ExcelProject {
 
 /** Known Excel column headers (case-insensitive matching) */
 export const COL_MAP = {
-  customer: ["customer", "client"],
-  division: ["division"],
-  date: ["date"],
-  project: ["project", "project name", "project description"],
-  contact: ["contact", "contact name"],
-  status: ["status"],
-  category: ["category", "cat", "cat."],
-  link: ["link", "sharepoint link", "folder link", "sharepoint"],
-  totalValue: ["total value", "total value (eur)", "total", "total eur"],
-  poNumber: ["po", "po number", "po #", "po#"],
-  invoiceNumber: ["invoice", "invoice number", "invoice #", "inv", "inv."],
+  customer: ["customer", "client", "client name", "company", "account"],
+  division: ["division", "department", "bu", "business unit", "entity"],
+  date: ["date", "project date", "creation date", "start date", "brief date", "order date"],
+  project: ["project", "project name", "project description", "description", "brief", "job", "job name", "titre", "titre du projet"],
+  contact: ["contact", "contact name", "client contact", "requestor", "demandeur", "contact client", "person"],
+  status: ["status", "project status", "statut", "état", "state"],
+  category: ["category", "cat", "cat.", "type", "service", "service type", "deliverable type"],
+  link: ["link", "sharepoint link", "folder link", "sharepoint", "folder", "url", "dossier"],
+  totalValue: [
+    "total value", "total value (eur)", "total", "total eur", "total usd",
+    "value", "amount", "montant", "prix", "price", "total price",
+    "total value (usd)", "project value", "budget", "fee", "fees",
+    "valeur", "valeur totale",
+  ],
+  poNumber: ["po", "po number", "po #", "po#", "purchase order", "bon de commande", "po ref", "po reference"],
+  invoiceNumber: ["invoice", "invoice number", "invoice #", "inv", "inv.", "invoice ref", "facture", "n° facture"],
   invoiceStatus: [
-    "invoice status",
-    "payment status",
-    "payment",
-    "inv. status",
-    "inv status",
+    "invoice status", "payment status", "payment", "inv. status", "inv status",
+    "paiement", "statut facture", "billing status", "billing",
   ],
 } as const;
 
