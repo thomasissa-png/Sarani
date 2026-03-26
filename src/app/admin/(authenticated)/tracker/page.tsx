@@ -7,6 +7,7 @@ import type {
   TrackerProject,
   TrackerResponse,
 } from "@/types/integrations";
+import { CLICKUP_STATUS_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── Sorting Types ──────────────────────────────────────────────────────────
 
@@ -36,7 +37,10 @@ interface StatusResponse {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const PROJECT_STATUSES = ["All", "Open", "in progress", "review", "Closed"] as const;
+const PROJECT_STATUSES = [
+  "All",
+  ...CLICKUP_STATUS_MAPPINGS.map((m) => m.clickupStatus),
+] as const;
 const INVOICE_STATUSES = ["All", "Open PO", "Invoiced", "Paid", "Overdue"] as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
