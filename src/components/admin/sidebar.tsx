@@ -41,7 +41,7 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "grid" },
   { label: "Tracker", href: "/admin/tracker", icon: "activity" },
-  { label: "Quick Brief", href: "/admin/quick-brief", icon: "zap" },
+  { label: "Project Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
   { label: "Clients", href: "/admin/clients", icon: "users" },
   { label: "AI Teams", href: "/admin/teams", icon: "team" },
@@ -67,7 +67,6 @@ const AGENT_GROUPS: AgentGroup[] = [
   {
     label: "Strategy",
     items: [
-      { label: "Project Manager", href: "/admin/agents/pm", icon: "briefcase" },
       { label: "Creative", href: "/admin/agents/creative", icon: "palette" },
       { label: "Proposal", href: "/admin/agents/proposal", icon: "file-text" },
       { label: "Presentation", href: "/admin/agents/presentation", icon: "monitor" },
