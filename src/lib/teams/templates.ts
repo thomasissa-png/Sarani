@@ -19,7 +19,8 @@ export type TemplateType =
   | "brand_identity"
   | "video"
   | "translation"
-  | "ad_campaign";
+  | "ad_campaign"
+  | "custom";
 
 export interface TemplateStep {
   stepOrder: number;
@@ -207,6 +208,12 @@ export const TEAM_TEMPLATES: Record<TemplateType, TeamTemplate> = {
         label: "Final copy & compliance check",
       },
     ],
+  },
+  custom: {
+    type: "custom",
+    name: "Custom Team",
+    description: "Build your own team with custom agents and steps",
+    steps: [], // User defines steps manually
   },
 };
 

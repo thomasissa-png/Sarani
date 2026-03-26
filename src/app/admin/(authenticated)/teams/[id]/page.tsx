@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AGENT_TYPE_LABELS, type AgentType } from "@/lib/teams/templates";
@@ -80,6 +80,8 @@ export default function TeamDetailPage() {
   const [rerunStepId, setRerunStepId] = useState<string | null>(null);
   const [rerunComment, setRerunComment] = useState("");
   const [rerunning, setRerunning] = useState(false);
+  const rerunTriggerRef = useRef<HTMLButtonElement>(null);
+  const rerunTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchTeam = useCallback(async () => {
     try {
@@ -89,29 +91,30 @@ export default function TeamDetailPage() {
       }
       const data: TeamDetail = await res.json();
       setTeam(data);
-
-      // Auto-select the first completed step or the step that should run next
-      if (!selectedStepId) {
-        const nextStep = data.steps.find(
-          (s) => s.status === "running" || s.status === "pending"
-        );
-        const lastCompleted = [...data.steps]
-          .reverse()
-          .find((s) => s.status === "completed");
-        setSelectedStepId(
-          nextStep?.id ?? lastCompleted?.id ?? data.steps[0]?.id ?? null
-        );
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
-  }, [teamId, selectedStepId]);
+  }, [teamId]);
 
   useEffect(() => {
     fetchTeam();
   }, [fetchTeam]);
+
+  // Auto-select a step on first load (when no step is selected yet)
+  useEffect(() => {
+    if (selectedStepId || !team) return;
+    const nextStep = team.steps.find(
+      (s) => s.status === "running" || s.status === "pending"
+    );
+    const lastCompleted = [...team.steps]
+      .reverse()
+      .find((s) => s.status === "completed");
+    setSelectedStepId(
+      nextStep?.id ?? lastCompleted?.id ?? team.steps[0]?.id ?? null
+    );
+  }, [team, selectedStepId]);
 
   // Poll while a step is running
   useEffect(() => {
@@ -119,6 +122,19 @@ export default function TeamDetailPage() {
     const interval = setInterval(fetchTeam, 3000);
     return () => clearInterval(interval);
   }, [executingStepId, fetchTeam]);
+
+  // Focus management for rerun modal
+  useEffect(() => {
+    if (rerunStepId) {
+      // Small delay to ensure the textarea is mounted
+      requestAnimationFrame(() => {
+        rerunTextareaRef.current?.focus();
+      });
+    } else {
+      // Return focus to the trigger button when modal closes
+      rerunTriggerRef.current?.focus();
+    }
+  }, [rerunStepId]);
 
   // Clear executing flag when step completes
   useEffect(() => {
@@ -188,6 +204,18 @@ export default function TeamDetailPage() {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     });
+  }
+
+  function handleDownloadOutput(text: string, stepLabel: string) {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${stepLabel.replace(/[^a-zA-Z0-9_-]/g, "_")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   if (loading) {
@@ -500,6 +528,22 @@ export default function TeamDetailPage() {
                       </button>
 
                       <button
+                        onClick={() =>
+                          handleDownloadOutput(
+                            selectedStep.output ?? "",
+                            selectedStep.label
+                          )
+                        }
+                        className="px-3 py-1.5 text-xs font-medium text-neutral-500 hover:text-brand-black border border-neutral-300 rounded-lg hover:border-neutral-400 transition-colors flex items-center gap-1.5"
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Download
+                      </button>
+
+                      <button
+                        ref={rerunTriggerRef}
                         onClick={() => {
                           setRerunStepId(selectedStep.id);
                           setRerunComment("");
@@ -542,13 +586,51 @@ export default function TeamDetailPage() {
 
       {/* Rerun Modal */}
       {rerunStepId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="rerun-modal-title"
+          onKeyDown={(e) => {
+            if (e.key === "Escape" && !rerunning) {
+              setRerunStepId(null);
+            }
+            // Focus trap: cycle within the modal
+            if (e.key === "Tab") {
+              const modal = e.currentTarget.querySelector<HTMLDivElement>("[data-modal-content]");
+              if (!modal) return;
+              const focusable = modal.querySelectorAll<HTMLElement>(
+                "textarea, button:not([disabled])"
+              );
+              if (focusable.length === 0) return;
+              const first = focusable[0];
+              const last = focusable[focusable.length - 1];
+              if (e.shiftKey) {
+                if (document.activeElement === first) {
+                  e.preventDefault();
+                  last.focus();
+                }
+              } else {
+                if (document.activeElement === last) {
+                  e.preventDefault();
+                  first.focus();
+                }
+              }
+            }
+          }}
+        >
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => !rerunning && setRerunStepId(null)}
           />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-brand-black">
+          <div
+            data-modal-content
+            className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4"
+          >
+            <h3
+              id="rerun-modal-title"
+              className="text-lg font-semibold text-brand-black"
+            >
               Re-run step
             </h3>
             <p className="text-sm text-neutral-500">
@@ -556,6 +638,7 @@ export default function TeamDetailPage() {
               guide the output (e.g. &quot;Too formal, make it more casual&quot;).
             </p>
             <textarea
+              ref={rerunTextareaRef}
               value={rerunComment}
               onChange={(e) => setRerunComment(e.target.value)}
               placeholder="Optional feedback for the agent..."
