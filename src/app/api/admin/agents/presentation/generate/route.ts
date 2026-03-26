@@ -11,7 +11,7 @@ import {
 } from "@/lib/validations/presentation";
 import type { Client } from "@/lib/db/schema";
 
-const MODEL = "claude-sonnet-4-5-20250514";
+const MODEL = "claude-sonnet-4-5-20241022";
 const MAX_TOKENS = 16384;
 
 /**

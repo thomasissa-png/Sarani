@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     const { data, usage } = await callClaudeJSON<VideoScriptResponse>({
       systemPrompt: VIDEO_SCRIPT_SYSTEM_PROMPT,
       userMessage,
-      model: "claude-sonnet-4-5-20250514",
+      model: "claude-sonnet-4-5-20241022",
       maxTokens: 8192,
     });
 
