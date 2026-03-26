@@ -94,7 +94,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       { items: ["Custom creation", "Management", "Tasks Outsourcing"] },
     ],
     proofPoint:
-      "Sony needed Black Friday banners with a same-day turnaround. No standard brief, no standard process. Request in the morning. Two proposals by afternoon. Delivery by the next morning. 155\u20AC.",
+      "Sony needed Black Friday banners with a same-day turnaround. No standard brief, no standard process. Request in the morning. Two proposals by afternoon. Delivery by the next morning. 150\u20AC.",
   },
 ];
 

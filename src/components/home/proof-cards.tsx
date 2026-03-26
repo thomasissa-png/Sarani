@@ -6,7 +6,7 @@ const PROOF_POINTS = [
   {
     client: "Sony",
     stat: "Same-day banners",
-    price: "155 \u20AC",
+    price: "150 \u20AC",
     detail: "Launch campaign assets delivered within hours, not weeks.",
   },
   {

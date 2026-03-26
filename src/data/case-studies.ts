@@ -64,11 +64,11 @@ export const caseStudies: CaseStudy[] = [
     deliverable: "Banner production",
     volume: "125+ assets across 15 languages",
     turnaround: "Same day (24 hours)",
-    outcome: "Black Friday campaign, banners from 155\u20AC",
+    outcome: "Black Friday campaign, banners from 150\u20AC",
     brief:
       "Sony needed Black Friday banners delivered the same day across 15 languages. We produced 125+ assets \u2014 banners, social cards, and email headers \u2014 before the deadline.",
-    result: "125+ assets. 15 languages. Same day. From 155\u20AC per banner.",
-    headline: "125+ Black Friday assets across 15 languages. Same day. From 155\u20AC per banner.",
+    result: "125+ assets. 15 languages. Same day. From 150\u20AC per banner.",
+    headline: "125+ Black Friday assets across 15 languages. Same day. From 150\u20AC per banner.",
     keyMetric: "125+ assets in 24h",
     stats: [
       { label: "Assets delivered", value: "125+" },
@@ -76,7 +76,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Turnaround", value: "24h" },
     ],
     metaDescription:
-      "How Sarani produced 125+ Black Friday assets for Sony across 15 languages in 24 hours. Banners, social cards, and email headers \u2014 same-day delivery from 155\u20AC.",
+      "How Sarani produced 125+ Black Friday assets for Sony across 15 languages in 24 hours. Banners, social cards, and email headers \u2014 same-day delivery from 150\u20AC.",
   },
   {
     slug: "geodis-presentation-rebranding",
@@ -155,20 +155,20 @@ export const caseStudies: CaseStudy[] = [
     deliverable: "Black Friday banners",
     volume: "2 assets",
     turnaround: "Same day",
-    outcome: "155\u20AC total \u2014 brief to delivery in under 24h",
+    outcome: "150\u20AC total \u2014 brief to delivery in under 24h",
     brief:
       "Sony needed Black Friday banners for their ULT series \u2014 urgently. The brief arrived in the morning. The campaign was live the next day.",
     result: "2 production-ready banner assets delivered. Brief to final file in under 24 hours.",
     headline: "Black Friday Banners. Same Day.",
-    keyMetric: "155\u20AC",
+    keyMetric: "150\u20AC",
     stats: [
       { label: "Assets delivered", value: "2" },
-      { label: "Price", value: "155\u20AC" },
+      { label: "Price", value: "150\u20AC" },
       { label: "Turnaround", value: "<24h" },
     ],
     metaDescription:
-      "How Sarani delivered Sony\u2019s Black Friday banners in under 24 hours for 155\u20AC \u2014 same-day first proposals, overnight finish, morning delivery.",
-    subtitle: "Request in the morning. Two proposals by afternoon. Final delivery by the next morning. 155\u20AC.",
+      "How Sarani delivered Sony\u2019s Black Friday banners in under 24 hours for 150\u20AC \u2014 same-day first proposals, overnight finish, morning delivery.",
+    subtitle: "Request in the morning. Two proposals by afternoon. Final delivery by the next morning. 150\u20AC.",
     challenge: "Sony needed Black Friday banners for their ULT series \u2014 urgently. The brief arrived in the morning. The campaign was live the next day. There was no room for the standard agency process: intake, briefing, kickoff, creative exploration, first draft, feedback loop. Sony needed proposals the same day the brief landed.",
     solution: "Two proposals were produced and returned to Sony the same afternoon. One designer worked the day shift, a second took over overnight to apply Sony\u2019s final feedback and prepare the delivery files. By morning, the assets were ready.\n\nThis is the relay structure that makes Sarani\u2019s D+1 commitment structurally possible \u2014 not a rush fee, not an exception. It is how the team is built: 35+ experts across 5 continents, working in time-zone relay so a brief that lands at 9am in Paris is still being worked on at 2am Paris time in another timezone.",
     resultsDetail: "2 production-ready banner assets delivered. Brief to final file in under 24 hours.",

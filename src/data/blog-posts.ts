@@ -111,7 +111,7 @@ TikTok, Sony, GEODIS, and Pernod Ricard use Sarani on a per-project basis. No su
 
 Here is what that looks like in practice:
 
-- Sony needed 125 banners across 15 languages for Black Friday. Brief in the morning. Every banner delivered the same day. One invoice: 155€ per banner, fixed. No retainer activated, no SOW renegotiated, no subscription seat resized.
+- Sony needed 125 banners across 15 languages for Black Friday. Brief in the morning. Every banner delivered the same day. One invoice: 150€ per banner, fixed. No retainer activated, no SOW renegotiated, no subscription seat resized.
 
 - GEODIS needed 350 presentations rebranded across multiple European markets. Their previous vendor had quoted 80,000€ and 3 months. Sarani delivered 5,700 slides in 3 weeks for 8,500€. Fixed price, confirmed before the first slide was touched.
 
@@ -151,7 +151,7 @@ That guarantee removes the switching cost of evaluation. Start with a single pro
 
 **How does per-project pricing scale for large campaigns?**
 
-Large campaigns are quoted as a single fixed-price deliverable. GEODIS's 5,700-slide rebrand was 8,500€ confirmed before work began. Sony's 125 banners were 155€ each, quoted as a batch. Volume does not change the pricing model — it changes the total invoice, which is confirmed upfront.
+Large campaigns are quoted as a single fixed-price deliverable. GEODIS's 5,700-slide rebrand was 8,500€ confirmed before work began. Sony's 125 banners were 150€ each, quoted as a batch. Volume does not change the pricing model — it changes the total invoice, which is confirmed upfront.
 
 **Does Sarani require a minimum number of projects per month?**
 
@@ -200,7 +200,7 @@ Subscription creative platforms charge a flat monthly fee for unlimited requests
 The hidden cost: if your monthly volume is variable, you pay for capacity you do not use in slow months. Subscription models also typically limit the number of active requests in queue — which creates bottlenecks during campaign peaks.
 
 **3. Per-project fixed pricing**
-Fixed pricing per deliverable — a banner at 155€, a video edit at 20€, a full rebranding at 5,000€. No subscription, no retainer, no change orders. You pay for what you order.
+Fixed pricing per deliverable — a banner at 150€, a video edit at 20€, a full rebranding at 5,000€. No subscription, no retainer, no change orders. You pay for what you order.
 
 This is the model Sarani operates on. It is the only model where the unit economics are fully transparent before you approve the brief.
 
@@ -215,8 +215,8 @@ A fully staffed in-house team (3–5 designers, 1–2 video editors, 1 creative 
 These figures are drawn from documented Sarani engagements and publicly available competitor pricing. They are not estimates.
 
 | Deliverable | Traditional agency | Subscription service | Sarani fixed price |
-| Single display banner | 400–1,200€ | Included in monthly subscription | 155–470€ |
-| 125 banners (Black Friday Sony) | 15,000–40,000€ | Monthly subscription ongoing | 155€/banner — Sony's campaign delivered same-day |
+| Single display banner | 400–1,200€ | Included in monthly subscription | 150–470€ |
+| 125 banners (Black Friday Sony) | 15,000–40,000€ | Monthly subscription ongoing | 150€/banner — Sony's campaign delivered same-day |
 | 350 presentations rebranded (GEODIS) | 80,000€ (quoted) | Subscription + overages | 8,500€ (delivered in 3 weeks) |
 | Video edit compliance (per video) | 150–400€ | Included in subscription | 20€ |
 | 1,500 video edits/month (TikTok) | 225,000–600,000€ | Enterprise subscription tier | 30,000€/month |
@@ -249,7 +249,7 @@ Four questions that reveal the real cost of any agency relationship:
 
 Sophie in marketing and Marc in procurement have different questions about the same invoice. Sophie wants quality and speed. Marc wants transparency and defensibility to his CFO.
 
-Fixed pricing answers both questions simultaneously. A 155€ banner is auditable. An "8% of project budget for strategic alignment meetings" is not.
+Fixed pricing answers both questions simultaneously. A 150€ banner is auditable. An "8% of project budget for strategic alignment meetings" is not.
 
 For enterprise teams, the move toward per-project pricing is not about saving money on individual deliverables. It is about removing the negotiation and approval overhead that makes every campaign launch slower than it needs to be.
 
@@ -257,7 +257,7 @@ For enterprise teams, the move toward per-project pricing is not about saving mo
 
 **How much does a creative agency cost for enterprise brands?**
 
-Traditional network agencies (WPP, Publicis, Havas) charge 50,000–500,000€+ per year in retainers. Subscription creative services charge thousands per month regardless of actual volume used. Per-project agencies like Sarani charge per deliverable: a banner starts at 155€, a full rebranding at 5,000€. The right model depends on your volume and procurement structure.
+Traditional network agencies (WPP, Publicis, Havas) charge 50,000–500,000€+ per year in retainers. Subscription creative services charge thousands per month regardless of actual volume used. Per-project agencies like Sarani charge per deliverable: a banner starts at 150€, a full rebranding at 5,000€. The right model depends on your volume and procurement structure.
 
 **Is a subscription model cheaper than per-project pricing?**
 
@@ -321,7 +321,7 @@ Sony needed 125 banners across 15 languages for Black Friday. The brief arrived 
 
 That is not a one-time exception — it is the relay model in action at scale. 125 deliverables across 15 languages in one working day requires more than fast designers. It requires a system where multiple team members work in parallel on the same brief, with consistent brand guidelines and format specs accessible to every contributor.
 
-The per-banner cost was 155€. Total project: under 20,000€, delivered same-day. A traditional agency would have quoted 3 weeks and 3x the budget.
+The per-banner cost was 150€. Total project: under 20,000€, delivered same-day. A traditional agency would have quoted 3 weeks and 3x the budget.
 
 **What D+1 does not mean**
 
@@ -375,7 +375,7 @@ New clients complete a brand intake — logo files, brand guidelines, color code
 
 **Is D+1 delivery included at every price point?**
 
-Yes. D+1 delivery is structural — it is not a premium tier. A 155€ banner has the same delivery standard as a 5,000€ rebranding project.`,
+Yes. D+1 delivery is structural — it is not a premium tier. A 150€ banner has the same delivery standard as a 5,000€ rebranding project.`,
     author: "Sarani Team",
     publishedAt: "2026-03-26",
     category: "Behind the Scenes",
@@ -403,7 +403,7 @@ The operational reality: subscription queues have capacity limits. Most services
 
 **How fixed-price creative agencies work**
 
-Per-project pricing charges a defined amount per deliverable type. A banner is 155€. A video edit is 20€. A presentation rebrand is 8,500€. You pay when you order. There is no monthly minimum, no commitment, and no unused capacity.
+Per-project pricing charges a defined amount per deliverable type. A banner is 150€. A video edit is 20€. A presentation rebrand is 8,500€. You pay when you order. There is no monthly minimum, no commitment, and no unused capacity.
 
 The core proposition: complete cost transparency, no lock-in, and pricing that scales proportionally to actual volume.
 
@@ -429,7 +429,7 @@ Marc in procurement sees the two models differently from Sophie in marketing.
 
 A $10,000/month subscription is a recurring operational expense. It needs annual budget approval, a vendor contract, and a justification that assumes a minimum volume that validates the cost. If the following year's campaign plan changes, the subscription cost stays fixed.
 
-A per-project invoice is a variable expense tied directly to output. It is auditable at the deliverable level. A 155€ banner invoice answers its own procurement question: one banner, 155 euros, delivered in 24 hours. There is no contract to renegotiate, no unused capacity to explain, and no exit process if the relationship is not working.
+A per-project invoice is a variable expense tied directly to output. It is auditable at the deliverable level. A 150€ banner invoice answers its own procurement question: one banner, 150 euros, delivered in 24 hours. There is no contract to renegotiate, no unused capacity to explain, and no exit process if the relationship is not working.
 
 For enterprises with formal procurement cycles, per-project pricing removes approximately 3–4 weeks of annual contract administration per creative vendor.
 

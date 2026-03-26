@@ -7,7 +7,7 @@ import { ClientLogos } from "@/components/home/client-logos";
 export const metadata: Metadata = {
   title: "Sarani Pricing — Fixed Rates, No Subscription",
   description:
-    "Transparent fixed pricing for enterprise creative work. Banners from 155€. Full rebrand from 5,000€. No monthly retainer. No surprise invoices.",
+    "Transparent fixed pricing for enterprise creative work. Banners from 150€. Full rebrand from 5,000€. No monthly retainer. No surprise invoices.",
 };
 
 /* ------------------------------------------------------------------ */
@@ -86,7 +86,7 @@ const PRICING_CATEGORIES: PricingCategory[] = [
     icon: <IconPalette />,
     accent: "border-t-brand-flame",
     items: [
-      { name: "Static banner", price: "155\u00A0€", priceUsd: "$\u00A0170" },
+      { name: "Static banner", price: "150\u00A0€", priceUsd: "$\u00A0170" },
       { name: "Banner adaptation", price: "35\u00A0€/size", priceUsd: "$\u00A040/size" },
       { name: "Full rebranding", price: "from 5,000\u00A0€", priceUsd: "from $\u00A05,500" },
       { name: "Infographic", price: "180\u00A0€ + 35\u00A0€/lang", priceUsd: "$\u00A0200 + $\u00A040/lang" },
@@ -149,7 +149,7 @@ type ProofPoint = {
 };
 
 const PROOF_POINTS: ProofPoint[] = [
-  { metric: "155\u00A0€", detail: "per banner — delivered same day", client: "Sony Black Friday" },
+  { metric: "150\u00A0€", detail: "per banner — delivered same day", client: "Sony Black Friday" },
   { metric: "8,500\u00A0€", detail: "for 350 presentations in 3 weeks", client: "GEODIS rebrand" },
   { metric: "$20", detail: "per video — 1,500+ per month", client: "TikTok compliance edits" },
   { metric: "60%", detail: "average savings vs previous agency", client: "Enterprise clients" },

@@ -96,7 +96,7 @@ export default function AboutPage() {
           <p className="text-lg leading-relaxed text-neutral-600">
             Fixed prices, published on the website. Unlimited revisions,
             included. D+1 delivery as the default — not a premium add-on. And
-            no subscription lock-in: you start with one project, at 155&#8364;,
+            no subscription lock-in: you start with one project, at 150&#8364;,
             and scale when it makes sense for you.
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function AboutPage() {
           <p className="mb-6 text-lg leading-relaxed text-neutral-600">
             TikTok trusted us with 1,500+ video edits a month. Sony called us
             the day their Black Friday banners were needed — not the week
-            before, that day — and we delivered at 155&#8364; per banner. GEODIS
+            before, that day — and we delivered at 150&#8364; per banner. GEODIS
             gave us 350 presentations to rebrand in 3 weeks. 5,700 slides.
             8,500&#8364;. Every one delivered.
           </p>

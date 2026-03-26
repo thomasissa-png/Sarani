@@ -595,7 +595,7 @@ export default function SeoPage() {
                       onChange={(val) =>
                         setForm((prev) => ({ ...prev, proofPoints: val }))
                       }
-                      placeholder='e.g. "155 EUR Sony banners", "8,500 EUR GEODIS 5,700 slides"'
+                      placeholder='e.g. "150 EUR Sony banners", "8,500 EUR GEODIS 5,700 slides"'
                       rows={2}
                     />
                   </FormField>
