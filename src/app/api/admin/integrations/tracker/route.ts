@@ -12,7 +12,7 @@ import {
   listWorksheets,
 } from "@/lib/integrations/sharepoint";
 import { getInvoices, type EvolizInvoice } from "@/lib/integrations/evoliz";
-import { fetchWithCache, invalidateCache, logSync } from "@/lib/integrations/cache";
+import { fetchWithCache, readCache, writeCache, invalidateCache, logSync } from "@/lib/integrations/cache";
 import {
   SHAREPOINT_TRACKERS_DRIVE_ID,
   TRACKERS_BASE_PATH,
@@ -93,58 +93,92 @@ async function fetchClickUpTasks(): Promise<{
   }
 }
 
+/** Cache entry for a single Excel tracker file */
+interface FileCacheEntry {
+  projects: ExcelProject[];
+  lastModified: string; // ISO date from SharePoint
+}
+
+/**
+ * Fetch Excel trackers using incremental sync:
+ * 1. Get file metadata (lightweight — just lastModifiedDateTime)
+ * 2. Compare with cached version
+ * 3. Only re-read files that changed since last sync
+ * 4. Merge cached + fresh results
+ */
 async function fetchExcelTrackers(): Promise<{
   projects: ExcelProject[];
   meta: SourceMeta;
 }> {
   try {
-    const result = await fetchWithCache<ExcelProject[]>({
-      cacheKey: "tracker:sharepoint_all_excel",
+    // Deduplicate files
+    const uniqueFiles = new Map<string, ClientIntegrationMapping>();
+    for (const mapping of CLIENT_MAPPINGS) {
+      if (!uniqueFiles.has(mapping.excelTrackerFilename)) {
+        uniqueFiles.set(mapping.excelTrackerFilename, mapping);
+      }
+    }
+
+    const allProjects: ExcelProject[] = [];
+    let filesRead = 0;
+    let filesSkipped = 0;
+
+    // Process each file: check if changed, re-read only if needed
+    for (const mapping of uniqueFiles.values()) {
+      const cacheKey = `tracker:excel:${mapping.excelTrackerFilename}`;
+
+      try {
+        const filePath = `${TRACKERS_BASE_PATH}/${mapping.excelTrackerFilename}`;
+        const item = await getDriveItemByPath(SHAREPOINT_TRACKERS_DRIVE_ID, filePath);
+        const fileModified = item.lastModifiedDateTime;
+
+        // Check if we have a cached version with the same lastModified
+        const cached = await readCache<FileCacheEntry>(cacheKey);
+
+        if (cached && !cached.stale && cached.data.lastModified === fileModified) {
+          // File hasn't changed — use cached projects
+          allProjects.push(...cached.data.projects);
+          filesSkipped++;
+          continue;
+        }
+
+        // File changed or no cache — re-read all sheets
+        const projects = await readTrackerFile(mapping);
+        allProjects.push(...projects);
+        filesRead++;
+
+        // Cache the result with the file's lastModified timestamp
+        await writeCache(cacheKey, "sharepoint", {
+          projects,
+          lastModified: fileModified,
+        } satisfies FileCacheEntry, CACHE_TTL.sharepoint);
+      } catch (e) {
+        // Try to use stale cache as fallback
+        const cacheKey = `tracker:excel:${mapping.excelTrackerFilename}`;
+        const staleCache = await readCache<FileCacheEntry>(cacheKey);
+        if (staleCache) {
+          allProjects.push(...staleCache.data.projects);
+          filesSkipped++;
+        } else {
+          console.error(
+            `[Tracker] Failed to read ${mapping.excelTrackerFilename}:`,
+            e instanceof Error ? e.message : e
+          );
+        }
+      }
+    }
+
+    await logSync({
       source: "sharepoint",
-      ttlSeconds: CACHE_TTL.sharepoint,
-      fetcher: async () => {
-        // Deduplicate: multiple CLIENT_MAPPINGS can point to the same Excel file
-        // (e.g. TikTok and PICO XR both use Bytedance tracker)
-        const uniqueFiles = new Map<string, ClientIntegrationMapping>();
-        for (const mapping of CLIENT_MAPPINGS) {
-          if (!uniqueFiles.has(mapping.excelTrackerFilename)) {
-            uniqueFiles.set(mapping.excelTrackerFilename, mapping);
-          }
-        }
-
-        const results = await Promise.allSettled(
-          Array.from(uniqueFiles.values()).map((mapping) => readTrackerFile(mapping))
-        );
-
-        const allProjects: ExcelProject[] = [];
-        const uniqueFileList = Array.from(uniqueFiles.values());
-        for (let i = 0; i < results.length; i++) {
-          const result = results[i];
-          if (result.status === "fulfilled") {
-            allProjects.push(...result.value);
-          } else {
-            console.error(
-              `Failed to read tracker for ${uniqueFileList[i].clickupSpaceName}:`,
-              result.reason
-            );
-          }
-        }
-
-        await logSync({
-          source: "sharepoint",
-          action: "fetch_all_trackers",
-          payload: { projectCount: allProjects.length },
-        });
-
-        return allProjects;
-      },
+      action: "fetch_all_trackers",
+      payload: { projectCount: allProjects.length, filesRead, filesSkipped },
     });
 
     return {
-      projects: result.data,
+      projects: allProjects,
       meta: {
-        status: result.stale ? "stale" : "live",
-        fetchedAt: result.fetchedAt.toISOString(),
+        status: "live",
+        fetchedAt: new Date().toISOString(),
       },
     };
   } catch (error) {
@@ -342,10 +376,14 @@ export async function GET(request: Request) {
     // If force-refresh header is set, invalidate all tracker caches
     const forceRefresh = request.headers.get("x-force-refresh") === "true";
     if (forceRefresh) {
+      // Invalidate per-file Excel caches + ClickUp + Evoliz
+      const excelInvalidations = CLIENT_MAPPINGS.map((m) =>
+        invalidateCache(`tracker:excel:${m.excelTrackerFilename}`)
+      );
       await Promise.all([
         invalidateCache("tracker:clickup_all_tasks"),
-        invalidateCache("tracker:sharepoint_all_excel"),
         invalidateCache("tracker:evoliz_all_invoices"),
+        ...excelInvalidations,
       ]);
     }
 
