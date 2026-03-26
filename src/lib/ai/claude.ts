@@ -9,6 +9,7 @@ type CallClaudeOptions = {
   userMessage: string;
   model?: string;
   maxTokens?: number;
+  timeout?: number;
 };
 
 type CallClaudeResult = {
@@ -43,7 +44,7 @@ export async function callClaude(
 ): Promise<CallClaudeResult> {
   const client = getClient();
 
-  const { systemPrompt, userMessage, model, maxTokens } = options;
+  const { systemPrompt, userMessage, model, maxTokens, timeout } = options;
 
   try {
     const response = await client.messages.create(
@@ -53,7 +54,7 @@ export async function callClaude(
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],
       },
-      { timeout: REQUEST_TIMEOUT_MS }
+      { timeout: timeout ?? REQUEST_TIMEOUT_MS }
     );
 
     const textBlock = response.content.find((block) => block.type === "text");

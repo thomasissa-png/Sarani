@@ -11,6 +11,8 @@ import { callClaude } from "@/lib/ai/claude";
 import { buildStepPrompt } from "@/lib/teams/prompts";
 import { AGENT_TYPE_LABELS, type AgentType } from "@/lib/teams/templates";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // ─── POST /api/admin/teams/[id]/steps/[stepId]/execute ──────────────────────
 
 export async function POST(
@@ -24,6 +26,14 @@ export async function POST(
     }
 
     const { id: teamId, stepId } = await params;
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(teamId) || !UUID_REGEX.test(stepId)) {
+      return NextResponse.json(
+        { error: "Invalid team ID or step ID format" },
+        { status: 400 }
+      );
+    }
 
     // Fetch team
     const [team] = await db
@@ -61,18 +71,22 @@ export async function POST(
       );
     }
 
+    // Fetch previous steps (single query — used for both gate check and output gathering)
+    const previousSteps = step.stepOrder > 1
+      ? await db
+          .select()
+          .from(teamSteps)
+          .where(
+            and(
+              eq(teamSteps.teamId, teamId),
+              lt(teamSteps.stepOrder, step.stepOrder)
+            )
+          )
+          .orderBy(asc(teamSteps.stepOrder))
+      : [];
+
     // Verify all previous steps are completed (manual approval gate)
     if (step.stepOrder > 1) {
-      const previousSteps = await db
-        .select()
-        .from(teamSteps)
-        .where(
-          and(
-            eq(teamSteps.teamId, teamId),
-            lt(teamSteps.stepOrder, step.stepOrder)
-          )
-        );
-
       const allPreviousCompleted = previousSteps.every(
         (s) => s.status === "completed"
       );
@@ -88,19 +102,7 @@ export async function POST(
       }
     }
 
-    // Gather outputs from completed previous steps
-    const completedPreviousSteps = await db
-      .select()
-      .from(teamSteps)
-      .where(
-        and(
-          eq(teamSteps.teamId, teamId),
-          lt(teamSteps.stepOrder, step.stepOrder)
-        )
-      )
-      .orderBy(asc(teamSteps.stepOrder));
-
-    const previousOutputs = completedPreviousSteps
+    const previousOutputs = previousSteps
       .filter((s) => s.output)
       .map((s) => ({
         label: s.label,
@@ -109,14 +111,27 @@ export async function POST(
         output: s.output as string,
       }));
 
-    // Mark step as running
-    await db
+    // Atomically claim the step — prevents race conditions
+    const [claimed] = await db
       .update(teamSteps)
       .set({
         status: "running",
         startedAt: new Date(),
       })
-      .where(eq(teamSteps.id, stepId));
+      .where(
+        and(
+          eq(teamSteps.id, stepId),
+          eq(teamSteps.status, "pending")
+        )
+      )
+      .returning({ id: teamSteps.id });
+
+    if (!claimed) {
+      return NextResponse.json(
+        { error: "Step is no longer pending — it may have been claimed by another request" },
+        { status: 409 }
+      );
+    }
 
     // Update team status to in_progress if still draft
     if (team.status === "draft") {
@@ -139,6 +154,7 @@ export async function POST(
         systemPrompt,
         userMessage,
         maxTokens: 8192,
+        timeout: previousOutputs.length > 0 ? 120_000 : undefined,
       });
 
       const totalTokens = result.usage.inputTokens + result.usage.outputTokens;

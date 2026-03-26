@@ -12,6 +12,8 @@ import { buildStepPrompt } from "@/lib/teams/prompts";
 import { AGENT_TYPE_LABELS, type AgentType } from "@/lib/teams/templates";
 import { z } from "zod";
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const rerunSchema = z.object({
   comment: z.string().min(1, "Comment is required for a rerun"),
 });
@@ -29,6 +31,14 @@ export async function POST(
     }
 
     const { id: teamId, stepId } = await params;
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(teamId) || !UUID_REGEX.test(stepId)) {
+      return NextResponse.json(
+        { error: "Invalid team ID or step ID format" },
+        { status: 400 }
+      );
+    }
 
     const body = await request.json();
     const parsed = rerunSchema.safeParse(body);

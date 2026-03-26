@@ -136,6 +136,8 @@ export async function POST(request: NextRequest) {
 
 // ─── GET /api/admin/teams ───────────────────────────────────────────────────
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getUserFromSession();
@@ -146,6 +148,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const statusFilter = searchParams.get("status");
     const clientIdFilter = searchParams.get("clientId");
+
+    // Validate clientId format if provided
+    if (clientIdFilter && !UUID_REGEX.test(clientIdFilter)) {
+      return NextResponse.json(
+        { error: "Invalid clientId format" },
+        { status: 400 }
+      );
+    }
 
     // Build conditions
     const conditions = [];
