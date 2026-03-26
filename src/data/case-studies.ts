@@ -45,11 +45,14 @@ export interface CaseStudy {
   resultsDetail?: string;
   /** Optional tags (category/year) for detail page */
   tags?: string[];
+  /** Optional hero image path (relative to /public) */
+  image?: string;
 }
 
 export const caseStudies: CaseStudy[] = [
   {
     slug: "tiktok-video-production",
+    image: "/images/hero-tiktok-creator.png",
     client: "TikTok",
     deliverable: "Video editing",
     volume: "1,500+ edits per month",
@@ -96,6 +99,7 @@ export const caseStudies: CaseStudy[] = [
   {
     slug: "adidas-superstar-concert",
     client: "Adidas",
+    image: "/images/hero-adidas-arena.png",
     deliverable: "Event creative production",
     volume: "Hundreds of assets",
     turnaround: "Before event date",
@@ -122,6 +126,7 @@ export const caseStudies: CaseStudy[] = [
   {
     slug: "lego-grand-tournoi",
     client: "LEGO",
+    image: "/images/hero-lego.png",
     deliverable: "Campaign + Web + Event",
     volume: "Full campaign suite",
     turnaround: "Pre-event delivery",
@@ -147,6 +152,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "sony-black-friday",
+    image: "/images/hero-sony-ult.png",
     client: "Sony",
     deliverable: "Black Friday banners",
     volume: "2 assets",
@@ -173,6 +179,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "sony-tv-launch",
+    image: "/images/hero-sony-camera.png",
     client: "Sony",
     deliverable: "European TV launch assets",
     volume: "125 assets",
@@ -199,6 +206,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "tiktok-ugc-edits",
+    image: "/images/hero-tiktok-beauty.png",
     client: "TikTok",
     deliverable: "UGC video editing",
     volume: "1,500+ edits per month",
@@ -277,6 +285,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "tiktok-gaming-showcase",
+    image: "/images/hero-tiktok-creator.png",
     client: "TikTok",
     deliverable: "Campaign creative production",
     volume: "3 markets",
@@ -381,6 +390,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "ikea-summer-tour",
+    image: "/images/hero-bose.png",
     client: "IKEA",
     deliverable: "Tour creative production",
     volume: "Full creative suite",

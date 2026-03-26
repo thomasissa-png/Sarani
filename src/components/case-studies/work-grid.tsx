@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { track, getDevice, getReferrer } from "@/lib/analytics";
 import type { CaseStudy, CaseStudyCategory } from "@/data/case-studies";
@@ -113,12 +114,24 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
                 type="button"
                 aria-expanded={expandedSlug === cs.slug}
                 onClick={() => handleCardClick(cs)}
-                className={`group relative flex flex-col rounded-2xl border bg-brand-white p-8 text-left transition-all duration-200 hover:shadow-md ${
+                className={`group relative flex flex-col rounded-2xl border bg-brand-white overflow-hidden text-left transition-all duration-200 hover:shadow-md ${
                   expandedSlug === cs.slug
                     ? "border-brand-flame shadow-md ring-2 ring-brand-flame/20"
                     : "border-neutral-300 hover:border-brand-lemon"
                 }`}
               >
+                {cs.image && (
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-100">
+                    <Image
+                      src={cs.image}
+                      alt={`${cs.client} — ${cs.headline}`}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  </div>
+                )}
+                <div className="p-8">
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   <span className="inline-block rounded-full bg-brand-black/5 px-3 py-1 text-xs font-bold text-brand-black">
                     {cs.keyMetric}
@@ -148,6 +161,7 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </div>
+                </div>
               </button>
             ))}
           </div>
@@ -157,8 +171,21 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
             <div
               ref={detailRef}
               tabIndex={-1}
-              className="mb-6 rounded-2xl border border-brand-flame/20 bg-brand-white p-5 shadow-lg sm:p-8 md:p-12 outline-none"
+              className="mb-6 rounded-2xl border border-brand-flame/20 bg-brand-white overflow-hidden shadow-lg outline-none"
             >
+              {expandedStudy.image && (
+                <div className="relative aspect-[21/9] w-full overflow-hidden bg-neutral-100">
+                  <Image
+                    src={expandedStudy.image}
+                    alt={`${expandedStudy.client} — ${expandedStudy.headline}`}
+                    fill
+                    className="object-cover"
+                    sizes="100vw"
+                    priority
+                  />
+                </div>
+              )}
+              <div className="p-5 sm:p-8 md:p-12">
               <div className="mb-8 flex items-start justify-between gap-4">
                 <div>
                   <p className="mb-1 text-sm font-medium uppercase tracking-wider text-brand-flame-dark">
@@ -233,6 +260,7 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
                 >
                   Start a similar project
                 </Link>
+              </div>
               </div>
             </div>
           )}
