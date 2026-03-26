@@ -1,49 +1,57 @@
 import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
-import { CaseStudyCard } from "@/components/case-studies/case-study-card";
-import { caseStudies } from "@/data/case-studies";
+import { WorkGrid } from "@/components/case-studies/work-grid";
+import { getOrderedCaseStudies, getCategories } from "@/data/case-studies";
 
 export const metadata: Metadata = {
-  title: "Case Studies — Enterprise Creative Work",
+  title: "Work — Enterprise Creative at Scale | Sarani",
   description:
-    "TikTok, Sony, GEODIS, Adidas, L'Oreal. Real briefs. Real deadlines. See how Sarani delivers 24-hour creative production for global enterprises.",
+    "TikTok, Sony, Adidas, LEGO, IKEA, GEODIS. 300M+ views. 1,500+ edits per month. See how Sarani delivers enterprise creative in 24 hours.",
   openGraph: {
-    title: "Case Studies — Sarani Enterprise Creative Work",
+    title: "Work — Enterprise Creative at Scale | Sarani",
     description:
-      "TikTok, Sony, GEODIS, Adidas, L'Oreal. Real briefs. Real deadlines. Real results.",
+      "TikTok, Sony, Adidas, LEGO, IKEA, GEODIS. Real briefs. Real deadlines. Real results.",
     url: "/work",
   },
 };
 
 export default function WorkPage() {
+  const orderedStudies = getOrderedCaseStudies();
+  const categories = getCategories();
+
   return (
     <div className="pt-[var(--header-height)]">
-      <Section ariaLabel="Case studies">
-        <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl">
-          Case Studies
-        </h1>
-        <p className="mb-12 max-w-2xl text-lg text-neutral-600">
-          TikTok, Sony, GEODIS, Adidas, L&apos;Or&eacute;al. Real briefs. Real
-          deadlines. Real results.
+      {/* Hero */}
+      <Section ariaLabel="Work overview">
+        <p className="mb-4 text-sm font-medium uppercase tracking-wider text-brand-flame-dark">
+          Work
         </p>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {caseStudies.map((cs) => (
-            <CaseStudyCard
-              key={cs.slug}
-              caseStudy={cs}
-              trackingLocation="work_listing"
-            />
-          ))}
+        <h1 className="mb-6 max-w-3xl text-4xl font-bold leading-tight text-brand-black sm:text-5xl lg:text-6xl">
+          Enterprise creative. Proven at scale.
+        </h1>
+        <p className="mb-4 max-w-2xl text-lg text-neutral-600">
+          TikTok, Sony, Adidas, LEGO, IKEA, GEODIS.
+          Real briefs. Real deadlines. Real results.
+        </p>
+        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm font-medium text-neutral-500">
+          <span>300M+ campaign views</span>
+          <span>1,500+ edits per month</span>
+          <span>15 languages</span>
+          <span>D+1 delivery</span>
         </div>
+      </Section>
+
+      {/* Filtered grid */}
+      <Section ariaLabel="Case studies">
+        <WorkGrid caseStudies={orderedStudies} categories={categories} />
       </Section>
 
       {/* Footer CTA */}
       <Section ariaLabel="Start your project">
         <div className="text-center">
           <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
-            Ready to see what we can do for you?
+            Your brief could be next.
           </h2>
           <p className="mx-auto mb-8 max-w-xl text-neutral-500">
             First project satisfaction or no invoice.

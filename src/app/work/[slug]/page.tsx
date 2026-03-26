@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import {
   getAllCaseStudySlugs,
   getCaseStudyBySlug,
   getRelatedCaseStudies,
+  getAdjacentCaseStudies,
 } from "@/data/case-studies";
 
 /* ---------- SSG ---------- */
@@ -28,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!cs) return {};
 
   return {
-    title: `${cs.client} — ${cs.headline}`,
+    title: `${cs.client} — ${cs.headline} | Sarani`,
     description: cs.metaDescription,
     openGraph: {
       title: `${cs.client} — ${cs.headline} | Sarani`,
@@ -47,6 +49,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
   if (!cs) notFound();
 
   const related = getRelatedCaseStudies(slug);
+  const { prev, next } = getAdjacentCaseStudies(slug);
   const pagePath = `/work/${cs.slug}`;
 
   const jsonLd = {
@@ -77,18 +80,21 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
       {/* Hero */}
       <Section ariaLabel={`${cs.client} case study hero`}>
         <div className="mx-auto max-w-3xl">
-          {cs.tags && cs.tags.length > 0 && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {cs.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-block rounded-full bg-brand-black/5 px-3 py-1 text-xs font-medium text-neutral-600"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Tags + Category */}
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span className="inline-block rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-500">
+              {cs.category}
+            </span>
+            {cs.tags && cs.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-block rounded-full bg-brand-black/5 px-3 py-1 text-xs font-medium text-neutral-600"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
           <p className="mb-4 text-sm font-medium uppercase tracking-wider text-brand-flame-dark">
             {cs.client}
           </p>
@@ -100,6 +106,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
               {cs.subtitle}
             </p>
           )}
+
           {/* Meta strip */}
           <div className="flex flex-wrap gap-6 text-sm text-neutral-500">
             <div>
@@ -227,11 +234,51 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
         </p>
       </Section>
 
+      {/* Prev / Next navigation */}
+      {(prev || next) && (
+        <Section ariaLabel="Navigate case studies" tight>
+          <div className="flex items-center justify-between border-t border-neutral-200 pt-8">
+            {prev ? (
+              <Link
+                href={`/work/${prev.slug}`}
+                className="group flex flex-col gap-1"
+              >
+                <span className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                  Previous
+                </span>
+                <span className="text-sm font-bold text-brand-black transition-colors group-hover:text-brand-cerulean-dark">
+                  <span aria-hidden="true">&larr; </span>
+                  {prev.client} — {prev.deliverable}
+                </span>
+              </Link>
+            ) : (
+              <div />
+            )}
+            {next ? (
+              <Link
+                href={`/work/${next.slug}`}
+                className="group flex flex-col items-end gap-1 text-right"
+              >
+                <span className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                  Next
+                </span>
+                <span className="text-sm font-bold text-brand-black transition-colors group-hover:text-brand-cerulean-dark">
+                  {next.client} — {next.deliverable}
+                  <span aria-hidden="true"> &rarr;</span>
+                </span>
+              </Link>
+            ) : (
+              <div />
+            )}
+          </div>
+        </Section>
+      )}
+
       {/* Closing CTA */}
       <Section ariaLabel="Start your project">
         <div className="text-center">
           <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
-            Ready to start your project?
+            Your brief could be next.
           </h2>
           <p className="mx-auto mb-8 max-w-xl text-neutral-500">
             First project satisfaction or no invoice.

@@ -8,6 +8,14 @@ export interface CaseStudyStat {
   value: string;
 }
 
+/** Filterable category for the Work listing page */
+export type CaseStudyCategory =
+  | "Video & Social"
+  | "Graphic Design"
+  | "Event"
+  | "Multilingual"
+  | "Out-of-Home";
+
 export interface CaseStudy {
   slug: string;
   client: string;
@@ -25,6 +33,8 @@ export interface CaseStudy {
   stats: [CaseStudyStat, CaseStudyStat, CaseStudyStat];
   /** SEO meta description */
   metaDescription: string;
+  /** Primary category for filtering on Work listing page */
+  category: CaseStudyCategory;
   /** Optional subtitle for detail page */
   subtitle?: string;
   /** Optional detailed challenge text for detail page */
@@ -55,29 +65,12 @@ export const caseStudies: CaseStudy[] = [
       { label: "Total campaign views", value: "400M+" },
       { label: "Deadlines met", value: "100%" },
     ],
+    category: "Video & Social",
     metaDescription:
       "How Sarani delivers 1,500+ video edits per month for TikTok creator campaigns across multiple markets. 400M+ total campaign views. Every deadline met.",
   },
-  {
-    slug: "sony-banner-production",
-    client: "Sony",
-    deliverable: "Banner production",
-    volume: "125+ assets across 15 languages",
-    turnaround: "Same day (24 hours)",
-    outcome: "Black Friday campaign, banners from 150\u20AC",
-    brief:
-      "Sony needed Black Friday banners delivered the same day across 15 languages. We produced 125+ assets \u2014 banners, social cards, and email headers \u2014 before the deadline.",
-    result: "125+ assets. 15 languages. Same day. From 150\u20AC per banner.",
-    headline: "125+ Black Friday assets across 15 languages. Same day. From 150\u20AC per banner.",
-    keyMetric: "125+ assets in 24h",
-    stats: [
-      { label: "Assets delivered", value: "125+" },
-      { label: "Languages", value: "15" },
-      { label: "Turnaround", value: "24h" },
-    ],
-    metaDescription:
-      "How Sarani produced 125+ Black Friday assets for Sony across 15 languages in 24 hours. Banners, social cards, and email headers \u2014 same-day delivery from 150\u20AC.",
-  },
+  // sony-banner-production removed — duplicated sony-tv-launch (125 assets, 15 languages)
+  // and sony-black-friday (same-day delivery). See docs/strategy/case-studies-selection.md.
   {
     slug: "geodis-presentation-rebranding",
     client: "GEODIS",
@@ -96,6 +89,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Total cost", value: "8,500\u20AC" },
       { label: "Time to deliver", value: "3 weeks" },
     ],
+    category: "Graphic Design",
     metaDescription:
       "How Sarani rebranded 5,700 slides across 350 presentations for GEODIS in 3 weeks for 8,500\u20AC \u2014 their previous agency quoted 80,000\u20AC and 3 months.",
   },
@@ -116,6 +110,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Scope", value: "Full-venue" },
       { label: "Client", value: "Adidas" },
     ],
+    category: "Event",
     metaDescription:
       "How Sarani produced hundreds of assets to transform the Adidas Arena Paris into a giant shoebox — stadium wraps, decor, invitations, tickets, and digital content.",
     subtitle: "Hundreds of assets, one brief \u2014 transforming a stadium into Adidas\u2019 most iconic product.",
@@ -141,6 +136,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Location", value: "Champs-\u00C9lys\u00E9es" },
       { label: "Date", value: "21 Sept 2025" },
     ],
+    category: "Event",
     metaDescription:
       "How Sarani produced the full campaign, web platform, and event assets for LEGO\u2019s Grand Tournoi des Champs on the Avenue des Champs-\u00C9lys\u00E9es.",
     subtitle: "250+ teams, one avenue, and every asset Sarani could produce \u2014 print, digital, web, and on-site.",
@@ -166,6 +162,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Price", value: "150\u20AC" },
       { label: "Turnaround", value: "<24h" },
     ],
+    category: "Graphic Design",
     metaDescription:
       "How Sarani delivered Sony\u2019s Black Friday banners in under 24 hours for 150\u20AC \u2014 same-day first proposals, overnight finish, morning delivery.",
     subtitle: "Request in the morning. Two proposals by afternoon. Final delivery by the next morning. 150\u20AC.",
@@ -191,6 +188,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Price", value: "8,500\u20AC" },
       { label: "Duration", value: "2 weeks" },
     ],
+    category: "Multilingual",
     metaDescription:
       "How Sarani produced 125 assets for Sony\u2019s European TV launch in 2 weeks for 8,500\u20AC with daily HQ Japan approval cycles.",
     subtitle: "Sony\u2019s new TV line-up launched across Europe \u2014 20 product sheets, 72 banners, 30 offline elements, 1 presentation. All in 14 days.",
@@ -216,6 +214,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Monthly total", value: "1,500+" },
       { label: "Price per video", value: "$20" },
     ],
+    category: "Video & Social",
     metaDescription:
       "How Sarani delivers 1,500+ UGC video edits per month for TikTok\u2019s US advertising programme at $20 per video \u2014 compliance editing at scale.",
     subtitle: "TikTok distributes UGC advertising across the US \u2014 Sarani handles the edits, the compliance, the volume.",
@@ -241,6 +240,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Price", value: "360\u20AC" },
       { label: "Revision rounds", value: "24" },
     ],
+    category: "Video & Social",
     metaDescription:
       "How Sarani produced a promotional video for TikTok\u2019s #RoadToParis campaign that reached 51 million views \u2014 for 360\u20AC with 24 revision rounds included.",
     subtitle: "A simple video to launch TikTok\u2019s Olympic Games search engine \u2014 and the revision process that made it right.",
@@ -266,6 +266,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Winner outcome", value: "Sold out La Cigale" },
       { label: "Price", value: "1,350\u20AC" },
     ],
+    category: "Video & Social",
     metaDescription:
       "How Sarani built TikTok\u2019s Comedy Club contest campaign \u2014 27 million views, a sold-out La Cigale, and 3 promotional videos for 1,350\u20AC.",
     subtitle: "The world\u2019s first Comedy Club contest on TikTok \u2014 campaign, content, and 3 promotional videos. 1,350\u20AC.",
@@ -291,8 +292,13 @@ export const caseStudies: CaseStudy[] = [
       { label: "Markets", value: "3" },
       { label: "Budget", value: "80,000€" },
     ],
+    category: "Video & Social",
     metaDescription:
       "How Sarani produced TikTok's gaming showcase campaign across 3 markets — 300 million cumulative views, 80,000€ budget, one creative partner.",
+    subtitle: "One gaming showcase. Three markets. 300 million views.",
+    challenge: "TikTok needed a gaming showcase campaign that would resonate across 3 international markets simultaneously. The brief demanded creative consistency — a unified campaign identity — while adapting tone, format, and cultural references for each local audience. One production partner had to hold it all together.",
+    solution: "Sarani produced the full campaign creative across all 3 markets. Each market received locally adapted assets built from a single creative system — ensuring brand consistency without flattening the local relevance that drives engagement on TikTok.\n\nThe production ran on Sarani's relay structure: assets reviewed in one timezone, revised in the next. No single-market bottleneck. No delays waiting for a local team to wake up.",
+    resultsDetail: "300 million cumulative views across 3 markets. One creative partner. One budget: 80,000€.",
     tags: ["Video", "Social Media"],
   },
   {
@@ -312,8 +318,13 @@ export const caseStudies: CaseStudy[] = [
       { label: "Price", value: "3,800€" },
       { label: "Market", value: "Germany" },
     ],
+    category: "Video & Social",
     metaDescription:
       "How Sarani produced TikTok's #GimmeTheMic campaign in Germany — 94 million views for 3,800€. The most dramatic ROI proof in enterprise creative.",
+    subtitle: "TikTok Germany needed a campaign that would break through. The budget was 3,800€. The result was 94 million views.",
+    challenge: "TikTok Germany launched the #GimmeTheMic campaign — a music-driven challenge designed to go viral on the platform. The production budget was defined and tight: 3,800€. The expectation was massive organic reach. No paid amplification budget to compensate for weak creative.",
+    solution: "Sarani produced the campaign video suite optimised for TikTok's native format and engagement patterns. Every asset was built to perform organically — pacing, hook structure, and visual rhythm calibrated for the platform's algorithm and user behaviour in the German market.\n\nThe creative was delivered within the 3,800€ budget. No overruns. No scope creep.",
+    resultsDetail: "94 million views. Total cost: 3,800€. The highest ROI ratio in Sarani's portfolio.",
     tags: ["Video", "Social Media"],
   },
   {
@@ -325,7 +336,7 @@ export const caseStudies: CaseStudy[] = [
     outcome: "Open-air library on the Seine — Paris landmark activation",
     brief:
       "IKEA needed a public installation on the banks of the Seine in Paris — an open-air library celebrating the BILLY bookcase. Creative production covered the full installation suite: signage, scenography, and branded elements.",
-    result: "The BILLYothèque opened on the Seine. A Paris landmark activation for one of the world's most recognisable furniture brands.",
+    result: "The BILLYotheque opened on the Seine. A Paris landmark activation for one of the world's most recognisable furniture brands.",
     headline: "IKEA's Open-Air Library on the Seine.",
     keyMetric: "Paris landmark activation",
     stats: [
@@ -333,8 +344,13 @@ export const caseStudies: CaseStudy[] = [
       { label: "Client", value: "IKEA" },
       { label: "Context", value: "Paris Design Week" },
     ],
+    category: "Event",
     metaDescription:
-      "How Sarani produced the creative suite for IKEA's BILLYothèque — an open-air library installation on the Seine in Paris.",
+      "How Sarani produced the creative suite for IKEA's BILLYotheque — an open-air library installation on the Seine in Paris.",
+    subtitle: "An open-air library on the banks of the Seine — celebrating one of the world's most recognisable furniture icons.",
+    challenge: "IKEA needed a public installation on the banks of the Seine in Paris — an open-air library celebrating the BILLY bookcase during Paris Design Week. The creative production had to cover the full installation: signage, scenography, branded elements, and every visual touchpoint a visitor would encounter along the riverbank.",
+    solution: "Sarani produced the complete creative suite for the BILLYotheque installation. Signage designed for outdoor display along the Seine. Scenography elements that transformed the riverbank into a reading space. Branded materials that connected the installation to IKEA's identity while respecting the cultural context of a Paris landmark location.\n\nEvery asset was produced to work in an open-air, public-facing environment — weather-resistant specifications, large-format printing, and visual impact at pedestrian distance.",
+    resultsDetail: "The BILLYotheque opened on the Seine during Paris Design Week. A landmark activation connecting IKEA to one of the most visible cultural locations in Paris.",
     tags: ["Graphic Design", "Event"],
   },
   {
@@ -354,8 +370,13 @@ export const caseStudies: CaseStudy[] = [
       { label: "Clients", value: "Crocs + TikTok" },
       { label: "Format", value: "OOH billboards" },
     ],
+    category: "Out-of-Home",
     metaDescription:
       "How Sarani produced the out-of-home creative for Crocs x TikTok Shop's Times Square NYC billboard campaign.",
+    subtitle: "Out-of-home creative for one of the world's most visible advertising locations.",
+    challenge: "Crocs and TikTok Shop needed out-of-home creative for a billboard campaign in Times Square, New York City. The location demands creative that works at massive physical scale, captures attention in the most visually saturated environment on earth, and represents two global brands simultaneously.",
+    solution: "Sarani produced the OOH campaign suite — billboard creative designed for Times Square's specific display specifications and viewing conditions. The creative held both the Crocs and TikTok Shop brand identities in a unified visual system built to command attention at the scale Times Square demands.",
+    resultsDetail: "Crocs x TikTok Shop billboards live in Times Square, NYC. The world's most famous advertising location.",
     tags: ["Graphic Design", "Event", "Out-of-Home"],
   },
   {
@@ -375,6 +396,7 @@ export const caseStudies: CaseStudy[] = [
       { label: "Scope", value: "Full creative" },
       { label: "Client", value: "IKEA" },
     ],
+    category: "Event",
     metaDescription:
       "How Sarani produced the complete creative suite for IKEA\u2019s Summer Tour across 8 French cities \u2014 truck design, promotional campaign, and video content.",
     subtitle: "IKEA\u2019s Summer Tour across France \u2014 truck design, campaign, promotional materials, and video content. All in.",
@@ -384,6 +406,43 @@ export const caseStudies: CaseStudy[] = [
     tags: ["Graphic Design", "Event", "Video"],
   },
 ];
+
+/**
+ * Display order — Top 10 ranked by impact (see docs/strategy/case-studies-selection.md).
+ * Remaining entries follow in their original order.
+ */
+const TOP_10_SLUGS: readonly string[] = [
+  "tiktok-gaming-showcase",
+  "tiktok-gimmethemic",
+  "tiktok-ugc-edits",
+  "tiktok-road-to-paris",
+  "adidas-superstar-concert",
+  "lego-grand-tournoi",
+  "sony-tv-launch",
+  "ikea-billyotheque",
+  "sony-black-friday",
+  "crocs-tiktok-times-square",
+] as const;
+
+/** Case studies sorted by strategic rank (Top 10 first, then the rest). */
+export function getOrderedCaseStudies(): CaseStudy[] {
+  const ranked: CaseStudy[] = [];
+  for (const slug of TOP_10_SLUGS) {
+    const cs = caseStudies.find((c) => c.slug === slug);
+    if (cs) ranked.push(cs);
+  }
+  const rest = caseStudies.filter((cs) => !TOP_10_SLUGS.includes(cs.slug));
+  return [...ranked, ...rest];
+}
+
+/** All unique categories present in the data. */
+export function getCategories(): CaseStudyCategory[] {
+  const cats = new Set<CaseStudyCategory>();
+  for (const cs of caseStudies) {
+    cats.add(cs.category);
+  }
+  return Array.from(cats);
+}
 
 /** Lookup a case study by slug. Returns undefined if not found. */
 export function getCaseStudyBySlug(slug: string): CaseStudy | undefined {
@@ -395,7 +454,27 @@ export function getAllCaseStudySlugs(): string[] {
   return caseStudies.map((cs) => cs.slug);
 }
 
-/** Get related case studies (all except the current one) */
+/** Get related case studies (same category first, then others) */
 export function getRelatedCaseStudies(currentSlug: string): CaseStudy[] {
-  return caseStudies.filter((cs) => cs.slug !== currentSlug);
+  const current = caseStudies.find((cs) => cs.slug === currentSlug);
+  if (!current) return caseStudies.filter((cs) => cs.slug !== currentSlug);
+
+  const others = caseStudies.filter((cs) => cs.slug !== currentSlug);
+  const sameCategory = others.filter((cs) => cs.category === current.category);
+  const different = others.filter((cs) => cs.category !== current.category);
+  return [...sameCategory, ...different];
+}
+
+/** Get adjacent case studies for prev/next navigation */
+export function getAdjacentCaseStudies(currentSlug: string): {
+  prev: CaseStudy | null;
+  next: CaseStudy | null;
+} {
+  const ordered = getOrderedCaseStudies();
+  const index = ordered.findIndex((cs) => cs.slug === currentSlug);
+  if (index === -1) return { prev: null, next: null };
+  return {
+    prev: index > 0 ? ordered[index - 1] : null,
+    next: index < ordered.length - 1 ? ordered[index + 1] : null,
+  };
 }

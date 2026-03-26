@@ -12,7 +12,7 @@ interface CaseStudyCardProps {
 
 /**
  * Reusable case study card — V2 light design.
- * Shows client, deliverable, key metric badge, read link, and a secondary CTA.
+ * Shows client, headline, key metric badge, category, read link, and a secondary CTA.
  */
 export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProps) {
   const handleClick = () => {
@@ -27,23 +27,29 @@ export function CaseStudyCard({ caseStudy, trackingLocation }: CaseStudyCardProp
   };
 
   return (
-    <div className="group relative rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-all duration-200 hover:border-brand-lemon hover:shadow-md">
-      {/* Metric badge */}
-      <span className="mb-4 inline-block rounded-full bg-brand-black/5 px-3 py-1 text-xs font-bold text-brand-black">
-        {caseStudy.keyMetric}
-      </span>
+    <div className="group relative flex flex-col rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-all duration-200 hover:border-brand-lemon hover:shadow-md">
+      {/* Top row: metric badge + category */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <span className="inline-block rounded-full bg-brand-black/5 px-3 py-1 text-xs font-bold text-brand-black">
+          {caseStudy.keyMetric}
+        </span>
+        <span className="inline-block rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-500">
+          {caseStudy.category}
+        </span>
+      </div>
 
       <p className="mb-1 text-sm font-medium uppercase tracking-wider text-brand-flame-dark">
         {caseStudy.client}
       </p>
-      <p className="mb-3 text-lg font-bold text-brand-black">
-        {caseStudy.deliverable}
+      <p className="mb-2 text-lg font-bold leading-snug text-brand-black">
+        {caseStudy.headline}
       </p>
       <p className="mb-6 text-sm font-medium text-neutral-500">
         {caseStudy.outcome}
       </p>
 
-      <div className="flex flex-col gap-3">
+      {/* Push links to bottom */}
+      <div className="mt-auto flex flex-col gap-3">
         <Link
           href={`/work/${caseStudy.slug}`}
           onClick={handleClick}
