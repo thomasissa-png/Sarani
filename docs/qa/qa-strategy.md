@@ -463,6 +463,66 @@ These tests, if failing, mean the site cannot ship. A single P0 failure = no pro
 
 ---
 
+## Section 6: Implemented Tests (2026-03-26)
+
+### Configuration Files
+
+| File | Purpose |
+|------|---------|
+| `vitest.config.ts` | Vitest config: jsdom for component tests, node for API route tests, path aliases, coverage thresholds 80% on critical paths |
+| `playwright.config.ts` | Playwright config: 6 browser/viewport projects, 30s timeout, webServer auto-start, CI retries |
+| `tests/setup.ts` | Vitest setup: loads @testing-library/jest-dom matchers |
+
+### Commands
+
+```bash
+# Unit + integration tests
+npm test                    # Run all Vitest tests once
+npm run test:unit           # Verbose output
+npm run test:watch          # Watch mode (development)
+npm run test:coverage       # With V8 coverage report
+
+# E2E tests (requires running dev server or auto-starts one)
+npm run test:e2e            # All browsers
+npm run test:e2e:chromium   # Chromium only (fastest feedback)
+npm run test:e2e:ui         # Playwright UI mode (debugging)
+```
+
+### Unit Tests (Vitest) -- 36 tests, all passing
+
+| File | Tests | What it covers | Linked AC |
+|------|-------|---------------|-----------|
+| `tests/unit/validation.test.ts` | 25 | Contact form Zod schema: valid payloads, required fields, email format, select value injection (EC-103-7), message length, honeypot, server-client parity, name length | AC-103-4, EC-103-7 |
+| `tests/unit/api-contact.test.ts` | 11 | /api/contact route handler: 200 on valid, 400 on invalid fields/email/companySize/attribution/short message, honeypot silent 200, rate limiting 429 after 5 requests, IP isolation, 500 on malformed JSON, no PII leak | AC-103-1 to AC-103-6, BR-103-3 |
+
+### E2E Tests (Playwright) -- 4 test files
+
+| File | Test count | What it covers | Priority | Linked AC |
+|------|-----------|---------------|----------|-----------|
+| `tests/e2e/contact-form.spec.ts` | 9 | Happy path (fill + submit + success), "Sending..." loading state, validation errors (empty fields, invalid email), focus-first-error, server error 500, rate limit 429, honeypot hidden, mobile 320px usability, reachable in 1 click from homepage | P0 | AC-103-1 to AC-103-6 |
+| `tests/e2e/accessibility.spec.ts` | 10 | axe-core WCAG 2.1 AA scan on 6 pages (homepage, contact, pricing, legal, work, about), skip-to-content link, form labels, aria-describedby on errors, image alt attributes | P0 | Cross-cutting WCAG |
+| `tests/e2e/navigation.spec.ts` | 17 | 7 pages return HTTP 200, 404 custom page, nav links present, legal footer link on ALL pages, sitemap.xml exists with critical URLs, robots.txt directives (allow /, disallow /api, sitemap ref), unique meta titles per page, meta descriptions | P0 | AC-105-4, AC-106-1, AC-106-2, AC-106-3 |
+| `tests/e2e/admin-smoke.spec.ts` | 3 | /admin/login shows form, /admin without auth redirects to login, invalid credentials show error | P0 | Back-office security |
+
+### P0 Coverage Summary
+
+| P0 Test (from Section 5) | Status | File |
+|--------------------------|--------|------|
+| Contact form E2E happy path | Implemented | `contact-form.spec.ts` |
+| Contact form /api/contact server-side validation | Implemented | `api-contact.test.ts` |
+| Contact form mobile 320px | Implemented | `contact-form.spec.ts` |
+| Contact form rate limiting | Implemented | `api-contact.test.ts` |
+| WCAG 2.1 AA (axe-core on all pages) | Implemented | `accessibility.spec.ts` |
+| Core Web Vitals (LCP, CLS) | Not yet -- requires Lighthouse CI setup in CI pipeline | -- |
+| Lighthouse SEO >= 90 | Not yet -- requires Lighthouse CI setup in CI pipeline | -- |
+| Footer "Legal & Privacy" on ALL pages | Implemented | `navigation.spec.ts` |
+| /sitemap.xml exists and contains pages | Implemented | `navigation.spec.ts` |
+| robots.txt allows crawling, refs sitemap | Implemented | `navigation.spec.ts` |
+
+**8 of 10 P0 tests implemented.** The 2 remaining (Core Web Vitals + Lighthouse SEO) require `@lhci/cli` setup in the CI pipeline -- this is an @infrastructure task.
+
+---
+
 **Handoff -> @infrastructure**
 - Files produced: `/home/user/Sarani/docs/qa/qa-strategy.md`
 - Decisions taken:
