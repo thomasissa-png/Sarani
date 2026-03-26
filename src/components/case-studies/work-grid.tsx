@@ -50,6 +50,20 @@ export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
     }
   }, [expandedSlug]);
 
+  // Close panel on click outside
+  useEffect(() => {
+    if (!expandedSlug) return;
+    function handleClick(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      // Don't close if clicking inside the detail panel or a card button
+      if (detailRef.current?.contains(target)) return;
+      if (target.closest("button[aria-expanded]")) return;
+      setExpandedSlug(null);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [expandedSlug]);
+
   function handleCardClick(cs: CaseStudy) {
     track("case_study_click", {
       client: cs.client,

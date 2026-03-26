@@ -52,7 +52,7 @@ export interface CaseStudy {
 export const caseStudies: CaseStudy[] = [
   {
     slug: "tiktok-video-production",
-    image: "/images/hero-tiktok-creator.png",
+    image: "/images/case-tiktok-ugc.png",
     client: "TikTok",
     deliverable: "Video editing",
     volume: "1,500+ edits per month",
@@ -152,7 +152,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "sony-black-friday",
-    image: "/images/hero-sony-ult.png",
+    image: "/images/case-sony-blackfriday.png",
     client: "Sony",
     deliverable: "Black Friday banners",
     volume: "2 assets",
@@ -179,7 +179,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "sony-tv-launch",
-    image: "/images/hero-sony-camera.png",
+    image: "/images/case-sony-tv-launch.png",
     client: "Sony",
     deliverable: "European TV launch assets",
     volume: "125 assets",
@@ -206,7 +206,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "tiktok-ugc-edits",
-    image: "/images/hero-tiktok-beauty.png",
+    image: "/images/case-tiktok-ugc.png",
     client: "TikTok",
     deliverable: "UGC video editing",
     volume: "1,500+ edits per month",
@@ -233,6 +233,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "tiktok-road-to-paris",
+    image: "/images/case-tiktok-roadtoparis.png",
     client: "TikTok",
     deliverable: "Promotional video",
     volume: "1 video, 24 revision rounds",
@@ -259,6 +260,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "tiktok-comedy-club",
+    image: "/images/case-tiktok-comedy-club.png",
     client: "TikTok",
     deliverable: "Campaign + Social content",
     volume: "Campaign identity + 3 videos + in-app content",
@@ -285,7 +287,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "tiktok-gaming-showcase",
-    image: "/images/hero-tiktok-creator.png",
+    image: "/images/case-tiktok-gaming.png",
     client: "TikTok",
     deliverable: "Campaign creative production",
     volume: "3 markets",
@@ -312,6 +314,7 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "tiktok-gimmethemic",
+    image: "/images/case-tiktok-gimmethemic.png",
     client: "TikTok",
     deliverable: "Campaign video production",
     volume: "Campaign suite",
@@ -390,7 +393,6 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "ikea-summer-tour",
-    image: "/images/hero-bose.png",
     client: "IKEA",
     deliverable: "Tour creative production",
     volume: "Full creative suite",
