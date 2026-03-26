@@ -41,6 +41,44 @@ export const COL_MAP = {
   ],
 } as const;
 
+// ─── Header Detection ───────────────────────────────────────────────────────
+
+/** All known column aliases flattened for header row detection */
+const ALL_KNOWN_HEADERS: Set<string> = new Set(
+  Object.values(COL_MAP).flatMap((aliases) => [...aliases])
+);
+
+/**
+ * Scan rows to find the actual header row.
+ * Many Sarani tracker files have a "Performance Dashboard" title block
+ * in the first rows — the real column headers start further down.
+ * A row is considered the header row if it contains at least 2 recognized
+ * column names (e.g. "project", "status", "date", "contact").
+ *
+ * @returns The index of the header row, or -1 if not found.
+ */
+function findHeaderRowIndex(
+  values: (string | number | boolean | null)[][],
+  maxScanRows = 20
+): number {
+  const limit = Math.min(values.length, maxScanRows);
+  for (let i = 0; i < limit; i++) {
+    const row = values[i];
+    if (!row || row.length < 2) continue;
+
+    let matchCount = 0;
+    for (const cell of row) {
+      if (cell === null || cell === undefined) continue;
+      const normalized = String(cell).toLowerCase().trim();
+      if (ALL_KNOWN_HEADERS.has(normalized)) {
+        matchCount++;
+        if (matchCount >= 2) return i;
+      }
+    }
+  }
+  return -1;
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 export function findColumnIndex(
@@ -83,7 +121,11 @@ export function parseExcelProjects(
 ): ExcelProject[] {
   if (values.length < 2) return [];
 
-  const headers = values[0].map((h) =>
+  // Find the real header row (skip dashboard title rows)
+  const headerIdx = findHeaderRowIndex(values);
+  if (headerIdx === -1) return [];
+
+  const headers = values[headerIdx].map((h) =>
     h !== null && h !== undefined ? String(h) : ""
   );
 
@@ -101,7 +143,8 @@ export function parseExcelProjects(
 
   if (colProject === -1) return [];
 
-  const dataRows = values.slice(1);
+  // Data starts after the header row
+  const dataRows = values.slice(headerIdx + 1);
   const projects: ExcelProject[] = [];
 
   for (const row of dataRows) {

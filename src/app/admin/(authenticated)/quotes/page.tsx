@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -58,7 +58,15 @@ function formatDate(iso: string): string {
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
-export default function QuotesPage() {
+export default function QuotesPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-neutral-400">Loading...</div>}>
+      <QuotesPage />
+    </Suspense>
+  );
+}
+
+function QuotesPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [pastQuotes, setPastQuotes] = useState<QuoteRecord[]>([]);
   const [loading, setLoading] = useState(false);
