@@ -101,3 +101,72 @@ export const translatorHistorySchema = z.object({
 });
 
 export type TranslatorHistoryInput = z.infer<typeof translatorHistorySchema>;
+
+// ─── Review request ──────────────────────────────────────────────────────────
+
+export const reviewRequestSchema = z.object({
+  clientId: z.string().uuid("Invalid client ID").optional(),
+  textToReview: z
+    .string()
+    .min(10, "Text to review must be at least 10 characters")
+    .max(100_000, "Text is too long (max 100,000 characters)"),
+  textLanguage: z.enum(SUPPORTED_LANGUAGES, {
+    message: "Unsupported language",
+  }),
+  contextNote: z.string().max(2000).optional(),
+});
+
+export type ReviewRequestInput = z.infer<typeof reviewRequestSchema>;
+
+// ─── Claude review response ──────────────────────────────────────────────────
+
+export const reviewIssueSchema = z.object({
+  severity: z.enum(["critical", "major", "minor"]),
+  category: z.enum([
+    "terminology",
+    "glossary",
+    "brandVoice",
+    "grammar",
+    "omission",
+    "cultural",
+    "formatting",
+  ]),
+  originalText: z.string(),
+  suggestion: z.string(),
+  explanation: z.string(),
+});
+
+export const glossaryViolationSchema = z.object({
+  expectedTerm: z.string(),
+  foundTerm: z.string(),
+  sourceTerm: z.string(),
+});
+
+export const inconsistentTermSchema = z.object({
+  term: z.string(),
+  translations: z.array(z.string()),
+  recommendation: z.string(),
+});
+
+export const reviewResponseSchema = z.object({
+  overallScore: z.number().min(0).max(100),
+  overallAssessment: z.string(),
+  issues: z.array(reviewIssueSchema),
+  glossaryCompliance: z.object({
+    totalTermsChecked: z.number(),
+    compliantTerms: z.number(),
+    violations: z.array(glossaryViolationSchema),
+  }),
+  consistencyReport: z.object({
+    inconsistentTerms: z.array(inconsistentTermSchema),
+  }),
+  toneAssessment: z.object({
+    detectedRegister: z.enum(["formal", "standard", "mixed"]),
+    brandVoiceAlignment: z.string(),
+    notes: z.string(),
+  }),
+  wordCount: z.number(),
+});
+
+export type ReviewResponse = z.infer<typeof reviewResponseSchema>;
+export type ReviewIssue = z.infer<typeof reviewIssueSchema>;
