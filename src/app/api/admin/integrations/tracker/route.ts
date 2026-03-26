@@ -103,19 +103,28 @@ async function fetchExcelTrackers(): Promise<{
       source: "sharepoint",
       ttlSeconds: CACHE_TTL.sharepoint,
       fetcher: async () => {
-        // P-02: Read all tracker files in parallel instead of sequentially
+        // Deduplicate: multiple CLIENT_MAPPINGS can point to the same Excel file
+        // (e.g. TikTok and PICO XR both use Bytedance tracker)
+        const uniqueFiles = new Map<string, ClientIntegrationMapping>();
+        for (const mapping of CLIENT_MAPPINGS) {
+          if (!uniqueFiles.has(mapping.excelTrackerFilename)) {
+            uniqueFiles.set(mapping.excelTrackerFilename, mapping);
+          }
+        }
+
         const results = await Promise.allSettled(
-          CLIENT_MAPPINGS.map((mapping) => readTrackerFile(mapping))
+          Array.from(uniqueFiles.values()).map((mapping) => readTrackerFile(mapping))
         );
 
         const allProjects: ExcelProject[] = [];
+        const uniqueFileList = Array.from(uniqueFiles.values());
         for (let i = 0; i < results.length; i++) {
           const result = results[i];
           if (result.status === "fulfilled") {
             allProjects.push(...result.value);
           } else {
             console.error(
-              `Failed to read tracker for ${CLIENT_MAPPINGS[i].clickupSpaceName}:`,
+              `Failed to read tracker for ${uniqueFileList[i].clickupSpaceName}:`,
               result.reason
             );
           }
@@ -168,6 +177,31 @@ function shouldSkipSheet(name: string): boolean {
 }
 
 /**
+ * Resolve the actual client name from a sheet name.
+ * Some Excel files contain tabs for multiple clients
+ * (e.g. ByteDance file has "TikTok France" AND "PICO Global" tabs).
+ * Check if the sheet name matches a different CLIENT_MAPPINGS entry.
+ */
+function resolveClientFromSheet(
+  sheetName: string,
+  defaultClient: string
+): string {
+  const sheetLower = sheetName.toLowerCase();
+  // Check if any other client mapping name appears in the sheet name
+  for (const mapping of CLIENT_MAPPINGS) {
+    const clientLower = mapping.clickupSpaceName.toLowerCase();
+    // Skip the default client (already the fallback)
+    if (clientLower === defaultClient.toLowerCase()) continue;
+    // Check if client name (or first word) appears in sheet name
+    const firstName = clientLower.split(/\s+/)[0];
+    if (sheetLower.includes(firstName) && firstName.length >= 3) {
+      return mapping.clickupSpaceName;
+    }
+  }
+  return defaultClient;
+}
+
+/**
  * Read ALL sheets in a tracker file.
  * Each sheet = a division (e.g. "Sony France", "Sony Professional").
  * Skips dashboard/performance sheets.
@@ -195,9 +229,13 @@ async function readTrackerFile(
             sheet.name
           );
 
-          // Use sheet name as division/subdivision of the client
-          // e.g. "Sony France" → client stays "Sony", but we can track division
-          const fallbackClient = mapping.clickupSpaceName;
+          // Determine the client name from the sheet name
+          // Some files contain multiple clients in different tabs
+          // (e.g. ByteDance file has TikTok tabs AND PICO tabs)
+          const fallbackClient = resolveClientFromSheet(
+            sheet.name,
+            mapping.clickupSpaceName
+          );
           const projects = parseExcelProjects(rangeData.values, fallbackClient);
 
           // Tag each project with the sheet/division name for better matching

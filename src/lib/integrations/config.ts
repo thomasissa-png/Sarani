@@ -92,6 +92,12 @@ export const CLIENT_MAPPINGS: readonly ClientIntegrationMapping[] = [
     sharepointCustomerFolder: "05. TikTok",
   },
   {
+    clickupSpaceName: "PICO XR",
+    clickupSpaceId: "90050434316",
+    excelTrackerFilename: "02. Sarani_Bytedance Projects.xlsx",
+    sharepointCustomerFolder: "05. TikTok",
+  },
+  {
     clickupSpaceName: "Other customers",
     clickupSpaceId: "90050435651",
     excelTrackerFilename: "03. Sarani_Other Projects.xlsx",
