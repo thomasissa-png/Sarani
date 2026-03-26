@@ -275,6 +275,90 @@ export const caseStudies: CaseStudy[] = [
     tags: ["Social Media"],
   },
   {
+    slug: "tiktok-gaming-showcase",
+    client: "TikTok",
+    deliverable: "Campaign creative production",
+    volume: "3 markets",
+    turnaround: "Campaign duration",
+    outcome: "300 million cumulative views — 80,000€",
+    brief:
+      "TikTok needed a gaming showcase campaign produced across 3 international markets. The brief required creative consistency across markets while adapting to local audiences — all under a single production partner.",
+    result: "300 million cumulative views across 3 markets. One creative partner. One budget.",
+    headline: "300 Million Views. 3 Markets. One Creative Partner.",
+    keyMetric: "300M views",
+    stats: [
+      { label: "Cumulative views", value: "300M+" },
+      { label: "Markets", value: "3" },
+      { label: "Budget", value: "80,000€" },
+    ],
+    metaDescription:
+      "How Sarani produced TikTok's gaming showcase campaign across 3 markets — 300 million cumulative views, 80,000€ budget, one creative partner.",
+    tags: ["Video", "Social Media"],
+  },
+  {
+    slug: "tiktok-gimmethemic",
+    client: "TikTok",
+    deliverable: "Campaign video production",
+    volume: "Campaign suite",
+    turnaround: "Campaign duration",
+    outcome: "94 million views — 3,800€",
+    brief:
+      "TikTok Germany launched the #GimmeTheMic campaign and needed video production that could drive massive organic reach on a defined budget.",
+    result: "94 million views. Total cost: 3,800€.",
+    headline: "94 Million Views. 3,800€.",
+    keyMetric: "94M views for 3,800€",
+    stats: [
+      { label: "Views", value: "94M" },
+      { label: "Price", value: "3,800€" },
+      { label: "Market", value: "Germany" },
+    ],
+    metaDescription:
+      "How Sarani produced TikTok's #GimmeTheMic campaign in Germany — 94 million views for 3,800€. The most dramatic ROI proof in enterprise creative.",
+    tags: ["Video", "Social Media"],
+  },
+  {
+    slug: "ikea-billyotheque",
+    client: "IKEA",
+    deliverable: "Event installation + creative production",
+    volume: "Full installation suite",
+    turnaround: "Pre-event delivery",
+    outcome: "Open-air library on the Seine — Paris landmark activation",
+    brief:
+      "IKEA needed a public installation on the banks of the Seine in Paris — an open-air library celebrating the BILLY bookcase. Creative production covered the full installation suite: signage, scenography, and branded elements.",
+    result: "The BILLYothèque opened on the Seine. A Paris landmark activation for one of the world's most recognisable furniture brands.",
+    headline: "IKEA's Open-Air Library on the Seine.",
+    keyMetric: "Paris landmark activation",
+    stats: [
+      { label: "Location", value: "Seine, Paris" },
+      { label: "Client", value: "IKEA" },
+      { label: "Context", value: "Paris Design Week" },
+    ],
+    metaDescription:
+      "How Sarani produced the creative suite for IKEA's BILLYothèque — an open-air library installation on the Seine in Paris.",
+    tags: ["Graphic Design", "Event"],
+  },
+  {
+    slug: "crocs-tiktok-times-square",
+    client: "Crocs x TikTok",
+    deliverable: "Out-of-home creative production",
+    volume: "OOH campaign suite",
+    turnaround: "Pre-launch delivery",
+    outcome: "Times Square NYC billboards",
+    brief:
+      "Crocs and TikTok Shop needed out-of-home creative for a billboard campaign in Times Square, New York City — one of the most visible advertising locations on earth.",
+    result: "Crocs x TikTok Shop billboards live in Times Square, NYC.",
+    headline: "Crocs x TikTok. Times Square.",
+    keyMetric: "Times Square NYC",
+    stats: [
+      { label: "Location", value: "Times Square, NYC" },
+      { label: "Clients", value: "Crocs + TikTok" },
+      { label: "Format", value: "OOH billboards" },
+    ],
+    metaDescription:
+      "How Sarani produced the out-of-home creative for Crocs x TikTok Shop's Times Square NYC billboard campaign.",
+    tags: ["Graphic Design", "Event", "Out-of-Home"],
+  },
+  {
     slug: "ikea-summer-tour",
     client: "IKEA",
     deliverable: "Tour creative production",

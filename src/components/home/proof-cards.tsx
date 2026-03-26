@@ -4,22 +4,22 @@ import { motion, useReducedMotion } from "framer-motion";
 
 const PROOF_POINTS = [
   {
+    client: "TikTok",
+    stat: "94M views",
+    price: "3,800 \u20AC",
+    detail: "#GimmeTheMic Germany — the most dramatic ROI in enterprise creative.",
+  },
+  {
     client: "Sony",
     stat: "Same-day banners",
     price: "150 \u20AC",
-    detail: "Launch campaign assets delivered within hours, not weeks.",
-  },
-  {
-    client: "GEODIS",
-    stat: "5,700 slides in 3 weeks",
-    price: "8,500 \u20AC",
-    detail: "Complete corporate rebrand across 350 presentations.",
+    detail: "Black Friday campaign assets delivered within hours, not weeks.",
   },
   {
     client: "TikTok",
     stat: "1,500+ edits per month",
-    price: "300\u2013500/week",
-    detail: "Campaigns reaching 400M+ views. Ongoing video production at scale, every single month.",
+    price: "$20/video",
+    detail: "Ongoing UGC video production at scale. Every week. Every month.",
   },
 ] as const;
 
@@ -54,7 +54,7 @@ export function ProofCards() {
     >
       {PROOF_POINTS.map((point) => (
         <motion.div
-          key={point.client}
+          key={point.stat}
           className="rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-shadow duration-200 hover:shadow-md hover:-translate-y-1"
           variants={prefersReduced ? {} : cardVariants}
           whileHover={prefersReduced ? {} : { y: -4 }}

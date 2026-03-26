@@ -45,7 +45,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       { items: ["Strategic Plan", "Marketing and Communication Plan", "Market Research"] },
     ],
     proofPoint:
-      "Sony\u2019s European TV line-up launched with 125 assets in 14 days. The production was fast because the brief was clear. Strategy first \u2014 execution follows.",
+      "Sony\u2019s European TV line-up launched with 125 assets across 15 languages in 14 days \u2014 8,500\u20AC, with daily HQ Japan approval. The production was fast because the brief was clear. Strategy first \u2014 execution follows.",
     cta: null,
   },
   {
@@ -66,7 +66,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       { group: "Virtualisation", items: ["Art Galleries", "Corporate Spaces", "Leisure", "Virtual Showrooms"] },
     ],
     proofPoint:
-      "TikTok trusted us with 1,500+ video edits a month. Adidas turned the Adidas Arena Paris into a giant shoebox \u2014 stadium wraps, decor, invitations, tickets, projections, and every collateral piece in between. LEGO took the Champs-\u00C9lys\u00E9es with a campaign, a web platform, and scenography we produced end-to-end.",
+      "TikTok\u2019s Gaming Showcase: 300 million views across 3 markets. TikTok\u2019s #GimmeTheMic Germany: 94 million views for 3,800\u20AC. Adidas turned the Adidas Arena Paris into a giant shoebox \u2014 stadium wraps, decor, invitations, tickets, projections, and every collateral piece. Sony\u2019s European TV launch: 125 assets across 15 languages in 2 weeks. GEODIS: 5,700 slides rebranded in 3 weeks for 8,500\u20AC. LEGO took the Champs-\u00C9lys\u00E9es with a campaign, a web platform, and scenography we produced end-to-end.",
     cta: {
       label: "See our work",
       href: "/work",
@@ -90,7 +90,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       { group: "Merchandising", items: ["Plans", "Offline implementation", "Print management"] },
     ],
     proofPoint:
-      "TikTok\u2019s #RoadToParis video \u2014 produced for 360\u20AC \u2014 reached 51 million views. The TikTok Comedy Club contest generated 27 million views and a winner who sold out La Cigale in Paris.",
+      "TikTok\u2019s #GimmeTheMic campaign: 94 million views for 3,800\u20AC. TikTok\u2019s #RoadToParis video \u2014 produced for 360\u20AC \u2014 reached 51 million views with 24 revision rounds included. 1,500+ UGC edits delivered every month at $20 per video.",
     cta: {
       label: "View pricing",
       href: "/pricing",

@@ -7,24 +7,24 @@ import { track, getDevice, getReferrer } from "@/lib/analytics";
 const CASE_STUDIES = [
   {
     client: "TikTok",
-    headline: "1,500+ edits per month",
+    headline: "94M views. 3,800€.",
     description:
-      "Ongoing video production at scale for TikTok's EMEA marketing team.",
-    slug: "tiktok-video-production",
+      "#GimmeTheMic Germany — the most dramatic ROI proof in enterprise creative production.",
+    slug: "tiktok-gimmethemic",
   },
   {
-    client: "GEODIS",
-    headline: "5,700 slides, 3 weeks",
+    client: "Adidas",
+    headline: "One night. One shoebox.",
     description:
-      "Complete corporate presentation rebrand across all business units.",
-    slug: "geodis-presentation-rebranding",
+      "The Adidas Arena Paris transformed into a giant Superstar — stadium wraps, decor, and every collateral piece.",
+    slug: "adidas-superstar-concert",
   },
   {
     client: "Sony",
-    headline: "125 assets, TV launch",
+    headline: "125 assets. 15 languages. 2 weeks.",
     description:
-      "Full campaign banner production for a major product launch.",
-    slug: "sony-banner-production",
+      "European TV launch — daily HQ Japan approval cycles, 8,500€ total.",
+    slug: "sony-tv-launch",
   },
 ] as const;
 
