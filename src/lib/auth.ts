@@ -160,7 +160,17 @@ export async function getUserFromSession(): Promise<{
   const sessionCookie = cookieStore.get(SESSION_COOKIE);
   if (!sessionCookie) return null;
 
-  return verifySignedToken(sessionCookie.value, secret);
+  // Try new token format first
+  const session = await verifySignedToken(sessionCookie.value, secret);
+  if (session) return session;
+
+  // Fall back to legacy token (old format without userId/role) — treat as admin
+  const legacyValid = await verifyLegacyToken(sessionCookie.value, secret);
+  if (legacyValid) {
+    return { userId: "legacy-admin", role: "admin" };
+  }
+
+  return null;
 }
 
 export async function isAuthenticated(): Promise<boolean> {
