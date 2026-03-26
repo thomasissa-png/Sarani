@@ -19,13 +19,13 @@ export default function GlobalError({
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <button
               onClick={reset}
-              className="inline-flex items-center justify-center rounded-full bg-[#e35019] px-8 py-4 text-base font-bold text-white transition-colors duration-150 hover:bg-[#b03d1c]"
+              className="inline-flex items-center justify-center rounded-full bg-[#da5126] px-8 py-4 text-base font-bold text-white transition-colors duration-150 hover:bg-[#b03d1c]"
             >
               Try again
             </button>
             <a
               href="/"
-              className="text-sm text-[#0bb3f0] transition-colors duration-150 hover:underline hover:underline-offset-4"
+              className="text-sm text-[#0babe8] transition-colors duration-150 hover:underline hover:underline-offset-4"
             >
               &larr; Back to homepage
             </a>

@@ -49,7 +49,7 @@
 - **Frontend** : À recommander par @fullstack (contrainte : site vitrine international, performance, SEO-friendly) — **greenfield**, on repart de zéro
 - **Backend** : À recommander par @fullstack (contrainte : site vitrine, formulaire contact, intégration Umami) — **greenfield**
 - **Base de données** : À recommander par @fullstack (besoin minimal : formulaire contact, éventuellement blog/case studies)
-- **Authentification** : Non requise (site vitrine public). **Back-office** : simple password (ajout ultérieur avant lancement, comme Resend)
+- **Authentification** : Email/password avec rôles admin/user (implémenté Phase 3 — voir docs/product/auth-specs.md)
 - **Hébergement** : Replit
 - **Outils IA utilisés** : Équipe d'agents IA internes via back-office (voir section Back-office IA ci-dessous)
 - **Budget IA mensuel (tokens)** : Pas de limite — tant que l'usage est intelligent et optimisé
@@ -90,8 +90,8 @@
 
 ### Architecture
 - **Déploiement** : Même app Next.js, route `/admin` (pas de sous-domaine séparé)
-- **Auth** : Simple password pour commencer (pas d'OAuth, pas d'IP restriction)
-- **Rôles/permissions** : Password unique partagé pour commencer (pas de rôles différenciés v1)
+- **Auth** : Email/password avec sessions HMAC (implémenté Phase 3)
+- **Rôles/permissions** : 2 rôles (admin, user) avec permissions différenciées (voir docs/product/auth-specs.md)
 
 ### APIs tierces
 - **ClickUp** : API key + workspace ID à ajouter avant lancement (comme Resend — env vars)

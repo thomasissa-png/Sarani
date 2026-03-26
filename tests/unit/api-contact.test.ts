@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * P0 — /api/contact route handler tests
  * WHY: The contact form is the ONLY digital conversion point for Sarani.

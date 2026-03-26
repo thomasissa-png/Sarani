@@ -10,10 +10,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
-    environmentMatchGlobs: [
-      // API route tests run in Node, not jsdom
-      ["tests/unit/api-*.test.ts", "node"],
-    ],
+    // API route tests override to Node via inline comment: // @vitest-environment node
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
     coverage: {

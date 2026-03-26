@@ -10,10 +10,10 @@
   /* Brand Colors — exact V2 Webflow values */
   --color-brand-black: #000000;
   --color-brand-white: #ffffff;
-  --color-brand-flame: #e35019;
+  --color-brand-flame: #da5126;
   --color-brand-flame-light: #e8735a;
   --color-brand-flame-dark: #b03d1c;
-  --color-brand-cerulean: #0bb3f0;
+  --color-brand-cerulean: #0babe8;
   --color-brand-cerulean-light: #3dbfef;
   --color-brand-cerulean-dark: #0888ba;
   --color-brand-lemon: #faca15;
@@ -38,9 +38,9 @@
   --color-warning: #faca15;
   --color-warning-light: #fef9c3;
   --color-warning-text: #b45309;
-  --color-error: #e35019;
+  --color-error: #da5126;
   --color-error-light: #fde8e2;
-  --color-info: #0bb3f0;
+  --color-info: #0babe8;
   --color-info-light: #e0f5fd;
 
   /* Surface Colors — Light-first */
