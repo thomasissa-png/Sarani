@@ -13,9 +13,9 @@ export const SHAREPOINT_TRACKERS_DRIVE_ID =
 export const SHAREPOINT_ASSETS_DRIVE_ID =
   "b!BTvSB7PxVEeCQbtgLKBtdI62eOvL4gFEkH_L6luQY04w7z1UWPKDQ4GDuZJmfD9_";
 
-/** Base path within the Trackers drive where Excel files live */
+/** Base path within the Trackers drive (OneDrive personal — no /Documents prefix) */
 export const TRACKERS_BASE_PATH =
-  "/Documents/00. Administrative/03. Financials (Trackers)";
+  "/00. Administrative/03. Financials (Trackers)";
 
 /** Base path within the Assets drive where customer folders live */
 export const ASSETS_CUSTOMERS_BASE_PATH = "/Documents/03. Customers";
