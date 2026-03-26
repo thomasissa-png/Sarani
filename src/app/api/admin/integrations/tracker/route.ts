@@ -164,15 +164,23 @@ async function fetchExcelTrackers(): Promise<{
 const SKIP_SHEET_PATTERNS = [
   "performance",
   "dashboard",
-  "summary",
   "overview",
   "template",
   "config",
   "instructions",
+  "total",
 ];
+
+/** Exact sheet names to skip (case-insensitive) — NOT partial matches */
+const SKIP_SHEET_EXACT = new Set([
+  "instructions",
+  "total",
+  "summary",
+]);
 
 function shouldSkipSheet(name: string): boolean {
   const lower = name.toLowerCase().trim();
+  if (SKIP_SHEET_EXACT.has(lower)) return true;
   return SKIP_SHEET_PATTERNS.some((p) => lower.includes(p));
 }
 

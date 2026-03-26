@@ -24,22 +24,24 @@ export const COL_MAP = {
   customer: ["customer", "client", "client name", "company", "account"],
   division: ["division", "department", "bu", "business unit", "entity"],
   date: ["date", "project date", "creation date", "start date", "brief date", "order date"],
-  project: ["project", "project name", "project description", "description", "brief", "job", "job name", "titre", "titre du projet"],
+  project: ["project", "project name", "project description", "description", "brief", "job", "job name", "titre", "titre du projet", "projet"],
   contact: ["contact", "contact name", "client contact", "requestor", "demandeur", "contact client", "person"],
-  status: ["status", "project status", "statut", "état", "state"],
-  category: ["category", "cat", "cat.", "type", "service", "service type", "deliverable type"],
-  link: ["link", "sharepoint link", "folder link", "sharepoint", "folder", "url", "dossier"],
+  status: ["status", "project status", "statut", "état", "state", "po status"],
+  category: ["category", "cat", "cat.", "type", "service", "service type", "deliverable type", "catégorie", "categorie"],
+  link: ["link", "sharepoint link", "folder link", "sharepoint", "folder", "url", "dossier", "lien projet", "lien", "lien sharepoint"],
   totalValue: [
     "total value", "total value (eur)", "total", "total eur", "total usd",
     "value", "amount", "montant", "prix", "price", "total price",
     "total value (usd)", "project value", "budget", "fee", "fees",
-    "valeur", "valeur totale",
+    "valeur", "valeur totale", "facturé client", "facture client",
+    "revenue", "chiffre", "ca",
   ],
-  poNumber: ["po", "po number", "po #", "po#", "purchase order", "bon de commande", "po ref", "po reference"],
-  invoiceNumber: ["invoice", "invoice number", "invoice #", "inv", "inv.", "invoice ref", "facture", "n° facture"],
+  poNumber: ["po", "po number", "po #", "po#", "purchase order", "bon de commande", "po ref", "po reference", "code projet"],
+  invoiceNumber: ["invoice", "invoice number", "invoice #", "inv", "inv.", "invoice ref", "facture", "n° facture", "n° invoice", "n°invoice"],
   invoiceStatus: [
     "invoice status", "payment status", "payment", "inv. status", "inv status",
     "paiement", "statut facture", "billing status", "billing",
+    "status2", "statut", "status inv.", "echéance", "echeance",
   ],
 } as const;
 
@@ -87,7 +89,7 @@ export function findColumnIndex(
   headers: string[],
   aliases: readonly string[]
 ): number {
-  const lower = headers.map((h) => h.toLowerCase().trim());
+  const lower = headers.map((h) => (h ?? "").toLowerCase().trim());
   for (const alias of aliases) {
     const idx = lower.indexOf(alias);
     if (idx !== -1) return idx;
