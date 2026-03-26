@@ -5,21 +5,27 @@ import { motion, useReducedMotion } from "framer-motion";
 const PROOF_POINTS = [
   {
     client: "TikTok",
-    stat: "94M views",
-    price: "3,800 \u20AC",
-    detail: "#GimmeTheMic Germany — the most dramatic ROI in enterprise creative.",
+    stat: "1,500+ edits/month",
+    price: "$20/video",
+    detail: "Ongoing UGC production at scale. Every week. Every month. 3 years running.",
   },
   {
     client: "Sony",
-    stat: "Same-day banners",
+    stat: "Same-day delivery",
     price: "150 \u20AC",
-    detail: "Black Friday campaign assets delivered within hours, not weeks.",
+    detail: "Black Friday banners. Ordered in the morning. Delivered by evening.",
+  },
+  {
+    client: "GEODIS",
+    stat: "5,700 slides",
+    price: "8,500 \u20AC",
+    detail: "Full rebrand in 3 weeks. Previous agency quoted 80,000\u20AC.",
   },
   {
     client: "TikTok",
-    stat: "1,500+ edits per month",
-    price: "$20/video",
-    detail: "Ongoing UGC video production at scale. Every week. Every month.",
+    stat: "94M views",
+    price: "3,800 \u20AC",
+    detail: "#GimmeTheMic Germany. One video. 94 million views.",
   },
 ] as const;
 
@@ -41,7 +47,7 @@ export function ProofCards() {
 
   return (
     <motion.div
-      className="grid gap-6 md:grid-cols-3"
+      className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}

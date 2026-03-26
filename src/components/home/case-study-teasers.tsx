@@ -7,24 +7,31 @@ import { track, getDevice, getReferrer } from "@/lib/analytics";
 const CASE_STUDIES = [
   {
     client: "TikTok",
-    headline: "94M views. 3,800€.",
+    headline: "94M views. 3,800\u20AC.",
     description:
-      "#GimmeTheMic Germany — the most dramatic ROI proof in enterprise creative production.",
+      "#GimmeTheMic Germany — one promotional video, 94 million views.",
     slug: "tiktok-gimmethemic",
   },
   {
     client: "Adidas",
-    headline: "One night. One shoebox.",
+    headline: "One night. One stadium.",
     description:
-      "The Adidas Arena Paris transformed into a giant Superstar — stadium wraps, decor, and every collateral piece.",
+      "The Adidas Arena transformed into a giant Superstar shoebox — hundreds of assets, stadium wraps, projections.",
     slug: "adidas-superstar-concert",
   },
   {
     client: "Sony",
     headline: "125 assets. 15 languages. 2 weeks.",
     description:
-      "European TV launch — daily HQ Japan approval cycles, 8,500€ total.",
+      "European TV launch with daily HQ Japan approval. Day/night relay. 8,500\u20AC.",
     slug: "sony-tv-launch",
+  },
+  {
+    client: "LEGO",
+    headline: "250+ teams. Champs-\u00C9lys\u00E9es.",
+    description:
+      "Le Grand Tournoi des Champs — poster, scenography, web platform, screen content. Paris\u2019s most famous avenue, turned playground.",
+    slug: "lego-champs-elysees",
   },
 ] as const;
 
@@ -57,7 +64,7 @@ export function CaseStudyTeasers() {
 
   return (
     <motion.div
-      className="grid gap-6 md:grid-cols-3"
+      className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}

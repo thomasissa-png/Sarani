@@ -41,20 +41,20 @@ type ProofPoint = {
 const PROOF_POINTS: ProofPoint[] = [
   {
     client: "TikTok",
-    challenge: "1,500+ video edits needed every month",
-    result: "Delivered on time. Every month.",
+    challenge: "1,500+ video edits needed every month across 10+ markets",
+    result: "Delivered on time. Every month. 3 years running. 400M+ total campaign views.",
     metric: "1,500+/mo",
   },
   {
     client: "Sony",
-    challenge: "Black Friday banners needed same-day",
-    result: "Ordered in the morning. Delivered the same day.",
-    metric: "150\u20AC/banner",
+    challenge: "125 assets for European TV launch across 15 languages — daily Japan HQ approval",
+    result: "Day/night relay production over 2 weeks. 8,500\u20AC total.",
+    metric: "125 assets",
   },
   {
     client: "GEODIS",
     challenge: "350 presentations to rebrand in 3 weeks",
-    result: "5,700 slides delivered. 8,500\u20AC. Done.",
+    result: "5,700 slides delivered. 8,500\u20AC. Previous agency quoted 80,000\u20AC.",
     metric: "3 weeks",
   },
 ];

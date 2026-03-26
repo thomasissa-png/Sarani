@@ -165,9 +165,9 @@ const PROOF_POINTS: ProofPoint[] = [
     client: "TikTok",
   },
   {
-    metric: "60%",
-    detail: "average savings vs traditional agencies — because our structure is built differently, not because we cut corners",
-    client: "Across all enterprise clients",
+    metric: "300M views",
+    detail: "across 3 countries — gamer portraits shot in LA, Paris, and Hamburg",
+    client: "TikTok Gaming Showcase — 80,000\u00A0€",
   },
 ];
 
