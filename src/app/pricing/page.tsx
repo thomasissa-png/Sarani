@@ -149,32 +149,60 @@ type ProofPoint = {
 };
 
 const PROOF_POINTS: ProofPoint[] = [
-  { metric: "150\u00A0€", detail: "per banner — delivered same day", client: "Sony Black Friday" },
-  { metric: "8,500\u00A0€", detail: "for 350 presentations in 3 weeks", client: "GEODIS rebrand" },
-  { metric: "$20", detail: "per video — 1,500+ per month", client: "TikTok compliance edits" },
-  { metric: "60%", detail: "average savings vs previous agency", client: "Enterprise clients" },
+  {
+    metric: "150\u00A0€",
+    detail: "per banner — ordered in the morning, delivered the same day",
+    client: "Sony Black Friday",
+  },
+  {
+    metric: "8,500\u00A0€",
+    detail: "for 5,700 slides in 3 weeks — their previous agency quoted 80,000\u00A0€ and 3 months",
+    client: "GEODIS rebrand",
+  },
+  {
+    metric: "$\u00A020",
+    detail: "per video — 1,500+ edits delivered every single month for 3 years running",
+    client: "TikTok",
+  },
+  {
+    metric: "60%",
+    detail: "average savings vs traditional agencies — because our structure is built differently, not because we cut corners",
+    client: "Across all enterprise clients",
+  },
 ];
 
 const FAQ_ITEMS = [
   {
     q: "Are revisions really unlimited?",
-    a: "Yes. We iterate until you're 100% satisfied. No extra charge, no limit.",
+    a: "Yes. The price quoted is the price paid — revisions included, no cap, no surcharge. We iterate until you sign off.",
   },
   {
     q: "What does D+1 delivery mean?",
-    a: "For standard graphic design (banners, adaptations), we deliver within 24 hours of brief validation. Larger scopes (video, branding) are confirmed at brief — typically 48 to 96 hours.",
+    a: "Brief validated today, asset delivered tomorrow. For standard design (banners, adaptations), that means 24 hours. 35 experts across 5 continents work in time-zone relay — your brief never waits for a timezone to wake up. Larger scopes (video, branding) follow confirmed timelines, typically 48 to 96 hours.",
   },
   {
     q: "Do I need a minimum commitment?",
-    a: "No. Order one banner or a thousand. No retainer, no contract lock-in. Pay per project.",
+    a: "No. Order one banner or a thousand. No retainer, no contract lock-in. Pay per project, benchmark quality and price each time, and scale when you need to.",
   },
   {
     q: "What if I'm not satisfied with the first project?",
-    a: "You don't pay. Simple as that. We believe in earning trust through work, not contracts.",
+    a: "You don't pay. No questions, no negotiation. First project satisfaction or no invoice — it is that simple.",
   },
   {
     q: "Can you handle volume?",
-    a: "Absolutely. We produce 1,500+ deliverables per month for clients like Sony, TikTok, and Adidas. Scale is what we do.",
+    a: "TikTok sends us 300 to 500 videos a week. We return 1,500+ edits a month, every month. Sony, Adidas, GEODIS, L'Oreal — they all run production through us at scale.",
+  },
+  {
+    q: "How do I justify this to my procurement team?",
+    a: "Give them this page. Every price is published — no negotiation required, no hidden fees. They get a fixed quote before work starts and a detailed invoice after delivery. Named references (GEODIS, Sony, TikTok) are verifiable. No retainer means no lock-in: evaluate quality project by project, with zero switching cost. GEODIS saved over 80% vs their previous agency on 350 presentations — 8,500\u00A0€ vs 80,000\u00A0€ quoted. That is the cost justification procurement signs off on.",
+  },
+  {
+    q: "Do you offer retained partnerships for ongoing volume?",
+    a: "Yes. If you have recurring production needs, we structure monthly packs with priority capacity and volume pricing. TikTok runs 1,500+ video edits through us every month on a retained basis. Contact us for a tailored quote — same fixed-price logic, scaled to your volume.",
+  },
+  {
+    q: "Why are your prices lower than traditional agencies?",
+    a: "Structure, not shortcuts. 35 experts across 5 continents working in relay means zero idle time and no account-management overhead. No corner offices, no layers of project managers between you and the work. The savings come from operational efficiency — TikTok, Sony, and Adidas would not trust us with their production if it came at the expense of quality.",
   },
 ];
 
@@ -213,9 +241,15 @@ export default function PricingPage() {
             <br />
             <span className="text-brand-flame">Zero surprises.</span>
           </h1>
-          <p className="mx-auto max-w-xl text-lg text-neutral-600">
-            No retainer. No minimum commitment. Unlimited revisions.
-            Up to 60% savings vs traditional agencies.
+          <p className="mx-auto max-w-xl text-lg leading-relaxed text-neutral-600">
+            Every price on this page is the price you pay. Every revision
+            is included. Every deadline is met. No retainer, no minimum
+            commitment — up to 60% savings vs traditional agencies.
+          </p>
+          <p className="mx-auto mt-4 max-w-lg text-sm text-neutral-500">
+            Built for marketing leaders who need assets delivered
+            yesterday — and procurement teams who need every euro
+            accounted for before signing.
           </p>
         </div>
       </Section>
@@ -223,9 +257,13 @@ export default function PricingPage() {
       {/* Guarantee Strip — high impact */}
       <div className="bg-brand-black">
         <div className="mx-auto max-w-screen-xl px-5 py-5 md:px-8">
-          <p className="text-center text-lg font-bold text-brand-white">
+          <p className="text-center text-lg font-bold text-brand-white md:text-xl">
             Not satisfied with your first project?{" "}
-            <span className="text-brand-lemon">No invoice.</span> No questions.
+            <span className="text-brand-lemon">No invoice.</span>
+          </p>
+          <p className="mt-1 text-center text-sm text-neutral-400">
+            No questions. No negotiation. No fine print. The financial risk
+            is entirely ours.
           </p>
         </div>
       </div>
@@ -247,19 +285,48 @@ export default function PricingPage() {
         </div>
 
         {/* VAT note — integrated */}
-        <p className="mt-8 text-center text-sm text-neutral-500">
-          All prices exclude VAT (HT). VAT is applied according to applicable regulations.
-        </p>
+        <div className="mt-8 space-y-1 text-center text-sm text-neutral-500">
+          <p>
+            All prices exclude VAT (HT). VAT is applied according to applicable
+            regulations.
+          </p>
+          <p>
+            Every project receives a fixed quote before work begins and a
+            detailed invoice upon delivery — no hidden fees, no revision
+            surcharges.
+          </p>
+        </div>
+      </Section>
+
+      {/* Why these prices — structural differentiation */}
+      <Section ariaLabel="Why these prices">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
+            35 experts. 5 continents. 18 languages. 24/7.
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-neutral-600">
+            Your brief never waits for a timezone to wake up. Our team works in
+            relay — when Paris signs off, Dubai picks up, then Singapore, then
+            Montreal. No account-management layers, no billable-hour model, no
+            office overhead passed on to you. The savings come from operational
+            efficiency — not from quality compromises.
+          </p>
+          <p className="mt-4 text-sm font-medium text-neutral-500">
+            TikTok, Sony, Adidas, GEODIS, L&apos;Oreal, Pernod Ricard — they
+            set the quality bar. We meet it every day.
+          </p>
+        </div>
       </Section>
 
       {/* Proof Points — results speak louder than comparisons */}
       <Section ariaLabel="Results" className="bg-brand-black">
         <div className="mx-auto max-w-3xl">
           <h2 className="mb-3 text-center text-3xl font-bold text-brand-white sm:text-4xl">
-            The numbers speak.
+            Real prices. Real clients. Real results.
           </h2>
           <p className="mb-10 text-center text-neutral-400">
-            Real prices. Real clients. Real deadlines met.
+            Not estimates. Not projections. These are invoices we sent — to
+            enterprises you know.
           </p>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -317,16 +384,21 @@ export default function PricingPage() {
       <Section ariaLabel="Call to action" className="bg-brand-black">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="mb-4 text-4xl font-bold text-brand-white sm:text-5xl">
-            One brief.
+            One brief. One fixed price.
             <br />
-            <span className="text-brand-flame">24 hours. Done.</span>
+            <span className="text-brand-flame">Delivered in 24 hours.</span>
           </h2>
-          <p className="mb-8 text-neutral-400">
-            Zero risk. No commitment. Start with one project and see for yourself.
+          <p className="mb-8 text-lg text-neutral-400">
+            No retainer. No contract lock-in. No risk. Start with a single
+            project and benchmark us against any agency you have ever worked
+            with — if the result is not right, you do not pay.
           </p>
           <Button variant="primary" href="/contact">
             Start a project
           </Button>
+          <p className="mt-4 text-sm text-neutral-500">
+            First project satisfaction or no invoice.
+          </p>
         </div>
       </Section>
     </div>
