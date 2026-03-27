@@ -74,6 +74,7 @@ const AGENT_GROUPS: AgentGroup[] = [
     items: [
       { label: "SEO", href: "/admin/agents/seo", icon: "search" },
       { label: "Social", href: "/admin/agents/social", icon: "share" },
+      { label: "Case Studies", href: "/admin/agents/case-studies", icon: "briefcase" },
     ],
   },
 ];
