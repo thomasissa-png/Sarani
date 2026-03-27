@@ -20,8 +20,10 @@ export async function GET() {
     return NextResponse.json({ emails });
   } catch (error) {
     console.error("[Emails API] Error fetching emails:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    // Surface the actual error to help diagnose permission issues
     return NextResponse.json(
-      { error: "Failed to fetch emails" },
+      { error: `Failed to fetch emails: ${message}` },
       { status: 500 }
     );
   }

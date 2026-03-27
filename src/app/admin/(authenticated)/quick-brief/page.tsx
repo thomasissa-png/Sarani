@@ -176,14 +176,18 @@ export default function ProjectBriefPage() {
         setEmailConfigured(false);
         return;
       }
-      if (!res.ok) throw new Error("Failed to fetch emails");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error ?? `Failed to fetch emails (${res.status})`);
+      }
       setEmailConfigured(true);
       const data = await res.json();
       setEmails(data.emails ?? []);
       emailFetchedRef.current = true;
-    } catch {
-      setEmailsError("Could not load emails. Check Microsoft Graph configuration.");
-      setEmailConfigured(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setEmailsError(msg);
+      // Don't hide the section for runtime errors — only for 503 (not configured)
     } finally {
       setEmailsLoading(false);
     }
@@ -509,8 +513,7 @@ export default function ProjectBriefPage() {
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
               Division
-              {divisions.length > 0 && <span className="text-red-500 ml-0.5">*</span>}
-              {divisions.length === 0 && <span className="text-neutral-400 font-normal ml-1">(auto-detected)</span>}
+              <span className="text-neutral-400 font-normal ml-1">(optional)</span>
             </label>
             {divisions.length > 0 ? (
               <select

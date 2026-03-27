@@ -307,8 +307,7 @@ export default function NewProjectPage() {
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
               Division
-              {divisions.length > 0 && <span className="text-error ml-0.5">*</span>}
-              {divisions.length === 0 && <span className="text-neutral-400 font-normal ml-1">(auto-detected)</span>}
+              <span className="text-neutral-400 font-normal ml-1">(optional)</span>
             </label>
             {divisions.length > 0 ? (
               <select
