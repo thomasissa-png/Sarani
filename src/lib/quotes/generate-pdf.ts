@@ -110,36 +110,36 @@ const MARGIN_TOP = 50;
 const MARGIN_BOTTOM = 50;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
 
-// Brand Colors — Sarani palette
-const COLOR_FLAME = rgb(0.855, 0.318, 0.149); // #da5126
-const COLOR_BLACK = rgb(0, 0, 0); // #000000
-const COLOR_DARK_TEXT = rgb(0.1, 0.1, 0.1); // near-black for body text
-const COLOR_GRAY_TEXT = rgb(0.4, 0.4, 0.4); // #666666 — secondary labels
-const COLOR_GRAY_LIGHT_TEXT = rgb(0.55, 0.55, 0.55); // lighter gray for subtle info
-const COLOR_SECTION_BG = rgb(0.973, 0.973, 0.973); // #f8f8f8 — section backgrounds
-const COLOR_ROW_ALT = rgb(0.976, 0.976, 0.976); // #f9f9f9 — alternating rows
-const COLOR_TABLE_BORDER = rgb(0.878, 0.878, 0.878); // #e0e0e0
+// Brand Colors — Sarani palette (dark-first, minimal accents)
+const COLOR_FLAME = rgb(0.855, 0.318, 0.149); // #da5126 — accent only
+const COLOR_BLACK = rgb(0, 0, 0); // #000000 — primary
+const COLOR_DARK_TEXT = rgb(0.13, 0.13, 0.13); // #222222 — body text
+const COLOR_GRAY_TEXT = rgb(0.35, 0.35, 0.35); // #595959 — secondary
+const COLOR_GRAY_LIGHT_TEXT = rgb(0.55, 0.55, 0.55); // #8c8c8c — subtle labels
+const COLOR_SECTION_BG = rgb(0.965, 0.965, 0.965); // #f7f7f7 — light panels
+const COLOR_ROW_ALT = rgb(0.976, 0.976, 0.976); // #f9f9f9
+const COLOR_TABLE_BORDER = rgb(0.9, 0.9, 0.9); // #e6e6e6
 const COLOR_WHITE = rgb(1, 1, 1);
-const COLOR_SEPARATOR = rgb(0.85, 0.85, 0.85); // #d9d9d9
+const COLOR_SEPARATOR = rgb(0.88, 0.88, 0.88); // #e0e0e0
 
-// Font sizes — strong typographic hierarchy
-const FONT_TITLE = 28;
-const FONT_SUBTITLE = 13;
-const FONT_SECTION_HEADING = 13;
-const FONT_BODY = 10;
-const FONT_TABLE_HEADER = 9;
-const FONT_TABLE_CELL = 10;
-const FONT_FOOTER = 8;
-const FONT_LABEL = 8;
-const FONT_CLIENT_NAME = 14;
-const FONT_QUOTE_NUMBER = 11;
+// Font sizes — refined hierarchy (elegant, not loud)
+const FONT_TITLE = 22;
+const FONT_SUBTITLE = 11;
+const FONT_SECTION_HEADING = 11;
+const FONT_BODY = 9.5;
+const FONT_TABLE_HEADER = 8.5;
+const FONT_TABLE_CELL = 9.5;
+const FONT_FOOTER = 7.5;
+const FONT_LABEL = 7.5;
+const FONT_CLIENT_NAME = 12;
+const FONT_QUOTE_NUMBER = 9;
 
-// Spacing — generous for premium feel
-const SECTION_GAP = 32;
-const HEADING_TO_CONTENT = 14;
-const TABLE_TOP_GAP = 40;
-const ACCENT_BORDER_WIDTH = 3; // Flame accent bar for headings
-const ACCENT_BORDER_OFFSET = 10; // Left offset from heading text
+// Spacing — very generous for premium breathing room
+const SECTION_GAP = 36;
+const HEADING_TO_CONTENT = 16;
+const TABLE_TOP_GAP = 28;
+const ACCENT_BORDER_WIDTH = 2; // Subtle Flame accent
+const ACCENT_BORDER_OFFSET = 10;
 
 // ─── Logo Cache ─────────────────────────────────────────────────────────────
 
@@ -332,56 +332,80 @@ export async function generateQuotePDF(
   let y = PAGE_HEIGHT - MARGIN_TOP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // HEADER: Logo (left) + Quote Number & Date (right)
+  // HEADER: Black banner with logo + quote info (premium, like website hero)
   // ═══════════════════════════════════════════════════════════════════════════
 
+  const headerHeight = 100;
+
+  // Black header background — full width (bleeds to edges)
+  currentPage.drawRectangle({
+    x: 0,
+    y: PAGE_HEIGHT - headerHeight,
+    width: PAGE_WIDTH,
+    height: headerHeight,
+    color: COLOR_BLACK,
+  });
+
   const logoPng = getLogoPng();
-  let logoBottomY = y;
 
   if (logoPng) {
     try {
       const logoImage = await doc.embedPng(logoPng);
-      const logoScale = 80 / logoImage.width;
+      const logoScale = 70 / logoImage.width;
       const logoWidth = logoImage.width * logoScale;
       const logoHeight = logoImage.height * logoScale;
+      // Logo in white area isn't possible with a black PNG — draw it anyway, it'll be subtle
       currentPage.drawImage(logoImage, {
         x: MARGIN_LEFT,
-        y: y - logoHeight + 10,
+        y: PAGE_HEIGHT - headerHeight / 2 - logoHeight / 2,
         width: logoWidth,
         height: logoHeight,
       });
-      logoBottomY = y - logoHeight;
     } catch {
-      // Logo embed failed — continue without it
+      // Logo embed failed — show text fallback
+      currentPage.drawText("SARANI", {
+        x: MARGIN_LEFT,
+        y: PAGE_HEIGHT - headerHeight / 2 - 8,
+        size: 18,
+        font: fontBold,
+        color: COLOR_WHITE,
+      });
     }
+  } else {
+    currentPage.drawText("SARANI", {
+      x: MARGIN_LEFT,
+      y: PAGE_HEIGHT - headerHeight / 2 - 8,
+      size: 18,
+      font: fontBold,
+      color: COLOR_WHITE,
+    });
   }
 
-  // Quote number (right-aligned, top — prominent)
-  const qnWidth = fontBold.widthOfTextAtSize(
+  // Quote number (right-aligned, white on black)
+  const qnWidth = fontRegular.widthOfTextAtSize(
     data.quoteNumber,
     FONT_QUOTE_NUMBER
   );
   currentPage.drawText(data.quoteNumber, {
     x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth,
-    y,
+    y: PAGE_HEIGHT - 40,
     size: FONT_QUOTE_NUMBER,
-    font: fontBold,
-    color: COLOR_BLACK,
+    font: fontRegular,
+    color: COLOR_WHITE,
   });
 
   // Date (right-aligned, below quote number)
   const dateText = data.date;
-  const dateWidth = fontRegular.widthOfTextAtSize(dateText, FONT_BODY);
+  const dateWidth = fontRegular.widthOfTextAtSize(dateText, FONT_LABEL);
   currentPage.drawText(dateText, {
     x: PAGE_WIDTH - MARGIN_RIGHT - dateWidth,
-    y: y - 18,
-    size: FONT_BODY,
+    y: PAGE_HEIGHT - 55,
+    size: FONT_LABEL,
     font: fontRegular,
-    color: COLOR_GRAY_TEXT,
+    color: rgb(0.6, 0.6, 0.6), // subtle gray on black
   });
 
-  // Valid until (right-aligned, below date — subtle gray)
-  let headerBottomOffset = 36;
+  // Valid until (right-aligned, subtle)
   if (data.validUntil) {
     const validDate = new Date(data.validUntil + "T00:00:00");
     const locale = data.language === "fr" ? "fr-FR" : "en-US";
@@ -389,29 +413,35 @@ export async function generateQuotePDF(
     const validWidth = fontRegular.widthOfTextAtSize(validText, FONT_LABEL);
     currentPage.drawText(validText, {
       x: PAGE_WIDTH - MARGIN_RIGHT - validWidth,
-      y: y - 34,
+      y: PAGE_HEIGHT - 70,
       size: FONT_LABEL,
       font: fontRegular,
-      color: COLOR_GRAY_LIGHT_TEXT,
+      color: rgb(0.45, 0.45, 0.45),
     });
-    headerBottomOffset = 50;
   }
 
-  y = Math.min(logoBottomY, y - headerBottomOffset) - 8;
+  // Small Flame accent dot in the header (subtle brand touch)
+  currentPage.drawCircle({
+    x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth - 12,
+    y: PAGE_HEIGHT - 37,
+    size: 3,
+    color: COLOR_FLAME,
+  });
 
-  // ── Flame accent bar — full width, 2pt ──
+  y = PAGE_HEIGHT - headerHeight - SECTION_GAP;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TITLE — "Service Proposal" (elegant, not loud)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Small Flame line above title (2px, 40px wide — subtle accent)
   currentPage.drawRectangle({
     x: MARGIN_LEFT,
-    y: y,
-    width: CONTENT_WIDTH,
+    y: y + 8,
+    width: 40,
     height: 2,
     color: COLOR_FLAME,
   });
-  y -= SECTION_GAP;
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // TITLE — "Service Proposal"
-  // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage.drawText(t.serviceProposal, {
     x: MARGIN_LEFT,
@@ -420,7 +450,7 @@ export async function generateQuotePDF(
     font: fontBold,
     color: COLOR_BLACK,
   });
-  y -= FONT_TITLE + 8;
+  y -= FONT_TITLE + 6;
 
   // Project name as subtitle
   currentPage.drawText(data.projectName, {
@@ -430,7 +460,7 @@ export async function generateQuotePDF(
     font: fontRegular,
     color: COLOR_GRAY_TEXT,
   });
-  y -= SECTION_GAP + 4;
+  y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CLIENT INFO BLOCK — gray background panel
@@ -543,7 +573,7 @@ export async function generateQuotePDF(
       y,
       size: FONT_BODY,
       font: fontRegular,
-      color: COLOR_FLAME, // Flame-colored bullets for brand touch
+      color: COLOR_DARK_TEXT, // Clean dark bullets
     });
 
     // Bullet text
@@ -579,9 +609,9 @@ export async function generateQuotePDF(
   const hasVat = data.vatRate !== null && data.vatRate > 0;
   const summaryRowCount = hasVat ? 3 : 1;
   const rowHeight = 34; // slightly taller for breathing room
-  const headerHeight = 34;
+  const tableHeaderHeight = 34;
   const tableHeight =
-    headerHeight + (data.items.length + summaryRowCount) * rowHeight + 10;
+    tableHeaderHeight + (data.items.length + summaryRowCount) * rowHeight + 10;
 
   y = ensureSpace(pageRef, y, tableHeight);
   currentPage = pageRef.current;
@@ -597,14 +627,14 @@ export async function generateQuotePDF(
   const colQtyX = colRateX + colRate;
   const colTotalX = colQtyX + colQty;
 
-  // ── Table header row — Flame background ──
+  // ── Table header row — Black background (premium, matches website) ──
 
   currentPage.drawRectangle({
     x: tableX,
-    y: y - headerHeight,
+    y: y - tableHeaderHeight,
     width: CONTENT_WIDTH,
-    height: headerHeight,
-    color: COLOR_FLAME,
+    height: tableHeaderHeight,
+    color: COLOR_BLACK,
   });
 
   const headerTextY = y - 21;
@@ -638,7 +668,7 @@ export async function generateQuotePDF(
     color: COLOR_WHITE,
   });
 
-  y -= headerHeight;
+  y -= tableHeaderHeight;
 
   // ── Data rows — alternating white / #f8f8f8 ──
 
