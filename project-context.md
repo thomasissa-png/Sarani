@@ -353,28 +353,47 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-03-27 (session 7 en cours)
+**Date et heure de clôture :** 2026-03-27 ~23:00 UTC (session 7)
 
 **Résumé de la session (session 7) :**
-Session de reprise et stabilisation. Migrations Drizzle corrigées : journal mis à jour (0002-0004 enregistrées), nouvelle migration 0005 (payment_terms_days), migration 0006 (project_teams/team_steps/team_deliverables) centralisée dans drizzle/. Build Next.js validé. Branche : `claude/extract-project-context-RzIlU`.
+Session majeure de stabilisation + specs nouvelles features. **Migrations** : journal Drizzle corrigé (0002-0006), QA audit (score 7→corrections appliquées : CTE fix 0004, FK CASCADE 0006, idempotence). Seed script refait avec raw SQL (plus de dépendance au migrator Drizzle). **Email import fix** : double `/v1.0/v1.0/` dans les URLs corrigé — cause racine du 400. **Outputs→Tracker** : 15 routes API + 13 pages agents + nouveau endpoint `/api/admin/agents/outputs-by-project` + badge "AI N" dans le tracker. **Sidebar** : réorganisée — Agent Teams dans AI Agents, nouvelle section "AI Sarani" (SEO, Social, Case Studies). **Quote PDF** : redesign premium (header noir, typographie raffinée, Flame en micro-accent, table header noir). **Video AI** : 5 hypothèses validées par Thomas, stratégie multi-modèle approuvée (Veo 3.1 + Runway Gen-4 + Kling 3.0 — PiAPI abandonné). **3 nouvelles features spécifiées** : Storyboard Preview (Phase 3f), Landing Page Generator (Phase 3h), AI Case Study Generator avec auto-scanning (Phase 3g).
 
-**Travaux en cours :**
-- **Déploiement Replit** : code pushé, migrations prêtes. À exécuter : `npm run db:migrate` après déploiement. Env vars à vérifier dans les Secrets Replit (DATABASE_URL, ANTHROPIC_API_KEY, MICROSOFT_*, CLICKUP_*).
-- **Email import** : fix 400 (URLSearchParams → query manuelle) pushé mais non confirmé par Thomas. Permission Mail.Read + MICROSOFT_EMAIL_ADDRESS configurées côté Azure.
-- **Police Outfit dans PDF** : woff2 non supporté par pdf-lib — utilise Helvetica. Pour Outfit il faudrait télécharger les fichiers .ttf et les mettre dans public/fonts/.
-- **Payment terms par client** : migration SQL prête (0005). UI dans la fiche client pour le configurer pas encore implémentée.
-- **Audit @moi** : score 7.5/10 — 5 gaps structurels identifiés (outputs non liés au tracker, pas de workflow approbation, pas de dashboard "Ma journée", pas de recherche globale, pas de pont Brief→AI Team).
+**Travaux terminés cette session :**
+- [x] Migrations Drizzle corrigées + audit QA + corrections
+- [x] Seed script avec raw SQL (indépendant du migrator)
+- [x] Email import : fix double /v1.0/ (cause racine du 400)
+- [x] Outputs agents rattachés au tracker (ProjectSelector + badge AI)
+- [x] Sidebar réorganisée (AI Agents + AI Sarani + Settings)
+- [x] Quote PDF redesign (style site web premium)
+- [x] Hypothèses vidéo H-01→H-05 toutes validées
+- [x] Stratégie multi-modèle vidéo validée
+- [x] Specs storyboard (`docs/product/storyboard-specs.md`)
+- [x] Specs landing page generator (`docs/product/landing-page-generator-specs.md`)
+- [x] Specs case study generator (`docs/product/case-study-generator-specs.md`)
+- [x] Roadmap mise à jour (phases 3g, 3h ajoutées)
+
+**Travaux en cours / à confirmer :**
+- **Email import** : fix pushé (double /v1.0/). Thomas doit tester — si toujours 400, le problème est côté Azure AD (Mail.Read en Application, pas Delegated).
+- **Quote PDF** : redesign pushé, audits @design et @creative-strategy en cours pour validation 10/10.
+- **Specs audits** : @reviewer a audité les 3 specs (storyboard, case study, landing page) — corrections à appliquer si score < 9/10.
+- **Police Outfit dans PDF** : toujours Helvetica (besoin de fichiers .ttf).
+- **Payment terms UI** : migration SQL prête, UI fiche client pas encore implémentée.
 
 **Prochaines actions recommandées :**
-1. **@fullstack — Confirmer email import** (PRIORITÉ 1) : Thomas doit tester l'email import après le fix 400. Si ça ne marche toujours pas, le problème est côté permissions Azure AD (Mail.Read en Application, pas Delegated).
-2. **@fullstack — Lier outputs agents aux projets tracker** (PRIORITÉ 2) : le gap #1 de l'audit @moi. Chaque output agent devrait être rattaché à un projet ClickUp visible depuis le tracker.
-3. **@ia + @product-manager — Prompt library vidéo IA** (PRIORITÉ 3) : avant d'implémenter Phase 3f, produire la bibliothèque de prompts optimisés Kling 2.6 (composition, caméra, éclairage, cohérence inter-scènes). Facteur #1 de qualité.
+1. **@fullstack — Implémenter Phase 3g (Case Study Generator)** (PRIORITÉ 1) : c'est la feature à impact maximal — génération automatique de contenu marketing à partir des projets existants. Specs prêtes.
+2. **@fullstack — Implémenter Phase 3h (Landing Page Generator)** (PRIORITÉ 2) : génération de landing pages + proposals web. Specs prêtes. Intègre le pré-remplissage Sarani (case studies, conditions, etc.) demandé par Thomas.
+3. **@ia — Prompt library vidéo IA** (PRIORITÉ 3) : avant d'implémenter Phase 3f, produire la bibliothèque de prompts optimisés (Veo 3.1 + Runway Gen-4). Thomas : "le meilleur prompt du monde possible".
+4. **@fullstack — Implémenter Phase 3f (Storyboard + Video AI)** (PRIORITÉ 4) : dépend du prompt library.
 
-**Blockers éventuels :**
-- Email import 400 : potentiellement résolu (fix URLSearchParams pushé) — à confirmer
-- Police Outfit PDF : nécessite des fichiers .ttf (pas disponibles dans l'env Replit)
+**Décisions de Thomas cette session :**
+- Stratégie multi-modèle vidéo : Veo 3.1 (client) + Runway Gen-4 Turbo (interne) + Kling 3.0 (fallback)
+- Storyboard comme étape intermédiaire optionnelle avant la vidéo
+- Case Study Generator avec auto-scanning et scoring automatique des projets
+- Landing Page Generator avec output = lien web (pas PDF)
+- Proposals & Decks : option 1 = lien web, tout pré-rempli avec données Sarani
+- Sidebar : AI Agents (Agent Teams en 1er) + AI Sarani (SEO, Social, Case Studies) + Settings
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Toutes les phases jusqu'à 3e complètes, Phase 3f (Video AI Preview) spécifiée. Migrations Drizzle corrigées et prêtes. Branche : claude/extract-project-context-RzIlU. Prochaines priorités : (1) confirmer email import, (2) lier outputs agents au tracker, (3) prompt library vidéo IA. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 7 complète. 3 nouvelles features spécifiées (Case Study Generator, Landing Page Generator, Storyboard). Branche : claude/extract-project-context-RzIlU. Prochaines priorités : (1) implémenter Case Study Generator, (2) implémenter Landing Page Generator, (3) prompt library vidéo, (4) implémenter Storyboard + Video AI. Ne lance aucun agent avant mon feu vert.
 ```
