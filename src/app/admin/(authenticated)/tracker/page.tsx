@@ -317,12 +317,13 @@ export default function TrackerPage() {
         search &&
         !p.project.toLowerCase().includes(search.toLowerCase()) &&
         !p.client.toLowerCase().includes(search.toLowerCase()) &&
+        !(p.displayClient ?? "").toLowerCase().includes(search.toLowerCase()) &&
         !p.contact.toLowerCase().includes(search.toLowerCase()) &&
         !p.poNumber.toLowerCase().includes(search.toLowerCase())
       ) {
         return false;
       }
-      if (clientFilter !== "All" && p.client !== clientFilter) return false;
+      if (clientFilter !== "All" && (p.displayClient ?? p.client) !== clientFilter) return false;
       if (statusFilter === "Active") {
         if (!ACTIVE_STATUSES.has(p.status.toLowerCase())) return false;
       } else if (
@@ -338,6 +339,7 @@ export default function TrackerPage() {
           return false;
         }
       }
+      if (countryFilter !== "All" && (p.country ?? "Other") !== countryFilter) return false;
       return true;
     });
 
@@ -347,7 +349,7 @@ export default function TrackerPage() {
         let cmp = 0;
         switch (sort.column) {
           case "client":
-            cmp = a.client.localeCompare(b.client);
+            cmp = (a.displayClient ?? a.client).localeCompare(b.displayClient ?? b.client);
             break;
           case "project":
             cmp = a.project.localeCompare(b.project);
@@ -367,13 +369,13 @@ export default function TrackerPage() {
     }
 
     return filtered;
-  }, [data, search, clientFilter, statusFilter, invoiceFilter, sort]);
+  }, [data, search, clientFilter, statusFilter, invoiceFilter, countryFilter, sort]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
     setPageInputValue("1");
-  }, [search, clientFilter, statusFilter, invoiceFilter]);
+  }, [search, clientFilter, statusFilter, invoiceFilter, countryFilter]);
 
   // Sync page input with currentPage
   useEffect(() => {
@@ -409,7 +411,7 @@ export default function TrackerPage() {
   }, [filteredProjects.length, currentPage]);
 
   // Stats (Fix #9 — scoped to filtered projects when filters active)
-  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All";
+  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All" || countryFilter !== "All";
   const stats = useMemo(() => {
     if (!data) return { total: 0, totalValue: 0, open: 0, overdue: 0, globalTotal: 0 };
     const source = filteredProjects;
@@ -432,6 +434,7 @@ export default function TrackerPage() {
     setClientFilter("All");
     setStatusFilter("All");
     setInvoiceFilter("All");
+    setCountryFilter("All");
   }, []);
 
   // Active filter count (for mobile badge)
@@ -440,8 +443,9 @@ export default function TrackerPage() {
     if (clientFilter !== "All") count++;
     if (statusFilter !== "All") count++;
     if (invoiceFilter !== "All") count++;
+    if (countryFilter !== "All") count++;
     return count;
-  }, [clientFilter, statusFilter, invoiceFilter]);
+  }, [clientFilter, statusFilter, invoiceFilter, countryFilter]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -609,6 +613,18 @@ export default function TrackerPage() {
             ))}
           </select>
           <select
+            value={countryFilter}
+            onChange={(e) => setCountryFilter(e.target.value)}
+            aria-label="Filter by country"
+            className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          >
+            {countries.map((c) => (
+              <option key={c} value={c}>
+                {c === "All" ? "All Countries" : c}
+              </option>
+            ))}
+          </select>
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             aria-label="Filter by project status"
@@ -682,6 +698,18 @@ export default function TrackerPage() {
                   {clients.map((c) => (
                     <option key={c} value={c}>
                       {c === "All" ? "All Clients" : c}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={countryFilter}
+                  onChange={(e) => setCountryFilter(e.target.value)}
+                  aria-label="Filter by country"
+                  className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  {countries.map((c) => (
+                    <option key={c} value={c}>
+                      {c === "All" ? "All Countries" : c}
                     </option>
                   ))}
                 </select>
@@ -842,16 +870,17 @@ export default function TrackerPage() {
               <caption className="sr-only">Project tracker data</caption>
               <thead>
                 <tr className="border-b border-neutral-200 text-left">
-                  <SortableTh column="client" sort={sort} onToggle={toggleSort}>Client</SortableTh>
-                  <SortableTh column="project" sort={sort} onToggle={toggleSort}>Project</SortableTh>
+                  <SortableTh column="client" sort={sort} onToggle={toggleSort} className="w-[20%]">Client</SortableTh>
+                  <Th className="w-[8%]">Country</Th>
+                  <SortableTh column="project" sort={sort} onToggle={toggleSort} className="w-[25%]">Project</SortableTh>
                   {!hiddenColumns.has("contact") && <Th>Contact</Th>}
-                  <SortableTh column="status" sort={sort} onToggle={toggleSort}>Status</SortableTh>
+                  <SortableTh column="status" sort={sort} onToggle={toggleSort} className="w-[8%]">Status</SortableTh>
                   {!hiddenColumns.has("category") && <Th>Category</Th>}
-                  <SortableTh column="totalValue" sort={sort} onToggle={toggleSort}>Value</SortableTh>
+                  <SortableTh column="totalValue" sort={sort} onToggle={toggleSort} className="w-[10%]">Value</SortableTh>
                   {!hiddenColumns.has("po") && <Th>PO</Th>}
-                  <Th>Invoice</Th>
-                  <SortableTh column="date" sort={sort} onToggle={toggleSort}>Date</SortableTh>
-                  <Th>Actions</Th>
+                  <Th className="w-[8%]">Invoice</Th>
+                  <SortableTh column="date" sort={sort} onToggle={toggleSort} className="w-[10%]">Date</SortableTh>
+                  <Th className="w-[19%]">Actions</Th>
                 </tr>
               </thead>
               <tbody>
@@ -863,7 +892,15 @@ export default function TrackerPage() {
                       className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
                     >
                       <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
-                        {p.client}
+                        <div>
+                          {p.displayClient ?? p.client}
+                          {p.displayClient && p.displayClient !== p.client && (
+                            <div className="text-xs text-neutral-400 font-normal">{p.client}</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-neutral-500 whitespace-nowrap">
+                        {p.country ?? "Other"}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
                         {p.project}
@@ -1006,7 +1043,13 @@ export default function TrackerPage() {
             >
               <div>
                 <p className="text-xs text-neutral-400 font-medium">
-                  {p.client}
+                  {p.displayClient ?? p.client}
+                  {p.displayClient && p.displayClient !== p.client && (
+                    <span className="ml-1 text-neutral-300">{p.client}</span>
+                  )}
+                  {p.country && p.country !== "Other" && (
+                    <span className="ml-1.5 text-neutral-300">{p.country}</span>
+                  )}
                 </p>
                 <p className="text-sm font-medium text-brand-black mt-0.5">
                   {p.project}
@@ -1135,15 +1178,17 @@ function SortableTh({
   column,
   sort,
   onToggle,
+  className,
 }: {
   children: React.ReactNode;
   column: SortableColumn;
   sort: SortConfig | null;
   onToggle: (column: SortableColumn) => void;
+  className?: string;
 }) {
   const isActive = sort?.column === column;
   return (
-    <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider whitespace-nowrap">
+    <th className={`px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider whitespace-nowrap ${className ?? ""}`}>
       <button
         type="button"
         onClick={() => onToggle(column)}
@@ -1171,9 +1216,9 @@ function SortIcon({ active, direction }: { active: boolean; direction: SortDirec
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+function Th({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider whitespace-nowrap">
+    <th className={`px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider whitespace-nowrap ${className ?? ""}`}>
       {children}
     </th>
   );
