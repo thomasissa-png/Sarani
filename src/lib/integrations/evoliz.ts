@@ -10,7 +10,10 @@ export type EvolizPaymentStatus = "paid" | "unpaid" | "sent" | "overdue" | "draf
 export interface EvolizInvoice {
   id: number;
   invoiceNumber: string;
+  /** Primary reference (best match from object/external_document_number/external_reference/reference) */
   reference: string | null;
+  /** All reference-like fields from Evoliz (for broader matching) */
+  allReferences: string[];
   clientName: string;
   amount: number;
   currency: string;
@@ -335,15 +338,20 @@ function normalizeInvoice(raw: RawEvolizInvoiceResponse): EvolizInvoice {
   return {
     id: Number(raw.invoiceid ?? raw.id ?? 0),
     invoiceNumber: String(raw.document_number ?? raw.invoice_number ?? ""),
-    reference: raw.object
-      ? String(raw.object)
-      : raw.external_document_number
-        ? String(raw.external_document_number)
-        : raw.external_reference
-          ? String(raw.external_reference)
-          : raw.reference
-            ? String(raw.reference)
-            : null,
+    // Collect ALL reference-like fields for broad matching
+    ...(() => {
+      const refs: string[] = [];
+      if (raw.object) refs.push(String(raw.object));
+      if (raw.external_document_number) refs.push(String(raw.external_document_number));
+      if (raw.external_reference) refs.push(String(raw.external_reference));
+      if (raw.reference) refs.push(String(raw.reference));
+      if (raw.label) refs.push(String(raw.label));
+      if (raw.title) refs.push(String(raw.title));
+      return {
+        reference: refs[0] ?? null,
+        allReferences: refs,
+      };
+    })(),
     clientName: String(
       raw.client_name ??
         (raw.client && typeof raw.client === "object"

@@ -78,14 +78,17 @@ export function mergeData(
     }
   }
 
-  // Build Evoliz invoice lookup by PO reference
-  const invoicesByPO = new Map<string, EvolizInvoice[]>();
+  // Build Evoliz invoice lookup by ALL reference fields (object, external_ref, reference, label...)
+  // Each reference string maps to its invoice — a single invoice can appear under multiple keys
+  const invoicesByRef = new Map<string, EvolizInvoice[]>();
   for (const inv of evolizInvoices) {
-    if (inv.reference) {
-      const key = normalizeForMatch(inv.reference);
-      const existing = invoicesByPO.get(key) ?? [];
+    const refs = inv.allReferences ?? (inv.reference ? [inv.reference] : []);
+    for (const ref of refs) {
+      const key = normalizeForMatch(ref);
+      if (!key) continue;
+      const existing = invoicesByRef.get(key) ?? [];
       existing.push(inv);
-      invoicesByPO.set(key, existing);
+      invoicesByRef.set(key, existing);
     }
   }
 
@@ -141,21 +144,43 @@ export function mergeData(
     const clickupTask = findClickUpMatch(ep);
     if (clickupTask) matchedTaskIds.add(clickupTask.id);
 
-    // Match Evoliz invoice by PO number (pick latest non-draft)
-    // Fallback: match by project name in invoice label if PO doesn't match
-    let matchingInvoices = ep.poNumber
-      ? invoicesByPO.get(normalizeForMatch(ep.poNumber))
-      : undefined;
+    // Match Evoliz invoice — 3 strategies:
+    // 1. Exact PO match against ALL Evoliz reference fields (object, external_ref, reference, label)
+    // 2. Fuzzy: PO appears inside any Evoliz reference (or vice versa)
+    // 3. Fallback: project name fuzzy-matches an invoice reference from the same client
+    let matchingInvoices: EvolizInvoice[] | undefined;
 
-    // Fallback: match by project name against invoice reference within same client
+    if (ep.poNumber) {
+      const poKey = normalizeForMatch(ep.poNumber);
+      // Strategy 1: exact match on any reference field
+      matchingInvoices = invoicesByRef.get(poKey);
+
+      // Strategy 2: fuzzy — PO contained in a reference, or reference contained in PO
+      if (!matchingInvoices?.length) {
+        const fuzzyPOMatches: EvolizInvoice[] = [];
+        for (const inv of evolizInvoices) {
+          const refs = inv.allReferences ?? (inv.reference ? [inv.reference] : []);
+          for (const ref of refs) {
+            if (fuzzyMatch(normalizeForMatch(ref), poKey)) {
+              fuzzyPOMatches.push(inv);
+              break;
+            }
+          }
+        }
+        if (fuzzyPOMatches.length) matchingInvoices = fuzzyPOMatches;
+      }
+    }
+
+    // Strategy 3: match by project name against invoice references from the same client
     if (!matchingInvoices?.length && ep.project && ep.client) {
       const clientKey = normalizeForMatch(ep.client);
       const projectKey = normalizeForMatch(ep.project);
       const clientInvoices = invoicesByClient.get(clientKey);
       if (clientInvoices?.length) {
-        const refMatches = clientInvoices.filter((inv) =>
-          inv.reference ? fuzzyMatch(normalizeForMatch(inv.reference), projectKey) : false
-        );
+        const refMatches = clientInvoices.filter((inv) => {
+          const refs = inv.allReferences ?? (inv.reference ? [inv.reference] : []);
+          return refs.some((ref) => fuzzyMatch(normalizeForMatch(ref), projectKey));
+        });
         if (refMatches.length) {
           matchingInvoices = refMatches;
         }
