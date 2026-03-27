@@ -50,6 +50,13 @@
       "when": 1774425800000,
       "tag": "0006_add_project_teams",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1774425900000,
+      "tag": "0007_add_case_study_tables",
+      "breakpoints": true
     }
   ]
 }

@@ -259,6 +259,106 @@ export const teamDeliverables = pgTable(
   (table) => [index("idx_team_deliverables_step").on(table.stepId)]
 );
 
+// ─── Case Study Candidates ─────────────────────────────────────────────────
+
+export const caseStudyCandidates = pgTable(
+  "case_study_candidates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clickupTaskId: text("clickup_task_id").notNull().unique(),
+    clientId: uuid("client_id").references(() => clients.id),
+    clientName: text("client_name").notNull(),
+    projectName: text("project_name"),
+    projectType: varchar("project_type", { length: 50 }),
+    projectAmount: numeric("project_amount"),
+    completedAt: timestamp("completed_at"),
+    sharePointAssetCount: integer("sharepoint_asset_count").default(0),
+    sharePointFolderUrl: text("sharepoint_folder_url"),
+    scoreTotal: integer("score_total").notNull(),
+    scoreBreakdown: jsonb("score_breakdown").$type<{
+      clientName: number;
+      amount: number;
+      assets: number;
+      projectType: number;
+      recency: number;
+      diversity: number;
+    }>(),
+    scoreOverride: boolean("score_override").default(false),
+    scoreOverrideReason: text("score_override_reason"),
+    status: varchar("status", { length: 20 }).notNull().default("ignored"),
+    // ignored | suggested | generating | generated | reviewed | published | excluded
+    excludedReason: varchar("excluded_reason", { length: 50 }),
+    excludedBy: text("excluded_by"),
+    lastScannedAt: timestamp("last_scanned_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_candidates_status").on(table.status),
+    index("idx_candidates_score").on(table.scoreTotal),
+    index("idx_candidates_client").on(table.clientName),
+  ]
+);
+
+// ─── Case Study Outputs ────────────────────────────────────────────────────
+
+export const caseStudyOutputs = pgTable(
+  "case_study_outputs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    candidateId: uuid("candidate_id")
+      .notNull()
+      .references(() => caseStudyCandidates.id, { onDelete: "cascade" }),
+    outputType: varchar("output_type", { length: 20 }).notNull(),
+    // case_study | linkedin_post | nurturing_email
+    currentVersion: integer("current_version").notNull().default(1),
+    content: jsonb("content").notNull(),
+    versions: jsonb("versions").$type<
+      Array<{
+        version: number;
+        content: unknown;
+        generatedAt: string;
+        generatedBy: string;
+        instruction?: string;
+      }>
+    >(),
+    publishedAt: timestamp("published_at"),
+    publishedBy: text("published_by"),
+    caseStudySlug: text("case_study_slug"),
+    generatedAt: timestamp("generated_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_outputs_candidate").on(table.candidateId),
+    index("idx_outputs_type").on(table.outputType),
+  ]
+);
+
+// ─── Scoring Config ────────────────────────────────────────────────────────
+
+export const scoringConfig = pgTable("scoring_config", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  weightClientName: integer("weight_client_name").notNull().default(25),
+  weightAmount: integer("weight_amount").notNull().default(20),
+  weightAssets: integer("weight_assets").notNull().default(20),
+  weightProjectType: integer("weight_project_type").notNull().default(15),
+  weightRecency: integer("weight_recency").notNull().default(10),
+  weightDiversity: integer("weight_diversity").notNull().default(10),
+  tier1Clients: jsonb("tier1_clients").$type<string[]>(),
+  tier2Clients: jsonb("tier2_clients").$type<string[]>(),
+  projectTypeScores: jsonb("project_type_scores").$type<
+    Record<string, number>
+  >(),
+  autoGenerateThreshold: integer("auto_generate_threshold")
+    .notNull()
+    .default(70),
+  autoGenerateEnabled: boolean("auto_generate_enabled")
+    .notNull()
+    .default(true),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedBy: text("updated_by"),
+});
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -281,3 +381,9 @@ export type TeamStep = typeof teamSteps.$inferSelect;
 export type NewTeamStep = typeof teamSteps.$inferInsert;
 export type TeamDeliverable = typeof teamDeliverables.$inferSelect;
 export type NewTeamDeliverable = typeof teamDeliverables.$inferInsert;
+export type CaseStudyCandidate = typeof caseStudyCandidates.$inferSelect;
+export type NewCaseStudyCandidate = typeof caseStudyCandidates.$inferInsert;
+export type CaseStudyOutput = typeof caseStudyOutputs.$inferSelect;
+export type NewCaseStudyOutput = typeof caseStudyOutputs.$inferInsert;
+export type ScoringConfig = typeof scoringConfig.$inferSelect;
+export type NewScoringConfig = typeof scoringConfig.$inferInsert;
