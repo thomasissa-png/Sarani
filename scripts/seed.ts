@@ -1,9 +1,14 @@
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import postgres from "postgres";
 import { db } from "../src/lib/db/index";
 import { clients, contractTemplates } from "../src/lib/db/schema";
 
 /**
  * Seed script — populates the Sarani back-office DB with real clients
  * and default contract templates.
+ *
+ * Automatically runs pending migrations before seeding.
  *
  * Usage: npx tsx scripts/seed.ts
  */
@@ -584,7 +589,21 @@ Nom du compte : SARANI | IBAN : FR76 1695 8000 0173 0920 6520 229 | BIC : QNTOFR
   },
 ];
 
+async function runMigrations() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is required");
+  }
+  const migrationClient = postgres(connectionString, { max: 1 });
+  const migrationDb = drizzle(migrationClient);
+  console.log("Running pending migrations...");
+  await migrate(migrationDb, { migrationsFolder: "./drizzle" });
+  console.log("Migrations up to date.\n");
+  await migrationClient.end();
+}
+
 async function seed() {
+  await runMigrations();
   console.log("Seeding Sarani clients...");
 
   for (const client of saraniClients) {
