@@ -29,3 +29,8 @@
 - [S6] Thomas veut que le flux email→brief soit automatisé : import depuis la boîte team@sarani.studio, pré-remplissage du formulaire par le PM IA, génération de la réponse client.
 - [S6] Les PO ouverts depuis > 60 jours doivent être visuellement flaggés dans le tracker (badge warning orange).
 - [S6] Division/pays doit être visible dans le tracker (Sony France, pas juste Sony) mais les suffixes internes (- Hors CM) doivent être retirés.
+
+## IA et prompts
+
+- [S6] Thomas considère le prompt engineering comme un actif stratégique — veut "le meilleur prompt du monde possible" avant toute implémentation IA (vidéo, image, texte). Le prompt library est un livrable à part entière, pas un détail technique.
+- [S6] Pour la vidéo IA : le prompt doit contrôler composition, mouvement caméra, éclairage, cohérence inter-scènes, style. @ia doit le tester sur les 4 cas d'usage Sarani et itérer jusqu'à 9/10.

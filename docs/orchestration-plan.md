@@ -26,6 +26,7 @@
 | 3c | Phase 3 — Back-Office V1 (ClickUp + SharePoint + Evoliz + Tracker + Quotes) | COMPLETE | @fullstack, @product-manager, @infrastructure, @agent-factory | Phase 3 |
 | 3d | Phase 3 — Back-Office V2 (Brief, Email Import, Quote Redesign, Sidebar) | COMPLETE | @fullstack, @product-manager, @ux, @design | Phase 3c |
 | 3e | Front-Office Polish (Page consistency, Services images, Footer, Case studies) | COMPLETE | @fullstack, @design, @ux | Phase 3 |
+| 3f | Back-Office V3 — Video AI Preview | NOT STARTED | @fullstack, @ia, @qa, @infrastructure | Phase 3d (indépendant de 3e) |
 | 4 | QA & Pre-Launch | IN PROGRESS (~20%) | @qa, @infrastructure, @legal | Phase 3e |
 | 5 | Launch & Post-Launch | NOT STARTED | @orchestrator, @reviewer, @data-analyst, @growth, @social | Phase 4 |
 
@@ -160,6 +161,36 @@
 - @fullstack: Umami integration (US-105)
 
 **Parallelizable:** @infrastructure can run alongside @fullstack from Sprint 1.
+
+---
+
+## Phase 3f — Back-Office V3 — Video AI Preview: NOT STARTED
+
+**Agents to execute:** @fullstack, @ia, @infrastructure, @qa
+**Prerequisites:** Phase 3d COMPLETE (DONE) + 5 hypothèses validées par Thomas (H-01 à H-05 dans docs/product/video-ai-specs.md)
+
+### Specs de référence
+- `docs/product/video-ai-specs.md` — specs complètes (user stories, architecture, UI/UX, risques)
+
+### Planned sequence (3 sessions):
+
+**Session A — Routes API + intégration PiAPI + stockage :**
+- @ia : Prompt engineering `videoScene → Kling text-to-video prompt`, choix du mode Standard/Pro, abstraction `VideoGenerationProvider`
+- @fullstack : 6 routes API (`/generate`, `/status`, `/regenerate`, `/assemble`, `/share`, `/preview/[token]`), intégration PiAPI, stockage SharePoint
+
+**Session B — UI back-office + assemblage FFmpeg + page partage public :**
+- @fullstack : Grille scènes + player modal + modal partage + watermark FFmpeg + page `/preview/[token]`
+- @infrastructure : Config FFmpeg Replit, env vars PiAPI key, monitoring coût IA
+
+**Session C — Tests E2E (parallélisable avec Session B) :**
+- @qa : Tests génération scène, polling statut, régénération, assemblage, expiration lien, approbation client
+
+### Go/No-Go criteria:
+- [ ] `POST /api/video-preview/generate` retourne un job_id, génération parallèle toutes les scènes
+- [ ] Page `/preview/[token]` accessible sans auth, Approve/Request changes fonctionnels
+- [ ] Assemblage FFmpeg produit un MP4 valide avec watermark
+- [ ] Lien expiré retourne message correct (pas de 500)
+- [ ] Coût estimé affiché avant toute génération (US-VA-07)
 
 ---
 
