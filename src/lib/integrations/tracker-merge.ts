@@ -9,6 +9,28 @@ import type { ExcelProject } from "@/lib/integrations/excel-parser";
 import type { TrackerProject } from "@/types/integrations";
 import { getMappingBySpaceId } from "@/lib/integrations/config";
 
+// ─── Country Detection ───────────────────────────────────────────────────────
+
+const COUNTRY_PATTERNS: [RegExp, string][] = [
+  [/\bfrance\b|\bfr\b/i, "France"],
+  [/\bgermany\b|\bde\b|\bdeutschland\b/i, "Germany"],
+  [/\buk\b|\bunited\s*kingdom\b|\bgb\b/i, "UK"],
+  [/\bitaly\b|\bit\b|\bitalia\b/i, "Italy"],
+  [/\bspain\b|\bes\b|\bespa[nñ]a\b/i, "Spain"],
+  [/\bnetherlands\b|\bnl\b|\bholland\b/i, "Netherlands"],
+  [/\bjapan\b|\bjp\b/i, "Japan"],
+  [/\busa\b|\bus\b|\bunited\s*states\b/i, "USA"],
+  [/\bchina\b|\bcn\b/i, "China"],
+  [/\bglobal\b/i, "Global"],
+];
+
+function detectCountry(sheetName: string): string {
+  for (const [pattern, country] of COUNTRY_PATTERNS) {
+    if (pattern.test(sheetName)) return country;
+  }
+  return "Other";
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function normalizeForMatch(s: string): string {
@@ -207,6 +229,23 @@ export function mergeData(
       ? evolizInvoice.invoiceNumber
       : ep.invoiceNumber;
 
+    // Determine display name: prefer sheet name if it contains more info than just the client name
+    const sheetName = ep.excelSheetName ?? "";
+    const displayClient =
+      sheetName && sheetName.toLowerCase() !== ep.client.toLowerCase()
+        ? sheetName
+        : ep.client;
+
+    // Extract division (the part of the sheet name beyond the client name)
+    const division =
+      sheetName && sheetName.toLowerCase() !== ep.client.toLowerCase()
+        ? sheetName.replace(new RegExp(`^${ep.client}\\s*`, "i"), "").trim() ||
+          sheetName
+        : undefined;
+
+    // Detect country/market from sheet name
+    const country = sheetName ? detectCountry(sheetName) : "Other";
+
     return {
       client: ep.client,
       project: ep.project,
@@ -224,6 +263,9 @@ export function mergeData(
       excelTrackerFile: ep.excelTrackerFile,
       excelSheetName: ep.excelSheetName,
       excelTrackerUrl: ep.excelTrackerUrl,
+      displayClient,
+      division,
+      country,
     };
   });
 
@@ -279,6 +321,9 @@ export function mergeData(
         excelTrackerFile: existing.excelTrackerFile || p.excelTrackerFile,
         excelSheetName: existing.excelSheetName || p.excelSheetName,
         excelTrackerUrl: existing.excelTrackerUrl || p.excelTrackerUrl,
+        displayClient: existing.displayClient || p.displayClient,
+        division: existing.division || p.division,
+        country: existing.country || p.country,
       });
     }
   }

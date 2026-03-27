@@ -21,6 +21,12 @@ export interface TrackerProject {
   excelSheetName?: string;
   /** SharePoint webUrl of the tracker file (for direct open) */
   excelTrackerUrl?: string;
+  /** Display name: sheet name if more specific than client (e.g. "Sony France") */
+  displayClient?: string;
+  /** Division/tab name from Excel (e.g. "France", "Professional") */
+  division?: string;
+  /** Country/market extracted from sheet name (e.g. "France", "Germany", "Global") */
+  country?: string;
 }
 
 export interface SourceMeta {

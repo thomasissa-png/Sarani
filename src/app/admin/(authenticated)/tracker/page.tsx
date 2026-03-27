@@ -128,6 +128,7 @@ export default function TrackerPage() {
   const [clientFilter, setClientFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("Active");
   const [invoiceFilter, setInvoiceFilter] = useState("All");
+  const [countryFilter, setCountryFilter] = useState("All");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Column visibility (Fix #1 — reduce to 7 visible columns by default)
@@ -299,7 +300,13 @@ export default function TrackerPage() {
   // Derived data
   const clients = useMemo(() => {
     if (!data) return [];
-    const set = new Set(data.projects.map((p) => p.client));
+    const set = new Set(data.projects.map((p) => p.displayClient ?? p.client));
+    return ["All", ...Array.from(set).sort()];
+  }, [data]);
+
+  const countries = useMemo(() => {
+    if (!data) return [];
+    const set = new Set(data.projects.map((p) => p.country ?? "Other"));
     return ["All", ...Array.from(set).sort()];
   }, [data]);
 
