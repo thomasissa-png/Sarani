@@ -52,7 +52,7 @@ export default function HomePage() {
       >
         <div className="mx-auto max-w-screen-xl px-5 md:px-8">
           <FadeInUp>
-            <h2 className="mb-12 text-center text-4xl font-bold text-brand-white md:text-5xl">
+            <h2 className="mb-12 text-center text-3xl font-bold text-brand-white sm:text-4xl">
               Our metrics
             </h2>
           </FadeInUp>
@@ -69,7 +69,7 @@ export default function HomePage() {
       <Section ariaLabel="What we do" className="bg-surface-warm">
         <div className="text-center">
           <FadeInUp>
-            <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
+            <h2 className="mb-8 text-3xl font-bold text-brand-black sm:text-4xl">
               8 disciplines, one team, no waiting.
             </h2>
           </FadeInUp>
@@ -80,7 +80,7 @@ export default function HomePage() {
       {/* -- Section 4: Real results — Proof cards -- */}
       <Section ariaLabel="Real results">
         <FadeInUp>
-          <h2 className="mb-10 text-center text-3xl font-bold text-brand-black md:text-4xl">
+          <h2 className="mb-10 text-center text-3xl font-bold text-brand-black sm:text-4xl">
             Real results
           </h2>
         </FadeInUp>
@@ -91,7 +91,7 @@ export default function HomePage() {
       <Section ariaLabel="Our recent work" className="bg-surface-elevated">
         <FadeInUp>
           <div className="mb-8 flex items-center justify-between">
-            <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
+            <h2 className="text-3xl font-bold text-brand-black sm:text-4xl">
               Our recent work
             </h2>
             <Link
@@ -109,7 +109,7 @@ export default function HomePage() {
       <Section ariaLabel="Start a project">
         <AnimatedSection className="mx-auto max-w-3xl text-center">
           <FadeInUp>
-            <h2 className="mb-8 text-4xl font-bold text-brand-black md:text-5xl">
+            <h2 className="mb-8 text-3xl font-bold text-brand-black sm:text-4xl">
               One brief. 24 hours. Done.
             </h2>
           </FadeInUp>
@@ -133,7 +133,7 @@ export default function HomePage() {
       <Section ariaLabel="Testimonials" className="bg-surface-elevated">
         <FadeInUp>
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-brand-black md:text-4xl">
+            <h2 className="text-3xl font-bold text-brand-black sm:text-4xl">
               Trusted by global brands
             </h2>
           </div>
@@ -145,7 +145,7 @@ export default function HomePage() {
       <Section ariaLabel="FAQ" className="bg-surface-warm">
         <div className="mx-auto max-w-3xl">
           <FadeInUp>
-            <h2 className="mb-12 text-center text-3xl font-bold text-brand-black md:text-4xl">
+            <h2 className="mb-12 text-center text-3xl font-bold text-brand-black sm:text-4xl">
               Frequently asked questions
             </h2>
           </FadeInUp>

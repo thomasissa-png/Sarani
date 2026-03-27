@@ -69,14 +69,14 @@ export default function AboutPage() {
       {/* ── Hero: The Sarani premise in 3 seconds ── */}
       <Section ariaLabel="About Sarani">
         <div className="max-w-3xl">
-          <p className="mb-4 text-sm font-medium uppercase tracking-widest text-brand-flame">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
             Since 2020
           </p>
           <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl lg:text-6xl">
             The creative agency enterprises call when every other agency says
             two weeks.
           </h1>
-          <p className="mb-8 text-lg leading-relaxed text-neutral-600 sm:text-xl">
+          <p className="mb-8 text-lg leading-relaxed text-neutral-600">
             35 experts. 5 continents. 18 languages. Enterprise-quality creative,
             delivered in 24 hours — with unlimited revisions and fixed prices.
           </p>

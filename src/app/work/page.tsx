@@ -24,13 +24,13 @@ export default function WorkPage() {
     <div className="pt-[var(--header-height)]">
       {/* Hero */}
       <Section ariaLabel="Work overview">
-        <p className="mb-4 text-sm font-medium uppercase tracking-wider text-brand-flame-dark">
-          Work
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
+          Our Work
         </p>
-        <h1 className="mb-6 max-w-3xl text-4xl font-bold leading-tight text-brand-black sm:text-5xl lg:text-6xl">
+        <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
           Enterprise creative. Proven at scale.
         </h1>
-        <p className="mb-4 max-w-2xl text-lg text-neutral-600">
+        <p className="mb-4 max-w-2xl text-lg leading-relaxed text-neutral-600">
           TikTok, Sony, Adidas, LEGO, IKEA, GEODIS.
           Real briefs. Real deadlines. Real results.
         </p>
@@ -48,14 +48,10 @@ export default function WorkPage() {
       </Section>
 
       {/* Footer CTA */}
-      <Section ariaLabel="Start your project">
-        <div className="text-center">
-          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
-            Your brief could be next.
-          </h2>
-          <p className="mx-auto mb-8 max-w-xl text-neutral-500">
-            First project satisfaction or no invoice.
-          </p>
+      <Section ariaLabel="Start your project" className="bg-brand-black">
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">Ready to start?</h2>
+          <p className="text-lg text-neutral-400 max-w-xl mx-auto">First project satisfaction or no invoice.</p>
           <Button variant="primary" href="/contact">
             Start a project
           </Button>
