@@ -1,6 +1,7 @@
 // ─── Quote PDF Generator ─────────────────────────────────────────────────────
-// Generates a professional-looking quote PDF using pdf-lib (no Puppeteer).
-// Template based on real Sarani DOCX analysis (TikTok reference quote).
+// Generates a premium quote PDF using pdf-lib (no Puppeteer).
+// Redesigned for Sarani's creative agency brand identity.
+// Brand palette: Flame #da5126, Black #000000, Cerulean #0babe8, Lemon #f1c217
 
 import { PDFDocument, rgb, StandardFonts, PDFPage, PDFFont } from "pdf-lib";
 import fs from "fs";
@@ -37,6 +38,7 @@ export interface QuotePDFData {
 const TRANSLATIONS = {
   en: {
     serviceProposal: "Service Proposal",
+    preparedFor: "Prepared for",
     proposalFor: "This proposal is for",
     at: "at",
     purposeOfWork: "Purpose of work",
@@ -55,7 +57,8 @@ const TRANSLATIONS = {
     subtotal: "Subtotal",
     vat: "VAT",
     references: "References",
-    referencesText: "Sarani is a Paris-born creative agency uniting 35 experts across 5 continents and 18 languages. We operate 24/7 to deliver unlimited creativity with next-day turnaround. Our clients include Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica, and PICO. We have been recognized for our work across multiple awards and industry benchmarks.",
+    referencesText:
+      "Sarani is a Paris-born creative agency uniting 35 experts across 5 continents and 18 languages. We operate 24/7 to deliver unlimited creativity with next-day turnaround. Our clients include Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica, and PICO. We have been recognized for our work across multiple awards and industry benchmarks.",
     paymentTerms: [
       "Work commences once a PO is raised.",
       "Unlimited rounds of revisions are offered before filming and on post-production.",
@@ -66,6 +69,7 @@ const TRANSLATIONS = {
   },
   fr: {
     serviceProposal: "Proposition de service",
+    preparedFor: "Préparé pour",
     proposalFor: "Cette proposition est destinée à",
     at: "chez",
     purposeOfWork: "Objet de la prestation",
@@ -84,7 +88,8 @@ const TRANSLATIONS = {
     subtotal: "Sous-total",
     vat: "TVA",
     references: "Références",
-    referencesText: "Sarani est une agence créative internationale réunissant 35 experts sur 5 continents et 18 langues. Nous opérons 24h/24 pour livrer une créativité illimitée avec un délai de livraison J+1. Nos clients incluent Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica et PICO. Nous avons été reconnus pour notre travail à travers de nombreux prix et benchmarks sectoriels.",
+    referencesText:
+      "Sarani est une agence créative internationale réunissant 35 experts sur 5 continents et 18 langues. Nous opérons 24h/24 pour livrer une créativité illimitée avec un délai de livraison J+1. Nos clients incluent Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica et PICO. Nous avons été reconnus pour notre travail à travers de nombreux prix et benchmarks sectoriels.",
     paymentTerms: [
       "Les travaux démarrent à réception du bon de commande (PO).",
       "Nombre illimité de révisions inclus avant tournage et en post-production.",
@@ -105,32 +110,36 @@ const MARGIN_TOP = 50;
 const MARGIN_BOTTOM = 50;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
 
-// Colors
-const COLOR_BLACK = rgb(0.1, 0.1, 0.1);
-const COLOR_GRAY = rgb(0.4, 0.4, 0.4);
-const COLOR_LIGHT_GRAY = rgb(0.93, 0.93, 0.93); // #ededed — subtotal/total row bg
+// Brand Colors — Sarani palette
+const COLOR_FLAME = rgb(0.855, 0.318, 0.149); // #da5126
+const COLOR_BLACK = rgb(0, 0, 0); // #000000
+const COLOR_DARK_TEXT = rgb(0.1, 0.1, 0.1); // near-black for body text
+const COLOR_GRAY_TEXT = rgb(0.4, 0.4, 0.4); // #666666 — secondary labels
+const COLOR_GRAY_LIGHT_TEXT = rgb(0.55, 0.55, 0.55); // lighter gray for subtle info
+const COLOR_SECTION_BG = rgb(0.973, 0.973, 0.973); // #f8f8f8 — section backgrounds
 const COLOR_ROW_ALT = rgb(0.976, 0.976, 0.976); // #f9f9f9 — alternating rows
 const COLOR_TABLE_BORDER = rgb(0.878, 0.878, 0.878); // #e0e0e0
-const COLOR_TABLE_HEADER = rgb(0, 0, 0); // pure black header
 const COLOR_WHITE = rgb(1, 1, 1);
-const COLOR_SEPARATOR = rgb(0.82, 0.82, 0.82); // #d1d1d1
+const COLOR_SEPARATOR = rgb(0.85, 0.85, 0.85); // #d9d9d9
 
-// Font sizes — unified hierarchy
+// Font sizes — strong typographic hierarchy
 const FONT_TITLE = 28;
-const FONT_SUBTITLE = 12;
-const FONT_SECTION_HEADING = 14;
+const FONT_SUBTITLE = 13;
+const FONT_SECTION_HEADING = 13;
 const FONT_BODY = 10;
 const FONT_TABLE_HEADER = 9;
 const FONT_TABLE_CELL = 10;
 const FONT_FOOTER = 8;
-const FONT_INTRO = 10;
+const FONT_LABEL = 8;
+const FONT_CLIENT_NAME = 14;
+const FONT_QUOTE_NUMBER = 11;
 
-// Spacing
-const SECTION_GAP = 30; // minimum gap between sections
-const HEADING_TO_CONTENT = 15; // gap between heading and content
-const TABLE_TOP_GAP = 40; // gap before pricing table
-
-// REFERENCES_TEXT and PAYMENT_TERMS moved to TRANSLATIONS above
+// Spacing — generous for premium feel
+const SECTION_GAP = 32;
+const HEADING_TO_CONTENT = 14;
+const TABLE_TOP_GAP = 40;
+const ACCENT_BORDER_WIDTH = 3; // Flame accent bar for headings
+const ACCENT_BORDER_OFFSET = 10; // Left offset from heading text
 
 // ─── Logo Cache ─────────────────────────────────────────────────────────────
 
@@ -139,7 +148,11 @@ let cachedLogoPng: Uint8Array | null = null;
 function getLogoPng(): Uint8Array | null {
   if (cachedLogoPng) return cachedLogoPng;
   try {
-    const logoPath = path.join(process.cwd(), "public", "sarani-logo-black.png");
+    const logoPath = path.join(
+      process.cwd(),
+      "public",
+      "sarani-logo-black.png"
+    );
     cachedLogoPng = new Uint8Array(fs.readFileSync(logoPath));
     return cachedLogoPng;
   } catch {
@@ -211,8 +224,8 @@ interface PageRef {
 }
 
 /**
- * Draw wrapped text, returning the new Y position after drawing.
- * Adds a new page if needed.
+ * Draw wrapped text with generous line spacing (1.6 default for readability).
+ * Returns the new Y position after drawing. Adds a new page if needed.
  */
 function drawWrappedText(
   page: PageRef,
@@ -223,7 +236,7 @@ function drawWrappedText(
   fontSize: number,
   maxWidth: number,
   color: typeof COLOR_BLACK,
-  lineSpacing: number = 1.5
+  lineSpacing: number = 1.6
 ): number {
   const lines = wrapText(text, font, fontSize, maxWidth);
   let currentY = y;
@@ -263,6 +276,36 @@ function drawSeparator(page: PDFPage, y: number): void {
 }
 
 /**
+ * Draw a section heading with a Flame accent bar on the left.
+ * Returns the Y position after the heading (ready for content).
+ */
+function drawSectionHeading(
+  page: PDFPage,
+  text: string,
+  y: number,
+  font: PDFFont
+): number {
+  // Flame accent bar — 3pt wide, aligned with text height
+  page.drawRectangle({
+    x: MARGIN_LEFT,
+    y: y - 2,
+    width: ACCENT_BORDER_WIDTH,
+    height: FONT_SECTION_HEADING + 4,
+    color: COLOR_FLAME,
+  });
+
+  page.drawText(text, {
+    x: MARGIN_LEFT + ACCENT_BORDER_OFFSET + ACCENT_BORDER_WIDTH,
+    y,
+    size: FONT_SECTION_HEADING,
+    font,
+    color: COLOR_BLACK,
+  });
+
+  return y - HEADING_TO_CONTENT - FONT_SECTION_HEADING;
+}
+
+/**
  * Ensure enough vertical space; if not, add a new page and return fresh Y.
  */
 function ensureSpace(page: PageRef, y: number, needed: number): number {
@@ -279,9 +322,6 @@ export async function generateQuotePDF(
   data: QuotePDFData
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  // Use Helvetica (built-in, universally supported, no font file dependency)
-  // Note: Outfit (brand font) is woff2-only and pdf-lib doesn't support woff2 natively.
-  // To use Outfit in PDFs, .ttf files would need to be added to public/fonts/.
   const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
@@ -292,7 +332,7 @@ export async function generateQuotePDF(
   let y = PAGE_HEIGHT - MARGIN_TOP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // HEADER: Logo (left) + Date & Quote Number (right)
+  // HEADER: Logo (left) + Quote Number & Date (right)
   // ═══════════════════════════════════════════════════════════════════════════
 
   const logoPng = getLogoPng();
@@ -316,52 +356,61 @@ export async function generateQuotePDF(
     }
   }
 
-  // Date (right-aligned, top)
-  const dateText = data.date;
-  const dateWidth = fontRegular.widthOfTextAtSize(dateText, FONT_BODY);
-  currentPage.drawText(dateText, {
-    x: PAGE_WIDTH - MARGIN_RIGHT - dateWidth,
-    y,
-    size: FONT_BODY,
-    font: fontRegular,
-    color: COLOR_GRAY,
-  });
-
-  // Quote number (right-aligned, below date)
-  const qnWidth = fontBold.widthOfTextAtSize(data.quoteNumber, FONT_BODY);
+  // Quote number (right-aligned, top — prominent)
+  const qnWidth = fontBold.widthOfTextAtSize(
+    data.quoteNumber,
+    FONT_QUOTE_NUMBER
+  );
   currentPage.drawText(data.quoteNumber, {
     x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth,
-    y: y - 16,
-    size: FONT_BODY,
+    y,
+    size: FONT_QUOTE_NUMBER,
     font: fontBold,
     color: COLOR_BLACK,
   });
 
-  // Valid until (right-aligned, below quote number)
-  let headerBottomOffset = 32;
+  // Date (right-aligned, below quote number)
+  const dateText = data.date;
+  const dateWidth = fontRegular.widthOfTextAtSize(dateText, FONT_BODY);
+  currentPage.drawText(dateText, {
+    x: PAGE_WIDTH - MARGIN_RIGHT - dateWidth,
+    y: y - 18,
+    size: FONT_BODY,
+    font: fontRegular,
+    color: COLOR_GRAY_TEXT,
+  });
+
+  // Valid until (right-aligned, below date — subtle gray)
+  let headerBottomOffset = 36;
   if (data.validUntil) {
     const validDate = new Date(data.validUntil + "T00:00:00");
     const locale = data.language === "fr" ? "fr-FR" : "en-US";
     const validText = `${t.validUntil} : ${validDate.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" })}`;
-    const validWidth = fontRegular.widthOfTextAtSize(validText, FONT_BODY);
+    const validWidth = fontRegular.widthOfTextAtSize(validText, FONT_LABEL);
     currentPage.drawText(validText, {
       x: PAGE_WIDTH - MARGIN_RIGHT - validWidth,
-      y: y - 32,
-      size: FONT_BODY,
+      y: y - 34,
+      size: FONT_LABEL,
       font: fontRegular,
-      color: COLOR_GRAY,
+      color: COLOR_GRAY_LIGHT_TEXT,
     });
-    headerBottomOffset = 48;
+    headerBottomOffset = 50;
   }
 
-  y = Math.min(logoBottomY, y - headerBottomOffset) - 15;
+  y = Math.min(logoBottomY, y - headerBottomOffset) - 8;
 
-  // Separator between header and body
-  drawSeparator(currentPage, y);
+  // ── Flame accent bar — full width, 2pt ──
+  currentPage.drawRectangle({
+    x: MARGIN_LEFT,
+    y: y,
+    width: CONTENT_WIDTH,
+    height: 2,
+    color: COLOR_FLAME,
+  });
   y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // TITLE
+  // TITLE — "Service Proposal"
   // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage.drawText(t.serviceProposal, {
@@ -371,110 +420,113 @@ export async function generateQuotePDF(
     font: fontBold,
     color: COLOR_BLACK,
   });
-  y -= FONT_TITLE + 6;
+  y -= FONT_TITLE + 8;
 
+  // Project name as subtitle
   currentPage.drawText(data.projectName, {
     x: MARGIN_LEFT,
     y,
     size: FONT_SUBTITLE,
     font: fontRegular,
-    color: COLOR_GRAY,
+    color: COLOR_GRAY_TEXT,
   });
-  y -= SECTION_GAP;
+  y -= SECTION_GAP + 4;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // INTRODUCTION
+  // CLIENT INFO BLOCK — gray background panel
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const introText = `${t.proposalFor} ${data.contactName} ${t.at} ${data.clientName}.`;
-  y = drawWrappedText(
-    pageRef,
-    introText,
-    MARGIN_LEFT,
-    y,
-    fontRegular,
-    FONT_INTRO,
-    CONTENT_WIDTH,
-    COLOR_BLACK
-  );
-  y -= SECTION_GAP;
+  const clientBlockHeight = 52;
+  const clientBlockPadding = 14;
+
+  // Gray background rectangle
+  currentPage.drawRectangle({
+    x: MARGIN_LEFT,
+    y: y - clientBlockHeight,
+    width: CONTENT_WIDTH,
+    height: clientBlockHeight,
+    color: COLOR_SECTION_BG,
+  });
+
+  // "Prepared for" label
+  currentPage.drawText(t.preparedFor, {
+    x: MARGIN_LEFT + clientBlockPadding,
+    y: y - 18,
+    size: FONT_LABEL,
+    font: fontRegular,
+    color: COLOR_GRAY_LIGHT_TEXT,
+  });
+
+  // Contact name + company — bold and prominent
+  const clientLine = `${data.contactName}  —  ${data.clientName}`;
+  currentPage.drawText(clientLine, {
+    x: MARGIN_LEFT + clientBlockPadding,
+    y: y - 36,
+    size: FONT_CLIENT_NAME,
+    font: fontBold,
+    color: COLOR_BLACK,
+  });
+
+  y -= clientBlockHeight + SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PURPOSE OF WORK
+  // PURPOSE OF WORK — with Flame accent bar
   // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage = pageRef.current;
   y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
 
-  currentPage.drawText(t.purposeOfWork, {
-    x: MARGIN_LEFT,
-    y,
-    size: FONT_SECTION_HEADING,
-    font: fontBold,
-    color: COLOR_BLACK,
-  });
-  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
+  y = drawSectionHeading(currentPage, t.purposeOfWork, y, fontBold);
+
+  const bodyIndent = MARGIN_LEFT + ACCENT_BORDER_OFFSET + ACCENT_BORDER_WIDTH;
+  const bodyWidth = CONTENT_WIDTH - ACCENT_BORDER_OFFSET - ACCENT_BORDER_WIDTH;
 
   y = drawWrappedText(
     pageRef,
     data.description,
-    MARGIN_LEFT,
+    bodyIndent,
     y,
     fontRegular,
     FONT_BODY,
-    CONTENT_WIDTH,
-    COLOR_GRAY,
-    1.5
+    bodyWidth,
+    COLOR_GRAY_TEXT,
+    1.6
   );
   y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SCOPE AND DELIVERABLES
+  // SCOPE AND DELIVERABLES — with Flame accent bar
   // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage = pageRef.current;
   y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
 
-  currentPage.drawText(t.scopeAndDeliverables, {
-    x: MARGIN_LEFT,
-    y,
-    size: FONT_SECTION_HEADING,
-    font: fontBold,
-    color: COLOR_BLACK,
-  });
-  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
+  y = drawSectionHeading(currentPage, t.scopeAndDeliverables, y, fontBold);
 
   y = drawWrappedText(
     pageRef,
     data.scope,
-    MARGIN_LEFT,
+    bodyIndent,
     y,
     fontRegular,
     FONT_BODY,
-    CONTENT_WIDTH,
-    COLOR_GRAY,
-    1.5
+    bodyWidth,
+    COLOR_GRAY_TEXT,
+    1.6
   );
   y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROJECT SCHEDULE
+  // PROJECT SCHEDULE — with Flame accent bar
   // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage = pageRef.current;
   y = ensureSpace(pageRef, y, 80);
   currentPage = pageRef.current;
 
-  currentPage.drawText(t.projectSchedule, {
-    x: MARGIN_LEFT,
-    y,
-    size: FONT_SECTION_HEADING,
-    font: fontBold,
-    color: COLOR_BLACK,
-  });
-  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
+  y = drawSectionHeading(currentPage, t.projectSchedule, y, fontBold);
 
   const scheduleItems = t.scheduleItems.map((s) =>
     s.replace("{client}", data.clientName).replace("{date}", data.date)
@@ -485,18 +537,18 @@ export async function generateQuotePDF(
     y = ensureSpace(pageRef, y, 20);
     currentPage = pageRef.current;
 
-    // Bullet point with proper indentation
+    // Bullet point
     currentPage.drawText("\u2022", {
-      x: MARGIN_LEFT + 8,
+      x: bodyIndent + 4,
       y,
       size: FONT_BODY,
       font: fontRegular,
-      color: COLOR_GRAY,
+      color: COLOR_FLAME, // Flame-colored bullets for brand touch
     });
 
-    // Wrap the bullet text with indentation
-    const bulletTextX = MARGIN_LEFT + 22;
-    const bulletMaxWidth = CONTENT_WIDTH - 22;
+    // Bullet text
+    const bulletTextX = bodyIndent + 18;
+    const bulletMaxWidth = bodyWidth - 18;
     y = drawWrappedText(
       pageRef,
       item,
@@ -505,88 +557,81 @@ export async function generateQuotePDF(
       fontRegular,
       FONT_BODY,
       bulletMaxWidth,
-      COLOR_GRAY,
-      1.5
+      COLOR_GRAY_TEXT,
+      1.6
     );
-    y -= 4; // small gap between bullets
+    y -= 4;
   }
   y -= TABLE_TOP_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PRICING TABLE
+  // PRICING TABLE — Flame header, alternating rows, black total
   // ═══════════════════════════════════════════════════════════════════════════
-
-  currentPage = pageRef.current;
 
   currentPage = pageRef.current;
   y = ensureSpace(pageRef, y, 40);
   currentPage = pageRef.current;
 
-  currentPage.drawText(t.pricing, {
-    x: MARGIN_LEFT,
-    y,
-    size: FONT_SECTION_HEADING,
-    font: fontBold,
-    color: COLOR_BLACK,
-  });
-  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING + 10;
+  y = drawSectionHeading(currentPage, t.pricing, y, fontBold);
+  y -= 10;
 
-  // Calculate how many summary rows we need (subtotal + vat + total, or just total)
+  // Calculate table dimensions
   const hasVat = data.vatRate !== null && data.vatRate > 0;
-  const summaryRowCount = hasVat ? 3 : 1; // subtotal + vat + total, or just total
-  const rowHeight = 32; // 12pt padding top + ~10pt text + 12pt padding bottom ≈ 32pt
-  const headerHeight = 32;
-  const tableHeight = headerHeight + (data.items.length + summaryRowCount) * rowHeight + 10;
+  const summaryRowCount = hasVat ? 3 : 1;
+  const rowHeight = 34; // slightly taller for breathing room
+  const headerHeight = 34;
+  const tableHeight =
+    headerHeight + (data.items.length + summaryRowCount) * rowHeight + 10;
 
   y = ensureSpace(pageRef, y, tableHeight);
   currentPage = pageRef.current;
 
   // Column layout: Item 50%, Fixed rate 20%, Qty 10%, Total 20%
-  const colItem = CONTENT_WIDTH * 0.50;
-  const colRate = CONTENT_WIDTH * 0.20;
-  const colQty = CONTENT_WIDTH * 0.10;
-  const colTotal = CONTENT_WIDTH * 0.20;
+  const colItem = CONTENT_WIDTH * 0.5;
+  const colRate = CONTENT_WIDTH * 0.2;
+  const colQty = CONTENT_WIDTH * 0.1;
+  const colTotal = CONTENT_WIDTH * 0.2;
 
   const tableX = MARGIN_LEFT;
   const colRateX = tableX + colItem;
   const colQtyX = colRateX + colRate;
   const colTotalX = colQtyX + colQty;
 
-  // ── Table header row ──
+  // ── Table header row — Flame background ──
 
   currentPage.drawRectangle({
     x: tableX,
     y: y - headerHeight,
     width: CONTENT_WIDTH,
     height: headerHeight,
-    color: COLOR_TABLE_HEADER, // pure black
+    color: COLOR_FLAME,
   });
 
-  const headerTextY = y - 20; // vertically centered in 32pt row
+  const headerTextY = y - 21;
 
   currentPage.drawText(t.item.toUpperCase(), {
-    x: tableX + 10,
+    x: tableX + 12,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
   currentPage.drawText(t.fixedRate.toUpperCase(), {
-    x: colRateX + 10,
+    x: colRateX + 12,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
   currentPage.drawText(t.qty.toUpperCase(), {
-    x: colQtyX + 10,
+    x: colQtyX + 12,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
   currentPage.drawText(t.total.toUpperCase(), {
-    x: colTotalX + 10,
+    x: colTotalX + 12,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
@@ -595,7 +640,7 @@ export async function generateQuotePDF(
 
   y -= headerHeight;
 
-  // ── Data rows ──
+  // ── Data rows — alternating white / #f8f8f8 ──
 
   for (let i = 0; i < data.items.length; i++) {
     const item = data.items[i];
@@ -603,14 +648,14 @@ export async function generateQuotePDF(
     y = ensureSpace(pageRef, y, rowHeight);
     currentPage = pageRef.current;
 
-    // Alternating row background: even = white (no fill), odd = #f9f9f9
+    // Alternating row background
     if (i % 2 === 1) {
       currentPage.drawRectangle({
         x: tableX,
         y: y - rowHeight,
         width: CONTENT_WIDTH,
         height: rowHeight,
-        color: COLOR_ROW_ALT,
+        color: COLOR_SECTION_BG, // #f8f8f8
       });
     }
 
@@ -622,45 +667,49 @@ export async function generateQuotePDF(
       color: COLOR_TABLE_BORDER,
     });
 
-    const cellTextY = y - 20; // vertically centered
+    const cellTextY = y - 21;
 
     // Item description — truncate if too long
     let desc = item.description;
-    const maxDescWidth = colItem - 20;
-    while (fontRegular.widthOfTextAtSize(desc, FONT_TABLE_CELL) > maxDescWidth && desc.length > 3) {
+    const maxDescWidth = colItem - 24;
+    while (
+      fontRegular.widthOfTextAtSize(desc, FONT_TABLE_CELL) > maxDescWidth &&
+      desc.length > 3
+    ) {
       desc = desc.slice(0, -4) + "...";
     }
 
     currentPage.drawText(desc, {
-      x: tableX + 10,
+      x: tableX + 12,
       y: cellTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
-      color: COLOR_BLACK,
+      color: COLOR_DARK_TEXT,
     });
 
     currentPage.drawText(formatCurrency(item.unitPrice, data.currency), {
-      x: colRateX + 10,
+      x: colRateX + 12,
       y: cellTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
-      color: COLOR_BLACK,
+      color: COLOR_DARK_TEXT,
     });
 
     currentPage.drawText(String(item.quantity), {
-      x: colQtyX + 10,
+      x: colQtyX + 12,
       y: cellTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
-      color: COLOR_BLACK,
+      color: COLOR_DARK_TEXT,
     });
 
+    // Total column — bold
     currentPage.drawText(formatCurrency(item.total, data.currency), {
-      x: colTotalX + 10,
+      x: colTotalX + 12,
       y: cellTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
-      color: COLOR_BLACK,
+      color: COLOR_DARK_TEXT,
     });
 
     y -= rowHeight;
@@ -681,7 +730,7 @@ export async function generateQuotePDF(
       y: y - rowHeight,
       width: CONTENT_WIDTH,
       height: rowHeight,
-      color: COLOR_LIGHT_GRAY, // #f0f0f0
+      color: COLOR_SECTION_BG,
     });
     currentPage.drawLine({
       start: { x: tableX, y: y - rowHeight },
@@ -690,24 +739,24 @@ export async function generateQuotePDF(
       color: COLOR_TABLE_BORDER,
     });
 
-    const subtotalTextY = y - 20;
+    const subtotalTextY = y - 21;
     currentPage.drawText(t.subtotal, {
-      x: tableX + 10,
+      x: tableX + 12,
       y: subtotalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
-      color: COLOR_BLACK,
+      color: COLOR_DARK_TEXT,
     });
     currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
-      x: colTotalX + 10,
+      x: colTotalX + 12,
       y: subtotalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
-      color: COLOR_BLACK,
+      color: COLOR_DARK_TEXT,
     });
     y -= rowHeight;
 
-    // VAT row — white bg
+    // VAT row — white bg, gray text
     y = ensureSpace(pageRef, y, rowHeight);
     currentPage = pageRef.current;
 
@@ -718,20 +767,20 @@ export async function generateQuotePDF(
       color: COLOR_TABLE_BORDER,
     });
 
-    const vatTextY = y - 20;
+    const vatTextY = y - 21;
     currentPage.drawText(`${t.vat} (${data.vatRate}%)`, {
-      x: tableX + 10,
+      x: tableX + 12,
       y: vatTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
-      color: COLOR_GRAY,
+      color: COLOR_GRAY_TEXT,
     });
     currentPage.drawText(formatCurrency(vatAmount, data.currency), {
-      x: colTotalX + 10,
+      x: colTotalX + 12,
       y: vatTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
-      color: COLOR_GRAY,
+      color: COLOR_GRAY_TEXT,
     });
     y -= rowHeight;
 
@@ -744,19 +793,19 @@ export async function generateQuotePDF(
       y: y - rowHeight,
       width: CONTENT_WIDTH,
       height: rowHeight,
-      color: COLOR_TABLE_HEADER, // pure black
+      color: COLOR_BLACK,
     });
 
-    const totalTextY = y - 20;
+    const totalTextY = y - 21;
     currentPage.drawText(t.total, {
-      x: tableX + 10,
+      x: tableX + 12,
       y: totalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
       color: COLOR_WHITE,
     });
     currentPage.drawText(formatCurrency(totalWithVat, data.currency), {
-      x: colTotalX + 10,
+      x: colTotalX + 12,
       y: totalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
@@ -773,19 +822,19 @@ export async function generateQuotePDF(
       y: y - rowHeight,
       width: CONTENT_WIDTH,
       height: rowHeight,
-      color: COLOR_TABLE_HEADER, // pure black
+      color: COLOR_BLACK,
     });
 
-    const totalTextY = y - 20;
+    const totalTextY = y - 21;
     currentPage.drawText(t.total, {
-      x: tableX + 10,
+      x: tableX + 12,
       y: totalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
       color: COLOR_WHITE,
     });
     currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
-      x: colTotalX + 10,
+      x: colTotalX + 12,
       y: totalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
@@ -797,47 +846,72 @@ export async function generateQuotePDF(
   y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // REFERENCES
+  // REFERENCES — gray background panel, more discrete
   // ═══════════════════════════════════════════════════════════════════════════
 
-  y = ensureSpace(pageRef, y, 120);
+  y = ensureSpace(pageRef, y, 130);
   currentPage = pageRef.current;
 
-  // Separator before references
+  // Thin separator
   drawSeparator(currentPage, y);
   y -= SECTION_GAP;
 
-  currentPage.drawText(t.references, {
+  // Compute references text height for background block
+  const refLines = wrapText(
+    t.referencesText,
+    fontRegular,
+    FONT_FOOTER + 1,
+    CONTENT_WIDTH - 28
+  );
+  const refBlockHeight = refLines.length * (FONT_FOOTER + 1) * 1.6 + 48;
+
+  // Gray background for entire references section
+  currentPage.drawRectangle({
     x: MARGIN_LEFT,
-    y,
+    y: y - refBlockHeight,
+    width: CONTENT_WIDTH,
+    height: refBlockHeight,
+    color: COLOR_SECTION_BG,
+  });
+
+  // "References" heading inside the block
+  const refHeadingY = y - 20;
+  currentPage.drawText(t.references, {
+    x: MARGIN_LEFT + 14,
+    y: refHeadingY,
     size: FONT_SECTION_HEADING,
     font: fontBold,
-    color: COLOR_BLACK,
+    color: COLOR_DARK_TEXT,
   });
-  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
 
-  y = drawWrappedText(
+  // References body text
+  const refTextStartY = refHeadingY - HEADING_TO_CONTENT - 6;
+  const refEndY = drawWrappedText(
     pageRef,
     t.referencesText,
-    MARGIN_LEFT,
-    y,
+    MARGIN_LEFT + 14,
+    refTextStartY,
     fontRegular,
     FONT_FOOTER + 1, // 9pt
-    CONTENT_WIDTH,
-    COLOR_GRAY,
-    1.5
+    CONTENT_WIDTH - 28,
+    COLOR_GRAY_TEXT,
+    1.6
   );
+  y = Math.min(y - refBlockHeight, refEndY) - 8;
   y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PAYMENT TERMS
+  // PAYMENT TERMS — small print
   // ═══════════════════════════════════════════════════════════════════════════
 
   y = ensureSpace(pageRef, y, 80);
   currentPage = pageRef.current;
 
   for (const rawTerm of t.paymentTerms) {
-    const term = rawTerm.replace("{days}", String(data.paymentTermsDays ?? 45));
+    const term = rawTerm.replace(
+      "{days}",
+      String(data.paymentTermsDays ?? 45)
+    );
     currentPage = pageRef.current;
     y = ensureSpace(pageRef, y, 16);
     currentPage = pageRef.current;
@@ -847,18 +921,28 @@ export async function generateQuotePDF(
       y,
       size: FONT_FOOTER,
       font: fontRegular,
-      color: COLOR_GRAY,
+      color: COLOR_GRAY_LIGHT_TEXT,
     });
     y -= 14;
   }
   y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SIGNATURE — right-aligned
+  // SIGNATURE — right-aligned, premium feel
   // ═══════════════════════════════════════════════════════════════════════════
 
   y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
+
+  // Small Flame accent line before signature
+  const sigLineWidth = 60;
+  currentPage.drawRectangle({
+    x: PAGE_WIDTH - MARGIN_RIGHT - sigLineWidth,
+    y: y + 8,
+    width: sigLineWidth,
+    height: 2,
+    color: COLOR_FLAME,
+  });
 
   const regardsText = t.bestRegards;
   const regardsWidth = fontRegular.widthOfTextAtSize(regardsText, FONT_BODY);
@@ -867,9 +951,9 @@ export async function generateQuotePDF(
     y,
     size: FONT_BODY,
     font: fontRegular,
-    color: COLOR_BLACK,
+    color: COLOR_DARK_TEXT,
   });
-  y -= 18;
+  y -= 20;
 
   const signatureName = "Emmanuel Gomez, CEO, Sarani";
   const signatureWidth = fontBold.widthOfTextAtSize(signatureName, FONT_BODY);
