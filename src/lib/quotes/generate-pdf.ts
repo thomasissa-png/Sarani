@@ -116,7 +116,7 @@ const COLOR_BLACK = rgb(0, 0, 0); // #000000 — primary
 const COLOR_DARK_TEXT = rgb(0.13, 0.13, 0.13); // #222222 — body text
 const COLOR_GRAY_TEXT = rgb(0.35, 0.35, 0.35); // #595959 — secondary
 const COLOR_GRAY_LIGHT_TEXT = rgb(0.55, 0.55, 0.55); // #8c8c8c — subtle labels
-const COLOR_SECTION_BG = rgb(0.965, 0.965, 0.965); // #f7f7f7 — light panels
+const COLOR_SECTION_BG = rgb(0.98, 0.976, 0.961); // #faf9f5 — warm neutral-200 from design system
 const COLOR_ROW_ALT = rgb(0.976, 0.976, 0.976); // #f9f9f9
 const COLOR_TABLE_BORDER = rgb(0.9, 0.9, 0.9); // #e6e6e6
 const COLOR_WHITE = rgb(1, 1, 1);
@@ -148,10 +148,11 @@ let cachedLogoPng: Uint8Array | null = null;
 function getLogoPng(): Uint8Array | null {
   if (cachedLogoPng) return cachedLogoPng;
   try {
+    // White logo for dark header background
     const logoPath = path.join(
       process.cwd(),
       "public",
-      "sarani-logo-black.png"
+      "sarani-logo-white.png"
     );
     cachedLogoPng = new Uint8Array(fs.readFileSync(logoPath));
     return cachedLogoPng;
@@ -283,15 +284,16 @@ function drawSectionHeading(
   page: PDFPage,
   text: string,
   y: number,
-  font: PDFFont
+  font: PDFFont,
+  accentColor: typeof COLOR_BLACK = COLOR_BLACK
 ): number {
-  // Flame accent bar — 3pt wide, aligned with text height
+  // Accent bar — 2pt wide, aligned with text height (Flame or Black)
   page.drawRectangle({
     x: MARGIN_LEFT,
     y: y - 2,
     width: ACCENT_BORDER_WIDTH,
     height: FONT_SECTION_HEADING + 4,
-    color: COLOR_FLAME,
+    color: accentColor,
   });
 
   page.drawText(text, {
@@ -322,8 +324,21 @@ export async function generateQuotePDF(
   data: QuotePDFData
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  // Embed Outfit font (Sarani's brand typeface) with Helvetica fallback
+  let fontRegular: PDFFont;
+  let fontBold: PDFFont;
+  try {
+    const outfitRegularPath = path.join(process.cwd(), "public", "fonts", "Outfit-Regular.ttf");
+    const outfitBoldPath = path.join(process.cwd(), "public", "fonts", "Outfit-Bold.ttf");
+    const outfitRegularBytes = fs.readFileSync(outfitRegularPath);
+    const outfitBoldBytes = fs.readFileSync(outfitBoldPath);
+    fontRegular = await doc.embedFont(outfitRegularBytes);
+    fontBold = await doc.embedFont(outfitBoldBytes);
+  } catch {
+    // Fallback to Helvetica if Outfit .ttf files are not available
+    fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+    fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  }
 
   const t = TRANSLATIONS[data.language ?? "en"];
 
@@ -354,7 +369,7 @@ export async function generateQuotePDF(
       const logoScale = 70 / logoImage.width;
       const logoWidth = logoImage.width * logoScale;
       const logoHeight = logoImage.height * logoScale;
-      // Logo in white area isn't possible with a black PNG — draw it anyway, it'll be subtle
+      // White logo on black header
       currentPage.drawImage(logoImage, {
         x: MARGIN_LEFT,
         y: PAGE_HEIGHT - headerHeight / 2 - logoHeight / 2,
@@ -602,7 +617,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 40);
   currentPage = pageRef.current;
 
-  y = drawSectionHeading(currentPage, t.pricing, y, fontBold);
+  y = drawSectionHeading(currentPage, t.pricing, y, fontBold, COLOR_FLAME);
   y -= 10;
 
   // Calculate table dimensions
