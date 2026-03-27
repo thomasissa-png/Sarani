@@ -489,45 +489,16 @@ export default function ProjectBriefPage() {
         </div>
       )}
 
-      {/* Reply to client — auto-generated */}
+      {/* Reply to client — auto-generated, editable, copy-pasteable */}
       {clientReply && (
-        <div className="bg-white rounded-xl border border-neutral-300 p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-brand-black">Reply to client</h2>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(clientReply.body);
-                setReplyCopied(true);
-                setTimeout(() => setReplyCopied(false), 2000);
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                replyCopied
-                  ? "bg-green-100 text-green-700 border border-green-300"
-                  : "bg-neutral-100 text-neutral-700 border border-neutral-300 hover:bg-neutral-200"
-              }`}
-            >
-              {replyCopied ? (
-                <>
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-                  Copied
-                </>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
-                  Copy to clipboard
-                </>
-              )}
-            </button>
-          </div>
-          <p className="text-xs text-neutral-400">Subject: {clientReply.subject}</p>
-          <div className="bg-neutral-50 rounded-lg px-4 py-3 text-sm text-brand-black whitespace-pre-wrap font-normal leading-relaxed">
-            {clientReply.body}
-          </div>
-          <p className="text-xs text-neutral-400">
-            Auto-generated in the client&apos;s language. Review before sending.
-          </p>
-        </div>
+        <ReplyToClient
+          reply={clientReply}
+          onRegenerate={async () => {
+            // Re-import the same email to regenerate the reply
+            // For now, just clear and let the user re-import
+            setClientReply(null);
+          }}
+        />
       )}
 
       {/* Form */}
@@ -835,6 +806,97 @@ export default function ProjectBriefPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Reply to Client Component ───────────────────────────────────────────────
+
+function ReplyToClient({
+  reply,
+  onRegenerate,
+}: {
+  reply: { subject: string; body: string };
+  onRegenerate: () => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editedBody, setEditedBody] = useState(reply.body);
+  const [copied, setCopied] = useState(false);
+
+  const currentBody = editing ? editedBody : reply.body;
+  const hasPlaceholders = /\[[A-Z_]+\]/.test(currentBody);
+
+  function handleCopy() {
+    if (hasPlaceholders) return;
+    navigator.clipboard.writeText(currentBody);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-neutral-300 p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-brand-black">Reply to client</h2>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onRegenerate}
+            className="inline-flex items-center gap-1 px-2 py-1 text-xs text-neutral-500 hover:text-brand-black transition-colors"
+            title="Regenerate reply"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setEditing(!editing); if (!editing) setEditedBody(reply.body); }}
+            className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+              editing ? "bg-amber-50 text-amber-700 border-amber-300" : "bg-neutral-100 text-neutral-700 border-neutral-300 hover:bg-neutral-200"
+            }`}
+          >
+            {editing ? "Editing" : "Edit"}
+          </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={hasPlaceholders}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+              copied
+                ? "bg-green-100 text-green-700 border border-green-300"
+                : hasPlaceholders
+                  ? "bg-red-50 text-red-400 border border-red-200 cursor-not-allowed"
+                  : "bg-neutral-100 text-neutral-700 border border-neutral-300 hover:bg-neutral-200"
+            }`}
+            title={hasPlaceholders ? "Resolve placeholders before copying" : undefined}
+          >
+            {copied ? (
+              <><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>Copied</>
+            ) : (
+              <><svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>Copy</>
+            )}
+          </button>
+        </div>
+      </div>
+      <p className="text-xs text-neutral-400">Subject: {reply.subject}</p>
+      {editing ? (
+        <textarea
+          value={editedBody}
+          onChange={(e) => setEditedBody(e.target.value)}
+          rows={8}
+          className="w-full px-4 py-3 rounded-lg border border-amber-300 bg-amber-50/30 text-sm text-brand-black font-normal leading-relaxed focus:outline-none focus:ring-2 focus:ring-amber-400 resize-y"
+        />
+      ) : (
+        <div className="bg-neutral-50 rounded-lg px-4 py-3 text-sm text-brand-black whitespace-pre-wrap font-normal leading-relaxed">
+          {reply.body}
+        </div>
+      )}
+      {hasPlaceholders && (
+        <p className="text-xs text-red-500 font-medium">
+          Resolve placeholders (text in [BRACKETS]) before copying.
+        </p>
+      )}
+      <p className="text-xs text-neutral-400">
+        Auto-generated in the client&apos;s language and tone. Review before sending.
+      </p>
     </div>
   );
 }
