@@ -142,7 +142,7 @@ export default function HomePage() {
       </Section>
 
       {/* -- Section 8: FAQ -- */}
-      <Section ariaLabel="FAQ" className="bg-surface-warm">
+      <Section ariaLabel="FAQ" className="bg-surface-warm" id="faq">
         <div className="mx-auto max-w-3xl">
           <FadeInUp>
             <h2 className="mb-12 text-center text-3xl font-bold text-brand-black sm:text-4xl">

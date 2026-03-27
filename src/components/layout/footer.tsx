@@ -11,14 +11,11 @@ const ABOUT_LINKS = [
 ] as const;
 
 const CATEGORY_LINKS = [
-  { href: "/work?category=branding", label: "Branding" },
-  { href: "/work?category=graphic-design", label: "Graphic Design" },
-  { href: "/work?category=marketing-assets", label: "Marketing Assets" },
-  { href: "/work?category=presentations", label: "Presentations" },
-  { href: "/work?category=photos", label: "Photos" },
-  { href: "/work?category=social-media", label: "Social Media" },
-  { href: "/work?category=videos", label: "Videos" },
-  { href: "/work?category=web-design", label: "Websites" },
+  { href: "/work", label: "Video & Social" },
+  { href: "/work", label: "Graphic Design" },
+  { href: "/work", label: "Events" },
+  { href: "/work", label: "Multilingual" },
+  { href: "/work", label: "Out-of-Home" },
 ] as const;
 
 const SUPPORT_LINKS = [
