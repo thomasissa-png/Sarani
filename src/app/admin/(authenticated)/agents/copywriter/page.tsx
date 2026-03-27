@@ -65,6 +65,7 @@ type FormState = {
   existingCopyToImprove: string;
   approvedReferences: string;
   hardConstraints: string;
+  characterLimit: string;
 };
 
 const STEPS = ["Select Client", "Configure", "Review & Generate"];
@@ -95,6 +96,7 @@ export default function CopywriterPage() {
     existingCopyToImprove: "",
     approvedReferences: "",
     hardConstraints: "",
+    characterLimit: "",
   });
 
   // Generation state
@@ -154,6 +156,7 @@ export default function CopywriterPage() {
           competitiveContext: form.competitiveContext || undefined,
           existingCopyToImprove: form.existingCopyToImprove || undefined,
           hardConstraints: form.hardConstraints || undefined,
+          characterLimit: form.characterLimit ? parseInt(form.characterLimit) : undefined,
         }),
       });
 
@@ -214,6 +217,13 @@ export default function CopywriterPage() {
       items.push({
         label: "Tone Direction",
         value: TONE_DIRECTION_OPTIONS.find((t) => t.value === form.toneDirection)?.label || form.toneDirection,
+      });
+    }
+
+    if (form.characterLimit) {
+      items.push({
+        label: "Character Limit",
+        value: `${form.characterLimit} characters`,
       });
     }
 
@@ -514,6 +524,24 @@ export default function CopywriterPage() {
                         }))
                       }
                       placeholder="e.g. Max 60 characters for this banner, must include trademark symbol"
+                      className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Character Limit"
+                    helperText="(optional — for banners, social posts, subject lines)"
+                  >
+                    <input
+                      type="number"
+                      value={form.characterLimit}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          characterLimit: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g. 280 for Twitter, 125 for meta description"
                       className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                     />
                   </FormField>
