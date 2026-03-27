@@ -427,9 +427,6 @@ export default function TrackerPage() {
     setInvoiceFilter("All");
   }, []);
 
-  // Actions overflow menu per row (Fix #6)
-  const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
-
   // Active filter count (for mobile badge)
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -442,7 +439,6 @@ export default function TrackerPage() {
   // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = () => {
-      setOpenActionMenu(null);
       setColumnsDropdownOpen(false);
     };
     document.addEventListener("click", handleClickOutside);
@@ -908,39 +904,39 @@ export default function TrackerPage() {
                       <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
                         {formatDate(p.date)}
                       </td>
-                      {/* Actions — visible icon buttons */}
+                      {/* Actions — text label buttons */}
                       <td className="px-3 py-3.5">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <Link
                             href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                            className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
                             title="Generate Quote"
                           >
-                            <QuoteIcon />
+                            Quote
                           </Link>
                           {p.excelTrackerUrl ? (
                             <a href={p.excelTrackerUrl} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-green-600 transition-colors"
+                              className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
                               title={`Open Tracker${p.excelSheetName ? ` (${p.excelSheetName})` : ""}`}
-                            ><SharePointIcon /></a>
+                            >Tracker</a>
                           ) : (
-                            <span className="inline-flex items-center justify-center w-8 h-8 text-neutral-200"><SharePointIcon /></span>
+                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Tracker</span>
                           )}
                           {p.clickupTaskUrl ? (
                             <a href={p.clickupTaskUrl} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-purple-600 transition-colors"
+                              className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
                               title="Open in ClickUp"
-                            ><ExternalLinkIcon /></a>
+                            >ClickUp</a>
                           ) : (
-                            <span className="inline-flex items-center justify-center w-8 h-8 text-neutral-200"><ExternalLinkIcon /></span>
+                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">ClickUp</span>
                           )}
                           {p.sharepointLink ? (
                             <a href={p.sharepointLink} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 transition-colors"
+                              className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
                               title="Open Project Folder"
-                            ><FolderIcon /></a>
+                            >Folder</a>
                           ) : (
-                            <span className="inline-flex items-center justify-center w-8 h-8 text-neutral-200"><FolderIcon /></span>
+                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Folder</span>
                           )}
                         </div>
                       </td>
@@ -1001,80 +997,13 @@ export default function TrackerPage() {
               key={`mobile-${p.client}-${p.project}-${i}`}
               className="bg-white rounded-xl border border-neutral-300 p-4 space-y-3"
             >
-              {/* Fix #6 — Overflow menu on mobile cards */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs text-neutral-400 font-medium">
-                    {p.client}
-                  </p>
-                  <p className="text-sm font-medium text-brand-black mt-0.5">
-                    {p.project}
-                  </p>
-                </div>
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const key = `mobile-${p.client}-${p.project}-${i}`;
-                      setOpenActionMenu(openActionMenu === key ? null : key);
-                    }}
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                    aria-label="Project actions"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                      <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-                    </svg>
-                  </button>
-                  {openActionMenu === `mobile-${p.client}-${p.project}-${i}` && (
-                    <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-neutral-200 rounded-lg shadow-lg z-30 py-1">
-                      <Link
-                        href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
-                        className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                        onClick={() => setOpenActionMenu(null)}
-                      >
-                        <QuoteIcon />
-                        Generate Quote
-                      </Link>
-                      {p.excelTrackerUrl && (
-                        <a
-                          href={p.excelTrackerUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                          onClick={() => setOpenActionMenu(null)}
-                        >
-                          <SharePointIcon />
-                          Open Tracker{p.excelSheetName ? ` (${p.excelSheetName})` : ""}
-                        </a>
-                      )}
-                      {p.sharepointLink && (
-                        <a
-                          href={p.sharepointLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                          onClick={() => setOpenActionMenu(null)}
-                        >
-                          <ExternalLinkIcon />
-                          Open Project Folder
-                        </a>
-                      )}
-                      {p.clickupTaskUrl && (
-                        <a
-                          href={p.clickupTaskUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2.5 min-h-[44px] px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                          onClick={() => setOpenActionMenu(null)}
-                        >
-                          <ExternalLinkIcon />
-                          Open in ClickUp
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
+              <div>
+                <p className="text-xs text-neutral-400 font-medium">
+                  {p.client}
+                </p>
+                <p className="text-sm font-medium text-brand-black mt-0.5">
+                  {p.project}
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {p.status && (
@@ -1110,6 +1039,36 @@ export default function TrackerPage() {
                   <span className="text-neutral-400">PO:</span>{" "}
                   {p.poNumber || "--"}
                 </div>
+              </div>
+              {/* Actions — compact text buttons */}
+              <div className="flex items-center gap-1.5 pt-1">
+                <Link
+                  href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
+                  className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                >
+                  Quote
+                </Link>
+                {p.excelTrackerUrl ? (
+                  <a href={p.excelTrackerUrl} target="_blank" rel="noopener noreferrer"
+                    className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                  >Tracker</a>
+                ) : (
+                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Tracker</span>
+                )}
+                {p.clickupTaskUrl ? (
+                  <a href={p.clickupTaskUrl} target="_blank" rel="noopener noreferrer"
+                    className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                  >ClickUp</a>
+                ) : (
+                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">ClickUp</span>
+                )}
+                {p.sharepointLink ? (
+                  <a href={p.sharepointLink} target="_blank" rel="noopener noreferrer"
+                    className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                  >Folder</a>
+                ) : (
+                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Folder</span>
+                )}
               </div>
             </div>
           ))}
