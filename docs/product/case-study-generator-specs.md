@@ -133,6 +133,21 @@ Score overrides are stored as `scoreOverride: true` with an audit trail.
 **Trigger:** Score >= 70 (auto) OR manual "Generate" action.
 **Inputs used:** Client name, project type, deliverables, amount, timeline, outcomes from ClickUp custom fields, SharePoint asset paths.
 
+**Project Type → CaseStudyCategory mapping** (used when generating the website case study):
+
+| ClickUp Project Type | Website CaseStudyCategory |
+|---|---|
+| Campaign | AI-determined: "Video & Social" if video assets, else "Graphic Design" |
+| Rebranding | Graphic Design |
+| Video Production | Video & Social |
+| Graphic Design | Graphic Design |
+| Event | Event |
+| Translation | Multilingual |
+| Presentation | Graphic Design |
+| Other | AI-determined from deliverables and assets |
+
+The LLM prompt MUST constrain the `category` output to one of: `"Video & Social" | "Graphic Design" | "Event" | "Multilingual" | "Out-of-Home"`. Invalid categories are rejected by Zod validation.
+
 **Outputs generated:**
 
 | Output | Format | Destination |
