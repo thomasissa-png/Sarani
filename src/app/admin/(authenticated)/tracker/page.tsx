@@ -965,7 +965,7 @@ export default function TrackerPage() {
                             className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
                             title="Create a new quote for this project"
                           >
-                            + Quote
+                            Quote
                           </Link>
                           {p.excelTrackerUrl ? (
                             <a href={p.excelTrackerUrl} target="_blank" rel="noopener noreferrer"

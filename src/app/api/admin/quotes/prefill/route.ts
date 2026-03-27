@@ -205,55 +205,29 @@ export async function GET(request: NextRequest) {
     },
   };
 
-  // ─── 1. Try to get purpose from ClickUp task description ────────────────
+  // ─── 1. Extract metadata from ClickUp task (for purpose building later) ──
+
+  let clickupCategory = "";
+  let clickupType = "";
 
   try {
     const cached = await readCache<ClickUpTask[]>("tracker:clickup_all_tasks");
     if (cached?.data) {
-      // Find matching task by project name
       const matchingTask = cached.data.find((task) => {
         const taskName = task.name.toLowerCase().trim();
         return taskName === projectLower || taskName.includes(projectLower) || projectLower.includes(taskName);
       });
 
       if (matchingTask?.description) {
-        // Extract just the project summary — NOT the full brief
-        // The task description format is:
-        //   Client: X\nContact: Y\nCategory: Z\n---\n\n[full brief markdown]
-        // We want only the metadata lines as a short purpose summary
-        const cleaned = matchingTask.description
-          .replace(/<[^>]+>/g, "")
-          .trim();
-
-        // Take only the lines before the "---" separator (metadata = purpose)
+        const cleaned = matchingTask.description.replace(/<[^>]+>/g, "").trim();
         const separatorIdx = cleaned.indexOf("---");
         const metadataSection = separatorIdx > 0 ? cleaned.slice(0, separatorIdx).trim() : "";
 
         if (metadataSection) {
-          // Build a short purpose from the metadata lines
-          const lines = metadataSection.split("\n").filter(Boolean);
-          const purposeParts: string[] = [];
-          for (const line of lines) {
-            // Skip Client/Contact lines — not useful as purpose
-            if (line.startsWith("Client:") || line.startsWith("Contact:")) continue;
-            if (line.startsWith("Category:")) {
-              purposeParts.push(line.replace("Category:", "").trim());
-            } else if (line.startsWith("Division:")) {
-              purposeParts.push(line.replace("Division:", "").trim());
-            } else if (line.startsWith("Type:")) {
-              purposeParts.push(line.replace("Type:", "").trim());
-            } else {
-              purposeParts.push(line);
-            }
+          for (const line of metadataSection.split("\n").filter(Boolean)) {
+            if (line.startsWith("Category:")) clickupCategory = line.replace("Category:", "").trim();
+            if (line.startsWith("Type:")) clickupType = line.replace("Type:", "").trim();
           }
-          if (purposeParts.length > 0) {
-            response.purpose = purposeParts.join(" — ");
-            response.sources.purpose = "clickup";
-          }
-        } else if (cleaned.length > 0 && cleaned.length < 200) {
-          // No separator — short description, use as-is
-          response.purpose = cleaned;
-          response.sources.purpose = "clickup";
         }
       }
     }
@@ -326,22 +300,12 @@ export async function GET(request: NextRequest) {
                 response.sources.lineItems = "excel";
               }
 
-              // If we didn't get purpose from ClickUp, build from project title + line items
-              if (!response.purpose) {
-                // Try category first
+              // Grab Excel category for purpose building
+              if (!clickupCategory) {
                 const colCategory = findColumnIndex(headers, COL_MAP.category);
-                const category = colCategory !== -1 ? cellToString(row[colCategory]) : "";
-
-                // Build purpose from available data: "[Category] — [project name] ([N assets])"
-                const parts: string[] = [];
-                if (category) parts.push(category);
-                parts.push(projectParam);
-                if (assetItems.length > 0) {
-                  const assetNames = assetItems.slice(0, 3).map(a => a.description).join(", ");
-                  parts.push(`(${assetNames}${assetItems.length > 3 ? ` +${assetItems.length - 3} more` : ""})`);
+                if (colCategory !== -1) {
+                  clickupCategory = cellToString(row[colCategory]);
                 }
-                response.purpose = parts.join(" — ");
-                response.sources.purpose = "excel";
               }
 
               break; // Found the project row
@@ -370,5 +334,68 @@ export async function GET(request: NextRequest) {
     response.sources.vatReason = reason;
   }
 
+  // ─── 4. Build purpose of work — ALWAYS a clean 1-2 sentence description ──
+  // GUARD: never output raw URLs, raw briefs, or internal metadata
+  response.purpose = buildPurpose(
+    clientParam,
+    projectParam,
+    clickupCategory,
+    clickupType,
+    response.lineItems
+  );
+  response.sources.purpose = clickupCategory ? "clickup" : response.lineItems.length > 0 ? "excel" : "none";
+
   return NextResponse.json(response);
+}
+
+/**
+ * Build a clean, professional purpose-of-work description.
+ * NEVER includes URLs, raw briefs, or internal metadata.
+ * Always produces 1-2 readable sentences.
+ */
+function buildPurpose(
+  clientName: string,
+  projectName: string,
+  category: string,
+  projectType: string,
+  lineItems: PrefillLineItem[]
+): string {
+  // Clean inputs — strip any URLs that may have leaked in
+  const cleanStr = (s: string) =>
+    s.replace(/https?:\/\/\S+/g, "").replace(/\s{2,}/g, " ").trim();
+
+  const cleanProject = cleanStr(projectName);
+  const cleanCategory = cleanStr(category);
+  const cleanType = cleanStr(projectType);
+
+  // Build the asset list summary
+  let assetSummary = "";
+  if (lineItems.length > 0) {
+    const names = lineItems.slice(0, 4).map((i) => i.description);
+    assetSummary = names.join(", ");
+    if (lineItems.length > 4) {
+      assetSummary += ` and ${lineItems.length - 4} additional item${lineItems.length - 4 > 1 ? "s" : ""}`;
+    }
+  }
+
+  // Compose the purpose sentence
+  const parts: string[] = [];
+
+  // Type of work (e.g. "Graphic design", "Video production")
+  if (cleanType && cleanType !== "generic") {
+    parts.push(cleanType.charAt(0).toUpperCase() + cleanType.slice(1));
+  } else if (cleanCategory) {
+    parts.push(cleanCategory);
+  }
+
+  // What: project name + deliverables
+  if (assetSummary) {
+    parts.push(`${cleanProject}: ${assetSummary}`);
+  } else {
+    parts.push(cleanProject);
+  }
+
+  // Build final sentence: "Production of [description] for [client]."
+  const description = parts.join(" — ");
+  return `${description} for ${clientName}.`;
 }
