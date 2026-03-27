@@ -26,6 +26,7 @@ export interface QuotePDFData {
   items: QuoteLineItem[];
   totalAmount: number;
   currency: string;
+  vatRate: number | null; // null = no VAT, e.g. 20 for 20%
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -34,14 +35,34 @@ const PAGE_WIDTH = 595.28; // A4
 const PAGE_HEIGHT = 841.89;
 const MARGIN_LEFT = 60;
 const MARGIN_RIGHT = 60;
+const MARGIN_TOP = 50;
+const MARGIN_BOTTOM = 50;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
 
+// Colors
 const COLOR_BLACK = rgb(0.1, 0.1, 0.1);
 const COLOR_GRAY = rgb(0.4, 0.4, 0.4);
-const COLOR_LIGHT_GRAY = rgb(0.95, 0.95, 0.95);
-const COLOR_TABLE_HEADER = rgb(0.15, 0.15, 0.15);
+const COLOR_LIGHT_GRAY = rgb(0.93, 0.93, 0.93); // #ededed — subtotal/total row bg
+const COLOR_ROW_ALT = rgb(0.976, 0.976, 0.976); // #f9f9f9 — alternating rows
+const COLOR_TABLE_BORDER = rgb(0.878, 0.878, 0.878); // #e0e0e0
+const COLOR_TABLE_HEADER = rgb(0, 0, 0); // pure black header
 const COLOR_WHITE = rgb(1, 1, 1);
-const COLOR_ACCENT = rgb(0.06, 0.06, 0.06);
+const COLOR_SEPARATOR = rgb(0.82, 0.82, 0.82); // #d1d1d1
+
+// Font sizes — unified hierarchy
+const FONT_TITLE = 28;
+const FONT_SUBTITLE = 12;
+const FONT_SECTION_HEADING = 14;
+const FONT_BODY = 10;
+const FONT_TABLE_HEADER = 9;
+const FONT_TABLE_CELL = 10;
+const FONT_FOOTER = 8;
+const FONT_INTRO = 10;
+
+// Spacing
+const SECTION_GAP = 30; // minimum gap between sections
+const HEADING_TO_CONTENT = 15; // gap between heading and content
+const TABLE_TOP_GAP = 40; // gap before pricing table
 
 const REFERENCES_TEXT = `Sarani is a Paris-born creative agency uniting 35 experts across 5 continents and 18 languages. We operate 24/7 to deliver unlimited creativity with next-day turnaround. Our clients include Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oreal, Air Corsica, and PICO. We have been recognized for our work across multiple awards and industry benchmarks.`;
 
@@ -123,12 +144,18 @@ function wrapText(
   return lines;
 }
 
+/** Page wrapper that tracks current page and supports auto-pagination */
+interface PageRef {
+  current: PDFPage;
+  doc: PDFDocument;
+}
+
 /**
  * Draw wrapped text, returning the new Y position after drawing.
  * Adds a new page if needed.
  */
 function drawWrappedText(
-  page: { current: PDFPage; doc: PDFDocument },
+  page: PageRef,
   text: string,
   x: number,
   y: number,
@@ -136,15 +163,15 @@ function drawWrappedText(
   fontSize: number,
   maxWidth: number,
   color: typeof COLOR_BLACK,
-  lineSpacing: number = 1.4
+  lineSpacing: number = 1.5
 ): number {
   const lines = wrapText(text, font, fontSize, maxWidth);
   let currentY = y;
 
   for (const line of lines) {
-    if (currentY < 60) {
+    if (currentY < MARGIN_BOTTOM + 20) {
       page.current = page.doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      currentY = PAGE_HEIGHT - 60;
+      currentY = PAGE_HEIGHT - MARGIN_TOP;
     }
 
     if (line.trim()) {
@@ -163,6 +190,29 @@ function drawWrappedText(
   return currentY;
 }
 
+/**
+ * Draw a horizontal separator line across the content width.
+ */
+function drawSeparator(page: PDFPage, y: number): void {
+  page.drawLine({
+    start: { x: MARGIN_LEFT, y },
+    end: { x: PAGE_WIDTH - MARGIN_RIGHT, y },
+    thickness: 0.5,
+    color: COLOR_SEPARATOR,
+  });
+}
+
+/**
+ * Ensure enough vertical space; if not, add a new page and return fresh Y.
+ */
+function ensureSpace(page: PageRef, y: number, needed: number): number {
+  if (y - needed < MARGIN_BOTTOM) {
+    page.current = page.doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    return PAGE_HEIGHT - MARGIN_TOP;
+  }
+  return y;
+}
+
 // ─── Main Generator ─────────────────────────────────────────────────────────
 
 export async function generateQuotePDF(
@@ -173,12 +223,16 @@ export async function generateQuotePDF(
   const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
   let currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  const pageRef = { current: currentPage, doc };
-  let y = PAGE_HEIGHT - 60;
+  const pageRef: PageRef = { current: currentPage, doc };
+  let y = PAGE_HEIGHT - MARGIN_TOP;
 
-  // ─── Logo ────────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HEADER: Logo (left) + Date & Quote Number (right)
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const logoPng = getLogoPng();
+  let logoBottomY = y;
+
   if (logoPng) {
     try {
       const logoImage = await doc.embedPng(logoPng);
@@ -191,55 +245,64 @@ export async function generateQuotePDF(
         width: logoWidth,
         height: logoHeight,
       });
-      y -= logoHeight + 20;
+      logoBottomY = y - logoHeight;
     } catch {
       // Logo embed failed — continue without it
-      y -= 10;
     }
   }
 
-  // ─── Date ────────────────────────────────────────────────────────────────
+  // Date (right-aligned, top)
+  const dateText = data.date;
+  const dateWidth = helvetica.widthOfTextAtSize(dateText, FONT_BODY);
+  currentPage.drawText(dateText, {
+    x: PAGE_WIDTH - MARGIN_RIGHT - dateWidth,
+    y,
+    size: FONT_BODY,
+    font: helvetica,
+    color: COLOR_GRAY,
+  });
 
-  // Quote number (right-aligned)
-  const qnWidth = helveticaBold.widthOfTextAtSize(data.quoteNumber, 10);
+  // Quote number (right-aligned, below date)
+  const qnWidth = helveticaBold.widthOfTextAtSize(data.quoteNumber, FONT_BODY);
   currentPage.drawText(data.quoteNumber, {
     x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth,
-    y,
-    size: 10,
+    y: y - 16,
+    size: FONT_BODY,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
 
-  currentPage.drawText(data.date, {
-    x: MARGIN_LEFT,
-    y,
-    size: 10,
-    font: helvetica,
-    color: COLOR_GRAY,
-  });
-  y -= 30;
+  y = Math.min(logoBottomY, y - 32) - 15;
 
-  // ─── Title ───────────────────────────────────────────────────────────────
+  // Separator between header and body
+  drawSeparator(currentPage, y);
+  y -= SECTION_GAP;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TITLE
+  // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage.drawText("Service Proposal", {
     x: MARGIN_LEFT,
     y,
-    size: 22,
+    size: FONT_TITLE,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
-  y -= 14;
+  y -= FONT_TITLE + 6;
 
   currentPage.drawText(data.projectName, {
     x: MARGIN_LEFT,
     y,
-    size: 12,
+    size: FONT_SUBTITLE,
     font: helvetica,
     color: COLOR_GRAY,
   });
-  y -= 30;
+  y -= SECTION_GAP;
 
-  // ─── Introduction ────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTRODUCTION
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const introText = `This proposal is for ${data.contactName} at ${data.clientName}.`;
   y = drawWrappedText(
@@ -248,23 +311,28 @@ export async function generateQuotePDF(
     MARGIN_LEFT,
     y,
     helvetica,
-    11,
+    FONT_INTRO,
     CONTENT_WIDTH,
     COLOR_BLACK
   );
-  y -= 15;
+  y -= SECTION_GAP;
 
-  // ─── Purpose of work ─────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PURPOSE OF WORK
+  // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage = pageRef.current;
+  y = ensureSpace(pageRef, y, 60);
+  currentPage = pageRef.current;
+
   currentPage.drawText("Purpose of work", {
     x: MARGIN_LEFT,
     y,
-    size: 14,
+    size: FONT_SECTION_HEADING,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
-  y -= 20;
+  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
 
   y = drawWrappedText(
     pageRef,
@@ -272,23 +340,29 @@ export async function generateQuotePDF(
     MARGIN_LEFT,
     y,
     helvetica,
-    10,
+    FONT_BODY,
     CONTENT_WIDTH,
-    COLOR_GRAY
+    COLOR_GRAY,
+    1.5
   );
-  y -= 15;
+  y -= SECTION_GAP;
 
-  // ─── Scope and deliverables ───────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SCOPE AND DELIVERABLES
+  // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage = pageRef.current;
+  y = ensureSpace(pageRef, y, 60);
+  currentPage = pageRef.current;
+
   currentPage.drawText("Scope and deliverables", {
     x: MARGIN_LEFT,
     y,
-    size: 14,
+    size: FONT_SECTION_HEADING,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
-  y -= 20;
+  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
 
   y = drawWrappedText(
     pageRef,
@@ -296,23 +370,29 @@ export async function generateQuotePDF(
     MARGIN_LEFT,
     y,
     helvetica,
-    10,
+    FONT_BODY,
     CONTENT_WIDTH,
-    COLOR_GRAY
+    COLOR_GRAY,
+    1.5
   );
-  y -= 15;
+  y -= SECTION_GAP;
 
-  // ─── Project schedule ──────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROJECT SCHEDULE
+  // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage = pageRef.current;
+  y = ensureSpace(pageRef, y, 80);
+  currentPage = pageRef.current;
+
   currentPage.drawText("Project schedule", {
     x: MARGIN_LEFT,
     y,
-    size: 14,
+    size: FONT_SECTION_HEADING,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
-  y -= 20;
+  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
 
   const scheduleItems = [
     `Proposal delivered to ${data.clientName} \u2013 ${data.date}`,
@@ -322,148 +402,183 @@ export async function generateQuotePDF(
 
   for (const item of scheduleItems) {
     currentPage = pageRef.current;
-    if (y < 60) {
-      currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      pageRef.current = currentPage;
-      y = PAGE_HEIGHT - 60;
-    }
-    currentPage.drawText(`\u2022  ${item}`, {
-      x: MARGIN_LEFT + 10,
+    y = ensureSpace(pageRef, y, 20);
+    currentPage = pageRef.current;
+
+    // Bullet point with proper indentation
+    currentPage.drawText("\u2022", {
+      x: MARGIN_LEFT + 8,
       y,
-      size: 10,
+      size: FONT_BODY,
       font: helvetica,
       color: COLOR_GRAY,
     });
-    y -= 16;
-  }
-  y -= 10;
 
-  // ─── Pricing table ────────────────────────────────────────────────────────
+    // Wrap the bullet text with indentation
+    const bulletTextX = MARGIN_LEFT + 22;
+    const bulletMaxWidth = CONTENT_WIDTH - 22;
+    y = drawWrappedText(
+      pageRef,
+      item,
+      bulletTextX,
+      y,
+      helvetica,
+      FONT_BODY,
+      bulletMaxWidth,
+      COLOR_GRAY,
+      1.5
+    );
+    y -= 4; // small gap between bullets
+  }
+  y -= TABLE_TOP_GAP;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PRICING TABLE
+  // ═══════════════════════════════════════════════════════════════════════════
 
   currentPage = pageRef.current;
+
+  currentPage = pageRef.current;
+  y = ensureSpace(pageRef, y, 40);
+  currentPage = pageRef.current;
+
   currentPage.drawText("Pricing, payment, terms and conditions", {
     x: MARGIN_LEFT,
     y,
-    size: 14,
+    size: FONT_SECTION_HEADING,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
-  y -= 25;
+  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING + 10;
 
-  // Check if we need a new page for the table
-  const tableHeight = (data.items.length + 2) * 28 + 40;
-  if (y - tableHeight < 60) {
-    currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    pageRef.current = currentPage;
-    y = PAGE_HEIGHT - 60;
-  }
+  // Calculate how many summary rows we need (subtotal + vat + total, or just total)
+  const hasVat = data.vatRate !== null && data.vatRate > 0;
+  const summaryRowCount = hasVat ? 3 : 1; // subtotal + vat + total, or just total
+  const rowHeight = 32; // 12pt padding top + ~10pt text + 12pt padding bottom ≈ 32pt
+  const headerHeight = 32;
+  const tableHeight = headerHeight + (data.items.length + summaryRowCount) * rowHeight + 10;
 
-  // Column widths
-  const colWidths = {
-    description: CONTENT_WIDTH * 0.45,
-    rate: CONTENT_WIDTH * 0.2,
-    qty: CONTENT_WIDTH * 0.15,
-    total: CONTENT_WIDTH * 0.2,
-  };
+  y = ensureSpace(pageRef, y, tableHeight);
+  currentPage = pageRef.current;
+
+  // Column layout: Item 50%, Fixed rate 20%, Qty 10%, Total 20%
+  const colItem = CONTENT_WIDTH * 0.50;
+  const colRate = CONTENT_WIDTH * 0.20;
+  const colQty = CONTENT_WIDTH * 0.10;
+  const colTotal = CONTENT_WIDTH * 0.20;
 
   const tableX = MARGIN_LEFT;
-  const rowHeight = 28;
+  const colRateX = tableX + colItem;
+  const colQtyX = colRateX + colRate;
+  const colTotalX = colQtyX + colQty;
 
-  // Header row
+  // ── Table header row ──
+
   currentPage.drawRectangle({
     x: tableX,
-    y: y - rowHeight,
+    y: y - headerHeight,
     width: CONTENT_WIDTH,
-    height: rowHeight,
-    color: COLOR_TABLE_HEADER,
+    height: headerHeight,
+    color: COLOR_TABLE_HEADER, // pure black
   });
 
-  const headerY = y - 18;
-  currentPage.drawText("Item", {
-    x: tableX + 8,
-    y: headerY,
-    size: 9,
-    font: helveticaBold,
-    color: COLOR_WHITE,
-  });
-  currentPage.drawText("Fixed rate", {
-    x: tableX + colWidths.description + 8,
-    y: headerY,
-    size: 9,
-    font: helveticaBold,
-    color: COLOR_WHITE,
-  });
-  currentPage.drawText("Qty", {
-    x: tableX + colWidths.description + colWidths.rate + 8,
-    y: headerY,
-    size: 9,
-    font: helveticaBold,
-    color: COLOR_WHITE,
-  });
-  currentPage.drawText("Total", {
-    x: tableX + colWidths.description + colWidths.rate + colWidths.qty + 8,
-    y: headerY,
-    size: 9,
-    font: helveticaBold,
-    color: COLOR_WHITE,
-  });
-  y -= rowHeight;
+  const headerTextY = y - 20; // vertically centered in 32pt row
 
-  // Data rows
+  currentPage.drawText("ITEM", {
+    x: tableX + 10,
+    y: headerTextY,
+    size: FONT_TABLE_HEADER,
+    font: helveticaBold,
+    color: COLOR_WHITE,
+  });
+  currentPage.drawText("FIXED RATE", {
+    x: colRateX + 10,
+    y: headerTextY,
+    size: FONT_TABLE_HEADER,
+    font: helveticaBold,
+    color: COLOR_WHITE,
+  });
+  currentPage.drawText("QTY", {
+    x: colQtyX + 10,
+    y: headerTextY,
+    size: FONT_TABLE_HEADER,
+    font: helveticaBold,
+    color: COLOR_WHITE,
+  });
+  currentPage.drawText("TOTAL", {
+    x: colTotalX + 10,
+    y: headerTextY,
+    size: FONT_TABLE_HEADER,
+    font: helveticaBold,
+    color: COLOR_WHITE,
+  });
+
+  y -= headerHeight;
+
+  // ── Data rows ──
+
   for (let i = 0; i < data.items.length; i++) {
     const item = data.items[i];
 
-    if (y - rowHeight < 60) {
-      currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      pageRef.current = currentPage;
-      y = PAGE_HEIGHT - 60;
-    }
+    y = ensureSpace(pageRef, y, rowHeight);
+    currentPage = pageRef.current;
 
-    // Alternating row background
-    if (i % 2 === 0) {
+    // Alternating row background: even = white (no fill), odd = #f9f9f9
+    if (i % 2 === 1) {
       currentPage.drawRectangle({
         x: tableX,
         y: y - rowHeight,
         width: CONTENT_WIDTH,
         height: rowHeight,
-        color: COLOR_LIGHT_GRAY,
+        color: COLOR_ROW_ALT,
       });
     }
 
-    const rowY = y - 18;
+    // Bottom border
+    currentPage.drawLine({
+      start: { x: tableX, y: y - rowHeight },
+      end: { x: tableX + CONTENT_WIDTH, y: y - rowHeight },
+      thickness: 0.5,
+      color: COLOR_TABLE_BORDER,
+    });
 
-    // Truncate long descriptions
+    const cellTextY = y - 20; // vertically centered
+
+    // Item description — truncate if too long
     let desc = item.description;
-    const maxDescWidth = colWidths.description - 16;
-    while (helvetica.widthOfTextAtSize(desc, 9) > maxDescWidth && desc.length > 3) {
+    const maxDescWidth = colItem - 20;
+    while (helvetica.widthOfTextAtSize(desc, FONT_TABLE_CELL) > maxDescWidth && desc.length > 3) {
       desc = desc.slice(0, -4) + "...";
     }
 
     currentPage.drawText(desc, {
-      x: tableX + 8,
-      y: rowY,
-      size: 9,
+      x: tableX + 10,
+      y: cellTextY,
+      size: FONT_TABLE_CELL,
       font: helvetica,
       color: COLOR_BLACK,
     });
+
     currentPage.drawText(formatCurrency(item.unitPrice, data.currency), {
-      x: tableX + colWidths.description + 8,
-      y: rowY,
-      size: 9,
+      x: colRateX + 10,
+      y: cellTextY,
+      size: FONT_TABLE_CELL,
       font: helvetica,
       color: COLOR_BLACK,
     });
+
     currentPage.drawText(String(item.quantity), {
-      x: tableX + colWidths.description + colWidths.rate + 8,
-      y: rowY,
-      size: 9,
+      x: colQtyX + 10,
+      y: cellTextY,
+      size: FONT_TABLE_CELL,
       font: helvetica,
       color: COLOR_BLACK,
     });
+
     currentPage.drawText(formatCurrency(item.total, data.currency), {
-      x: tableX + colWidths.description + colWidths.rate + colWidths.qty + 8,
-      y: rowY,
-      size: 9,
+      x: colTotalX + 10,
+      y: cellTextY,
+      size: FONT_TABLE_CELL,
       font: helveticaBold,
       color: COLOR_BLACK,
     });
@@ -471,56 +586,155 @@ export async function generateQuotePDF(
     y -= rowHeight;
   }
 
-  // Total row
-  currentPage = pageRef.current;
-  if (y - rowHeight < 60) {
-    currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    pageRef.current = currentPage;
-    y = PAGE_HEIGHT - 60;
+  // ── Summary rows (Subtotal / VAT / Total) ──
+
+  if (hasVat) {
+    const vatAmount = data.totalAmount * (data.vatRate! / 100);
+    const totalWithVat = data.totalAmount + vatAmount;
+
+    // Subtotal row — light gray bg
+    y = ensureSpace(pageRef, y, rowHeight);
+    currentPage = pageRef.current;
+
+    currentPage.drawRectangle({
+      x: tableX,
+      y: y - rowHeight,
+      width: CONTENT_WIDTH,
+      height: rowHeight,
+      color: COLOR_LIGHT_GRAY, // #f0f0f0
+    });
+    currentPage.drawLine({
+      start: { x: tableX, y: y - rowHeight },
+      end: { x: tableX + CONTENT_WIDTH, y: y - rowHeight },
+      thickness: 0.5,
+      color: COLOR_TABLE_BORDER,
+    });
+
+    const subtotalTextY = y - 20;
+    currentPage.drawText("Subtotal", {
+      x: tableX + 10,
+      y: subtotalTextY,
+      size: FONT_TABLE_CELL,
+      font: helveticaBold,
+      color: COLOR_BLACK,
+    });
+    currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
+      x: colTotalX + 10,
+      y: subtotalTextY,
+      size: FONT_TABLE_CELL,
+      font: helveticaBold,
+      color: COLOR_BLACK,
+    });
+    y -= rowHeight;
+
+    // VAT row — white bg
+    y = ensureSpace(pageRef, y, rowHeight);
+    currentPage = pageRef.current;
+
+    currentPage.drawLine({
+      start: { x: tableX, y: y - rowHeight },
+      end: { x: tableX + CONTENT_WIDTH, y: y - rowHeight },
+      thickness: 0.5,
+      color: COLOR_TABLE_BORDER,
+    });
+
+    const vatTextY = y - 20;
+    currentPage.drawText(`VAT (${data.vatRate}%)`, {
+      x: tableX + 10,
+      y: vatTextY,
+      size: FONT_TABLE_CELL,
+      font: helvetica,
+      color: COLOR_GRAY,
+    });
+    currentPage.drawText(formatCurrency(vatAmount, data.currency), {
+      x: colTotalX + 10,
+      y: vatTextY,
+      size: FONT_TABLE_CELL,
+      font: helvetica,
+      color: COLOR_GRAY,
+    });
+    y -= rowHeight;
+
+    // Total row — black bg, white text
+    y = ensureSpace(pageRef, y, rowHeight);
+    currentPage = pageRef.current;
+
+    currentPage.drawRectangle({
+      x: tableX,
+      y: y - rowHeight,
+      width: CONTENT_WIDTH,
+      height: rowHeight,
+      color: COLOR_TABLE_HEADER, // pure black
+    });
+
+    const totalTextY = y - 20;
+    currentPage.drawText("Total", {
+      x: tableX + 10,
+      y: totalTextY,
+      size: FONT_TABLE_CELL,
+      font: helveticaBold,
+      color: COLOR_WHITE,
+    });
+    currentPage.drawText(formatCurrency(totalWithVat, data.currency), {
+      x: colTotalX + 10,
+      y: totalTextY,
+      size: FONT_TABLE_CELL,
+      font: helveticaBold,
+      color: COLOR_WHITE,
+    });
+    y -= rowHeight;
+  } else {
+    // No VAT — single total row with black bg
+    y = ensureSpace(pageRef, y, rowHeight);
+    currentPage = pageRef.current;
+
+    currentPage.drawRectangle({
+      x: tableX,
+      y: y - rowHeight,
+      width: CONTENT_WIDTH,
+      height: rowHeight,
+      color: COLOR_TABLE_HEADER, // pure black
+    });
+
+    const totalTextY = y - 20;
+    currentPage.drawText("Total", {
+      x: tableX + 10,
+      y: totalTextY,
+      size: FONT_TABLE_CELL,
+      font: helveticaBold,
+      color: COLOR_WHITE,
+    });
+    currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
+      x: colTotalX + 10,
+      y: totalTextY,
+      size: FONT_TABLE_CELL,
+      font: helveticaBold,
+      color: COLOR_WHITE,
+    });
+    y -= rowHeight;
   }
 
-  currentPage.drawRectangle({
-    x: tableX,
-    y: y - rowHeight,
-    width: CONTENT_WIDTH,
-    height: rowHeight,
-    color: COLOR_ACCENT,
-  });
+  y -= SECTION_GAP;
 
-  const totalY = y - 18;
-  currentPage.drawText("Total", {
-    x: tableX + 8,
-    y: totalY,
-    size: 10,
-    font: helveticaBold,
-    color: COLOR_WHITE,
-  });
-  currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
-    x: tableX + colWidths.description + colWidths.rate + colWidths.qty + 8,
-    y: totalY,
-    size: 10,
-    font: helveticaBold,
-    color: COLOR_WHITE,
-  });
-  y -= rowHeight + 25;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REFERENCES
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  // ─── References ────────────────────────────────────────────────────────────
-
+  y = ensureSpace(pageRef, y, 120);
   currentPage = pageRef.current;
-  if (y < 120) {
-    currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    pageRef.current = currentPage;
-    y = PAGE_HEIGHT - 60;
-  }
+
+  // Separator before references
+  drawSeparator(currentPage, y);
+  y -= SECTION_GAP;
 
   currentPage.drawText("References", {
     x: MARGIN_LEFT,
     y,
-    size: 14,
+    size: FONT_SECTION_HEADING,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
-  y -= 20;
+  y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
 
   y = drawWrappedText(
     pageRef,
@@ -528,66 +742,67 @@ export async function generateQuotePDF(
     MARGIN_LEFT,
     y,
     helvetica,
-    9,
+    FONT_FOOTER + 1, // 9pt
     CONTENT_WIDTH,
-    COLOR_GRAY
+    COLOR_GRAY,
+    1.5
   );
-  y -= 20;
+  y -= SECTION_GAP;
 
-  // ─── Payment terms ─────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PAYMENT TERMS
+  // ═══════════════════════════════════════════════════════════════════════════
 
+  y = ensureSpace(pageRef, y, 80);
   currentPage = pageRef.current;
-  if (y < 100) {
-    currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    pageRef.current = currentPage;
-    y = PAGE_HEIGHT - 60;
-  }
 
   for (const term of PAYMENT_TERMS) {
     currentPage = pageRef.current;
-    if (y < 60) {
-      currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      pageRef.current = currentPage;
-      y = PAGE_HEIGHT - 60;
-    }
+    y = ensureSpace(pageRef, y, 16);
+    currentPage = pageRef.current;
+
     currentPage.drawText(term, {
       x: MARGIN_LEFT,
       y,
-      size: 9,
+      size: FONT_FOOTER,
       font: helvetica,
       color: COLOR_GRAY,
     });
     y -= 14;
   }
-  y -= 25;
+  y -= SECTION_GAP;
 
-  // ─── Signature ─────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SIGNATURE — right-aligned
+  // ═══════════════════════════════════════════════════════════════════════════
 
+  y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
-  if (y < 80) {
-    currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    pageRef.current = currentPage;
-    y = PAGE_HEIGHT - 60;
-  }
 
-  currentPage.drawText("Best regards,", {
-    x: MARGIN_LEFT,
+  const regardsText = "Best regards,";
+  const regardsWidth = helvetica.widthOfTextAtSize(regardsText, FONT_BODY);
+  currentPage.drawText(regardsText, {
+    x: PAGE_WIDTH - MARGIN_RIGHT - regardsWidth,
     y,
-    size: 10,
+    size: FONT_BODY,
     font: helvetica,
     color: COLOR_BLACK,
   });
-  y -= 16;
+  y -= 18;
 
-  currentPage.drawText("Emmanuel Gomez, CEO, Sarani", {
-    x: MARGIN_LEFT,
+  const signatureName = "Emmanuel Gomez, CEO, Sarani";
+  const signatureWidth = helveticaBold.widthOfTextAtSize(signatureName, FONT_BODY);
+  currentPage.drawText(signatureName, {
+    x: PAGE_WIDTH - MARGIN_RIGHT - signatureWidth,
     y,
-    size: 10,
+    size: FONT_BODY,
     font: helveticaBold,
     color: COLOR_BLACK,
   });
 
-  // ─── Serialize ─────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SERIALIZE
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const pdfBytes = await doc.save();
   return new Uint8Array(pdfBytes);

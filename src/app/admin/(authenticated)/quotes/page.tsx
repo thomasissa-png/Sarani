@@ -31,6 +31,25 @@ interface ClientRecord {
   name: string;
 }
 
+interface PrefillLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+interface PrefillResponse {
+  purpose: string;
+  lineItems: PrefillLineItem[];
+  applyVat: boolean;
+  vatRate: number;
+  sources: {
+    purpose: "clickup" | "excel" | "none";
+    lineItems: "excel" | "none";
+    vatReason: string;
+  };
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function generateId(): string {
@@ -84,6 +103,7 @@ function QuotesPage() {
   const [description, setDescription] = useState("");
   const [scope, setScope] = useState("");
   const [currency, setCurrency] = useState("EUR");
+  const [vatRate, setVatRate] = useState<number | null>(20); // Default 20% VAT, null = no VAT
   const [items, setItems] = useState<LineItem[]>([createEmptyItem()]);
 
   // Preview state
@@ -243,6 +263,7 @@ function QuotesPage() {
             total,
           })),
           currency,
+          vatRate,
         }),
       });
 
@@ -349,8 +370,8 @@ function QuotesPage() {
           </div>
         </div>
 
-        {/* Project name + Currency */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Project name + Currency + VAT */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-brand-black mb-1.5">
               Project Name <span className="text-error">*</span>
@@ -375,6 +396,24 @@ function QuotesPage() {
               <option value="EUR">EUR</option>
               <option value="USD">USD</option>
               <option value="GBP">GBP</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-black mb-1.5">
+              VAT
+            </label>
+            <select
+              value={vatRate === null ? "none" : String(vatRate)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setVatRate(val === "none" ? null : parseFloat(val));
+              }}
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+            >
+              <option value="none">No VAT</option>
+              <option value="20">20%</option>
+              <option value="10">10%</option>
+              <option value="5.5">5.5%</option>
             </select>
           </div>
         </div>
@@ -608,7 +647,7 @@ function QuotesPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-neutral-400 text-xs font-medium uppercase">Client</p>
               <p className="text-brand-black font-medium mt-0.5">{clientName}</p>
@@ -620,6 +659,10 @@ function QuotesPage() {
             <div>
               <p className="text-neutral-400 text-xs font-medium uppercase">Currency</p>
               <p className="text-brand-black font-medium mt-0.5">{currency}</p>
+            </div>
+            <div>
+              <p className="text-neutral-400 text-xs font-medium uppercase">VAT</p>
+              <p className="text-brand-black font-medium mt-0.5">{vatRate !== null ? `${vatRate}%` : "None"}</p>
             </div>
           </div>
 
@@ -649,9 +692,30 @@ function QuotesPage() {
                   <span className="font-medium text-brand-black">{formatCurrency(item.total, currency)}</span>
                 </div>
               ))}
+            {vatRate !== null && vatRate > 0 && (
+              <>
+                <div className="grid grid-cols-[1fr_100px] px-3 py-2 bg-neutral-50 border-t border-neutral-200">
+                  <span className="text-sm text-neutral-600">Subtotal</span>
+                  <span className="text-sm font-medium text-brand-black">{formatCurrency(grandTotal, currency)}</span>
+                </div>
+                <div className="grid grid-cols-[1fr_100px] px-3 py-2 bg-neutral-50 border-t border-neutral-100">
+                  <span className="text-sm text-neutral-500">VAT ({vatRate}%)</span>
+                  <span className="text-sm text-neutral-600">{formatCurrency(grandTotal * (vatRate / 100), currency)}</span>
+                </div>
+              </>
+            )}
             <div className="grid grid-cols-[1fr_100px] px-3 py-2.5 bg-neutral-100 border-t border-neutral-200">
-              <span className="text-sm font-bold text-brand-black">Grand Total</span>
-              <span className="text-sm font-bold text-brand-black">{formatCurrency(grandTotal, currency)}</span>
+              <span className="text-sm font-bold text-brand-black">
+                {vatRate !== null && vatRate > 0 ? "Total (incl. VAT)" : "Grand Total"}
+              </span>
+              <span className="text-sm font-bold text-brand-black">
+                {formatCurrency(
+                  vatRate !== null && vatRate > 0
+                    ? grandTotal + grandTotal * (vatRate / 100)
+                    : grandTotal,
+                  currency
+                )}
+              </span>
             </div>
           </div>
 
