@@ -576,19 +576,341 @@ logoAlt: text("logo_alt"),          // Alt text for accessibility
 
 ## 6. API Routes
 
-[Section 6 — filled below]
+All admin API routes follow the existing pattern: `/api/admin/[resource]/[action]`. Auth guard via `getUserFromSession()` on all admin routes. Public routes (landing page render + preview) require no auth.
+
+### 6.1 Admin routes (authenticated)
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/api/admin/landing-pages` | List all landing pages (with filters: clientId, status) |
+| `POST` | `/api/admin/landing-pages` | Create a new landing page record (status: draft) |
+| `GET` | `/api/admin/landing-pages/[id]` | Get single landing page with all versions |
+| `PATCH` | `/api/admin/landing-pages/[id]` | Update fields (title, slug, noIndex, sectionsEnabled, paletteOverride, manualOverrides, clickupTaskId) |
+| `DELETE` | `/api/admin/landing-pages/[id]` | Hard delete (only draft or archived pages) |
+| `POST` | `/api/admin/landing-pages/[id]/generate` | Trigger LLM generation — streams response via SSE |
+| `POST` | `/api/admin/landing-pages/[id]/regenerate-section` | Regenerate a single section (body: `{ sectionKey, additionalInstruction? }`) |
+| `POST` | `/api/admin/landing-pages/[id]/publish` | Set status to `published`, record `publishedAt` |
+| `POST` | `/api/admin/landing-pages/[id]/unpublish` | Set status back to `ready` |
+| `POST` | `/api/admin/landing-pages/[id]/archive` | Set status to `archived` |
+| `POST` | `/api/admin/landing-pages/[id]/duplicate` | Create a copy (status: draft, slug suffixed `-copy`) |
+| `POST` | `/api/admin/landing-pages/[id]/share` | Generate a share token, return preview URL |
+| `DELETE` | `/api/admin/landing-pages/[id]/share/[tokenId]` | Revoke a share token |
+| `GET` | `/api/admin/landing-pages/[id]/versions` | List all versions for a page |
+| `POST` | `/api/admin/landing-pages/[id]/versions/[versionId]/restore` | Restore a previous version |
+| `POST` | `/api/admin/landing-pages/[id]/upload-asset` | Upload a visual asset (multipart/form-data → SharePoint) |
+| `POST` | `/api/admin/landing-pages/[id]/estimate-cost` | Return token + cost estimate without triggering generation |
+
+### 6.2 Public routes (no auth)
+
+| Method | Route | Purpose |
+|---|---|---|
+| `GET` | `/lp/[slug]` | Serve the published landing page (SSR) — returns 404 if not published |
+| `GET` | `/preview/lp/[token]` | Serve the preview page with watermark + approve/request changes UI |
+| `POST` | `/api/lp/[token]/respond` | Submit client approval or feedback (body: `{ type: "approved" | "changes_requested", feedbackText? }`) |
+| `GET` | `/api/lp/asset/[assetId]` | [HYPOTHÈSE H-03 proxy] Stream asset from SharePoint if direct URL auth required |
+
+### 6.3 Key route detail — `POST /api/admin/landing-pages/[id]/generate`
+
+**Request body:**
+```json
+{
+  "brief": "string",
+  "clientId": "uuid",
+  "sectionsEnabled": { "features": true, "socialProof": false },
+  "language": "EN"
+}
+```
+
+**Response:** Server-Sent Events (SSE) stream. Events:
+```
+event: section_complete
+data: { "section": "hero", "content": {...} }
+
+event: section_complete
+data: { "section": "features", "content": [...] }
+
+event: done
+data: { "totalTokens": 1240, "estimatedCostUsd": 0.04, "landingPageId": "uuid" }
+
+event: error
+data: { "message": "LLM timeout after 45s" }
+```
+
+SSE allows the back-office preview to progressively reveal sections as they are generated — a better UX than a full-page loading spinner.
 
 ---
 
 ## 7. UI Back-office — Wireframes ASCII
 
-[Section 7 — filled below]
+Design system tokens from `docs/design/design-tokens.json` apply throughout. All colors reference Sarani tokens (Flame, Cerulean, Lemon, Black, White).
+
+---
+
+### 7.1 List view — `/admin/landing-pages`
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SARANI BACK-OFFICE                                              [user] [⚙]  │
+├──────────────────┬──────────────────────────────────────────────────────────┤
+│ Core             │  Landing Pages                    [+ New Landing Page]   │
+│  Dashboard       │                                                          │
+│  Projects        │  Client [All ▾]  Status [All ▾]           🔍 Search     │
+│  Tracker         │  ───────────────────────────────────────────────────     │
+│  Quotes          │  ┌──────────────────────────────────────────────────┐   │
+│ AI Agents        │  │ TITLE           CLIENT   STATUS    SHARE   DATE  │   │
+│  Copywriter      │  ├──────────────────────────────────────────────────┤   │
+│  Creative        │  │ Sony BF 2026    Sony     ●Published  Approved  3d│   │
+│  Designer        │  │ GEODIS Q1 LP    GEODIS   ●Ready     Viewed     1d│   │
+│  → Landing Pages │  │ L'Oréal Serum   L'Oréal  ●Draft     Not shared 5h│   │
+│  ...             │  │ TikTok Summit   TikTok   ●Generat…  —          2m│   │
+│ Settings         │  └──────────────────────────────────────────────────┘   │
+│  Clients         │  Showing 4 of 4 landing pages                           │
+│  Users           │                                                          │
+└──────────────────┴──────────────────────────────────────────────────────────┘
+```
+
+**Status badge colors:** Draft=grey, Generating=Lemon (pulsing), Ready=Cerulean, Published=green, Archived=light grey.
+
+**Actions per row (overflow menu `...`):**
+- Edit / Preview / Publish (or Unpublish) / Share / Duplicate / Archive / Delete
+
+---
+
+### 7.2 New landing page form — `/admin/landing-pages/new`
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ← Landing Pages    New Landing Page                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  CLIENT *                                                                   │
+│  ┌─────────────────────────────────────────┐                               │
+│  │ Select a client...                    ▾ │  ← dropdown from clients DB   │
+│  └─────────────────────────────────────────┘                               │
+│  ✓ Sony — #DA2536 / Neue Haas Grotesk / EN                                 │
+│    Brand tone: "Confident, premium, tech-forward"                           │
+│                                                                             │
+│  PAGE TITLE (internal) *                                                    │
+│  ┌─────────────────────────────────────────────────────────┐               │
+│  │ e.g. "Black Friday 2026 — Electronics"                  │               │
+│  └─────────────────────────────────────────────────────────┘               │
+│                                                                             │
+│  CAMPAIGN BRIEF *                                                           │
+│  ┌─────────────────────────────────────────────────────────┐               │
+│  │                                                         │               │
+│  │ Describe the campaign goal, target audience, key        │               │
+│  │ message, and any mandatory content (offers, dates,      │               │
+│  │ legal mentions)...                                      │               │
+│  │                                                         │               │
+│  └─────────────────────────────────────────────────────────┘               │
+│  Characters: 0 / 3000                                                       │
+│                                                                             │
+│  SECTIONS TO INCLUDE                                                        │
+│  [✓] Hero (required)  [✓] Features grid  [ ] Social proof  [✓] CTA  [✓] Footer│
+│                                                                             │
+│  VISUAL ASSETS (optional)                                                   │
+│  ┌────────────────────────────────────────┐                                │
+│  │  ⬆ Drop images here or click to upload│                                │
+│  │  PNG, JPG, SVG — max 5MB each         │                                │
+│  └────────────────────────────────────────┘                                │
+│  [asset-1.jpg ✕]  [logo-sony.png ✕]                                        │
+│                                                                             │
+│  LANGUAGE   [EN ▾]     PAGE URL   /lp/ [sony-black-friday-2026       ]     │
+│                                                                             │
+│  ─────────────────────────────────────────────────────────────────         │
+│  Estimated cost: ~$0.04 (Claude Sonnet, ~1,200 tokens)                     │
+│                                                                             │
+│  [Cancel]                              [Generate Landing Page  →]          │
+│                                                              (Flame button) │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 7.3 Detail view / Editor — `/admin/landing-pages/[id]`
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ← Landing Pages    Sony — Black Friday 2026   ●Published   [Share] [⋯]   │
+├──────────────────────────────────┬──────────────────────────────────────────┤
+│ EDIT PANEL                       │ PREVIEW                                  │
+│                                  │  [Desktop] [Mobile]                      │
+│ ▼ HERO                           │ ┌──────────────────────────────────────┐ │
+│  Headline                        │ │  [LOGO]   Nav link 1   [Get started]│ │
+│  ┌────────────────────────────┐  │ │                                      │ │
+│  │ Unbeatable deals. One day. │  │ │  ████████████████████████████████   │ │
+│  └────────────────────────────┘  │ │  ████ HEADLINE ████████████████     │ │
+│  [✏ AI rewrite]  [Manual ✓]      │ │  ██ Subheadline ████████████████    │ │
+│                                  │ │           [GET STARTED →]            │ │
+│  Subheadline                     │ │                                      │ │
+│  ┌────────────────────────────┐  │ │  ── FEATURES ──────────────────────  │ │
+│  │ 150+ exclusive offers,     │  │ │  [🎯 Feature 1] [⚡ F2] [🌍 F3]      │ │
+│  │ curated for your team.     │  │ │                                      │ │
+│  └────────────────────────────┘  │ │  ── CTA ───────────────────────────  │ │
+│                                  │ │  Ready to save big?  [CONTACT US]    │ │
+│ ▼ FEATURES  (3 items)            │ │                                      │ │
+│  [+ Add feature]  [↻ Regenerate] │ │  ── FOOTER ────────────────────────  │ │
+│                                  │ │  [LOGO]   Powered by Sarani          │ │
+│ ▼ SOCIAL PROOF  (disabled)       │ └──────────────────────────────────────┘ │
+│  [Enable section]                │                                          │
+│                                  │  [👁 View public page ↗]                 │
+│ ▼ PALETTE OVERRIDE               │                                          │
+│  Primary: [#DA2536 ████]         │  VERSION HISTORY                         │
+│  Secondary: [#000000 ████]       │  v3 (current) — 14 min ago  [Restore]    │
+│                                  │  v2 — 2h ago               [Restore]    │
+│ ▼ SEO                            │  v1 — yesterday             [Restore]    │
+│  Title: [Sony Black Friday...]   │                                          │
+│  Description: [Discover 150+...] │  SHARE STATUS                            │
+│  [✓] No-index                   │  ●Approved — Sophie M, 2026-03-26 14:32  │
+│                                  │  [+ New share link]                      │
+│                                  │                                          │
+│         [Save]  [Publish ↑]      │                                          │
+└──────────────────────────────────┴──────────────────────────────────────────┘
+```
+
+**Five UI states per section in the preview iframe:**
+- **Default:** rendered content
+- **Loading/Generating:** skeleton shimmer (Lemon pulse border)
+- **Empty:** "Section not generated — click 'Regenerate' to fill" (dashed grey border)
+- **Error:** "Generation failed" banner in Flame red with retry button
+- **Success (freshly saved):** 2-second green border flash on the section
+
+---
+
+### 7.4 Client share preview — `/preview/lp/[token]`
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │  🔒 Sarani Preview — Not for distribution. This link expires in 12 days.│ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  [CLIENT LOGO]   Nav link 1   Nav link 2   [GET STARTED]                   │
+│                                                                             │
+│  ████████████████████████████████████████████████████████████████████      │
+│  ████  HERO HEADLINE  ████████████████████████████████████████████         │
+│  ████  Subheadline ████████████████████████████████████████████████        │
+│                     [PRIMARY CTA BUTTON]                                    │
+│                                                                             │
+│  ── Features ─────────────────────────────────────────────────────────     │
+│  [Icon Title] Description    [Icon Title] Description    [Icon Title] ...  │
+│                                                                             │
+│  ── Call to Action ────────────────────────────────────────────────────    │
+│  Headline text                                                              │
+│  Subtext paragraph                               [CONTACT US →]            │
+│                                                                             │
+│  ── Footer ────────────────────────────────────────────────────────────    │
+│  [Logo] Tagline text                                                        │
+│                                                                             │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │  What do you think of this page?                                        │ │
+│ │                                                                         │ │
+│ │  [✓ Approve this page]    [✎ Request changes]                          │ │
+│ │                                                                         │ │
+│ │  ← If requesting changes, a text field appears here →                  │ │
+│ │  ┌─────────────────────────────────────────────────────────────────┐   │ │
+│ │  │ Please describe the changes you'd like...            0 / 1000   │   │ │
+│ │  └─────────────────────────────────────────────────────────────────┘   │ │
+│ │  [Submit feedback]                                                      │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## 8. Public Landing Page — Structure & Rendering
 
-[Section 8 — filled below]
+### 8.1 Section anatomy
+
+The rendered page at `/lp/[slug]` is a single Next.js Server Component. Each section is a React component that receives its data from `landingPages.sections` and applies brand identity via CSS variables.
+
+```
+Page structure (top to bottom):
+  <head>
+    - meta title, description (from sections.meta)
+    - OG tags
+    - Google Fonts preconnect + stylesheet (client.fontName)
+    - CSS custom properties injection (brand colors)
+    - Canonical URL
+    - robots meta (index or noindex)
+
+  <body>
+    <LandingNavbar>       // logo + CTA button (always)
+    <LandingHero>         // headline + subheadline + CTA + background
+    <LandingFeatures />   // if sectionsEnabled.features = true
+    <LandingSocialProof/> // if sectionsEnabled.socialProof = true
+    <LandingCTA />        // always
+    <LandingFooter />     // always
+```
+
+### 8.2 Brand identity application
+
+**Colors** — via CSS custom properties (injected server-side in `<head>`):
+
+```css
+:root {
+  --lp-primary:    /* client.primaryColor or Sarani #DA5126 */;
+  --lp-secondary:  /* client.secondaryColors[0] or Sarani #0BABE8 */;
+  --lp-bg:         /* always #FFFFFF */;
+  --lp-text:       /* always #000000 */;
+  --lp-font:       /* client.fontName or 'Outfit' */;
+}
+```
+
+Usage in components:
+- `--lp-primary` → CTA button background, section dividers, icon accent color
+- `--lp-secondary` → links, hover states, badge backgrounds
+- `--lp-font` → `font-family` on `body`
+
+**Logo** — displayed in `<LandingNavbar>` and `<LandingFooter>`:
+- Source: `landingPages.logoUrl` → if null, fallback to `clients.logoUrl` → if null, display client name as text
+- Rendered via `next/image` with `alt={client.name}`, `height={40}` (fixed), `width="auto"`
+- **Rule:** never approximate, recreate, or inline-encode a client logo (per absolute rule in project-context.md §Positionnement)
+
+**Font** — loaded via `<link>` in `<head>`:
+- If `client.fontName` is a Google Font: `https://fonts.googleapis.com/css2?family=[fontName]&display=swap`
+- If not a Google Font or unknown: fallback to Outfit (Sarani default), warning logged
+- Font applied via `--lp-font` CSS variable
+
+### 8.3 Responsive design
+
+All section components use Tailwind CSS (same as the existing Sarani site). Breakpoints:
+- Mobile: default (< 768px) — single column, stacked sections, 16px body text
+- Tablet: `md:` (768px–1199px) — 2-column features grid
+- Desktop: `lg:` (>= 1200px) — 3-column features grid, larger hero text
+
+CTA button: full-width on mobile, `max-w-xs` centered on desktop.
+
+### 8.4 SEO output
+
+All meta tags generated by LLM (`sections.meta`) and rendered server-side:
+
+```tsx
+// src/app/lp/[slug]/page.tsx
+export async function generateMetadata({ params }): Promise<Metadata> {
+  const page = await getLandingPage(params.slug);
+  return {
+    title: page.sections.meta.title,
+    description: page.sections.meta.description,
+    openGraph: {
+      title: page.sections.meta.title,
+      description: page.sections.meta.description,
+      url: `https://sarani.studio/lp/${params.slug}`,
+      images: [page.visualAssets?.[0] ?? page.logoUrl ?? '/og-default.png'],
+    },
+    robots: page.noIndex ? 'noindex, nofollow' : 'index, follow',
+  };
+}
+```
+
+### 8.5 Preview watermark (share page only)
+
+The `/preview/lp/[token]` route renders the same `<LandingPageTemplate>` component but wraps it with:
+- A fixed top banner: `"Sarani Preview — Not for distribution"` — black background, white text, 48px height, z-index 50
+- `<meta name="robots" content="noindex, nofollow">` forced (regardless of page setting)
+- Approve / Request Changes sticky bottom bar
+
+The `isPreview` boolean prop controls the banner and the feedback bar visibility.
 
 ---
 
