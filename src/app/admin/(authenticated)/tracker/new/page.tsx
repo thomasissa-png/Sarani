@@ -54,6 +54,8 @@ export default function NewProjectPage() {
 
   // Form state
   const [clientName, setClientName] = useState("");
+  const [isNewClient, setIsNewClient] = useState(false);
+  const [customClientName, setCustomClientName] = useState("");
   const [projectName, setProjectName] = useState("");
   const [contactName, setContactName] = useState("");
   const [category, setCategory] = useState("");
@@ -249,7 +251,7 @@ export default function NewProjectPage() {
 
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
               Client <span className="text-error">*</span>
@@ -278,6 +280,34 @@ export default function NewProjectPage() {
                 </p>
               );
             })()}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-black mb-1.5">
+              Division
+              {divisions.length > 0 && <span className="text-error ml-0.5">*</span>}
+              {divisions.length === 0 && <span className="text-neutral-400 font-normal ml-1">(auto-detected)</span>}
+            </label>
+            {divisions.length > 0 ? (
+              <select
+                value={division}
+                onChange={(e) => setDivision(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              >
+                <option value="">Select a division...</option>
+                {divisions.map((d) => (
+                  <option key={d.id} value={d.name}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={clientName ? "No divisions found" : "Select a client first"}
+                disabled
+                className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 bg-neutral-100 text-sm text-neutral-400 cursor-not-allowed"
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
@@ -459,34 +489,6 @@ export default function NewProjectPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-brand-black mb-1.5">
-              Division
-              {divisions.length > 0 && <span className="text-error ml-0.5">*</span>}
-              {divisions.length === 0 && <span className="text-neutral-400 font-normal ml-1">(auto-detected from ClickUp)</span>}
-            </label>
-            {divisions.length > 0 ? (
-              <select
-                value={division}
-                onChange={(e) => setDivision(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-              >
-                <option value="">Select a division...</option>
-                {divisions.map((d) => (
-                  <option key={d.id} value={d.name}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                value={clientName ? "No divisions found" : "Select a client first"}
-                disabled
-                className="w-full px-3 py-2.5 rounded-lg border border-neutral-200 bg-neutral-100 text-sm text-neutral-400 cursor-not-allowed"
-              />
-            )}
-          </div>
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
               Estimated Value
