@@ -49,6 +49,7 @@ const generateQuoteSchema = z.object({
   currency: z.enum(["EUR", "USD", "GBP"]),
   vatRate: z.number().min(0).max(100).nullable().default(null),
   validUntil: z.string().optional(),
+  language: z.enum(["en", "fr"]).default("en"),
 });
 
 // ─── Route ─────────────────────────────────────────────────────────────────
@@ -101,6 +102,7 @@ export async function POST(request: NextRequest) {
       currency: data.currency,
       vatRate: data.vatRate,
       validUntil: data.validUntil ?? null,
+      language: data.language,
     };
 
     const pdfBytes = await generateQuotePDF(pdfData);

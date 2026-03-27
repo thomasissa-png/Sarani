@@ -28,7 +28,71 @@ export interface QuotePDFData {
   currency: string;
   vatRate: number | null; // null = no VAT, e.g. 20 for 20%
   validUntil: string | null; // ISO date string, e.g. "2026-04-26"
+  language: "en" | "fr"; // Quote language — defaults to "en"
 }
+
+// ─── Translations ────────────────────────────────────────────────────────────
+
+const TRANSLATIONS = {
+  en: {
+    serviceProposal: "Service Proposal",
+    proposalFor: "This proposal is for",
+    at: "at",
+    purposeOfWork: "Purpose of work",
+    scopeAndDeliverables: "Scope and deliverables",
+    projectSchedule: "Project schedule",
+    scheduleItems: [
+      "Proposal delivered to {client} – {date}",
+      "Work commences once PO is raised",
+      "Final work to be delivered to {client} by specified deadline",
+    ],
+    pricing: "Pricing, payment, terms and conditions",
+    item: "Item",
+    fixedRate: "Fixed rate",
+    qty: "Qty",
+    total: "Total",
+    subtotal: "Subtotal",
+    vat: "VAT",
+    references: "References",
+    referencesText: "Sarani is a Paris-born creative agency uniting 35 experts across 5 continents and 18 languages. We operate 24/7 to deliver unlimited creativity with next-day turnaround. Our clients include Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica, and PICO. We have been recognized for our work across multiple awards and industry benchmarks.",
+    paymentTerms: [
+      "Work commences once a PO is raised.",
+      "Unlimited rounds of revisions are offered before filming and on post-production.",
+      "Payment terms are 45 days.",
+    ],
+    bestRegards: "Best regards,",
+    validUntil: "Valid until",
+  },
+  fr: {
+    serviceProposal: "Proposition de service",
+    proposalFor: "Cette proposition est destinée à",
+    at: "chez",
+    purposeOfWork: "Objet de la prestation",
+    scopeAndDeliverables: "Périmètre et livrables",
+    projectSchedule: "Calendrier du projet",
+    scheduleItems: [
+      "Proposition remise à {client} – {date}",
+      "Les travaux démarrent à réception du bon de commande",
+      "Livraison finale à {client} selon le délai convenu",
+    ],
+    pricing: "Tarification, paiement, termes et conditions",
+    item: "Prestation",
+    fixedRate: "Tarif unitaire",
+    qty: "Qté",
+    total: "Total",
+    subtotal: "Sous-total",
+    vat: "TVA",
+    references: "Références",
+    referencesText: "Sarani est une agence créative internationale réunissant 35 experts sur 5 continents et 18 langues. Nous opérons 24h/24 pour livrer une créativité illimitée avec un délai de livraison J+1. Nos clients incluent Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica et PICO. Nous avons été reconnus pour notre travail à travers de nombreux prix et benchmarks sectoriels.",
+    paymentTerms: [
+      "Les travaux démarrent à réception du bon de commande (PO).",
+      "Nombre illimité de révisions inclus avant tournage et en post-production.",
+      "Conditions de paiement : 45 jours.",
+    ],
+    bestRegards: "Cordialement,",
+    validUntil: "Valable jusqu'au",
+  },
+} as const;
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -65,13 +129,7 @@ const SECTION_GAP = 30; // minimum gap between sections
 const HEADING_TO_CONTENT = 15; // gap between heading and content
 const TABLE_TOP_GAP = 40; // gap before pricing table
 
-const REFERENCES_TEXT = `Sarani is a Paris-born creative agency uniting 35 experts across 5 continents and 18 languages. We operate 24/7 to deliver unlimited creativity with next-day turnaround. Our clients include Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oreal, Air Corsica, and PICO. We have been recognized for our work across multiple awards and industry benchmarks.`;
-
-const PAYMENT_TERMS = [
-  "Work commences once a PO is raised.",
-  "Unlimited rounds of revisions are offered before filming and on post-production.",
-  "Payment terms are 45 days.",
-];
+// REFERENCES_TEXT and PAYMENT_TERMS moved to TRANSLATIONS above
 
 // ─── Logo Cache ─────────────────────────────────────────────────────────────
 
@@ -226,6 +284,8 @@ export async function generateQuotePDF(
   const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
+  const t = TRANSLATIONS[data.language ?? "en"];
+
   let currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   const pageRef: PageRef = { current: currentPage, doc };
   let y = PAGE_HEIGHT - MARGIN_TOP;
@@ -280,7 +340,8 @@ export async function generateQuotePDF(
   let headerBottomOffset = 32;
   if (data.validUntil) {
     const validDate = new Date(data.validUntil + "T00:00:00");
-    const validText = `Valid until: ${validDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
+    const locale = data.language === "fr" ? "fr-FR" : "en-US";
+    const validText = `${t.validUntil} : ${validDate.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" })}`;
     const validWidth = fontRegular.widthOfTextAtSize(validText, FONT_BODY);
     currentPage.drawText(validText, {
       x: PAGE_WIDTH - MARGIN_RIGHT - validWidth,
@@ -302,7 +363,7 @@ export async function generateQuotePDF(
   // TITLE
   // ═══════════════════════════════════════════════════════════════════════════
 
-  currentPage.drawText("Service Proposal", {
+  currentPage.drawText(t.serviceProposal, {
     x: MARGIN_LEFT,
     y,
     size: FONT_TITLE,
@@ -324,7 +385,7 @@ export async function generateQuotePDF(
   // INTRODUCTION
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const introText = `This proposal is for ${data.contactName} at ${data.clientName}.`;
+  const introText = `${t.proposalFor} ${data.contactName} ${t.at} ${data.clientName}.`;
   y = drawWrappedText(
     pageRef,
     introText,
@@ -345,7 +406,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
 
-  currentPage.drawText("Purpose of work", {
+  currentPage.drawText(t.purposeOfWork, {
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
@@ -375,7 +436,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
 
-  currentPage.drawText("Scope and deliverables", {
+  currentPage.drawText(t.scopeAndDeliverables, {
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
@@ -405,7 +466,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 80);
   currentPage = pageRef.current;
 
-  currentPage.drawText("Project schedule", {
+  currentPage.drawText(t.projectSchedule, {
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
@@ -414,11 +475,9 @@ export async function generateQuotePDF(
   });
   y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
 
-  const scheduleItems = [
-    `Proposal delivered to ${data.clientName} \u2013 ${data.date}`,
-    "Work commences once PO is raised",
-    `Final work to be delivered to ${data.clientName} by specified deadline`,
-  ];
+  const scheduleItems = t.scheduleItems.map((s) =>
+    s.replace("{client}", data.clientName).replace("{date}", data.date)
+  );
 
   for (const item of scheduleItems) {
     currentPage = pageRef.current;
@@ -462,7 +521,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 40);
   currentPage = pageRef.current;
 
-  currentPage.drawText("Pricing, payment, terms and conditions", {
+  currentPage.drawText(t.pricing, {
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
@@ -504,28 +563,28 @@ export async function generateQuotePDF(
 
   const headerTextY = y - 20; // vertically centered in 32pt row
 
-  currentPage.drawText("ITEM", {
+  currentPage.drawText(t.item.toUpperCase(), {
     x: tableX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
-  currentPage.drawText("FIXED RATE", {
+  currentPage.drawText(t.fixedRate.toUpperCase(), {
     x: colRateX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
-  currentPage.drawText("QTY", {
+  currentPage.drawText(t.qty.toUpperCase(), {
     x: colQtyX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
-  currentPage.drawText("TOTAL", {
+  currentPage.drawText(t.total.toUpperCase(), {
     x: colTotalX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
@@ -631,7 +690,7 @@ export async function generateQuotePDF(
     });
 
     const subtotalTextY = y - 20;
-    currentPage.drawText("Subtotal", {
+    currentPage.drawText(t.subtotal, {
       x: tableX + 10,
       y: subtotalTextY,
       size: FONT_TABLE_CELL,
@@ -659,7 +718,7 @@ export async function generateQuotePDF(
     });
 
     const vatTextY = y - 20;
-    currentPage.drawText(`VAT (${data.vatRate}%)`, {
+    currentPage.drawText(`${t.vat} (${data.vatRate}%)`, {
       x: tableX + 10,
       y: vatTextY,
       size: FONT_TABLE_CELL,
@@ -688,7 +747,7 @@ export async function generateQuotePDF(
     });
 
     const totalTextY = y - 20;
-    currentPage.drawText("Total", {
+    currentPage.drawText(t.total, {
       x: tableX + 10,
       y: totalTextY,
       size: FONT_TABLE_CELL,
@@ -717,7 +776,7 @@ export async function generateQuotePDF(
     });
 
     const totalTextY = y - 20;
-    currentPage.drawText("Total", {
+    currentPage.drawText(t.total, {
       x: tableX + 10,
       y: totalTextY,
       size: FONT_TABLE_CELL,
@@ -747,7 +806,7 @@ export async function generateQuotePDF(
   drawSeparator(currentPage, y);
   y -= SECTION_GAP;
 
-  currentPage.drawText("References", {
+  currentPage.drawText(t.references, {
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
@@ -758,7 +817,7 @@ export async function generateQuotePDF(
 
   y = drawWrappedText(
     pageRef,
-    REFERENCES_TEXT,
+    t.referencesText,
     MARGIN_LEFT,
     y,
     fontRegular,
@@ -776,7 +835,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 80);
   currentPage = pageRef.current;
 
-  for (const term of PAYMENT_TERMS) {
+  for (const term of t.paymentTerms) {
     currentPage = pageRef.current;
     y = ensureSpace(pageRef, y, 16);
     currentPage = pageRef.current;
@@ -799,7 +858,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
 
-  const regardsText = "Best regards,";
+  const regardsText = t.bestRegards;
   const regardsWidth = fontRegular.widthOfTextAtSize(regardsText, FONT_BODY);
   currentPage.drawText(regardsText, {
     x: PAGE_WIDTH - MARGIN_RIGHT - regardsWidth,

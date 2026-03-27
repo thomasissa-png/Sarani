@@ -110,6 +110,7 @@ function QuotesPage() {
     d.setDate(d.getDate() + 30);
     return d.toISOString().split("T")[0];
   });
+  const [language, setLanguage] = useState<"en" | "fr">("en");
 
   // Prefill state
   const [prefilling, setPrefilling] = useState(false);
@@ -313,6 +314,7 @@ function QuotesPage() {
           currency,
           vatRate,
           validUntil,
+          language,
         }),
       });
 
@@ -487,6 +489,19 @@ function QuotesPage() {
               <option value="20">20%</option>
               <option value="10">10%</option>
               <option value="5.5">5.5%</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-black mb-1.5">
+              Language
+            </label>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as "en" | "fr")}
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+            >
+              <option value="en">English</option>
+              <option value="fr">Français</option>
             </select>
           </div>
         </div>
