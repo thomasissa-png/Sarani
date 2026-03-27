@@ -198,10 +198,8 @@ export default function TrackerPage() {
     }
     setError(null);
     try {
-      const [trackerRes, statusRes] = await Promise.all([
-        fetch("/api/admin/integrations/tracker"),
-        fetch("/api/admin/integrations/status"),
-      ]);
+      // Fetch tracker data — status is non-blocking (fetched separately)
+      const trackerRes = await fetch("/api/admin/integrations/tracker");
 
       if (!trackerRes.ok) {
         throw new Error(`Failed to fetch tracker data (${trackerRes.status})`);
@@ -217,12 +215,21 @@ export default function TrackerPage() {
         // localStorage full or quota exceeded — ignore
       }
 
-      if (statusRes.ok) {
-        const statusData: StatusResponse = await statusRes.json();
-        setApiStatus(statusData);
+      // Fetch status separately (non-blocking — don't let it fail the main load)
+      try {
+        const statusRes = await fetch("/api/admin/integrations/status");
+        if (statusRes.ok) {
+          const statusData: StatusResponse = await statusRes.json();
+          setApiStatus(statusData);
+        }
+      } catch {
+        // Status is informational — ignore failures
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      // Only show error if we have NO data at all (neither from API nor from cache)
+      if (!data) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
