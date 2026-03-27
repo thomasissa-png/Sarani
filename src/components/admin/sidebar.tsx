@@ -38,13 +38,16 @@ type NavItem = {
   icon: string;
 };
 
-const NAV_ITEMS: NavItem[] = [
+const CORE_NAV: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: "grid" },
   { label: "Tracker", href: "/admin/tracker", icon: "activity" },
   { label: "Project Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
-  { label: "Clients", href: "/admin/clients", icon: "users" },
   { label: "AI Teams", href: "/admin/teams", icon: "team" },
+];
+
+const SETTINGS_NAV: NavItem[] = [
+  { label: "Clients", href: "/admin/clients", icon: "users" },
   { label: "Users", href: "/admin/users", icon: "shield" },
 ];
 
@@ -230,11 +233,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} item={item} onNavigate={onNavigate} />
-        ))}
+      <nav className="flex-1 p-4 overflow-y-auto flex flex-col">
+        {/* Core navigation */}
+        <div className="space-y-1">
+          {CORE_NAV.map((item) => (
+            <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+          ))}
+        </div>
 
+        {/* AI Agents — grouped */}
         {AGENT_GROUPS.map((group) => (
           <div key={group.label}>
             <div className="pt-4 pb-2">
@@ -242,11 +249,25 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 {group.label}
               </p>
             </div>
-            {group.items.map((item) => (
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Settings — pushed to bottom */}
+        <div className="mt-auto pt-4 border-t border-neutral-200">
+          <p className="px-3 pb-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+            Settings
+          </p>
+          <div className="space-y-1">
+            {SETTINGS_NAV.map((item) => (
               <NavLink key={item.href} item={item} onNavigate={onNavigate} />
             ))}
           </div>
-        ))}
+        </div>
       </nav>
     </>
   );
