@@ -60,9 +60,9 @@ const AGENT_GROUPS: AgentGroup[] = [
   {
     label: "AI Agents",
     items: [
+      { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
       { label: "Art Direction", href: "/admin/agents/creative", icon: "palette" },
       { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
-      { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
       { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
       { label: "SEO", href: "/admin/agents/seo", icon: "search" },
       { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
