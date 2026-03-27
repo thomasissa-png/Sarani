@@ -46,6 +46,7 @@ type FormState = {
   formalRegister: boolean;
   showGlossaryHits: boolean;
   contextNote: string;
+  glossary: string;
   preserveFormatting: boolean;
   documentUpload: File | null;
 };
@@ -76,6 +77,7 @@ export default function TranslatorPage() {
     formalRegister: false,
     showGlossaryHits: false,
     contextNote: "",
+    glossary: "",
     preserveFormatting: true,
     documentUpload: null,
   });
@@ -142,6 +144,7 @@ export default function TranslatorPage() {
           targetLanguage: form.targetLanguage,
           inputText: form.inputText,
           formalRegister: form.formalRegister,
+          glossary: form.glossary || undefined,
         }),
       });
 
@@ -301,6 +304,12 @@ export default function TranslatorPage() {
         value: form.showGlossaryHits ? "Shown" : "Hidden",
       },
     ];
+    if (form.glossary.trim()) {
+      items.push({
+        label: "Client glossary",
+        value: `${form.glossary.split("\n").filter(Boolean).length} term(s)`,
+      });
+    }
     return items;
   }
 
@@ -551,6 +560,20 @@ export default function TranslatorPage() {
                       }
                       placeholder="e.g. This is a client-facing presentation for the Q2 business review"
                       rows={2}
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Client glossary"
+                    helperText="(brand-specific terms, do-not-translate words, TikTok vocabulary, etc.)"
+                  >
+                    <TextareaWithCount
+                      value={form.glossary}
+                      onChange={(glossary) =>
+                        setForm((prev) => ({ ...prev, glossary }))
+                      }
+                      placeholder={"e.g. Creator = Créateur (not Créatrice)\nFYP = FYP (do not translate)\nFor You Page = Pour Toi"}
+                      rows={3}
                     />
                   </FormField>
 
