@@ -18,6 +18,10 @@ export async function POST(request: NextRequest) {
 
     const { clientId, briefSummary, deadline, priority, tasks } = parsed.data;
 
+    // Optional: link to a tracker project (not part of agent-specific validation)
+    const clickupTaskId =
+      typeof body.clickupTaskId === "string" ? body.clickupTaskId : null;
+
     // Verify client exists
     const [client] = await db
       .select({ id: clients.id })
@@ -49,6 +53,7 @@ export async function POST(request: NextRequest) {
           },
           status: "pending" as const,
           createdBy: "admin",
+          clickupTaskId,
         }))
       )
       .returning({

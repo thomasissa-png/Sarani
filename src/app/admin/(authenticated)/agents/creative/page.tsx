@@ -19,6 +19,10 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import {
+  ProjectSelector,
+  type SelectedProject,
+} from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -90,6 +94,11 @@ export default function CreativeStrategistPage() {
 
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // Linked tracker project (optional)
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(
+    null
+  );
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -165,6 +174,10 @@ export default function CreativeStrategistPage() {
 
       if (form.inspirationReferences.trim()) {
         payload.inspirationReferences = form.inspirationReferences;
+      }
+
+      if (linkedProject?.clickupTaskId) {
+        payload.clickupTaskId = linkedProject.clickupTaskId;
       }
 
       const res = await fetch("/api/admin/agents/creative/recommend", {
@@ -310,6 +323,13 @@ export default function CreativeStrategistPage() {
       { label: "Timeline", value: form.timeline || "Not set" },
     ];
 
+    if (linkedProject) {
+      items.push({
+        label: "Linked Project",
+        value: linkedProject.label,
+      });
+    }
+
     if (form.budgetRange) {
       items.push({
         label: "Budget Range",
@@ -383,6 +403,17 @@ export default function CreativeStrategistPage() {
               onClientLoaded={handleClientLoaded}
               helperText="Select the client this campaign is for. Their brand tone, industry, and guidelines will shape the strategic recommendation."
             />
+
+            <FormField
+              label="Link to Project"
+              helperText="Optional. Link this output to a tracker project so it appears in the project view."
+            >
+              <ProjectSelector
+                value={linkedProject?.clickupTaskUrl ?? ""}
+                onChange={setLinkedProject}
+                clientName={selectedClient?.name}
+              />
+            </FormField>
 
             <div className="flex justify-end">
               <button

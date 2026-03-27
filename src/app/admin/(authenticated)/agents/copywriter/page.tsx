@@ -21,6 +21,10 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import {
+  ProjectSelector,
+  type SelectedProject,
+} from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -78,6 +82,11 @@ export default function CopywriterPage() {
 
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // Linked tracker project (optional)
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(
+    null
+  );
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -157,6 +166,7 @@ export default function CopywriterPage() {
           existingCopyToImprove: form.existingCopyToImprove || undefined,
           hardConstraints: form.hardConstraints || undefined,
           characterLimit: form.characterLimit ? parseInt(form.characterLimit) : undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -227,6 +237,13 @@ export default function CopywriterPage() {
       });
     }
 
+    if (linkedProject) {
+      items.push({
+        label: "Linked Project",
+        value: linkedProject.label,
+      });
+    }
+
     if (form.competitiveContext.trim()) {
       items.push({
         label: "Competitive Context",
@@ -284,6 +301,17 @@ export default function CopywriterPage() {
               onClientLoaded={handleClientLoaded}
               helperText="Select the client. Their brand tone, voice guidelines, and primary language will be applied to the generated copy."
             />
+
+            <FormField
+              label="Link to Project"
+              helperText="Optional. Link this output to a tracker project so it appears in the project view."
+            >
+              <ProjectSelector
+                value={linkedProject?.clickupTaskUrl ?? ""}
+                onChange={setLinkedProject}
+                clientName={selectedClient?.name}
+              />
+            </FormField>
 
             <div className="flex justify-end">
               <button

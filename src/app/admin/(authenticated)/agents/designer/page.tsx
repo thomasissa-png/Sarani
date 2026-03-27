@@ -28,6 +28,10 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import {
+  ProjectSelector,
+  type SelectedProject,
+} from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -62,6 +66,7 @@ export default function DesignerPage() {
 
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -224,6 +229,17 @@ export default function DesignerPage() {
               onClientLoaded={handleClientLoaded}
               helperText="Select the client. Their brand assets (colors, font, tone) will be loaded and applied to the design brief."
             />
+
+            <FormField
+              label="Link to Project"
+              helperText="Optional. Link this output to a tracker project so it appears in the project view."
+            >
+              <ProjectSelector
+                value={linkedProject?.clickupTaskUrl ?? ""}
+                onChange={setLinkedProject}
+                clientName={selectedClient?.name}
+              />
+            </FormField>
 
             {/* Extra brand preview with colors and font */}
             {selectedClient && <BrandPreview client={selectedClient} />}

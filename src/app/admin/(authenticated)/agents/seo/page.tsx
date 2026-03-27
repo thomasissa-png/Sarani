@@ -26,6 +26,10 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import {
+  ProjectSelector,
+  type SelectedProject,
+} from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -99,6 +103,11 @@ export default function SeoPage() {
 
   // Client data
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // Linked tracker project (optional)
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(
+    null
+  );
 
   // Form state
   const [form, setForm] = useState<FormState>({
@@ -182,6 +191,7 @@ export default function SeoPage() {
           internalLinks: form.internalLinks || undefined,
           proofPoints: form.proofPoints || undefined,
           articleOutline: form.articleOutline || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -243,6 +253,9 @@ export default function SeoPage() {
       ...(form.targetCta
         ? [{ label: "Target CTA", value: TARGET_CTA_OPTIONS.find((o) => o.value === form.targetCta)?.label || form.targetCta }]
         : []),
+      ...(linkedProject
+        ? [{ label: "Linked Project", value: linkedProject.label }]
+        : []),
     ];
   }
 
@@ -297,6 +310,18 @@ export default function SeoPage() {
               helperText="Recommended — aligns SEO content with the client's brand voice and industry context."
               onClientLoaded={handleClientLoaded}
             />
+
+            <FormField
+              label="Link to Project"
+              helperText="Optional. Link this output to a tracker project so it appears in the project view."
+            >
+              <ProjectSelector
+                value={linkedProject?.clickupTaskUrl ?? ""}
+                onChange={setLinkedProject}
+                clientName={selectedClient?.name}
+              />
+            </FormField>
+
             {/* Content type and language */}
             <div className="grid grid-cols-2 gap-4">
               <FormField

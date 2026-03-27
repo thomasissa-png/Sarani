@@ -127,6 +127,10 @@ export async function POST(request: NextRequest) {
       checkGlossary,
     } = parsed.data;
 
+    // Optional: link to a tracker project (not part of agent-specific validation)
+    const clickupTaskId =
+      typeof body.clickupTaskId === "string" ? body.clickupTaskId : null;
+
     // Fetch client if provided
     let client: Client | null = null;
     let glossaryEntries: ClientGlossaryEntry[] = [];
@@ -214,6 +218,7 @@ export async function POST(request: NextRequest) {
           },
           outputContent: JSON.stringify(validatedResponse.data),
           status: "done",
+          clickupTaskId,
         })
         .returning({ id: agentOutputs.id });
 
