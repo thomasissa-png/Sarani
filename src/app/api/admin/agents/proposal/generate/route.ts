@@ -183,6 +183,10 @@ export async function POST(request: NextRequest) {
 
     const input = parsed.data;
 
+    // Optional: link to a tracker project (not part of agent-specific validation)
+    const clickupTaskId =
+      typeof body.clickupTaskId === "string" ? body.clickupTaskId : null;
+
     // Select relevant case studies
     const relevantCases = selectRelevantCaseStudies(input);
 
@@ -230,6 +234,7 @@ export async function POST(request: NextRequest) {
         },
         outputContent: JSON.stringify(validated.data),
         status: "done",
+        clickupTaskId,
       })
       .returning({ id: agentOutputs.id });
 

@@ -125,6 +125,10 @@ export async function POST(request: NextRequest) {
       platform,
     } = parsed.data;
 
+    // Optional: link to a tracker project (not part of agent-specific validation)
+    const clickupTaskId =
+      typeof body.clickupTaskId === "string" ? body.clickupTaskId : null;
+
     // Fetch client (required for designer)
     const [client] = await db
       .select()
@@ -190,6 +194,7 @@ export async function POST(request: NextRequest) {
         },
         outputContent: JSON.stringify(validatedResponse.data),
         status: "done",
+        clickupTaskId,
       })
       .returning({ id: agentOutputs.id });
 

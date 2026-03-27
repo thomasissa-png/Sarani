@@ -105,6 +105,10 @@ export async function POST(request: NextRequest) {
       language,
     } = parsed.data;
 
+    // Optional: link to a tracker project (not part of agent-specific validation)
+    const clickupTaskId =
+      typeof body.clickupTaskId === "string" ? body.clickupTaskId : null;
+
     // Fetch client record
     const [client] = await db
       .select()
@@ -166,6 +170,7 @@ export async function POST(request: NextRequest) {
         },
         outputContent: content,
         status: "done",
+        clickupTaskId,
       })
       .returning({ id: agentOutputs.id });
 
