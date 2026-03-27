@@ -111,6 +111,7 @@ function QuotesPage() {
     return d.toISOString().split("T")[0];
   });
   const [language, setLanguage] = useState<"en" | "fr">("en");
+  const [paymentTermsDays, setPaymentTermsDays] = useState("45");
 
   // Prefill state
   const [prefilling, setPrefilling] = useState(false);
@@ -315,6 +316,7 @@ function QuotesPage() {
           vatRate,
           validUntil,
           language,
+          paymentTermsDays: parseInt(paymentTermsDays) || 45,
         }),
       });
 
@@ -503,6 +505,19 @@ function QuotesPage() {
               <option value="en">English</option>
               <option value="fr">Français</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-brand-black mb-1.5">
+              Payment terms <span className="text-neutral-400 font-normal">(days)</span>
+            </label>
+            <input
+              type="number"
+              value={paymentTermsDays}
+              onChange={(e) => setPaymentTermsDays(e.target.value)}
+              min={0}
+              max={365}
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+            />
           </div>
         </div>
 

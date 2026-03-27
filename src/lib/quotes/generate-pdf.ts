@@ -29,6 +29,7 @@ export interface QuotePDFData {
   vatRate: number | null; // null = no VAT, e.g. 20 for 20%
   validUntil: string | null; // ISO date string, e.g. "2026-04-26"
   language: "en" | "fr"; // Quote language — defaults to "en"
+  paymentTermsDays: number; // Payment terms in days — defaults to 45
 }
 
 // ─── Translations ────────────────────────────────────────────────────────────
@@ -58,7 +59,7 @@ const TRANSLATIONS = {
     paymentTerms: [
       "Work commences once a PO is raised.",
       "Unlimited rounds of revisions are offered before filming and on post-production.",
-      "Payment terms are 45 days.",
+      "Payment terms are {days} days.",
     ],
     bestRegards: "Best regards,",
     validUntil: "Valid until",
@@ -87,7 +88,7 @@ const TRANSLATIONS = {
     paymentTerms: [
       "Les travaux démarrent à réception du bon de commande (PO).",
       "Nombre illimité de révisions inclus avant tournage et en post-production.",
-      "Conditions de paiement : 45 jours.",
+      "Conditions de paiement : {days} jours.",
     ],
     bestRegards: "Cordialement,",
     validUntil: "Valable jusqu'au",
@@ -835,7 +836,8 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 80);
   currentPage = pageRef.current;
 
-  for (const term of t.paymentTerms) {
+  for (const rawTerm of t.paymentTerms) {
+    const term = rawTerm.replace("{days}", String(data.paymentTermsDays ?? 45));
     currentPage = pageRef.current;
     y = ensureSpace(pageRef, y, 16);
     currentPage = pageRef.current;

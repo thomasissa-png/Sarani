@@ -326,16 +326,22 @@ export async function GET(request: NextRequest) {
                 response.sources.lineItems = "excel";
               }
 
-              // If we didn't get purpose from ClickUp, try the category/description from Excel
+              // If we didn't get purpose from ClickUp, build from project title + line items
               if (!response.purpose) {
+                // Try category first
                 const colCategory = findColumnIndex(headers, COL_MAP.category);
-                if (colCategory !== -1) {
-                  const category = cellToString(row[colCategory]);
-                  if (category) {
-                    response.purpose = category;
-                    response.sources.purpose = "excel";
-                  }
+                const category = colCategory !== -1 ? cellToString(row[colCategory]) : "";
+
+                // Build purpose from available data: "[Category] — [project name] ([N assets])"
+                const parts: string[] = [];
+                if (category) parts.push(category);
+                parts.push(projectParam);
+                if (assetItems.length > 0) {
+                  const assetNames = assetItems.slice(0, 3).map(a => a.description).join(", ");
+                  parts.push(`(${assetNames}${assetItems.length > 3 ? ` +${assetItems.length - 3} more` : ""})`);
                 }
+                response.purpose = parts.join(" — ");
+                response.sources.purpose = "excel";
               }
 
               break; // Found the project row

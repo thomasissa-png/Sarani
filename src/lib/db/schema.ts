@@ -38,6 +38,9 @@ export const clients = pgTable(
     translationMemory: text("translation_memory"),
     prohibitedTerms: text("prohibited_terms"),
 
+    // Bloc financier (optional)
+    paymentTermsDays: integer("payment_terms_days").default(45), // default 45 days, configurable per client
+
     // Bloc juridique (optional)
     legalEntityName: text("legal_entity_name"),
     legalCountry: varchar("legal_country", { length: 5 }),

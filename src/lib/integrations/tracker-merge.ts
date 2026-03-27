@@ -230,10 +230,14 @@ export function mergeData(
       : ep.invoiceNumber;
 
     // Determine display name: prefer sheet name if it contains more info than just the client name
+    // Strip internal suffixes like "- Hors CM", "- Internal", etc.
     const sheetName = ep.excelSheetName ?? "";
+    const cleanedSheetName = sheetName
+      .replace(/\s*-\s*(hors\s+\w+|internal|test|archive|old|template)\s*$/i, "")
+      .trim();
     const displayClient =
-      sheetName && sheetName.toLowerCase() !== ep.client.toLowerCase()
-        ? sheetName
+      cleanedSheetName && cleanedSheetName.toLowerCase() !== ep.client.toLowerCase()
+        ? cleanedSheetName
         : ep.client;
 
     // Extract division (the part of the sheet name beyond the client name)
