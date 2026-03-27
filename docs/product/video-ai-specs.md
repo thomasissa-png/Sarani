@@ -341,13 +341,13 @@ Phase 3d (Back-Office V2) — COMPLETE
 
 ## Hypothèses à valider
 
-| ID | Hypothèse | Impact si fausse | Owner | Urgence |
-|----|-----------|-----------------|-------|---------|
-| H-01 | SharePoint supporte le stockage et les liens temporaires pour les fichiers vidéo générés | Nécessite un stockage alternatif (Replit Object Storage ou S3/R2) — 1 session de refactoring | Thomas | Avant Session A |
-| H-02 | FFmpeg est installable dans l'environnement Replit Deployments | L'assemblage doit passer par ffmpeg.wasm ou une API tierce (ex : Shotstack ~$0.01/min assemblé) | @infrastructure | Avant Session B |
-| H-03 | PiAPI est le provider optimal — ni Kling direct ni Kie.ai ne sont plus adaptés au volume Sarani | Changement de provider = update des routes API uniquement (impact faible si code derrière abstraction) | @ia | Avant Session A |
-| H-04 | Le client (Sophie) valide réellement sur une preview IA et non sur un storyboard PDF | Si non, la feature n'apporte pas le gain de cycle attendu — valider avec 2-3 clients avant dev | Thomas | Avant Session A |
-| H-05 | La page de partage public `/preview/[token]` sans auth est acceptable pour les clients Sarani (confidentialité des briefs) | Nécessite une auth légère (code PIN ou lien + email de vérification) sur la page publique | Thomas + @legal | Avant Session B |
+| ID | Hypothèse | Impact si fausse | Owner | Urgence | Statut |
+|----|-----------|-----------------|-------|---------|--------|
+| H-01 | SharePoint supporte le stockage et les liens temporaires pour les fichiers vidéo générés | Nécessite un stockage alternatif (Replit Object Storage ou S3/R2) — 1 session de refactoring | Thomas | Avant Session A | **VALIDÉE** — Thomas confirme SharePoint OK (2026-03-27) |
+| H-02 | FFmpeg est installable dans l'environnement Replit Deployments | L'assemblage doit passer par ffmpeg.wasm ou une API tierce (ex : Shotstack ~$0.01/min assemblé) | @infrastructure | Avant Session B | **VALIDÉE** — Thomas confirme OK (2026-03-27) |
+| H-03 | PiAPI est le provider optimal — ni Kling direct ni Kie.ai ne sont plus adaptés au volume Sarani | Changement de provider = update des routes API uniquement (impact faible si code derrière abstraction) | @ia | Avant Session A | **EN COURS** — Thomas demande le meilleur rendu qualité/fiabilité, pas nécessairement PiAPI. Recherche @ia lancée (2026-03-27) |
+| H-04 | Le client (Sophie) valide réellement sur une preview IA et non sur un storyboard PDF | Si non, la feature n'apporte pas le gain de cycle attendu — valider avec 2-3 clients avant dev | Thomas | Avant Session A | **DÉCISION** — Thomas valide l'ajout d'une étape storyboard intermédiaire AVANT la vidéo. Les deux étapes coexistent : storyboard (optionnel) → vidéo. Specs storyboard en cours par @product-manager (2026-03-27) |
+| H-05 | La page de partage public `/preview/[token]` sans auth est acceptable pour les clients Sarani (confidentialité des briefs) | Nécessite une auth légère (code PIN ou lien + email de vérification) sur la page publique | Thomas + @legal | Avant Session B | **VALIDÉE** — Thomas confirme page publique OK (2026-03-27) |
 
 ---
 
