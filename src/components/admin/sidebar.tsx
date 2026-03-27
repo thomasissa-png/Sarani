@@ -58,30 +58,17 @@ type AgentGroup = {
 
 const AGENT_GROUPS: AgentGroup[] = [
   {
-    label: "Content",
+    label: "AI Agents",
     items: [
+      { label: "Creative", href: "/admin/agents/creative", icon: "palette" },
       { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
       { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
+      { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
       { label: "SEO", href: "/admin/agents/seo", icon: "search" },
       { label: "Social", href: "/admin/agents/social", icon: "share" },
       { label: "Video Script", href: "/admin/agents/video-script", icon: "video" },
-    ],
-  },
-  {
-    label: "Strategy",
-    items: [
-      { label: "Creative", href: "/admin/agents/creative", icon: "palette" },
-      { label: "Proposal", href: "/admin/agents/proposal", icon: "file-text" },
-      { label: "Presentation", href: "/admin/agents/presentation", icon: "monitor" },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
+      { label: "Proposals & Decks", href: "/admin/agents/proposal", icon: "file-text" },
       { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
-      { label: "Email Drafter", href: "/admin/agents/email-drafter", icon: "mail" },
-      { label: "Proofreader", href: "/admin/agents/proofreader", icon: "check-circle" },
     ],
   },
 ];
