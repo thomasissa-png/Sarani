@@ -104,8 +104,8 @@ const TRANSLATIONS = {
 
 const PAGE_WIDTH = 595.28; // A4
 const PAGE_HEIGHT = 841.89;
-const MARGIN_LEFT = 60;
-const MARGIN_RIGHT = 60;
+const MARGIN_LEFT = 72;
+const MARGIN_RIGHT = 72;
 const MARGIN_TOP = 50;
 const MARGIN_BOTTOM = 50;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_LEFT - MARGIN_RIGHT;
@@ -117,13 +117,13 @@ const COLOR_DARK_TEXT = rgb(0.13, 0.13, 0.13); // #222222 — body text
 const COLOR_GRAY_TEXT = rgb(0.35, 0.35, 0.35); // #595959 — secondary
 const COLOR_GRAY_LIGHT_TEXT = rgb(0.55, 0.55, 0.55); // #8c8c8c — subtle labels
 const COLOR_SECTION_BG = rgb(0.98, 0.976, 0.961); // #faf9f5 — warm neutral-200 from design system
-const COLOR_ROW_ALT = rgb(0.976, 0.976, 0.976); // #f9f9f9
+const COLOR_ROW_ALT = rgb(0.953, 0.949, 0.937); // #f3f2ef — visible alternation
 const COLOR_TABLE_BORDER = rgb(0.9, 0.9, 0.9); // #e6e6e6
 const COLOR_WHITE = rgb(1, 1, 1);
 const COLOR_SEPARATOR = rgb(0.88, 0.88, 0.88); // #e0e0e0
 
 // Font sizes — refined hierarchy (elegant, not loud)
-const FONT_TITLE = 22;
+const FONT_TITLE = 24;
 const FONT_SUBTITLE = 11;
 const FONT_SECTION_HEADING = 11;
 const FONT_BODY = 9.5;
@@ -334,8 +334,8 @@ export async function generateQuotePDF(
     const outfitBoldBytes = fs.readFileSync(outfitBoldPath);
     fontRegular = await doc.embedFont(outfitRegularBytes);
     fontBold = await doc.embedFont(outfitBoldBytes);
-  } catch {
-    // Fallback to Helvetica if Outfit .ttf files are not available
+  } catch (e) {
+    console.error("[generate-pdf] Outfit font not found, falling back to Helvetica. Deploy fonts to public/fonts/.", e);
     fontRegular = await doc.embedFont(StandardFonts.Helvetica);
     fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
   }
@@ -350,7 +350,7 @@ export async function generateQuotePDF(
   // HEADER: Black banner with logo + quote info (premium, like website hero)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const headerHeight = 100;
+  const headerHeight = 120;
 
   // Black header background — full width (bleeds to edges)
   currentPage.drawRectangle({
@@ -403,21 +403,21 @@ export async function generateQuotePDF(
   );
   currentPage.drawText(data.quoteNumber, {
     x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth,
-    y: PAGE_HEIGHT - 40,
+    y: PAGE_HEIGHT - headerHeight / 2 + 15,
     size: FONT_QUOTE_NUMBER,
     font: fontRegular,
     color: COLOR_WHITE,
   });
 
-  // Date (right-aligned, below quote number)
+  // Date (right-aligned, centered in header)
   const dateText = data.date;
   const dateWidth = fontRegular.widthOfTextAtSize(dateText, FONT_LABEL);
   currentPage.drawText(dateText, {
     x: PAGE_WIDTH - MARGIN_RIGHT - dateWidth,
-    y: PAGE_HEIGHT - 55,
+    y: PAGE_HEIGHT - headerHeight / 2,
     size: FONT_LABEL,
     font: fontRegular,
-    color: rgb(0.6, 0.6, 0.6), // subtle gray on black
+    color: rgb(0.6, 0.6, 0.6),
   });
 
   // Valid until (right-aligned, subtle)
@@ -428,22 +428,22 @@ export async function generateQuotePDF(
     const validWidth = fontRegular.widthOfTextAtSize(validText, FONT_LABEL);
     currentPage.drawText(validText, {
       x: PAGE_WIDTH - MARGIN_RIGHT - validWidth,
-      y: PAGE_HEIGHT - 70,
+      y: PAGE_HEIGHT - headerHeight / 2 - 15,
       size: FONT_LABEL,
       font: fontRegular,
       color: rgb(0.45, 0.45, 0.45),
     });
   }
 
-  // Small Flame accent dot in the header (subtle brand touch)
+  // Small Flame accent dot in the header (subtle brand touch, fixed position)
   currentPage.drawCircle({
-    x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth - 12,
-    y: PAGE_HEIGHT - 37,
-    size: 3,
+    x: PAGE_WIDTH - MARGIN_RIGHT - 120,
+    y: PAGE_HEIGHT - headerHeight / 2,
+    size: 2.5,
     color: COLOR_FLAME,
   });
 
-  y = PAGE_HEIGHT - headerHeight - SECTION_GAP;
+  y = PAGE_HEIGHT - headerHeight - 48; // generous post-header gap
 
   // ═══════════════════════════════════════════════════════════════════════════
   // TITLE — "Service Proposal" (elegant, not loud)
@@ -452,8 +452,8 @@ export async function generateQuotePDF(
   // Small Flame line above title (2px, 40px wide — subtle accent)
   currentPage.drawRectangle({
     x: MARGIN_LEFT,
-    y: y + 8,
-    width: 40,
+    y: y + 14,
+    width: 56,
     height: 2,
     color: COLOR_FLAME,
   });
@@ -481,8 +481,8 @@ export async function generateQuotePDF(
   // CLIENT INFO BLOCK — gray background panel
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const clientBlockHeight = 52;
-  const clientBlockPadding = 14;
+  const clientBlockHeight = 60;
+  const clientBlockPadding = 16;
 
   // Gray background rectangle
   currentPage.drawRectangle({
@@ -496,7 +496,7 @@ export async function generateQuotePDF(
   // "Prepared for" label
   currentPage.drawText(t.preparedFor, {
     x: MARGIN_LEFT + clientBlockPadding,
-    y: y - 18,
+    y: y - 22,
     size: FONT_LABEL,
     font: fontRegular,
     color: COLOR_GRAY_LIGHT_TEXT,
@@ -506,7 +506,7 @@ export async function generateQuotePDF(
   const clientLine = `${data.contactName}  —  ${data.clientName}`;
   currentPage.drawText(clientLine, {
     x: MARGIN_LEFT + clientBlockPadding,
-    y: y - 36,
+    y: y - 40,
     size: FONT_CLIENT_NAME,
     font: fontBold,
     color: COLOR_BLACK,
@@ -584,15 +584,15 @@ export async function generateQuotePDF(
 
     // Bullet point
     currentPage.drawText("\u2022", {
-      x: bodyIndent + 4,
+      x: bodyIndent,
       y,
       size: FONT_BODY,
       font: fontRegular,
-      color: COLOR_DARK_TEXT, // Clean dark bullets
+      color: COLOR_DARK_TEXT,
     });
 
     // Bullet text
-    const bulletTextX = bodyIndent + 18;
+    const bulletTextX = bodyIndent + 14;
     const bulletMaxWidth = bodyWidth - 18;
     y = drawWrappedText(
       pageRef,
@@ -661,22 +661,29 @@ export async function generateQuotePDF(
     font: fontBold,
     color: COLOR_WHITE,
   });
-  currentPage.drawText(t.fixedRate.toUpperCase(), {
-    x: colRateX + 12,
+  // Right-align numeric column headers
+  const fixedRateLabel = t.fixedRate.toUpperCase();
+  const fixedRateLabelW = fontBold.widthOfTextAtSize(fixedRateLabel, FONT_TABLE_HEADER);
+  currentPage.drawText(fixedRateLabel, {
+    x: colRateX + colRate - 12 - fixedRateLabelW,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
-  currentPage.drawText(t.qty.toUpperCase(), {
-    x: colQtyX + 12,
+  const qtyLabel = t.qty.toUpperCase();
+  const qtyLabelW = fontBold.widthOfTextAtSize(qtyLabel, FONT_TABLE_HEADER);
+  currentPage.drawText(qtyLabel, {
+    x: colQtyX + colQty / 2 - qtyLabelW / 2,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
     color: COLOR_WHITE,
   });
-  currentPage.drawText(t.total.toUpperCase(), {
-    x: colTotalX + 12,
+  const totalLabel = t.total.toUpperCase();
+  const totalLabelW = fontBold.widthOfTextAtSize(totalLabel, FONT_TABLE_HEADER);
+  currentPage.drawText(totalLabel, {
+    x: colTotalX + colTotal - 12 - totalLabelW,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
     font: fontBold,
@@ -732,25 +739,33 @@ export async function generateQuotePDF(
       color: COLOR_DARK_TEXT,
     });
 
-    currentPage.drawText(formatCurrency(item.unitPrice, data.currency), {
-      x: colRateX + 12,
+    // Right-aligned monetary columns
+    const rateText = formatCurrency(item.unitPrice, data.currency);
+    const rateW = fontRegular.widthOfTextAtSize(rateText, FONT_TABLE_CELL);
+    currentPage.drawText(rateText, {
+      x: colRateX + colRate - 12 - rateW,
       y: cellTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
       color: COLOR_DARK_TEXT,
     });
 
-    currentPage.drawText(String(item.quantity), {
-      x: colQtyX + 12,
+    // Qty centered
+    const qtyText = String(item.quantity);
+    const qtyW = fontRegular.widthOfTextAtSize(qtyText, FONT_TABLE_CELL);
+    currentPage.drawText(qtyText, {
+      x: colQtyX + colQty / 2 - qtyW / 2,
       y: cellTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
       color: COLOR_DARK_TEXT,
     });
 
-    // Total column — bold
-    currentPage.drawText(formatCurrency(item.total, data.currency), {
-      x: colTotalX + 12,
+    // Total column — bold, right-aligned
+    const itemTotalText = formatCurrency(item.total, data.currency);
+    const itemTotalW = fontBold.widthOfTextAtSize(itemTotalText, FONT_TABLE_CELL);
+    currentPage.drawText(itemTotalText, {
+      x: colTotalX + colTotal - 12 - itemTotalW,
       y: cellTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
@@ -792,8 +807,10 @@ export async function generateQuotePDF(
       font: fontBold,
       color: COLOR_DARK_TEXT,
     });
-    currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
-      x: colTotalX + 12,
+    const subtotalAmtText = formatCurrency(data.totalAmount, data.currency);
+    const subtotalAmtW = fontBold.widthOfTextAtSize(subtotalAmtText, FONT_TABLE_CELL);
+    currentPage.drawText(subtotalAmtText, {
+      x: colTotalX + colTotal - 12 - subtotalAmtW,
       y: subtotalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
@@ -820,8 +837,10 @@ export async function generateQuotePDF(
       font: fontRegular,
       color: COLOR_GRAY_TEXT,
     });
-    currentPage.drawText(formatCurrency(vatAmount, data.currency), {
-      x: colTotalX + 12,
+    const vatAmtText = formatCurrency(vatAmount, data.currency);
+    const vatAmtW = fontRegular.widthOfTextAtSize(vatAmtText, FONT_TABLE_CELL);
+    currentPage.drawText(vatAmtText, {
+      x: colTotalX + colTotal - 12 - vatAmtW,
       y: vatTextY,
       size: FONT_TABLE_CELL,
       font: fontRegular,
@@ -849,8 +868,10 @@ export async function generateQuotePDF(
       font: fontBold,
       color: COLOR_WHITE,
     });
-    currentPage.drawText(formatCurrency(totalWithVat, data.currency), {
-      x: colTotalX + 12,
+    const totalWithVatText = formatCurrency(totalWithVat, data.currency);
+    const totalWithVatW = fontBold.widthOfTextAtSize(totalWithVatText, FONT_TABLE_CELL);
+    currentPage.drawText(totalWithVatText, {
+      x: colTotalX + colTotal - 12 - totalWithVatW,
       y: totalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
@@ -878,8 +899,10 @@ export async function generateQuotePDF(
       font: fontBold,
       color: COLOR_WHITE,
     });
-    currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
-      x: colTotalX + 12,
+    const noVatTotalText = formatCurrency(data.totalAmount, data.currency);
+    const noVatTotalW = fontBold.widthOfTextAtSize(noVatTotalText, FONT_TABLE_CELL);
+    currentPage.drawText(noVatTotalText, {
+      x: colTotalX + colTotal - 12 - noVatTotalW,
       y: totalTextY,
       size: FONT_TABLE_CELL,
       font: fontBold,
@@ -980,7 +1003,7 @@ export async function generateQuotePDF(
   currentPage = pageRef.current;
 
   // Small Flame accent line before signature
-  const sigLineWidth = 60;
+  const sigLineWidth = 40;
   currentPage.drawRectangle({
     x: PAGE_WIDTH - MARGIN_RIGHT - sigLineWidth,
     y: y + 8,
