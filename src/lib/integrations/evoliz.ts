@@ -239,6 +239,8 @@ interface RawEvolizInvoiceResponse {
   external_document_number?: string;
   external_reference?: string;
   reference?: string;
+  label?: string;
+  title?: string;
   client_name?: string;
   client?: { name?: string; clientid?: number } | null;
   total?: {
