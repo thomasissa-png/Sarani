@@ -103,8 +103,12 @@ function QuotesPage() {
   const [description, setDescription] = useState("");
   const [scope, setScope] = useState("");
   const [currency, setCurrency] = useState("EUR");
-  const [vatRate, setVatRate] = useState<number | null>(20); // Default 20% VAT, null = no VAT
+  const [vatRate, setVatRate] = useState<number | null>(null); // null = no VAT by default, prefill may override
   const [items, setItems] = useState<LineItem[]>([createEmptyItem()]);
+
+  // Prefill state
+  const [prefilling, setPrefilling] = useState(false);
+  const [prefillSource, setPrefillSource] = useState<PrefillResponse["sources"] | null>(null);
 
   // Preview state
   const [showPreview, setShowPreview] = useState(false);
@@ -135,7 +139,7 @@ function QuotesPage() {
     if (qProject) setProjectName(qProject);
     if (qContact) setContactName(qContact);
     if (qCategory) setScope(qCategory);
-    // Auto-create a line item from tracker data
+    // Auto-create a line item from tracker data (fallback if prefill doesn't return items)
     if (qProject && qAmount && parseFloat(qAmount) > 0) {
       setItems([{
         id: generateId(),
@@ -144,6 +148,45 @@ function QuotesPage() {
         unitPrice: parseFloat(qAmount),
         total: parseFloat(qAmount),
       }]);
+    }
+
+    // Call prefill API to get purpose, line items from Excel, and VAT auto-detection
+    if (qClient && qProject) {
+      setPrefilling(true);
+      fetch(`/api/admin/quotes/prefill?client=${encodeURIComponent(qClient)}&project=${encodeURIComponent(qProject)}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Prefill failed");
+          return res.json() as Promise<PrefillResponse>;
+        })
+        .then((prefill) => {
+          setPrefillSource(prefill.sources);
+
+          // Set purpose if we got one and user hasn't typed anything yet
+          if (prefill.purpose) {
+            setDescription((prev: string) => prev || prefill.purpose);
+          }
+
+          // Set line items from Excel assets (overrides the single amount-based item)
+          if (prefill.lineItems.length > 0) {
+            setItems(
+              prefill.lineItems.map((li) => ({
+                id: generateId(),
+                description: li.description,
+                quantity: li.quantity,
+                unitPrice: li.unitPrice,
+                total: li.total,
+              }))
+            );
+          }
+
+          // Auto-set VAT based on client/division detection
+          setVatRate(prefill.applyVat ? prefill.vatRate : null);
+        })
+        .catch((err) => {
+          console.error("[Quotes] Prefill error:", err);
+          // Non-critical — form still works without prefill
+        })
+        .finally(() => setPrefilling(false));
     }
   }, [searchParams, clients]);
 
@@ -313,6 +356,30 @@ function QuotesPage() {
           Create professional PDF quotes and upload them to SharePoint
         </p>
       </div>
+
+      {/* Prefill status banner */}
+      {prefilling && (
+        <div className="bg-info-light border border-info rounded-lg px-4 py-3 text-sm text-info flex items-center gap-2">
+          <svg className="w-4 h-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Loading data from ClickUp and Excel tracker...
+        </div>
+      )}
+      {prefillSource && !prefilling && (
+        <div className="bg-neutral-50 border border-neutral-200 rounded-lg px-4 py-3 text-xs text-neutral-500 flex flex-wrap gap-x-4 gap-y-1">
+          <span>
+            Purpose: <span className="font-medium text-neutral-700">{prefillSource.purpose === "none" ? "manual" : prefillSource.purpose}</span>
+          </span>
+          <span>
+            Line items: <span className="font-medium text-neutral-700">{prefillSource.lineItems === "none" ? "manual" : prefillSource.lineItems}</span>
+          </span>
+          <span>
+            VAT: <span className="font-medium text-neutral-700">{prefillSource.vatReason}</span>
+          </span>
+        </div>
+      )}
 
       {/* Form */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-6">
