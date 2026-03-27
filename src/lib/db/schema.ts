@@ -359,6 +359,133 @@ export const scoringConfig = pgTable("scoring_config", {
   updatedBy: text("updated_by"),
 });
 
+// ─── Landing Page Sections Type ────────────────────────────────────────
+
+export interface LandingPageSections {
+  hero: {
+    headline: string;
+    subheadline: string;
+    ctaText: string;
+    ctaUrl: string;
+    backgroundType: "color" | "image";
+    backgroundImageUrl?: string;
+  };
+  features?: Array<{
+    iconName: string;
+    title: string;
+    description: string;
+  }>;
+  socialProof?: {
+    quote: string;
+    author: string;
+    company: string;
+  };
+  cta: {
+    headline: string;
+    subtext: string;
+    buttonText: string;
+    buttonUrl: string;
+  };
+  footer: {
+    tagline: string;
+  };
+  meta: {
+    title: string;
+    description: string;
+  };
+}
+
+// ─── Landing Pages ─────────────────────────────────────────────────────────
+
+export const landingPages = pgTable(
+  "landing_pages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+
+    // Identity
+    title: text("title").notNull(),
+    slug: varchar("slug", { length: 100 }).notNull().unique(),
+    status: varchar("status", { length: 20 }).notNull().default("draft"),
+    // draft | generating | ready | published | archived
+
+    // Brief & generation inputs
+    brief: text("brief").notNull(),
+    language: varchar("language", { length: 5 }).notNull().default("EN"),
+
+    // Generated content (structured JSON)
+    sections: jsonb("sections").$type<LandingPageSections>(),
+
+    // Manual overrides
+    manualOverrides: jsonb("manual_overrides").$type<Record<string, string>>(),
+
+    // Visual assets
+    logoUrl: text("logo_url"),
+    visualAssets: jsonb("visual_assets").$type<string[]>(),
+
+    // Palette overrides
+    paletteOverride: jsonb("palette_override").$type<{
+      primaryColor?: string;
+      secondaryColor?: string;
+      backgroundColor?: string;
+    }>(),
+
+    // Layout
+    sectionsEnabled: jsonb("sections_enabled")
+      .$type<{ features: boolean; socialProof: boolean }>()
+      .default({ features: true, socialProof: false }),
+
+    // SEO
+    noIndex: boolean("no_index").notNull().default(false),
+
+    // Cost tracking
+    totalTokenCost: integer("total_token_cost").default(0),
+    rawLlmOutput: text("raw_llm_output"),
+
+    // ClickUp integration
+    clickupTaskId: text("clickup_task_id"),
+
+    // Share token
+    shareToken: varchar("share_token", { length: 64 }).unique(),
+
+    // Timestamps
+    publishedAt: timestamp("published_at"),
+    createdBy: text("created_by").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_landing_pages_client").on(table.clientId),
+    index("idx_landing_pages_status").on(table.status),
+    index("idx_landing_pages_slug").on(table.slug),
+  ]
+);
+
+// ─── Landing Page Versions ─────────────────────────────────────────────────
+
+export const landingPageVersions = pgTable(
+  "landing_page_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    landingPageId: uuid("landing_page_id")
+      .notNull()
+      .references(() => landingPages.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    sections: jsonb("sections").$type<LandingPageSections>().notNull(),
+    paletteOverride: jsonb("palette_override").$type<Record<string, string>>(),
+    visualAssets: jsonb("visual_assets").$type<string[]>(),
+    manualOverrides: jsonb("manual_overrides").$type<Record<string, string>>(),
+    tokenCost: integer("token_cost"),
+    createdBy: text("created_by").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_lp_versions_page").on(table.landingPageId),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -387,3 +514,7 @@ export type CaseStudyOutput = typeof caseStudyOutputs.$inferSelect;
 export type NewCaseStudyOutput = typeof caseStudyOutputs.$inferInsert;
 export type ScoringConfig = typeof scoringConfig.$inferSelect;
 export type NewScoringConfig = typeof scoringConfig.$inferInsert;
+export type LandingPage = typeof landingPages.$inferSelect;
+export type NewLandingPage = typeof landingPages.$inferInsert;
+export type LandingPageVersion = typeof landingPageVersions.$inferSelect;
+export type NewLandingPageVersion = typeof landingPageVersions.$inferInsert;

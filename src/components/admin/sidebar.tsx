@@ -43,6 +43,7 @@ const CORE_NAV: NavItem[] = [
   { label: "Tracker", href: "/admin/tracker", icon: "activity" },
   { label: "Project Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
+  { label: "Landing Pages", href: "/admin/landing-pages", icon: "monitor" },
 ];
 
 const SETTINGS_NAV: NavItem[] = [

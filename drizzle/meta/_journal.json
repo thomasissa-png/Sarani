@@ -57,6 +57,13 @@
       "when": 1774425900000,
       "tag": "0007_add_case_study_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1774426000000,
+      "tag": "0008_add_landing_pages",
+      "breakpoints": true
     }
   ]
 }
