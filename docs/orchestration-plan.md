@@ -26,7 +26,7 @@
 | 3c | Phase 3 — Back-Office V1 (ClickUp + SharePoint + Evoliz + Tracker + Quotes) | COMPLETE | @fullstack, @product-manager, @infrastructure, @agent-factory | Phase 3 |
 | 3d | Phase 3 — Back-Office V2 (Brief, Email Import, Quote Redesign, Sidebar) | COMPLETE | @fullstack, @product-manager, @ux, @design | Phase 3c |
 | 3e | Front-Office Polish (Page consistency, Services images, Footer, Case studies) | COMPLETE | @fullstack, @design, @ux | Phase 3 |
-| 3f | Back-Office V3 — Video AI Preview (Storyboard + Video) | SPECS READY — prompt library in progress | @fullstack, @ia, @qa, @infrastructure | Phase 3d (indépendant de 3e) |
+| 3f | Back-Office V3 — Video AI Preview (Storyboard + Video) | SPECS + PROMPT LIBRARY READY | @fullstack, @ia, @qa, @infrastructure | Phase 3d (indépendant de 3e) |
 | 3g | AI Case Study Generator (auto-scan + auto-gen) | FOUNDATION IMPLEMENTED | @fullstack, @creative-strategy, @ia | Phase 3d |
 | 3h | Landing Page Generator | FOUNDATION IMPLEMENTED | @fullstack, @design, @ia | Phase 3d |
 | 4 | QA & Pre-Launch | IN PROGRESS (~30%) | @qa, @infrastructure, @legal | Phase 3e |
