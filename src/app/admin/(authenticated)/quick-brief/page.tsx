@@ -90,64 +90,7 @@ interface CreateProjectResponse {
 
 // ─── Brief Templates ─────────────────────────────────────────────────────────
 
-const PROJECT_TYPES = [
-  { value: "generic", label: "Other / General" },
-  { value: "design", label: "Graphic Design" },
-  { value: "video", label: "Video Editing" },
-  { value: "translation", label: "Translation" },
-] as const;
-
-const BRIEF_TEMPLATES: Record<string, string> = {
-  generic: `## Deliverables
-[What needs to be delivered — formats, sizes, quantity]
-
-## Message & Direction
-[Key message, CTA, creative direction]
-
-## References & Constraints
-[Brand guidelines, formats, mandatory elements, things to avoid]`,
-
-  design: `## Deliverables
-| Format | Dimensions | Quantity |
-|---|---|---|
-| [e.g. Web banner] | [px] | [n] |
-
-## Brand Constraints
-- Colors: [hex codes or "use existing brand guidelines"]
-- Fonts: [font names or "see attached brand guide"]
-
-## Message / Copy
-[Key message to convey — or "copy provided separately"]
-
-## References
-[URL or "see attached moodboard"]`,
-
-  video: `## Deliverables
-| Format | Duration | Aspect Ratio | Quantity |
-|---|---|---|---|
-| [e.g. Social reel] | [15s / 30s] | [9:16 / 16:9] | [n] |
-
-## Raw Footage
-[ ] Footage provided  [ ] Footage to be sourced by Sarani
-
-## Editing Instructions
-[Cuts, pacing, music, captions, subtitles, end card]
-
-## Delivery Format
-[MP4 H.264 / ProRes] — [resolution]`,
-
-  translation: `## Languages
-Source: [e.g. EN] → Target: [e.g. FR, DE, ES]
-
-## Volume
-[Word count or "see attached file(s)"] — [n files]
-
-## Tone & Constraints
-[Formal / casual / technical] — [glossary / terms to avoid]
-
-## Delivery Format
-[Same as source / DOCX / CSV / InDesign package]`,
-};
+import { PROJECT_TYPES, BRIEF_TEMPLATES } from "@/lib/brief-templates";
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
@@ -365,9 +308,8 @@ export default function ProjectBriefPage() {
         </p>
       </div>
 
-      {/* Email Import Section */}
-      {emailConfigured !== false && (
-        <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
+      {/* Email Import Section — always visible, shows config message inside if not configured */}
+      <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <button
             type="button"
             onClick={() => {
@@ -463,8 +405,16 @@ export default function ProjectBriefPage() {
               )}
             </div>
           )}
+
+          {/* Email not configured message */}
+          {emailSectionOpen && emailConfigured === false && (
+            <div className="px-6 pb-5 border-t border-neutral-200 pt-4">
+              <p className="text-sm text-neutral-500">
+                Email integration not configured. Add <code className="bg-neutral-100 px-1 rounded text-xs">Mail.Read</code> permission to your Azure AD app and set <code className="bg-neutral-100 px-1 rounded text-xs">MICROSOFT_EMAIL_ADDRESS</code> env var.
+              </p>
+            </div>
+          )}
         </div>
-      )}
 
       {/* Imported email banner */}
       {importedFromSubject && (

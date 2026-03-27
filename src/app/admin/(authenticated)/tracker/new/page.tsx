@@ -40,68 +40,7 @@ interface CreateProjectResponse {
   sharepoint: StepResult;
 }
 
-// ─── Brief Templates ─────────────────────────────────────────────────────────
-
-const PROJECT_TYPES = [
-  { value: "generic", label: "Other / General" },
-  { value: "design", label: "Graphic Design" },
-  { value: "video", label: "Video Editing" },
-  { value: "translation", label: "Translation" },
-] as const;
-
-const BRIEF_TEMPLATES: Record<string, string> = {
-  generic: `## Deliverables
-[What needs to be delivered — formats, sizes, quantity]
-
-## Message & Direction
-[Key message, CTA, creative direction]
-
-## References & Constraints
-[Brand guidelines, formats, mandatory elements, things to avoid]`,
-
-  design: `## Deliverables
-| Format | Dimensions | Quantity |
-|---|---|---|
-| [e.g. Web banner] | [px] | [n] |
-
-## Brand Constraints
-- Colors: [hex codes or "use existing brand guidelines"]
-- Fonts: [font names or "see attached brand guide"]
-- Logo: [attached / to be provided / use existing]
-
-## Message / Copy
-[Key message to convey — or "copy provided separately"]
-
-## References
-[URL or "see attached moodboard"]`,
-
-  video: `## Deliverables
-| Format | Duration | Aspect Ratio | Quantity |
-|---|---|---|---|
-| [e.g. Social reel] | [15s / 30s] | [9:16 / 16:9] | [n] |
-
-## Raw Footage
-[ ] Footage provided (see brief folder)
-[ ] Footage to be sourced by Sarani
-
-## Editing Instructions
-[Cuts, pacing, music, captions, subtitles, end card]
-
-## Delivery Format
-[MP4 H.264 / ProRes] — [resolution] — [file size limit if any]`,
-
-  translation: `## Languages
-Source: [e.g. EN] → Target: [e.g. FR, DE, ES]
-
-## Volume
-[Word count or "see attached file(s)"] — [n files]
-
-## Tone & Constraints
-[Formal / casual / technical] — [glossary / terms to avoid]
-
-## Delivery Format
-[Same as source / DOCX / CSV / InDesign package]`,
-};
+import { PROJECT_TYPES, BRIEF_TEMPLATES } from "@/lib/brief-templates";
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 

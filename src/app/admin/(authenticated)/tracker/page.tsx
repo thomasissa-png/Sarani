@@ -50,9 +50,20 @@ const INVOICE_STATUSES = ["All", "Open PO", "Invoiced", "Paid", "Overdue"] as co
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "--";
-  // Try to parse YYYY-MM-DD or ISO date strings into a readable format
+  // Pure numeric strings are Excel serial dates that weren't converted — convert here
+  const trimmed = dateStr.trim();
+  if (/^\d{4,5}$/.test(trimmed)) {
+    const n = parseInt(trimmed, 10);
+    if (n > 30000 && n < 60000) {
+      const epoch = new Date(Date.UTC(1899, 11, 30));
+      const d = new Date(epoch.getTime() + n * 86400000);
+      return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    }
+    return "--"; // Not a valid date serial
+  }
+  // Try to parse YYYY-MM-DD or ISO date strings
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr; // Return as-is if unparseable
+  if (isNaN(d.getTime()) || d.getFullYear() > 2100 || d.getFullYear() < 1990) return dateStr;
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
@@ -897,66 +908,39 @@ export default function TrackerPage() {
                       <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
                         {formatDate(p.date)}
                       </td>
-                      {/* Fix #6 — Overflow menu for actions */}
-                      <td className="px-5 py-3.5">
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); setOpenActionMenu(openActionMenu === rowKey ? null : rowKey); }}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                            aria-label="Project actions"
+                      {/* Actions — visible icon buttons */}
+                      <td className="px-3 py-3.5">
+                        <div className="flex items-center gap-1">
+                          <Link
+                            href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                            title="Generate Quote"
                           >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" />
-                            </svg>
-                          </button>
-                          {openActionMenu === rowKey && (
-                            <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-neutral-200 rounded-lg shadow-lg z-30 py-1">
-                              <Link
-                                href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
-                                className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                                onClick={() => setOpenActionMenu(null)}
-                              >
-                                <QuoteIcon />
-                                Generate Quote
-                              </Link>
-                              {p.excelTrackerUrl && (
-                                <a
-                                  href={p.excelTrackerUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                                  onClick={() => setOpenActionMenu(null)}
-                                >
-                                  <SharePointIcon />
-                                  Open Tracker{p.excelSheetName ? ` (${p.excelSheetName})` : ""}
-                                </a>
-                              )}
-                              {p.sharepointLink && (
-                                <a
-                                  href={p.sharepointLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                                  onClick={() => setOpenActionMenu(null)}
-                                >
-                                  <ExternalLinkIcon />
-                                  Open Project Folder
-                                </a>
-                              )}
-                              {p.clickupTaskUrl && (
-                                <a
-                                  href={p.clickupTaskUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
-                                  onClick={() => setOpenActionMenu(null)}
-                                >
-                                  <ExternalLinkIcon />
-                                  Open in ClickUp
-                                </a>
-                              )}
-                            </div>
+                            <QuoteIcon />
+                          </Link>
+                          {p.excelTrackerUrl ? (
+                            <a href={p.excelTrackerUrl} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-green-600 transition-colors"
+                              title={`Open Tracker${p.excelSheetName ? ` (${p.excelSheetName})` : ""}`}
+                            ><SharePointIcon /></a>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-8 h-8 text-neutral-200"><SharePointIcon /></span>
+                          )}
+                          {p.clickupTaskUrl ? (
+                            <a href={p.clickupTaskUrl} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-purple-600 transition-colors"
+                              title="Open in ClickUp"
+                            ><ExternalLinkIcon /></a>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-8 h-8 text-neutral-200"><ExternalLinkIcon /></span>
+                          )}
+                          {p.sharepointLink ? (
+                            <a href={p.sharepointLink} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-neutral-400 hover:bg-neutral-100 hover:text-blue-600 transition-colors"
+                              title="Open Project Folder"
+                            ><FolderIcon /></a>
+                          ) : (
+                            <span className="inline-flex items-center justify-center w-8 h-8 text-neutral-200"><FolderIcon /></span>
                           )}
                         </div>
                       </td>
@@ -1345,6 +1329,14 @@ function ExternalLinkIcon() {
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
       <polyline points="15 3 21 3 21 9" />
       <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
+function FolderIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
   );
 }
