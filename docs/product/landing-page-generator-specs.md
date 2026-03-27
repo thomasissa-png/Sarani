@@ -916,22 +916,85 @@ The `isPreview` boolean prop controls the banner and the feedback bar visibility
 
 ## 9. Integrations with existing back-office
 
-[Section 9 — filled below]
+### 9.1 Clients DB (`clients` table)
+- Auto-populate brand identity from client record: `primaryColor`, `secondaryColors`, `fontName`, `brandTone`, `brandGuidelinesNotes`
+- Client selector reuses the existing `<select>` pattern from quotes page
+- Sophie's frustrations addressed: zero re-entry of data Sarani already knows
+
+### 9.2 Tracker (ClickUp + SharePoint)
+- Optional "Link to Project" field (same `ProjectSelector` component used in agent pages)
+- Saves `clickupTaskId` on the landing page record for traceability
+
+### 9.3 AI Agents Pipeline
+- **Copywriter agent**: generates landing page copy (headline, subheadline, body, CTA)
+- **SEO agent**: generates meta tags, OG tags, JSON-LD
+- Pipeline: brief → Copywriter (Sonnet) → SEO (metadata) → render
+
+### 9.4 SharePoint Assets
+- Visuals stored in SharePoint: `/Sarani Back-Office/Landing Pages/[clientName]/[landingPageId]/`
+- Reuses existing `graphFetch` + SharePoint drive upload from `src/lib/integrations/sharepoint.ts`
+
+### 9.5 Proposals & Decks (Thomas requirement)
+- **Template "Proposal"**: a landing page sub-type for commercial proposals
+- Auto-populated with Sarani data the system already knows:
+  - Case studies from `src/data/case-studies.ts` (auto-selected by client industry)
+  - Conditions: unlimited revisions, D+1 delivery, 24/7 operations, 35 experts, 5 continents, 18 languages
+  - Client references: Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal
+  - Pricing from existing pricing page data
+- Output = **shareable web link** (not PDF) — per Thomas's explicit request
+- PM only fills in: project-specific scope, deliverables, timeline, custom pricing
+- Everything else is pre-filled from Sarani's existing data
 
 ---
 
 ## 10. Roadmap — Positioning & Dependencies
 
-[Section 10 — filled below]
+### Position: Phase 3h (independent of 3f and 3g)
+
+| Dependency | Status | Required for |
+|---|---|---|
+| Auth system (Phase 3) | COMPLETE | Admin access to creation UI |
+| Clients DB + API | COMPLETE | Client brand identity auto-fill |
+| SharePoint integration | COMPLETE | Asset storage |
+| Design tokens (`docs/design/design-tokens.json`) | COMPLETE | Default Sarani styling |
+| AI agent routes (Copywriter, SEO) | COMPLETE | Content generation pipeline |
+
+### Implementation: 2 sessions
+- **Session A**: Data model, API routes, LLM pipeline, template engine
+- **Session B**: Creation form, live preview editor, public render route, share page
 
 ---
 
 ## 11. Risks & Open Questions
 
-[Section 11 — filled below]
+| Risk | Severity | Mitigation |
+|---|---|---|
+| Generated copy quality insufficient for enterprise clients | HIGH | Human review mandatory before publish. Copywriter uses `docs/copy/brand-voice.md` constraints. |
+| SharePoint public URLs expire or require auth | MEDIUM | Validate H-03 before dev. Fallback: serve images through Next.js API route proxy. |
+| LLM cost per generation unpredictable | LOW | Display estimated cost before confirmation. Cap at $2 per generation. |
+| SEO conflict with main Sarani domain | LOW | Landing pages on `/lp/[slug]` with `noindex` by default. Manual `index` toggle. |
+
+### Open Questions for Thomas
+1. Should proposals auto-include ALL Sarani case studies or only 3-5 most relevant to client industry?
+2. Should landing pages expire after a configurable period (like video previews)?
 
 ---
 
 ## Hypotheses to Validate
 
-[Hypotheses — filled below]
+| ID | Hypothesis | Impact if false | Owner | Urgency |
+|----|-----------|-----------------|-------|---------|
+| H-01 | Per-project pricing acceptable for LP generation | Need flat fee or bundle into project pricing | Thomas | Before Session A |
+| H-02 | Single sitemap.xml can accommodate dynamic landing pages | May need `/lp/` prefix with targeted robots.txt | @seo | Before Session B |
+| H-03 | SharePoint sharing links provide stable public URLs for images | Need to proxy images through API route or CDN | Thomas + @infrastructure | Before Session A |
+| H-04 | Existing client DB fields sufficient for brand-accurate pages | May need secondary font, icon style, photo style fields | @design | Before Session A |
+
+---
+
+## Handoff → @fullstack
+
+- **Files produced**: `docs/product/landing-page-generator-specs.md`
+- **Key decisions**: SSR rendering, single responsive layout V1, SharePoint for assets, LLM pipeline Sonnet/Haiku, preview token pattern from video AI, Proposal template with Sarani auto-fill
+- **Thomas requirements integrated**: (1) Proposals = web link not PDF, (2) auto-populated with Sarani case studies + conditions
+- **Upstream deliverables**: `docs/design/design-tokens.json`, `src/lib/db/schema.ts`, `docs/copy/brand-voice.md`, `docs/product/auth-specs.md`, `docs/product/functional-specs.md`
+- **Attention**: H-03 (SharePoint public URLs) must be validated before implementation
