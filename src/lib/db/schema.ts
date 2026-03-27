@@ -199,7 +199,7 @@ export const projectTeams = pgTable(
     name: text("name").notNull(),
     clientId: uuid("client_id")
       .notNull()
-      .references(() => clients.id),
+      .references(() => clients.id, { onDelete: "cascade" }),
     templateType: varchar("template_type", { length: 50 }), // social_media | seo_content | brand_identity | video | translation | ad_campaign | custom
     brief: text("brief").notNull(),
     status: varchar("status", { length: 20 })

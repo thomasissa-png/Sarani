@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS project_teams (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  client_id UUID NOT NULL REFERENCES clients(id),
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
   template_type VARCHAR(50),
   brief TEXT NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'draft',
