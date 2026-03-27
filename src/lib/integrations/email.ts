@@ -1,0 +1,166 @@
+// ─── Microsoft Graph Email Client ──────────────────────────────────────────
+// Server-side only. Reuses the same OAuth2 client_credentials flow as SharePoint.
+// No npm dependencies beyond what sharepoint.ts already uses.
+
+import { graphFetch } from "./sharepoint";
+
+// ─── Configuration ─────────────────────────────────────────────────────────
+
+const EMAIL_ADDRESS =
+  process.env.MICROSOFT_EMAIL_ADDRESS || "team@sarani.studio";
+
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+export interface EmailMessage {
+  id: string;
+  subject: string;
+  from: {
+    emailAddress: {
+      name: string;
+      address: string;
+    };
+  };
+  receivedDateTime: string;
+  bodyPreview: string;
+  hasAttachments: boolean;
+}
+
+export interface EmailMessageFull extends EmailMessage {
+  body: {
+    contentType: string;
+    content: string;
+  };
+}
+
+export interface EmailAttachment {
+  id: string;
+  name: string;
+  contentType: string;
+  size: number;
+}
+
+// ─── Email Operations ──────────────────────────────────────────────────────
+
+/**
+ * Fetch recent unread emails from the configured mailbox.
+ * Returns emails sorted by receivedDateTime desc, limited to `limit` (default 20).
+ */
+export async function getRecentEmails(
+  limit: number = 20
+): Promise<EmailMessage[]> {
+  const select =
+    "id,subject,from,receivedDateTime,bodyPreview,hasAttachments";
+  const filter = "isRead eq false";
+  const orderby = "receivedDateTime desc";
+
+  const data = await graphFetch<{ value: EmailMessage[] }>(
+    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages?$filter=${encodeURIComponent(filter)}&$orderby=${encodeURIComponent(orderby)}&$top=${limit}&$select=${encodeURIComponent(select)}`
+  );
+
+  return data.value;
+}
+
+/**
+ * Fetch a single email by ID, including the full HTML body.
+ */
+export async function getEmailById(
+  messageId: string
+): Promise<EmailMessageFull> {
+  return graphFetch<EmailMessageFull>(
+    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}`
+  );
+}
+
+/**
+ * Fetch attachments metadata for an email (without contentBytes to keep payload small).
+ */
+export async function getEmailAttachments(
+  messageId: string
+): Promise<EmailAttachment[]> {
+  const select = "id,name,contentType,size";
+  const data = await graphFetch<{ value: EmailAttachment[] }>(
+    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}/attachments?$select=${encodeURIComponent(select)}`
+  );
+  return data.value;
+}
+
+/**
+ * Mark an email as read.
+ */
+export async function markEmailAsRead(messageId: string): Promise<void> {
+  await graphFetch<Record<string, unknown>>(
+    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ isRead: true }),
+    }
+  );
+}
+
+// ─── HTML Stripping ────────────────────────────────────────────────────────
+
+/**
+ * Convert HTML email body to plain text.
+ * Handles common email HTML patterns: <br>, <p>, <div>, <li>, tables.
+ * No external dependency — uses regex-based stripping.
+ */
+export function stripHtml(html: string): string {
+  let text = html;
+
+  // Replace <br>, <br/>, <br /> with newlines
+  text = text.replace(/<br\s*\/?>/gi, "\n");
+
+  // Replace closing block tags with newlines
+  text = text.replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n");
+
+  // Replace <li> with bullet
+  text = text.replace(/<li[^>]*>/gi, "- ");
+
+  // Remove all remaining HTML tags
+  text = text.replace(/<[^>]+>/g, "");
+
+  // Decode common HTML entities
+  text = text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&rsquo;/gi, "'")
+    .replace(/&lsquo;/gi, "'")
+    .replace(/&rdquo;/gi, "\u201D")
+    .replace(/&ldquo;/gi, "\u201C")
+    .replace(/&mdash;/gi, "\u2014")
+    .replace(/&ndash;/gi, "\u2013")
+    .replace(/&#\d+;/g, "");
+
+  // Collapse multiple newlines to max 2
+  text = text.replace(/\n{3,}/g, "\n\n");
+
+  // Collapse multiple spaces to single space
+  text = text.replace(/[ \t]+/g, " ");
+
+  // Trim each line
+  text = text
+    .split("\n")
+    .map((line) => line.trim())
+    .join("\n")
+    .trim();
+
+  return text;
+}
+
+// ─── Health Check ──────────────────────────────────────────────────────────
+
+/**
+ * Check if Microsoft Graph email integration is configured.
+ * Returns false if the required env vars are missing.
+ */
+export function isEmailConfigured(): boolean {
+  return !!(
+    process.env.MICROSOFT_TENANT_ID &&
+    process.env.MICROSOFT_CLIENT_ID &&
+    process.env.MICROSOFT_CLIENT_SECRET
+  );
+}

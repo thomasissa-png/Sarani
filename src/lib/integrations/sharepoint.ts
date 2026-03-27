@@ -134,7 +134,7 @@ export async function getAccessToken(): Promise<string> {
 
 // ─── Internal fetch with retry ──────────────────────────────────────────────
 
-async function graphFetch<T>(
+export async function graphFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
