@@ -20,6 +20,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -103,6 +104,7 @@ export default function LegalAgentPage() {
 
   // Client data
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -201,6 +203,7 @@ export default function LegalAgentPage() {
           governingLaw: form.governingLaw || undefined,
           referencesFrameworkAgreement: form.referencesFrameworkAgreement || undefined,
           secondPartyContact: form.secondPartyContact || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -288,6 +291,7 @@ export default function LegalAgentPage() {
             ? form.scopeOfWork.slice(0, 80) + "..."
             : form.scopeOfWork,
       },
+      ...(linkedProject ? [{ label: "Linked Project", value: linkedProject.label }] : []),
     ];
   }
 
@@ -340,6 +344,9 @@ export default function LegalAgentPage() {
               helperText="The contract will use the client's legal entity name and VAT number from their profile."
               onClientLoaded={handleClientLoaded}
             />
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+            </FormField>
 
             {/* Client legal info banner */}
             {selectedClient && (

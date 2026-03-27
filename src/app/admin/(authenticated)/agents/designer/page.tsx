@@ -142,6 +142,7 @@ export default function DesignerPage() {
           briefDescription: form.briefDescription,
           style: form.style,
           platform: form.platform,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -172,6 +173,7 @@ export default function DesignerPage() {
       { label: "Variations", value: String(form.quantity) },
       { label: "Style", value: STYLE_LABELS[form.style] },
       { label: "Platform", value: PLATFORM_LABELS[form.platform] },
+      ...(linkedProject ? [{ label: "Linked Project", value: linkedProject.label }] : []),
       {
         label: "Brief",
         value:

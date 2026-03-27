@@ -25,6 +25,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,7 @@ export default function SocialPage() {
 
   // Client data (for optional client reference)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Advanced options toggle
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -179,6 +181,7 @@ export default function SocialPage() {
           hashtagPreferences: form.hashtagPreferences || undefined,
           ctaDirection: form.ctaDirection || undefined,
           scheduledDate: form.scheduledDate || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -402,6 +405,9 @@ export default function SocialPage() {
                 helperText=""
                 onClientLoaded={handleClientLoaded}
               />
+            </FormField>
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
             </FormField>
 
             {/* Tone emphasis — recommended */}

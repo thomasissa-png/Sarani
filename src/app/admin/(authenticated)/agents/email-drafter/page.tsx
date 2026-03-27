@@ -13,6 +13,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 import {
   SUPPORTED_LANGUAGES,
   LANGUAGE_LABELS,
@@ -73,6 +74,7 @@ export default function EmailDrafterPage() {
 
   // Client ref for context panel
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -162,6 +164,7 @@ export default function EmailDrafterPage() {
           deadlineMentioned: form.deadlineMentioned || undefined,
           previousEmailThread: form.previousEmailThread || undefined,
           culturalContext: form.culturalContext || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -258,6 +261,7 @@ export default function EmailDrafterPage() {
           : "Not specified",
       },
       { label: "Variants", value: `${form.variantCount}` },
+      ...(linkedProject ? [{ label: "Linked Project", value: linkedProject.label }] : []),
     ];
   }
 
@@ -303,6 +307,9 @@ export default function EmailDrafterPage() {
               helperText="Loads relationship history, contact name, preferred language, and client tone context."
               onClientLoaded={handleClientLoaded}
             />
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+            </FormField>
             {/* Step navigation */}
             <div className="flex justify-end pt-2">
               <button
