@@ -72,7 +72,7 @@ export default function AboutPage() {
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
             Since 2020
           </p>
-          <h1 className="mb-6 text-4xl font-bold text-brand-black sm:text-5xl lg:text-6xl">
+          <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
             The creative agency enterprises call when every other agency says
             two weeks.
           </h1>
