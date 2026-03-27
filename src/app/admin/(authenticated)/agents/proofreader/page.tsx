@@ -14,6 +14,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 import {
   CONTENT_TYPES,
   CONTENT_TYPE_LABELS,
@@ -156,6 +157,7 @@ export default function ProofreaderPage() {
 
   // Client ref
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -269,6 +271,7 @@ export default function ProofreaderPage() {
           knownIssues: form.knownIssues || undefined,
           originalSource: form.originalSource || undefined,
           lengthConstraint: form.lengthConstraint || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -492,6 +495,9 @@ export default function ProofreaderPage() {
                 helperText="Activates the client glossary (terms to use and not to use). Without it, the agent may 'correct' a brand-specific term."
                 onClientLoaded={handleClientLoaded}
               />
+              <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+                <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+              </FormField>
 
               {selectedClient && (
                 <ClientContextPanel client={selectedClient} />

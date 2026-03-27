@@ -9,6 +9,18 @@ import type {
 } from "@/types/integrations";
 import { CLICKUP_STATUS_MAPPINGS } from "@/lib/integrations/config";
 
+// ─── AI Outputs Types ──────────────────────────────────────────────────────
+
+type OutputsByProject = Record<string, { count: number; agents: string[] }>;
+
+function extractTaskId(url: string): string {
+  if (!url) return "";
+  const match = url.match(/\/t\/([a-zA-Z0-9]+)/);
+  if (match) return match[1];
+  const segments = url.split("/").filter(Boolean);
+  return segments[segments.length - 1] || "";
+}
+
 // ─── Sorting Types ──────────────────────────────────────────────────────────
 
 type SortableColumn = "client" | "project" | "status" | "totalValue" | "date";
@@ -132,6 +144,10 @@ export default function TrackerPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // AI outputs linked to tracker projects
+  const [outputsByProject, setOutputsByProject] =
+    useState<OutputsByProject>({});
+
   // Filters — default to Open + In progress only
   const [search, setSearch] = useState("");
   const [clientFilter, setClientFilter] = useState("All");
@@ -236,15 +252,22 @@ export default function TrackerPage() {
         // localStorage full or quota exceeded — ignore
       }
 
-      // Fetch status separately (non-blocking — don't let it fail the main load)
+      // Fetch status and AI outputs separately (non-blocking)
       try {
-        const statusRes = await fetch("/api/admin/integrations/status");
+        const [statusRes, outputsRes] = await Promise.all([
+          fetch("/api/admin/integrations/status"),
+          fetch("/api/admin/agents/outputs-by-project"),
+        ]);
         if (statusRes.ok) {
           const statusData: StatusResponse = await statusRes.json();
           setApiStatus(statusData);
         }
+        if (outputsRes.ok) {
+          const outputsData: OutputsByProject = await outputsRes.json();
+          setOutputsByProject(outputsData);
+        }
       } catch {
-        // Status is informational — ignore failures
+        // Status and outputs are informational — ignore failures
       }
     } catch (err) {
       // Only show error if we have NO data at all (neither from API nor from cache)
@@ -271,12 +294,13 @@ export default function TrackerPage() {
         throw new Error(syncErr.error || `Sync failed (${syncRes.status})`);
       }
 
-      // 2. Fetch fresh tracker data (force-refresh invalidates cache) + status
-      const [trackerRes, statusRes] = await Promise.all([
+      // 2. Fetch fresh tracker data (force-refresh invalidates cache) + status + AI outputs
+      const [trackerRes, statusRes, outputsRes] = await Promise.all([
         fetch("/api/admin/integrations/tracker", {
           headers: { "x-force-refresh": "true" },
         }),
         fetch("/api/admin/integrations/status"),
+        fetch("/api/admin/agents/outputs-by-project"),
       ]);
 
       if (!trackerRes.ok) {
@@ -294,6 +318,10 @@ export default function TrackerPage() {
       if (statusRes.ok) {
         const statusData: StatusResponse = await statusRes.json();
         setApiStatus(statusData);
+      }
+      if (outputsRes.ok) {
+        const outputsData: OutputsByProject = await outputsRes.json();
+        setOutputsByProject(outputsData);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -991,6 +1019,20 @@ export default function TrackerPage() {
                           ) : (
                             <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Files</span>
                           )}
+                          {(() => {
+                            const taskId = extractTaskId(p.clickupTaskUrl);
+                            const outputs = taskId ? outputsByProject[taskId] : null;
+                            if (!outputs) return null;
+                            return (
+                              <Link
+                                href={`/admin/projects?clickupTaskId=${encodeURIComponent(taskId)}`}
+                                className="px-2 py-1 text-xs font-medium rounded border border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                                title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
+                              >
+                                AI {outputs.count}
+                              </Link>
+                            );
+                          })()}
                         </div>
                       </td>
                     </tr>
@@ -1128,6 +1170,20 @@ export default function TrackerPage() {
                 ) : (
                   <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Files</span>
                 )}
+                {(() => {
+                  const taskId = extractTaskId(p.clickupTaskUrl);
+                  const outputs = taskId ? outputsByProject[taskId] : null;
+                  if (!outputs) return null;
+                  return (
+                    <Link
+                      href={`/admin/projects?clickupTaskId=${encodeURIComponent(taskId)}`}
+                      className="px-2 py-1 text-xs font-medium rounded border border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                      title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
+                    >
+                      AI {outputs.count}
+                    </Link>
+                  );
+                })()}
               </div>
             </div>
           ))}
