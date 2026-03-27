@@ -2,7 +2,8 @@
 // Generates a professional-looking quote PDF using pdf-lib (no Puppeteer).
 // Template based on real Sarani DOCX analysis (TikTok reference quote).
 
-import { PDFDocument, rgb, StandardFonts, PDFPage, PDFFont } from "pdf-lib";
+import { PDFDocument, rgb, PDFPage, PDFFont } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
 import fs from "fs";
 import path from "path";
 
@@ -219,8 +220,24 @@ export async function generateQuotePDF(
   data: QuotePDFData
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  const helvetica = await doc.embedFont(StandardFonts.Helvetica);
-  const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  // Register fontkit for custom font support (woff2)
+  doc.registerFontkit(fontkit);
+
+  // Embed Outfit font (Sarani brand font) — fallback to Helvetica if not found
+  let fontRegular: PDFFont;
+  let fontBold: PDFFont;
+  try {
+    const fontsDir = path.join(process.cwd(), "public", "fonts");
+    const regularBytes = fs.readFileSync(path.join(fontsDir, "outfit-latin-400-normal.woff2"));
+    const boldBytes = fs.readFileSync(path.join(fontsDir, "outfit-latin-700-normal.woff2"));
+    fontRegular = await doc.embedFont(regularBytes, { subset: true });
+    fontBold = await doc.embedFont(boldBytes, { subset: true });
+  } catch {
+    // Fallback to Helvetica if Outfit font files not available
+    const { StandardFonts } = await import("pdf-lib");
+    fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+    fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  }
 
   let currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   const pageRef: PageRef = { current: currentPage, doc };
@@ -253,22 +270,22 @@ export async function generateQuotePDF(
 
   // Date (right-aligned, top)
   const dateText = data.date;
-  const dateWidth = helvetica.widthOfTextAtSize(dateText, FONT_BODY);
+  const dateWidth = fontRegular.widthOfTextAtSize(dateText, FONT_BODY);
   currentPage.drawText(dateText, {
     x: PAGE_WIDTH - MARGIN_RIGHT - dateWidth,
     y,
     size: FONT_BODY,
-    font: helvetica,
+    font: fontRegular,
     color: COLOR_GRAY,
   });
 
   // Quote number (right-aligned, below date)
-  const qnWidth = helveticaBold.widthOfTextAtSize(data.quoteNumber, FONT_BODY);
+  const qnWidth = fontBold.widthOfTextAtSize(data.quoteNumber, FONT_BODY);
   currentPage.drawText(data.quoteNumber, {
     x: PAGE_WIDTH - MARGIN_RIGHT - qnWidth,
     y: y - 16,
     size: FONT_BODY,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
 
@@ -286,7 +303,7 @@ export async function generateQuotePDF(
     x: MARGIN_LEFT,
     y,
     size: FONT_TITLE,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
   y -= FONT_TITLE + 6;
@@ -295,7 +312,7 @@ export async function generateQuotePDF(
     x: MARGIN_LEFT,
     y,
     size: FONT_SUBTITLE,
-    font: helvetica,
+    font: fontRegular,
     color: COLOR_GRAY,
   });
   y -= SECTION_GAP;
@@ -310,7 +327,7 @@ export async function generateQuotePDF(
     introText,
     MARGIN_LEFT,
     y,
-    helvetica,
+    fontRegular,
     FONT_INTRO,
     CONTENT_WIDTH,
     COLOR_BLACK
@@ -329,7 +346,7 @@ export async function generateQuotePDF(
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
   y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
@@ -339,7 +356,7 @@ export async function generateQuotePDF(
     data.description,
     MARGIN_LEFT,
     y,
-    helvetica,
+    fontRegular,
     FONT_BODY,
     CONTENT_WIDTH,
     COLOR_GRAY,
@@ -359,7 +376,7 @@ export async function generateQuotePDF(
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
   y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
@@ -369,7 +386,7 @@ export async function generateQuotePDF(
     data.scope,
     MARGIN_LEFT,
     y,
-    helvetica,
+    fontRegular,
     FONT_BODY,
     CONTENT_WIDTH,
     COLOR_GRAY,
@@ -389,7 +406,7 @@ export async function generateQuotePDF(
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
   y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
@@ -410,7 +427,7 @@ export async function generateQuotePDF(
       x: MARGIN_LEFT + 8,
       y,
       size: FONT_BODY,
-      font: helvetica,
+      font: fontRegular,
       color: COLOR_GRAY,
     });
 
@@ -422,7 +439,7 @@ export async function generateQuotePDF(
       item,
       bulletTextX,
       y,
-      helvetica,
+      fontRegular,
       FONT_BODY,
       bulletMaxWidth,
       COLOR_GRAY,
@@ -446,7 +463,7 @@ export async function generateQuotePDF(
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
   y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING + 10;
@@ -488,28 +505,28 @@ export async function generateQuotePDF(
     x: tableX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_WHITE,
   });
   currentPage.drawText("FIXED RATE", {
     x: colRateX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_WHITE,
   });
   currentPage.drawText("QTY", {
     x: colQtyX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_WHITE,
   });
   currentPage.drawText("TOTAL", {
     x: colTotalX + 10,
     y: headerTextY,
     size: FONT_TABLE_HEADER,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_WHITE,
   });
 
@@ -547,7 +564,7 @@ export async function generateQuotePDF(
     // Item description — truncate if too long
     let desc = item.description;
     const maxDescWidth = colItem - 20;
-    while (helvetica.widthOfTextAtSize(desc, FONT_TABLE_CELL) > maxDescWidth && desc.length > 3) {
+    while (fontRegular.widthOfTextAtSize(desc, FONT_TABLE_CELL) > maxDescWidth && desc.length > 3) {
       desc = desc.slice(0, -4) + "...";
     }
 
@@ -555,7 +572,7 @@ export async function generateQuotePDF(
       x: tableX + 10,
       y: cellTextY,
       size: FONT_TABLE_CELL,
-      font: helvetica,
+      font: fontRegular,
       color: COLOR_BLACK,
     });
 
@@ -563,7 +580,7 @@ export async function generateQuotePDF(
       x: colRateX + 10,
       y: cellTextY,
       size: FONT_TABLE_CELL,
-      font: helvetica,
+      font: fontRegular,
       color: COLOR_BLACK,
     });
 
@@ -571,7 +588,7 @@ export async function generateQuotePDF(
       x: colQtyX + 10,
       y: cellTextY,
       size: FONT_TABLE_CELL,
-      font: helvetica,
+      font: fontRegular,
       color: COLOR_BLACK,
     });
 
@@ -579,7 +596,7 @@ export async function generateQuotePDF(
       x: colTotalX + 10,
       y: cellTextY,
       size: FONT_TABLE_CELL,
-      font: helveticaBold,
+      font: fontBold,
       color: COLOR_BLACK,
     });
 
@@ -615,14 +632,14 @@ export async function generateQuotePDF(
       x: tableX + 10,
       y: subtotalTextY,
       size: FONT_TABLE_CELL,
-      font: helveticaBold,
+      font: fontBold,
       color: COLOR_BLACK,
     });
     currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
       x: colTotalX + 10,
       y: subtotalTextY,
       size: FONT_TABLE_CELL,
-      font: helveticaBold,
+      font: fontBold,
       color: COLOR_BLACK,
     });
     y -= rowHeight;
@@ -643,14 +660,14 @@ export async function generateQuotePDF(
       x: tableX + 10,
       y: vatTextY,
       size: FONT_TABLE_CELL,
-      font: helvetica,
+      font: fontRegular,
       color: COLOR_GRAY,
     });
     currentPage.drawText(formatCurrency(vatAmount, data.currency), {
       x: colTotalX + 10,
       y: vatTextY,
       size: FONT_TABLE_CELL,
-      font: helvetica,
+      font: fontRegular,
       color: COLOR_GRAY,
     });
     y -= rowHeight;
@@ -672,14 +689,14 @@ export async function generateQuotePDF(
       x: tableX + 10,
       y: totalTextY,
       size: FONT_TABLE_CELL,
-      font: helveticaBold,
+      font: fontBold,
       color: COLOR_WHITE,
     });
     currentPage.drawText(formatCurrency(totalWithVat, data.currency), {
       x: colTotalX + 10,
       y: totalTextY,
       size: FONT_TABLE_CELL,
-      font: helveticaBold,
+      font: fontBold,
       color: COLOR_WHITE,
     });
     y -= rowHeight;
@@ -701,14 +718,14 @@ export async function generateQuotePDF(
       x: tableX + 10,
       y: totalTextY,
       size: FONT_TABLE_CELL,
-      font: helveticaBold,
+      font: fontBold,
       color: COLOR_WHITE,
     });
     currentPage.drawText(formatCurrency(data.totalAmount, data.currency), {
       x: colTotalX + 10,
       y: totalTextY,
       size: FONT_TABLE_CELL,
-      font: helveticaBold,
+      font: fontBold,
       color: COLOR_WHITE,
     });
     y -= rowHeight;
@@ -731,7 +748,7 @@ export async function generateQuotePDF(
     x: MARGIN_LEFT,
     y,
     size: FONT_SECTION_HEADING,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
   y -= HEADING_TO_CONTENT + FONT_SECTION_HEADING;
@@ -741,7 +758,7 @@ export async function generateQuotePDF(
     REFERENCES_TEXT,
     MARGIN_LEFT,
     y,
-    helvetica,
+    fontRegular,
     FONT_FOOTER + 1, // 9pt
     CONTENT_WIDTH,
     COLOR_GRAY,
@@ -765,7 +782,7 @@ export async function generateQuotePDF(
       x: MARGIN_LEFT,
       y,
       size: FONT_FOOTER,
-      font: helvetica,
+      font: fontRegular,
       color: COLOR_GRAY,
     });
     y -= 14;
@@ -780,23 +797,23 @@ export async function generateQuotePDF(
   currentPage = pageRef.current;
 
   const regardsText = "Best regards,";
-  const regardsWidth = helvetica.widthOfTextAtSize(regardsText, FONT_BODY);
+  const regardsWidth = fontRegular.widthOfTextAtSize(regardsText, FONT_BODY);
   currentPage.drawText(regardsText, {
     x: PAGE_WIDTH - MARGIN_RIGHT - regardsWidth,
     y,
     size: FONT_BODY,
-    font: helvetica,
+    font: fontRegular,
     color: COLOR_BLACK,
   });
   y -= 18;
 
   const signatureName = "Emmanuel Gomez, CEO, Sarani";
-  const signatureWidth = helveticaBold.widthOfTextAtSize(signatureName, FONT_BODY);
+  const signatureWidth = fontBold.widthOfTextAtSize(signatureName, FONT_BODY);
   currentPage.drawText(signatureName, {
     x: PAGE_WIDTH - MARGIN_RIGHT - signatureWidth,
     y,
     size: FONT_BODY,
-    font: helveticaBold,
+    font: fontBold,
     color: COLOR_BLACK,
   });
 
