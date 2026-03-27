@@ -57,7 +57,7 @@ export async function getRecentEmails(
   ].join("&");
 
   const data = await graphFetch<{ value: EmailMessage[] }>(
-    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages?${query}`
+    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages?${query}`
   );
 
   return data.value;
@@ -70,7 +70,7 @@ export async function getEmailById(
   messageId: string
 ): Promise<EmailMessageFull> {
   return graphFetch<EmailMessageFull>(
-    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}`
+    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}`
   );
 }
 
@@ -82,7 +82,7 @@ export async function getEmailAttachments(
 ): Promise<EmailAttachment[]> {
   const select = "id,name,contentType,size";
   const data = await graphFetch<{ value: EmailAttachment[] }>(
-    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}/attachments?$select=${encodeURIComponent(select)}`
+    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}/attachments?$select=${select}`
   );
   return data.value;
 }
@@ -92,7 +92,7 @@ export async function getEmailAttachments(
  */
 export async function markEmailAsRead(messageId: string): Promise<void> {
   await graphFetch<Record<string, unknown>>(
-    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}`,
+    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}`,
     {
       method: "PATCH",
       body: JSON.stringify({ isRead: true }),

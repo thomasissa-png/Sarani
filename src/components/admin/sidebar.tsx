@@ -43,7 +43,6 @@ const CORE_NAV: NavItem[] = [
   { label: "Tracker", href: "/admin/tracker", icon: "activity" },
   { label: "Project Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
-  { label: "Agent Teams", href: "/admin/teams", icon: "team" },
 ];
 
 const SETTINGS_NAV: NavItem[] = [
@@ -60,15 +59,21 @@ const AGENT_GROUPS: AgentGroup[] = [
   {
     label: "AI Agents",
     items: [
+      { label: "Agent Teams", href: "/admin/teams", icon: "team" },
       { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
       { label: "Art Direction", href: "/admin/agents/creative", icon: "palette" },
       { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
       { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
-      { label: "SEO", href: "/admin/agents/seo", icon: "search" },
       { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
-      { label: "Social", href: "/admin/agents/social", icon: "share" },
       { label: "Video Script", href: "/admin/agents/video-script", icon: "video" },
       { label: "Proposals & Decks", href: "/admin/agents/proposal", icon: "file-text" },
+    ],
+  },
+  {
+    label: "AI Sarani",
+    items: [
+      { label: "SEO", href: "/admin/agents/seo", icon: "search" },
+      { label: "Social", href: "/admin/agents/social", icon: "share" },
     ],
   },
 ];
