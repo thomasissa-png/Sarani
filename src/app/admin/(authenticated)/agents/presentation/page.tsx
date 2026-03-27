@@ -21,6 +21,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 import { generatePresentationHTML } from "@/lib/export/presentation-html";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -101,6 +102,7 @@ export default function PresentationAgentPage() {
 
   // Client data
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Form state
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
@@ -176,6 +178,10 @@ export default function PresentationAgentPage() {
       }
       if (form.toneDirection) {
         payload.toneDirection = form.toneDirection;
+      }
+
+      if (linkedProject?.clickupTaskId) {
+        payload.clickupTaskId = linkedProject.clickupTaskId;
       }
 
       const res = await fetch("/api/admin/agents/presentation/generate", {
@@ -348,6 +354,7 @@ export default function PresentationAgentPage() {
         label: "Tone",
         value: form.toneDirection || "Not specified",
       },
+      ...(linkedProject ? [{ label: "Linked Project", value: linkedProject.label }] : []),
     ];
   }
 
@@ -396,6 +403,9 @@ export default function PresentationAgentPage() {
               helperText="Loads brand book for visual formatting of the deck, and historical context."
               onClientLoaded={handleClientLoaded}
             />
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+            </FormField>
 
             <div className="flex justify-end pt-2">
               <button

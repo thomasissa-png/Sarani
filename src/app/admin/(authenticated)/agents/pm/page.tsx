@@ -15,6 +15,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@ export default function PMAgentPage() {
 
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -143,6 +145,7 @@ export default function PMAgentPage() {
           brief: form.brief,
           deadline: form.deadline || undefined,
           priority: form.priority,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -195,6 +198,7 @@ export default function PMAgentPage() {
           deadline: form.deadline || undefined,
           priority: form.priority,
           tasks: tasksToDispatch,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -263,6 +267,10 @@ export default function PMAgentPage() {
       });
     }
 
+    if (linkedProject) {
+      items.push({ label: "Linked Project", value: linkedProject.label });
+    }
+
     return items;
   }
 
@@ -310,6 +318,9 @@ export default function PMAgentPage() {
               onClientLoaded={handleClientLoaded}
               helperText="Select the client this brief is for. Their brand context and active projects will inform the analysis."
             />
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+            </FormField>
 
             <div className="flex justify-end">
               <button

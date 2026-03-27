@@ -13,6 +13,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 import {
   VIDEO_FORMATS,
   VIDEO_FORMAT_LABELS,
@@ -90,6 +91,7 @@ export default function VideoScriptPage() {
 
   // Client ref
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -185,6 +187,7 @@ export default function VideoScriptPage() {
           captionStyle: form.captionStyle || undefined,
           seriesContext: form.seriesContext || undefined,
           existingReferenceScript: form.existingReferenceScript || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -233,6 +236,7 @@ export default function VideoScriptPage() {
       },
       { label: "Language", value: VIDEO_LANGUAGE_LABELS[form.language] },
       { label: "Variants", value: `${form.variantCount}` },
+      ...(linkedProject ? [{ label: "Linked Project", value: linkedProject.label }] : []),
     ];
   }
 
@@ -278,6 +282,9 @@ export default function VideoScriptPage() {
               helperText="Loads brand voice, tone, and visual identity constraints. A script for TikTok's own channel and a script for a GEODIS product video have different register and energy."
               onClientLoaded={handleClientLoaded}
             />
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+            </FormField>
             <div className="flex justify-end pt-2">
               <button
                 type="button"

@@ -223,6 +223,7 @@ export default function SocialPage() {
       ...(form.proofPoints ? [{ label: "Proof Points", value: form.proofPoints.length > 60 ? form.proofPoints.slice(0, 60) + "..." : form.proofPoints }] : []),
       ...(form.scheduledDate ? [{ label: "Scheduled", value: form.scheduledDate }] : []),
       ...(selectedClient ? [{ label: "Client Reference", value: selectedClient.name }] : []),
+      ...(linkedProject ? [{ label: "Linked Project", value: linkedProject.label }] : []),
     ];
   }
 

@@ -21,6 +21,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -64,6 +65,7 @@ export default function TranslatorPage() {
 
   // Selected client object
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   // Advanced options toggle
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -145,6 +147,7 @@ export default function TranslatorPage() {
           inputText: form.inputText,
           formalRegister: form.formalRegister,
           glossary: form.glossary || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -247,6 +250,7 @@ export default function TranslatorPage() {
           textToReview: reviewText,
           textLanguage: reviewLanguage,
           contextNote: reviewContext || undefined,
+          clickupTaskId: linkedProject?.clickupTaskId || undefined,
         }),
       });
 
@@ -309,6 +313,9 @@ export default function TranslatorPage() {
         label: "Client glossary",
         value: `${form.glossary.split("\n").filter(Boolean).length} term(s)`,
       });
+    }
+    if (linkedProject) {
+      items.push({ label: "Linked Project", value: linkedProject.label });
     }
     return items;
   }
@@ -417,6 +424,9 @@ export default function TranslatorPage() {
                 helperText="Activates the client glossary and translation memory. Without it, the translation is generic and may contradict validated formulations from previous deliveries."
               />
             </div>
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+            </FormField>
 
             <div className="flex justify-end">
               <button

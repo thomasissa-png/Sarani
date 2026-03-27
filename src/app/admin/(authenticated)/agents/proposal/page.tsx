@@ -23,6 +23,7 @@ import {
   PreSubmitSummary,
   TextareaWithCount,
 } from "@/components/admin/guided-form";
+import { ProjectSelector, type SelectedProject } from "@/components/admin/ProjectSelector";
 import { generateProposalHTML } from "@/lib/export/proposal-html";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -103,6 +104,7 @@ export default function ProposalAgentPage() {
 
   // Existing client reference (optional)
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [linkedProject, setLinkedProject] = useState<SelectedProject | null>(null);
 
   const handleClientLoaded = useCallback((client: Client | null) => {
     setSelectedClient(client);
@@ -193,6 +195,10 @@ export default function ProposalAgentPage() {
       }
       if (form.specialConditions.trim()) {
         payload.specialConditions = form.specialConditions.trim();
+      }
+
+      if (linkedProject?.clickupTaskId) {
+        payload.clickupTaskId = linkedProject.clickupTaskId;
       }
 
       const res = await fetch("/api/admin/agents/proposal/generate", {
@@ -374,6 +380,7 @@ export default function ProposalAgentPage() {
       ...(form.proposalFormat
         ? [{ label: "Format", value: PROPOSAL_FORMAT_OPTIONS.find((o) => o.value === form.proposalFormat)?.label || form.proposalFormat }]
         : []),
+      ...(linkedProject ? [{ label: "Linked Project", value: linkedProject.label }] : []),
     ];
   }
 
@@ -513,6 +520,9 @@ export default function ProposalAgentPage() {
               onClientLoaded={handleClientLoaded}
               helperText="If this prospect is already a client, select them to load their context. Otherwise leave empty."
             />
+            <FormField label="Link to Project" helperText="Optional. Link this output to a tracker project so it appears in the project view.">
+              <ProjectSelector value={linkedProject?.clickupTaskUrl ?? ""} onChange={setLinkedProject} clientName={selectedClient?.name} />
+            </FormField>
 
             {/* Client pain point — required, most critical */}
             <FormField
