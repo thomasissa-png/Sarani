@@ -27,6 +27,7 @@ export interface QuotePDFData {
   totalAmount: number;
   currency: string;
   vatRate: number | null; // null = no VAT, e.g. 20 for 20%
+  validUntil: string | null; // ISO date string, e.g. "2026-04-26"
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -275,7 +276,23 @@ export async function generateQuotePDF(
     color: COLOR_BLACK,
   });
 
-  y = Math.min(logoBottomY, y - 32) - 15;
+  // Valid until (right-aligned, below quote number)
+  let headerBottomOffset = 32;
+  if (data.validUntil) {
+    const validDate = new Date(data.validUntil + "T00:00:00");
+    const validText = `Valid until: ${validDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
+    const validWidth = fontRegular.widthOfTextAtSize(validText, FONT_BODY);
+    currentPage.drawText(validText, {
+      x: PAGE_WIDTH - MARGIN_RIGHT - validWidth,
+      y: y - 32,
+      size: FONT_BODY,
+      font: fontRegular,
+      color: COLOR_GRAY,
+    });
+    headerBottomOffset = 48;
+  }
+
+  y = Math.min(logoBottomY, y - headerBottomOffset) - 15;
 
   // Separator between header and body
   drawSeparator(currentPage, y);

@@ -491,6 +491,20 @@ function QuotesPage() {
           </div>
         </div>
 
+        {/* Valid until */}
+        <div>
+          <label className="block text-sm font-medium text-brand-black mb-1.5">
+            Valid until
+          </label>
+          <input
+            type="date"
+            value={validUntil}
+            onChange={(e) => setValidUntil(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          />
+          <p className="text-xs text-neutral-400 mt-1">Default: 30 days from today</p>
+        </div>
+
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-brand-black mb-1.5">

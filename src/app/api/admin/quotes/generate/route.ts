@@ -48,6 +48,7 @@ const generateQuoteSchema = z.object({
   items: z.array(lineItemSchema).min(1, "At least one line item is required"),
   currency: z.enum(["EUR", "USD", "GBP"]),
   vatRate: z.number().min(0).max(100).nullable().default(null),
+  validUntil: z.string().optional(),
 });
 
 // ─── Route ─────────────────────────────────────────────────────────────────
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
       totalAmount,
       currency: data.currency,
       vatRate: data.vatRate,
+      validUntil: data.validUntil ?? null,
     };
 
     const pdfBytes = await generateQuotePDF(pdfData);
