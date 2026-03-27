@@ -21,7 +21,7 @@ export default function LegalPage() {
     <div className="pt-[var(--header-height)]">
       <Section ariaLabel="Legal and privacy">
         <div className="max-w-3xl">
-          <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">
+          <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
             Legal &amp; Privacy
           </h1>
           <p className="mb-10 text-sm text-neutral-500">

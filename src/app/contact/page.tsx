@@ -16,10 +16,13 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_420px] lg:gap-16">
             {/* Left column — Form */}
             <div className="max-w-[640px]">
-              <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
+                Start a Project
+              </p>
+              <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
                 Start a project.
               </h1>
-              <p className="mb-10 text-lg text-neutral-600">
+              <p className="mb-10 text-lg leading-relaxed text-neutral-600">
                 Tell us what you need. We&apos;ll get back to you within the
                 hour.
               </p>

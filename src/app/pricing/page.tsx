@@ -232,21 +232,21 @@ export default function PricingPage() {
       />
       {/* Hero — bold, creative */}
       <Section ariaLabel="Pricing hero">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="mb-4 inline-block text-xs font-medium uppercase tracking-[0.2em] text-brand-cerulean-dark">
-            Transparent pricing
-          </span>
-          <h1 className="mb-6 text-5xl font-bold tracking-tight text-brand-black sm:text-6xl lg:text-7xl">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
+            Transparent Pricing
+          </p>
+          <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
             Fixed prices.
             <br />
             <span className="text-brand-flame">Zero surprises.</span>
           </h1>
-          <p className="mx-auto max-w-xl text-lg leading-relaxed text-neutral-600">
+          <p className="max-w-3xl text-lg leading-relaxed text-neutral-600">
             Every price on this page is the price you pay. Every revision
             is included. Every deadline is met. No retainer, no minimum
             commitment — up to 60% savings vs traditional agencies.
           </p>
-          <p className="mx-auto mt-4 max-w-lg text-sm text-neutral-500">
+          <p className="mt-4 max-w-3xl text-sm text-neutral-500">
             Built for marketing leaders who need assets delivered
             yesterday — and procurement teams who need every euro
             accounted for before signing.

@@ -128,13 +128,16 @@ export default function ServicesPage() {
     <div className="pt-[var(--header-height)]">
       {/* Hero */}
       <Section ariaLabel="Services hero">
-        <div className="mx-auto max-w-3xl text-center">
-          <h1 className="mb-6 text-4xl font-bold tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
+            What We Do
+          </p>
+          <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
             Enterprise creative. Every format.
             <br />
             Delivered in 24&nbsp;hours.
           </h1>
-          <p className="mx-auto max-w-2xl text-lg text-neutral-600">
+          <p className="max-w-3xl text-lg leading-relaxed text-neutral-600">
             Strategy, content, distribution, on-demand production &mdash;
             produced by 35&nbsp;experts across 5&nbsp;continents, working in relay.
             No retainer. Fixed prices. Unlimited revisions.

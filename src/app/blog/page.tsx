@@ -22,7 +22,10 @@ export default function BlogPage() {
   return (
     <div className="pt-[var(--header-height)]">
       <Section ariaLabel="Blog articles">
-        <h1 className="mb-4 text-4xl font-bold text-brand-black sm:text-5xl">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
+          Insights
+        </p>
+        <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
           Insights from 5 Continents
         </h1>
         <p className="mb-10 max-w-2xl text-lg leading-relaxed text-neutral-600">
@@ -36,14 +39,10 @@ export default function BlogPage() {
       </Section>
 
       {/* Footer CTA */}
-      <Section ariaLabel="Start your project">
-        <div className="text-center">
-          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
-            Your next campaign starts with a brief
-          </h2>
-          <p className="mx-auto mb-8 max-w-xl text-neutral-500">
-            D+1 delivery. Fixed prices. First project satisfaction or no invoice.
-          </p>
+      <Section ariaLabel="Start your project" className="bg-brand-black">
+        <div className="text-center space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">Ready to start?</h2>
+          <p className="text-lg text-neutral-400 max-w-xl mx-auto">First project satisfaction or no invoice.</p>
           <Button variant="primary" href="/contact">
             Start a project
           </Button>
