@@ -24,7 +24,9 @@
 | 3 | Development (Code) — Phase 1 Site | COMPLETE | @fullstack, @infrastructure | Phase 2 |
 | 3b | Phase 2 — Autonomous Pipeline (LinkedIn + SEO + GEO) | COMPLETE | @social, @seo, @copywriter, @geo | Phase 3 |
 | 3c | Phase 3 — Back-Office V1 (ClickUp + SharePoint + Evoliz + Tracker + Quotes) | COMPLETE | @fullstack, @product-manager, @infrastructure, @agent-factory | Phase 3 |
-| 4 | QA & Pre-Launch | NOT STARTED | @qa, @infrastructure, @legal | Phase 3c |
+| 3d | Phase 3 — Back-Office V2 (Brief, Email Import, Quote Redesign, Sidebar) | COMPLETE | @fullstack, @product-manager, @ux, @design | Phase 3c |
+| 3e | Front-Office Polish (Page consistency, Services images, Footer, Case studies) | COMPLETE | @fullstack, @design, @ux | Phase 3 |
+| 4 | QA & Pre-Launch | IN PROGRESS (~20%) | @qa, @infrastructure, @legal | Phase 3e |
 | 5 | Launch & Post-Launch | NOT STARTED | @orchestrator, @reviewer, @data-analyst, @growth, @social | Phase 4 |
 
 ---
