@@ -311,7 +311,7 @@ Phase 3d (Back-Office V2) — COMPLETE
 
 **Risque :** les previews IA text-to-video peuvent ne pas représenter fidèlement les personnages, le branding client, ou les assets visuels spécifiques (logo, produit). Le client rejette la preview car trop générique.
 
-**Mitigation :** positionner explicitement la feature comme "concept preview" et non "production preview" — wording dans le back-office et sur la page de partage client ("AI-generated concept preview — final production will match your brand guidelines"). Ajouter une option image-to-video (I2V) dans V2 pour permettre l'upload d'un frame de référence.
+**Mitigation :** positionner explicitement la feature comme "concept preview" et non "production preview" — wording dans le back-office et sur la page de partage client ("AI-generated concept preview — final production will match your brand guidelines"). Image-to-video (I2V) is available in V1 via Runway Gen-4 and Google Veo 3.1 (both support I2V natively) — used by the Storyboard Preview feature (see `docs/product/storyboard-specs.md` US-SB-05) to anchor video generation on approved storyboard frames.
 
 ---
 
