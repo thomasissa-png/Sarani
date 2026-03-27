@@ -84,7 +84,7 @@ const organizationJsonLd = {
   slogan: "Unlimited Creativity",
   sameAs: [
     "https://www.instagram.com/sarani.studio",
-    "https://www.linkedin.com/company/sarani-studio",
+    "https://www.linkedin.com/company/sarani-studio/",
   ],
   contactPoint: {
     "@type": "ContactPoint",

@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 
 const ABOUT_LINKS = [
-  { href: "/services", label: "How we work" },
-  { href: "/about", label: "About us" },
+  { href: "/services", label: "Services" },
+  { href: "/about", label: "About Us" },
   { href: "/work", label: "Portfolio" },
   { href: "/blog", label: "Blog" },
   { href: "/#faq", label: "FAQ" },
@@ -22,6 +22,7 @@ const CATEGORY_LINKS = [
 ] as const;
 
 const SUPPORT_LINKS = [
+  { href: "mailto:team@sarani.studio", label: "team@sarani.studio" },
   { href: "/contact", label: "Contact Us" },
   { href: "/legal", label: "Terms and Conditions" },
   { href: "/legal#privacy-policy", label: "Privacy Policy" },
@@ -136,7 +137,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="mt-12 border-t border-neutral-800 pt-6">
           <p className="text-xs text-neutral-500">
-            &copy; {new Date().getFullYear()} Sarani. All rights reserved.
+            &copy; {new Date().getFullYear()} Sarani. All rights reserved. &middot; SIREN 881&nbsp;687&nbsp;503
           </p>
         </div>
       </div>
