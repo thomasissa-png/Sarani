@@ -15,6 +15,41 @@
       "when": 1774425353722,
       "tag": "0001_oval_gambit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774425400000,
+      "tag": "0002_add_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774425500000,
+      "tag": "0003_add_integrations",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774425600000,
+      "tag": "0004_add_quote_number",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774425700000,
+      "tag": "0005_add_payment_terms_days",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774425800000,
+      "tag": "0006_add_project_teams",
+      "breakpoints": true
     }
   ]
 }
