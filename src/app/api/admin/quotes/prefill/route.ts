@@ -9,7 +9,6 @@ import {
   SHAREPOINT_TRACKERS_DRIVE_ID,
   TRACKERS_BASE_PATH,
   CLIENT_MAPPINGS,
-  type ClientIntegrationMapping,
 } from "@/lib/integrations/config";
 import {
   findColumnIndex,
@@ -17,7 +16,7 @@ import {
   cellToNumber,
   COL_MAP,
 } from "@/lib/integrations/excel-parser";
-import { fetchWithCache, readCache } from "@/lib/integrations/cache";
+import { readCache } from "@/lib/integrations/cache";
 import type { ClickUpTask } from "@/lib/integrations/clickup";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -81,7 +80,7 @@ function shouldApplyVat(clientName: string, sheetName?: string): boolean {
 // ─── Known standard columns to exclude from asset detection ─────────────────
 
 /** All standard column aliases — anything NOT in this set is a potential asset column */
-const STANDARD_COL_ALIASES = new Set(
+const STANDARD_COL_ALIASES: Set<string> = new Set(
   Object.values(COL_MAP).flatMap((aliases) => [...aliases])
 );
 
@@ -151,7 +150,7 @@ function extractAssetLineItems(
 
 // ─── Find header row (duplicated from excel-parser to avoid circular dep) ───
 
-const ALL_KNOWN_HEADERS = new Set(
+const ALL_KNOWN_HEADERS: Set<string> = new Set(
   Object.values(COL_MAP).flatMap((aliases) => [...aliases])
 );
 
