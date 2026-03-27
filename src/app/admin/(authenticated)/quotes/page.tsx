@@ -203,9 +203,11 @@ function QuotesPage() {
       if (res.ok) {
         const data: ClientRecord[] = await res.json();
         setClients(data);
+      } else {
+        console.error("[Quotes] Failed to fetch clients:", res.status, await res.text().catch(() => ""));
       }
-    } catch {
-      // Non-critical — client dropdown just stays empty
+    } catch (err) {
+      console.error("[Quotes] Error fetching clients:", err);
     }
   }, []);
 
