@@ -336,9 +336,9 @@ async function fetchEvolizInvoices(): Promise<{
           hasMore = batch.length === perPage;
           page++;
           // R-01: Safety limit with warning when reached
-          if (page > 20) {
+          if (page > 50) {
             console.warn(
-              `[Evoliz] Pagination safety limit reached (20 pages, ${allInvoices.length} invoices). ` +
+              `[Evoliz] Pagination safety limit reached (50 pages, ${allInvoices.length} invoices). ` +
               `Some invoices may be missing. Consider increasing the limit if Sarani grows.`
             );
             break;

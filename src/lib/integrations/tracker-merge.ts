@@ -89,6 +89,17 @@ export function mergeData(
     }
   }
 
+  // Build Evoliz invoice lookup by client name (fallback for project name matching)
+  const invoicesByClient = new Map<string, EvolizInvoice[]>();
+  for (const inv of evolizInvoices) {
+    if (inv.clientName) {
+      const key = normalizeForMatch(inv.clientName);
+      const existing = invoicesByClient.get(key) ?? [];
+      existing.push(inv);
+      invoicesByClient.set(key, existing);
+    }
+  }
+
   // Track matched ClickUp task IDs to identify unmatched ones later
   const matchedTaskIds = new Set<string>();
 
@@ -131,10 +142,27 @@ export function mergeData(
     if (clickupTask) matchedTaskIds.add(clickupTask.id);
 
     // Match Evoliz invoice by PO number (pick latest non-draft)
-    const matchingInvoices = ep.poNumber
+    // Fallback: match by project name in invoice label if PO doesn't match
+    let matchingInvoices = ep.poNumber
       ? invoicesByPO.get(normalizeForMatch(ep.poNumber))
       : undefined;
-    const evolizInvoice = matchingInvoices
+
+    // Fallback: match by project name against invoice reference within same client
+    if (!matchingInvoices?.length && ep.project && ep.client) {
+      const clientKey = normalizeForMatch(ep.client);
+      const projectKey = normalizeForMatch(ep.project);
+      const clientInvoices = invoicesByClient.get(clientKey);
+      if (clientInvoices?.length) {
+        const refMatches = clientInvoices.filter((inv) =>
+          inv.reference ? fuzzyMatch(normalizeForMatch(inv.reference), projectKey) : false
+        );
+        if (refMatches.length) {
+          matchingInvoices = refMatches;
+        }
+      }
+    }
+
+    const evolizInvoice = matchingInvoices?.length
       ? matchingInvoices
           .filter((inv) => inv.status !== "draft")
           .sort(
