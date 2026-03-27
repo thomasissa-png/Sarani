@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { track, getDevice, getReferrer } from "@/lib/analytics";
 
@@ -76,28 +77,31 @@ export function CaseStudyTeasers() {
       }}
     >
       {CASE_STUDIES.map((study) => (
-        <motion.a
+        <motion.div
           key={study.slug}
-          href={`/case-studies/${study.slug}`}
-          onClick={() => handleClick(study.client, study.slug)}
-          className="group rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-all duration-200 hover:border-brand-lemon hover:shadow-lemon-glow"
           variants={prefersReduced ? {} : cardVariants}
           whileHover={prefersReduced ? {} : { scale: 1.02 }}
           transition={{ type: "spring", stiffness: 400, damping: 25 }}
         >
-          <p className="mb-2 text-sm font-bold uppercase tracking-wider text-brand-cerulean-dark">
-            {study.client}
-          </p>
-          <p className="mb-3 text-xl font-bold text-brand-black">
-            {study.headline}
-          </p>
-          <p className="mb-6 text-sm text-neutral-500">
-            {study.description}
-          </p>
-          <span className="text-sm font-bold text-brand-flame transition-colors group-hover:text-brand-flame-light">
-            Read case study &rarr;
-          </span>
-        </motion.a>
+          <Link
+            href={`/work/${study.slug}`}
+            onClick={() => handleClick(study.client, study.slug)}
+            className="group flex flex-col rounded-2xl border border-neutral-300 bg-brand-white p-8 transition-all duration-200 hover:border-brand-lemon hover:shadow-lemon-glow h-full"
+          >
+            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-brand-cerulean-dark">
+              {study.client}
+            </p>
+            <p className="mb-3 text-xl font-bold text-brand-black">
+              {study.headline}
+            </p>
+            <p className="mb-6 text-sm text-neutral-500">
+              {study.description}
+            </p>
+            <span className="mt-auto text-sm font-bold text-brand-flame transition-colors group-hover:text-brand-flame-light">
+              Read case study &rarr;
+            </span>
+          </Link>
+        </motion.div>
       ))}
     </motion.div>
   );
