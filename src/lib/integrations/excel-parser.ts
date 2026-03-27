@@ -199,7 +199,14 @@ export function parseExcelProjects(
       contact: colContact !== -1 ? cellToString(row[colContact]) : "",
       status: colStatus !== -1 ? cellToString(row[colStatus]) : "",
       category: colCategory !== -1 ? cellToString(row[colCategory]) : "",
-      sharepointLink: colLink !== -1 ? cellToString(row[colLink]) : "",
+      sharepointLink: colLink !== -1 ? (() => {
+        const link = cellToString(row[colLink]);
+        // Only keep SharePoint/OneDrive URLs — filter out replit, localhost, etc.
+        if (!link) return "";
+        if (link.includes("sharepoint.com") || link.includes("onedrive.com") || link.includes("1drv.ms")) return link;
+        if (link.startsWith("http") && !link.includes("sharepoint") && !link.includes("onedrive")) return ""; // Filter non-SP URLs
+        return link;
+      })() : "",
       totalValue:
         colTotalValue !== -1 ? cellToNumber(row[colTotalValue]) : null,
       poNumber: colPoNumber !== -1 ? cellToString(row[colPoNumber]) : "",

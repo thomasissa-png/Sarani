@@ -48,13 +48,15 @@ export interface EmailAttachment {
 export async function getRecentEmails(
   limit: number = 20
 ): Promise<EmailMessage[]> {
-  const select =
-    "id,subject,from,receivedDateTime,bodyPreview,hasAttachments";
-  const filter = "isRead eq false";
-  const orderby = "receivedDateTime desc";
+  const params = new URLSearchParams({
+    $filter: "isRead eq false",
+    $orderby: "receivedDateTime desc",
+    $top: String(limit),
+    $select: "id,subject,from,receivedDateTime,bodyPreview,hasAttachments",
+  });
 
   const data = await graphFetch<{ value: EmailMessage[] }>(
-    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages?$filter=${encodeURIComponent(filter)}&$orderby=${encodeURIComponent(orderby)}&$top=${limit}&$select=${encodeURIComponent(select)}`
+    `/v1.0/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages?${params.toString()}`
   );
 
   return data.value;

@@ -107,34 +107,30 @@ function extractAssetLineItems(
 
   const items: PrefillLineItem[] = [];
 
-  // Scan all columns after the last standard column
-  // First, find where standard columns end
+  // Identify standard columns to exclude
   const standardColIndices = new Set<number>();
+  const headerStrings = headers.map((h) => (h !== null && h !== undefined ? String(h) : ""));
   for (const aliases of Object.values(COL_MAP)) {
-    const idx = findColumnIndex(
-      headers.map((h) => (h !== null && h !== undefined ? String(h) : "")),
-      aliases
-    );
+    const idx = findColumnIndex(headerStrings, aliases);
     if (idx !== -1) standardColIndices.add(idx);
   }
 
-  const maxStandardCol = standardColIndices.size > 0
-    ? Math.max(...standardColIndices)
-    : -1;
+  // Scan ALL columns — any non-standard column with a numeric value is a potential asset
+  // This handles Sony France where asset columns (V-BC) are interleaved, not just at the end
+  for (let col = 0; col < headers.length; col++) {
+    // Skip standard columns (project, status, date, contact, value, PO, etc.)
+    if (standardColIndices.has(col)) continue;
 
-  // Asset columns start after the last standard column
-  // Look at each column: if header is not a standard alias and data has a value
-  for (let col = maxStandardCol + 1; col < headers.length; col++) {
     const header = cellToString(headers[col]);
     if (!header) continue;
 
-    // Skip if this is somehow a standard column alias
+    // Skip if this is a standard column alias we missed
     if (STANDARD_COL_ALIASES.has(header.toLowerCase().trim())) continue;
 
     const cellValue = dataRow[col];
     const numericValue = cellToNumber(cellValue);
 
-    // If the cell has a numeric value > 0, it's likely a price or quantity for this asset
+    // If the cell has a numeric value > 0, it's likely a price for this asset type
     if (numericValue !== null && numericValue > 0) {
       items.push({
         description: header,
@@ -221,13 +217,41 @@ export async function GET(request: NextRequest) {
       });
 
       if (matchingTask?.description) {
-        // Clean up ClickUp markdown description — strip HTML tags and excessive whitespace
+        // Extract just the project summary — NOT the full brief
+        // The task description format is:
+        //   Client: X\nContact: Y\nCategory: Z\n---\n\n[full brief markdown]
+        // We want only the metadata lines as a short purpose summary
         const cleaned = matchingTask.description
           .replace(/<[^>]+>/g, "")
-          .replace(/\n{3,}/g, "\n\n")
           .trim();
 
-        if (cleaned.length > 0) {
+        // Take only the lines before the "---" separator (metadata = purpose)
+        const separatorIdx = cleaned.indexOf("---");
+        const metadataSection = separatorIdx > 0 ? cleaned.slice(0, separatorIdx).trim() : "";
+
+        if (metadataSection) {
+          // Build a short purpose from the metadata lines
+          const lines = metadataSection.split("\n").filter(Boolean);
+          const purposeParts: string[] = [];
+          for (const line of lines) {
+            // Skip Client/Contact lines — not useful as purpose
+            if (line.startsWith("Client:") || line.startsWith("Contact:")) continue;
+            if (line.startsWith("Category:")) {
+              purposeParts.push(line.replace("Category:", "").trim());
+            } else if (line.startsWith("Division:")) {
+              purposeParts.push(line.replace("Division:", "").trim());
+            } else if (line.startsWith("Type:")) {
+              purposeParts.push(line.replace("Type:", "").trim());
+            } else {
+              purposeParts.push(line);
+            }
+          }
+          if (purposeParts.length > 0) {
+            response.purpose = purposeParts.join(" — ");
+            response.sources.purpose = "clickup";
+          }
+        } else if (cleaned.length > 0 && cleaned.length < 200) {
+          // No separator — short description, use as-is
           response.purpose = cleaned;
           response.sources.purpose = "clickup";
         }

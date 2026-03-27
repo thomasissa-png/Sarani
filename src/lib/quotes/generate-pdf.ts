@@ -2,8 +2,7 @@
 // Generates a professional-looking quote PDF using pdf-lib (no Puppeteer).
 // Template based on real Sarani DOCX analysis (TikTok reference quote).
 
-import { PDFDocument, rgb, PDFPage, PDFFont } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
+import { PDFDocument, rgb, StandardFonts, PDFPage, PDFFont } from "pdf-lib";
 import fs from "fs";
 import path from "path";
 
@@ -220,24 +219,11 @@ export async function generateQuotePDF(
   data: QuotePDFData
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  // Register fontkit for custom font support (woff2)
-  doc.registerFontkit(fontkit);
-
-  // Embed Outfit font (Sarani brand font) — fallback to Helvetica if not found
-  let fontRegular: PDFFont;
-  let fontBold: PDFFont;
-  try {
-    const fontsDir = path.join(process.cwd(), "public", "fonts");
-    const regularBytes = fs.readFileSync(path.join(fontsDir, "outfit-latin-400-normal.woff2"));
-    const boldBytes = fs.readFileSync(path.join(fontsDir, "outfit-latin-700-normal.woff2"));
-    fontRegular = await doc.embedFont(regularBytes, { subset: true });
-    fontBold = await doc.embedFont(boldBytes, { subset: true });
-  } catch {
-    // Fallback to Helvetica if Outfit font files not available
-    const { StandardFonts } = await import("pdf-lib");
-    fontRegular = await doc.embedFont(StandardFonts.Helvetica);
-    fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-  }
+  // Use Helvetica (built-in, universally supported, no font file dependency)
+  // Note: Outfit (brand font) is woff2-only and pdf-lib doesn't support woff2 natively.
+  // To use Outfit in PDFs, .ttf files would need to be added to public/fonts/.
+  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
 
   let currentPage = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   const pageRef: PageRef = { current: currentPage, doc };
