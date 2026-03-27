@@ -43,7 +43,7 @@ const CORE_NAV: NavItem[] = [
   { label: "Tracker", href: "/admin/tracker", icon: "activity" },
   { label: "Project Brief", href: "/admin/quick-brief", icon: "zap" },
   { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
-  { label: "AI Teams", href: "/admin/teams", icon: "team" },
+  { label: "Agent Teams", href: "/admin/teams", icon: "team" },
 ];
 
 const SETTINGS_NAV: NavItem[] = [
