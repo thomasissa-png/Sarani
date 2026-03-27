@@ -99,12 +99,21 @@ function getStatusBadgeClasses(status: string): string {
   return "bg-neutral-200 text-neutral-600";
 }
 
-function getInvoiceBadgeClasses(status: string): string {
+function getInvoiceBadgeClasses(status: string, projectDate?: string): string {
   const lower = status.toLowerCase();
   if (lower === "paid") return "bg-success-light text-success";
   if (lower === "invoiced") return "bg-info-light text-info";
   if (lower === "overdue") return "bg-error-light text-error";
-  if (lower === "open po") return "bg-neutral-200 text-neutral-600";
+  if (lower === "open po") {
+    // Flag stale POs: if project date is > 60 days ago, show warning
+    if (projectDate) {
+      const d = new Date(projectDate);
+      if (!isNaN(d.getTime()) && Date.now() - d.getTime() > 60 * 86400000) {
+        return "bg-warning-light text-warning-text";
+      }
+    }
+    return "bg-neutral-200 text-neutral-600";
+  }
   return "bg-neutral-200 text-neutral-600";
 }
 
@@ -937,9 +946,9 @@ export default function TrackerPage() {
                       <td className="px-5 py-3.5">
                         {p.invoiceStatus ? (
                           <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus)}`}
+                            className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
                           >
-                            {p.invoiceStatus}
+                            {p.invoiceStatus}{p.invoiceStatus?.toLowerCase() === "open po" && p.date && !isNaN(new Date(p.date).getTime()) && Date.now() - new Date(p.date).getTime() > 60 * 86400000 ? " (stale)" : ""}
                           </span>
                         ) : (
                           <span className="text-neutral-400 text-xs">--</span>
@@ -954,9 +963,9 @@ export default function TrackerPage() {
                           <Link
                             href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
                             className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                            title="Generate Quote"
+                            title="Create a new quote for this project"
                           >
-                            Quote
+                            + Quote
                           </Link>
                           {p.excelTrackerUrl ? (
                             <a href={p.excelTrackerUrl} target="_blank" rel="noopener noreferrer"
@@ -964,7 +973,7 @@ export default function TrackerPage() {
                               title={`Open Tracker${p.excelSheetName ? ` (${p.excelSheetName})` : ""}`}
                             >Tracker</a>
                           ) : (
-                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Tracker</span>
+                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Excel</span>
                           )}
                           {p.clickupTaskUrl ? (
                             <a href={p.clickupTaskUrl} target="_blank" rel="noopener noreferrer"
@@ -980,7 +989,7 @@ export default function TrackerPage() {
                               title="Open Project Folder"
                             >Folder</a>
                           ) : (
-                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Folder</span>
+                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Files</span>
                           )}
                         </div>
                       </td>
@@ -1065,9 +1074,9 @@ export default function TrackerPage() {
                 )}
                 {p.invoiceStatus && (
                   <span
-                    className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus)}`}
+                    className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
                   >
-                    {p.invoiceStatus}
+                    {p.invoiceStatus}{p.invoiceStatus?.toLowerCase() === "open po" && p.date && !isNaN(new Date(p.date).getTime()) && Date.now() - new Date(p.date).getTime() > 60 * 86400000 ? " (stale)" : ""}
                   </span>
                 )}
               </div>
@@ -1103,7 +1112,7 @@ export default function TrackerPage() {
                     className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
                   >Tracker</a>
                 ) : (
-                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Tracker</span>
+                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Excel</span>
                 )}
                 {p.clickupTaskUrl ? (
                   <a href={p.clickupTaskUrl} target="_blank" rel="noopener noreferrer"
@@ -1117,7 +1126,7 @@ export default function TrackerPage() {
                     className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
                   >Folder</a>
                 ) : (
-                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Folder</span>
+                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Files</span>
                 )}
               </div>
             </div>
