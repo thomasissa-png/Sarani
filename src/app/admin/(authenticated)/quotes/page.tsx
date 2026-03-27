@@ -105,6 +105,11 @@ function QuotesPage() {
   const [currency, setCurrency] = useState("EUR");
   const [vatRate, setVatRate] = useState<number | null>(null); // null = no VAT by default, prefill may override
   const [items, setItems] = useState<LineItem[]>([createEmptyItem()]);
+  const [validUntil, setValidUntil] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split("T")[0];
+  });
 
   // Prefill state
   const [prefilling, setPrefilling] = useState(false);
@@ -307,6 +312,7 @@ function QuotesPage() {
           })),
           currency,
           vatRate,
+          validUntil,
         }),
       });
 
