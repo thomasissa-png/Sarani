@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { ClientLogos } from "@/components/home/client-logos";
@@ -30,6 +31,8 @@ type ServiceSection = {
   proofPoint: string;
   /** Per-section CTA config — null means no CTA for this block */
   cta: { label: string; href: string; ariaLabel: string; variant: "primary" | "secondary" | "ghost" } | null;
+  /** Illustration image */
+  image?: { src: string; alt: string };
 };
 
 const SERVICE_SECTIONS: ServiceSection[] = [
@@ -47,6 +50,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
     proofPoint:
       "Sony\u2019s European TV line-up launched with 125 assets across 15 languages in 14 days \u2014 8,500\u20AC, with daily HQ Japan approval. The production was fast because the brief was clear. Strategy first \u2014 execution follows.",
     cta: null,
+    image: { src: "/L'Oréal Fashion Week 2025/Captura de pantalla 2025-11-13 233119.png", alt: "L'Oréal Le Défilé — Paris Fashion Week 2025 campaign by Sarani" },
   },
   {
     id: "content-creation",
@@ -72,6 +76,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       ariaLabel: "See content creation case studies",
       variant: "secondary",
     },
+    image: { src: "/Le Grand Tournoi des Champs LEGO/KV-LEGO_1080x1920.png", alt: "LEGO Le Grand Tournoi des Champs — Champs-Élysées campaign by Sarani" },
   },
   {
     id: "operational-marketing",
@@ -96,6 +101,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       ariaLabel: "View operational marketing pricing",
       variant: "secondary",
     },
+    image: { src: "/CROCS.jpg", alt: "Crocs campaign on Times Square NASDAQ billboard — produced by Sarani" },
   },
   {
     id: "on-demand",
@@ -116,6 +122,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
       ariaLabel: "Send us a custom brief",
       variant: "primary",
     },
+    image: { src: "/Sony Month Boulanger/SONY_FR_Homepage_716x1040px_Boulanger Banners V2.jpg", alt: "Sony Month Boulanger banners — produced by Sarani" },
   },
 ];
 
@@ -127,7 +134,7 @@ export default function ServicesPage() {
   return (
     <div className="pt-[var(--header-height)]">
       {/* Hero */}
-      <Section ariaLabel="Services hero">
+      <Section ariaLabel="Services hero" className="!pb-8">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
             What We Do
@@ -151,8 +158,8 @@ export default function ServicesPage() {
         </div>
       </Section>
 
-      {/* Client logos */}
-      <div className="border-t border-neutral-100">
+      {/* Client logos — tight spacing */}
+      <div className="border-t border-neutral-100 py-4">
         <ClientLogos />
       </div>
 
@@ -215,7 +222,9 @@ export default function ServicesPage() {
 /* ------------------------------------------------------------------ */
 
 function ServiceBlock({ section }: { section: ServiceSection }) {
-  const isEvenIndex = SERVICE_SECTIONS.indexOf(section) % 2 === 1;
+  const sectionIndex = SERVICE_SECTIONS.indexOf(section);
+  const isEvenIndex = sectionIndex % 2 === 1;
+  const imageOnRight = sectionIndex % 2 === 0;
 
   return (
     <Section
@@ -223,54 +232,73 @@ function ServiceBlock({ section }: { section: ServiceSection }) {
       ariaLabel={section.headline}
       className={isEvenIndex ? "bg-surface-warm" : undefined}
     >
-      <div className="mx-auto max-w-4xl">
-        {/* Heading */}
-        <div className={`mb-8 border-l-4 pl-6 ${section.accentBorder}`}>
-          <h2 className="mb-3 text-3xl font-bold text-brand-black sm:text-4xl">
-            {section.headline}
-          </h2>
-          <p className="max-w-2xl text-lg text-neutral-600">
-            {section.subtitle}
-          </p>
-        </div>
+      <div className={`grid gap-10 lg:gap-16 items-start ${section.image ? "lg:grid-cols-5" : ""}`}>
+        {/* Text content */}
+        <div className={`${section.image ? "lg:col-span-3" : ""} ${section.image && !imageOnRight ? "lg:order-2" : ""}`}>
+          {/* Heading */}
+          <div className={`mb-8 border-l-4 pl-6 ${section.accentBorder}`}>
+            <h2 className="mb-3 text-3xl font-bold text-brand-black sm:text-4xl">
+              {section.headline}
+            </h2>
+            <p className="max-w-2xl text-lg text-neutral-600">
+              {section.subtitle}
+            </p>
+          </div>
 
-        {/* Services list */}
-        <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {section.services.map((group, gi) => (
-            <div key={gi}>
-              {group.group && (
-                <h3 className={`mb-2 text-sm font-bold uppercase tracking-wider ${section.accentText}`}>
-                  {group.group}
-                </h3>
-              )}
-              <ul className="space-y-1.5">
-                {group.items.map((item) => (
-                  <li key={item} className="text-neutral-600">
-                    {item}
-                  </li>
-                ))}
-              </ul>
+          {/* Services list */}
+          <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {section.services.map((group, gi) => (
+              <div key={gi}>
+                {group.group && (
+                  <h3 className={`mb-2 text-sm font-bold uppercase tracking-wider ${section.accentText}`}>
+                    {group.group}
+                  </h3>
+                )}
+                <ul className="space-y-1.5">
+                  {group.items.map((item) => (
+                    <li key={item} className="text-neutral-600">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* Proof point */}
+          <div className={`rounded-xl ${section.accent} p-6`}>
+            <p className="text-sm font-medium text-neutral-700 italic">
+              {section.proofPoint}
+            </p>
+          </div>
+
+          {/* CTA */}
+          {section.cta && (
+            <div className="mt-8">
+              <Button
+                variant={section.cta.variant}
+                href={section.cta.href}
+                aria-label={section.cta.ariaLabel}
+              >
+                {section.cta.label}
+              </Button>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Proof point */}
-        <div className={`rounded-xl ${section.accent} p-6`}>
-          <p className="text-sm font-medium text-neutral-700 italic">
-            {section.proofPoint}
-          </p>
-        </div>
-
-        {/* CTA — contextual per section */}
-        {section.cta && (
-          <div className="mt-8">
-            <Button
-              variant={section.cta.variant}
-              href={section.cta.href}
-              aria-label={section.cta.ariaLabel}
-            >
-              {section.cta.label}
-            </Button>
+        {/* Image */}
+        {section.image && (
+          <div className={`lg:col-span-2 ${!imageOnRight ? "lg:order-1" : ""}`}>
+            <div className="relative overflow-hidden rounded-2xl border border-neutral-200">
+              <Image
+                src={section.image.src}
+                alt={section.image.alt}
+                width={600}
+                height={400}
+                className="w-full h-auto object-cover"
+                sizes="(max-width: 1024px) 100vw, 40vw"
+              />
+            </div>
           </div>
         )}
       </div>
