@@ -5,6 +5,12 @@
 *Context: optimized prompt templates for AI video preview generation in the Sarani back-office*
 *References: `docs/product/video-ai-specs.md`, `docs/product/storyboard-specs.md`, `project-context.md`*
 
+**Persona**: Sophie, 38, Head of Marketing at enterprise clients (TikTok, Sony, Adidas, GEODIS). She needs to validate creative concepts fast — not wait 2 weeks for a production edit. These prompts generate the AI previews she reviews for approval, replacing slow agency back-and-forth with instant iteration.
+
+**KPI North Star**: 10M EUR CA at 20% EBITDA. This library directly impacts scalability (more projects, same team) and margin (fewer regenerations = lower AI costs per project). Every prompt optimization reduces the average cost-per-preview while increasing Sophie's approval rate on first pass.
+
+**Provider strategy** (validated by Thomas — 2026-03-27, see `docs/product/video-ai-specs.md` H-03): Veo 3.1 (client-facing quality), Runway Gen-4 Turbo (fast internal iterations), Kling 3.0 via fal.ai (fallback/volume). PiAPI + Kling 2.6 abandoned.
+
 ---
 
 ## Table of Contents
@@ -381,7 +387,7 @@ When generating multiple video scenes from a storyboard sequence:
 
 ## 5. Quality Checklist
 
-Run this checklist on every prompt BEFORE submitting to the API. A prompt that fails any CRITICAL item will produce poor results and waste generation credits ($0.20-$0.33 per scene per `docs/product/video-ai-specs.md`).
+Run this checklist on every prompt BEFORE submitting to the API. A prompt that fails any CRITICAL item will produce poor results and waste generation credits. Remember: Sophie (Head of Marketing) sees these previews — every failed generation is a delay in her approval cycle and a cost against our 20% EBITDA target.
 
 ### Pre-Submission Checklist
 
