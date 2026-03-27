@@ -48,7 +48,7 @@ const CORE_NAV: NavItem[] = [
 
 const SETTINGS_NAV: NavItem[] = [
   { label: "Clients", href: "/admin/clients", icon: "users" },
-  { label: "Users", href: "/admin/users", icon: "shield" },
+  { label: "Users", href: "/admin/users", icon: "user-check" },
 ];
 
 type AgentGroup = {
@@ -60,15 +60,15 @@ const AGENT_GROUPS: AgentGroup[] = [
   {
     label: "AI Agents",
     items: [
-      { label: "Creative", href: "/admin/agents/creative", icon: "palette" },
+      { label: "Art Direction", href: "/admin/agents/creative", icon: "palette" },
       { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
       { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
       { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
       { label: "SEO", href: "/admin/agents/seo", icon: "search" },
+      { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
       { label: "Social", href: "/admin/agents/social", icon: "share" },
       { label: "Video Script", href: "/admin/agents/video-script", icon: "video" },
       { label: "Proposals & Decks", href: "/admin/agents/proposal", icon: "file-text" },
-      { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
     ],
   },
 ];
@@ -108,6 +108,11 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
     shield: (
       <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    ),
+    "user-check": (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><polyline points="17 11 19 13 23 9" />
       </svg>
     ),
     share: (
@@ -211,7 +216,7 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
-      <div className="p-5 border-b border-neutral-300" onClick={onNavigate}>
+      <div className="p-4 border-b border-neutral-300" onClick={onNavigate}>
         <div className="inline-flex items-center gap-2">
           <Logo variant="dark" width={100} href="/admin" />
           <span className="text-xs font-medium text-neutral-500 bg-neutral-200 px-2 py-0.5 rounded-full">
