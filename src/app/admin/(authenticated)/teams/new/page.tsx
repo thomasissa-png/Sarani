@@ -88,6 +88,8 @@ export default function NewTeamPage() {
   // Form state
   const [name, setName] = useState("");
   const [clientId, setClientId] = useState("");
+  const [isNewClient, setIsNewClient] = useState(false);
+  const [customClientName, setCustomClientName] = useState("");
   const [brief, setBrief] = useState("");
 
   // Custom steps state
@@ -131,7 +133,8 @@ export default function NewTeamPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedTemplate || !clientId || !name.trim() || !brief.trim()) return;
+    const hasClient = isNewClient ? customClientName.trim().length > 0 : !!clientId;
+    if (!selectedTemplate || !hasClient || !name.trim() || !brief.trim()) return;
 
     if (isCustom) {
       const validSteps = customSteps.filter((s) => s.label.trim());
@@ -161,7 +164,8 @@ export default function NewTeamPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
-          clientId,
+          clientId: isNewClient ? undefined : clientId,
+          customClientName: isNewClient ? customClientName.trim() : undefined,
           templateType: selectedTemplate,
           brief: brief.trim(),
           steps: stepsPayload,
@@ -191,7 +195,7 @@ export default function NewTeamPage() {
 
   const formValid =
     name.trim().length > 0 &&
-    clientId.length > 0 &&
+    (isNewClient ? customClientName.trim().length > 0 : clientId.length > 0) &&
     brief.trim().length >= 20 &&
     customStepsValid;
 
@@ -426,20 +430,43 @@ export default function NewTeamPage() {
                 Loading clients...
               </div>
             ) : (
-              <select
-                id="team-client"
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                required
-              >
-                <option value="">-- Select a client --</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  id="team-client"
+                  value={isNewClient ? "__new__" : clientId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "__new__") {
+                      setIsNewClient(true);
+                      setClientId("");
+                      setCustomClientName("");
+                    } else {
+                      setIsNewClient(false);
+                      setClientId(val);
+                      setCustomClientName("");
+                    }
+                  }}
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  required
+                >
+                  <option value="">-- Select a client --</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                  <option value="__new__">Other / New client</option>
+                </select>
+                {isNewClient && (
+                  <input
+                    type="text"
+                    value={customClientName}
+                    onChange={(e) => setCustomClientName(e.target.value)}
+                    placeholder="Enter new client name..."
+                    className="w-full mt-2 px-4 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                  />
+                )}
+              </>
             )}
           </div>
 

@@ -136,7 +136,8 @@ export default function NewProjectPage() {
     setError(null);
     setResult(null);
 
-    if (!clientName || !projectName) {
+    const effectiveClientName = isNewClient ? customClientName.trim() : clientName;
+    if (!effectiveClientName || !projectName) {
       setError("Client and Project Name are required.");
       return;
     }
@@ -147,7 +148,7 @@ export default function NewProjectPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientName,
+          clientName: effectiveClientName,
           projectName,
           contactName: contactName || undefined,
           category: category || undefined,
@@ -178,12 +179,13 @@ export default function NewProjectPage() {
 
     setError(null);
     setCreating(true);
+    const effectiveClientName = isNewClient ? customClientName.trim() : clientName;
     try {
       const res = await fetch("/api/admin/integrations/create-project", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientName,
+          clientName: effectiveClientName,
           projectName,
           contactName: contactName || undefined,
           category: category || undefined,
@@ -257,8 +259,19 @@ export default function NewProjectPage() {
               Client <span className="text-error">*</span>
             </label>
             <select
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
+              value={isNewClient ? "__new__" : clientName}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "__new__") {
+                  setIsNewClient(true);
+                  setClientName("");
+                  setCustomClientName("");
+                } else {
+                  setIsNewClient(false);
+                  setClientName(val);
+                  setCustomClientName("");
+                }
+              }}
               className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
             >
               <option value="">Select a client...</option>
@@ -267,7 +280,17 @@ export default function NewProjectPage() {
                   {c.name}
                 </option>
               ))}
+              <option value="__new__">Other / New client</option>
             </select>
+            {isNewClient && (
+              <input
+                type="text"
+                value={customClientName}
+                onChange={(e) => setCustomClientName(e.target.value)}
+                placeholder="Enter new client name..."
+                className="w-full mt-2 px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            )}
             {clientName && (() => {
               const m = getMappingBySpaceName(clientName);
               const fallback = !m;

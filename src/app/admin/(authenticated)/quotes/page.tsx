@@ -76,7 +76,9 @@ function QuotesPage() {
 
   // Form state — select by ID, derive name
   const [selectedClientId, setSelectedClientId] = useState("");
-  const clientName = clients.find((c) => c.id === selectedClientId)?.name ?? "";
+  const [isNewClient, setIsNewClient] = useState(false);
+  const [customClientName, setCustomClientName] = useState("");
+  const clientName = isNewClient ? customClientName.trim() : (clients.find((c) => c.id === selectedClientId)?.name ?? "");
   const [contactName, setContactName] = useState("");
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
@@ -188,7 +190,8 @@ function QuotesPage() {
     setError(null);
     setSuccess(null);
 
-    if (!selectedClientId || !contactName || !projectName || !description || !scope) {
+    const hasClient = isNewClient ? customClientName.trim().length > 0 : !!selectedClientId;
+    if (!hasClient || !contactName || !projectName || !description || !scope) {
       setError("All fields are required.");
       return false;
     }
@@ -299,8 +302,19 @@ function QuotesPage() {
               Client <span className="text-error">*</span>
             </label>
             <select
-              value={selectedClientId}
-              onChange={(e) => setSelectedClientId(e.target.value)}
+              value={isNewClient ? "__new__" : selectedClientId}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "__new__") {
+                  setIsNewClient(true);
+                  setSelectedClientId("");
+                  setCustomClientName("");
+                } else {
+                  setIsNewClient(false);
+                  setSelectedClientId(val);
+                  setCustomClientName("");
+                }
+              }}
               className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
             >
               <option value="">Select a client...</option>
@@ -309,7 +323,17 @@ function QuotesPage() {
                   {c.name}
                 </option>
               ))}
+              <option value="__new__">Other / New client</option>
             </select>
+            {isNewClient && (
+              <input
+                type="text"
+                value={customClientName}
+                onChange={(e) => setCustomClientName(e.target.value)}
+                placeholder="Enter new client name..."
+                className="w-full mt-2 px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+              />
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-brand-black mb-1.5">
