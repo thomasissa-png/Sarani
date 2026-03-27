@@ -1,5 +1,3 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 import { db } from "../src/lib/db/index";
 import { clients, contractTemplates } from "../src/lib/db/schema";
@@ -8,7 +6,8 @@ import { clients, contractTemplates } from "../src/lib/db/schema";
  * Seed script — populates the Sarani back-office DB with real clients
  * and default contract templates.
  *
- * Automatically runs pending migrations before seeding.
+ * Runs essential schema migrations via raw SQL before seeding
+ * to ensure all columns exist regardless of Drizzle migrator state.
  *
  * Usage: npx tsx scripts/seed.ts
  */
@@ -589,21 +588,131 @@ Nom du compte : SARANI | IBAN : FR76 1695 8000 0173 0920 6520 229 | BIC : QNTOFR
   },
 ];
 
-async function runMigrations() {
+async function ensureSchema() {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error("DATABASE_URL environment variable is required");
   }
-  const migrationClient = postgres(connectionString, { max: 1 });
-  const migrationDb = drizzle(migrationClient);
-  console.log("Running pending migrations...");
-  await migrate(migrationDb, { migrationsFolder: "./drizzle" });
-  console.log("Migrations up to date.\n");
-  await migrationClient.end();
+  const sql = postgres(connectionString, { max: 1 });
+
+  console.log("Ensuring database schema is up to date...");
+
+  // Ensure all tables exist (idempotent — IF NOT EXISTS everywhere)
+  await sql.unsafe(`
+    -- Users table (migration 0002)
+    CREATE TABLE IF NOT EXISTS "users" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "email" text NOT NULL UNIQUE,
+      "password_hash" text NOT NULL,
+      "name" text NOT NULL,
+      "role" varchar(20) NOT NULL DEFAULT 'user',
+      "created_at" timestamp NOT NULL DEFAULT now(),
+      "updated_at" timestamp NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "idx_users_email" ON "users" ("email");
+
+    -- Sync cache (migration 0003)
+    CREATE TABLE IF NOT EXISTS "sync_cache" (
+      "key" TEXT PRIMARY KEY,
+      "source" VARCHAR(20) NOT NULL,
+      "data" JSONB NOT NULL,
+      "fetched_at" TIMESTAMP NOT NULL DEFAULT NOW(),
+      "ttl_seconds" INTEGER NOT NULL DEFAULT 300
+    );
+    CREATE INDEX IF NOT EXISTS "idx_sync_cache_source" ON "sync_cache" ("source");
+
+    -- Sync logs (migration 0003)
+    CREATE TABLE IF NOT EXISTS "sync_logs" (
+      "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      "source" VARCHAR(20) NOT NULL,
+      "action" VARCHAR(50) NOT NULL,
+      "entity_id" TEXT,
+      "payload" JSONB,
+      "status" VARCHAR(20) NOT NULL DEFAULT 'success',
+      "error" TEXT,
+      "created_at" TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS "idx_sync_logs_source" ON "sync_logs" ("source");
+    CREATE INDEX IF NOT EXISTS "idx_sync_logs_created_at" ON "sync_logs" ("created_at");
+
+    -- Quotes (migration 0003)
+    CREATE TABLE IF NOT EXISTS "quotes" (
+      "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      "client_name" TEXT NOT NULL,
+      "project_name" TEXT NOT NULL,
+      "items" JSONB NOT NULL,
+      "total" NUMERIC(12, 2) NOT NULL,
+      "currency" VARCHAR(3) NOT NULL DEFAULT 'EUR',
+      "pdf_url" TEXT,
+      "created_by" TEXT NOT NULL,
+      "created_at" TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS "idx_quotes_client_name" ON "quotes" ("client_name");
+    CREATE INDEX IF NOT EXISTS "idx_quotes_created_by" ON "quotes" ("created_by");
+
+    -- Project teams (migration 0006)
+    CREATE TABLE IF NOT EXISTS project_teams (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name TEXT NOT NULL,
+      client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      template_type VARCHAR(50),
+      brief TEXT NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'draft',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_project_teams_client ON project_teams(client_id);
+    CREATE INDEX IF NOT EXISTS idx_project_teams_status ON project_teams(status);
+
+    CREATE TABLE IF NOT EXISTS team_steps (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      team_id UUID NOT NULL REFERENCES project_teams(id) ON DELETE CASCADE,
+      step_order INTEGER NOT NULL,
+      agent_type VARCHAR(50) NOT NULL,
+      label TEXT NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      input JSONB,
+      output TEXT,
+      token_cost INTEGER,
+      started_at TIMESTAMP,
+      completed_at TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_team_steps_team ON team_steps(team_id);
+
+    CREATE TABLE IF NOT EXISTS team_deliverables (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      step_id UUID NOT NULL REFERENCES team_steps(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      content TEXT NOT NULL,
+      format VARCHAR(20) NOT NULL DEFAULT 'markdown',
+      version INTEGER NOT NULL DEFAULT 1,
+      rerun_comment TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_team_deliverables_step ON team_deliverables(step_id);
+  `);
+
+  // Add columns that may be missing (ALTER TABLE with DO block for safety)
+  await sql.unsafe(`
+    -- payment_terms_days on clients (migration 0005)
+    DO $$ BEGIN
+      ALTER TABLE "clients" ADD COLUMN "payment_terms_days" INTEGER DEFAULT 45;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+
+    -- quote_number on quotes (migration 0004)
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "quote_number" VARCHAR(20);
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `);
+
+  console.log("Schema up to date.\n");
+  await sql.end();
 }
 
 async function seed() {
-  await runMigrations();
+  await ensureSchema();
   console.log("Seeding Sarani clients...");
 
   for (const client of saraniClients) {
