@@ -112,7 +112,7 @@ export default function AboutPage() {
             don&apos;t negotiate.
           </p>
           <p className="text-lg leading-relaxed text-neutral-600">
-            In 2020, Thomas and the founding team built Sarani not as a response
+            In 2020, the founding team built Sarani not as a response
             to the pandemic, but as a response to a structural failure. The
             pandemic simply made it impossible to ignore.
           </p>
