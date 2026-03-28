@@ -317,18 +317,25 @@ export default async function ProjectPreviewPage({ params }: Props) {
           </div>
         ) : (
           <div className="space-y-14">
-            {batches.map((batch) => {
+            {/* Show batches in reverse order — highest batch = final delivery */}
+            {[...batches].reverse().map((batch, idx) => {
               const batchImages = batch.items.filter((i) =>
                 i.mimeType.startsWith("image/")
               );
               const batchPdfs = batch.items.filter(
                 (i) => i.mimeType === "application/pdf"
               );
+              const isFinal = idx === 0; // First after reverse = highest batch
 
               return (
                 <div key={batch.name}>
-                  <h3 className="text-lg font-semibold mb-5 text-white/80">
+                  <h3 className="text-lg font-semibold mb-5 text-white/80 flex items-center gap-3">
                     {formatBatchName(batch.name)}
+                    {isFinal && (
+                      <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-brand-flame/20 text-brand-flame">
+                        Final
+                      </span>
+                    )}
                   </h3>
 
                   {/* Image Grid */}
