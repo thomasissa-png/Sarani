@@ -185,7 +185,7 @@ function QuotesPage() {
 
     if (qProject) setProjectName(qProject);
     if (qContact) setContactName(qContact);
-    if (qCategory) setScope(qCategory);
+    // Don't use raw category (e.g. "EMEA") as scope — it will be overridden by prefill
     // Auto-create a line item from tracker data (fallback if prefill doesn't return items)
     if (qProject && qAmount && parseFloat(qAmount) > 0) {
       setItems([{
@@ -224,6 +224,16 @@ function QuotesPage() {
                 total: li.total,
               }))
             );
+          }
+
+          // Build scope from line items — a proper deliverables summary
+          if (prefill.lineItems.length > 0) {
+            const scopeLines = prefill.lineItems.map(
+              (li) => `${li.quantity}x ${li.description} (${li.unitPrice}€/unit)`
+            );
+            setScope(scopeLines.join("\n"));
+          } else if (qProject) {
+            setScope(`Creative production for ${qProject}`);
           }
 
           // Auto-set VAT based on client/division detection
