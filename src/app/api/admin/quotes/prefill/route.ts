@@ -9,6 +9,7 @@ import {
   SHAREPOINT_TRACKERS_DRIVE_ID,
   TRACKERS_BASE_PATH,
   CLIENT_MAPPINGS,
+  getMappingBySpaceName,
 } from "@/lib/integrations/config";
 import {
   findColumnIndex,
@@ -285,28 +286,41 @@ export async function GET(request: NextRequest) {
   try {
     const cached = await readCache<ClickUpTask[]>("tracker:clickup_all_tasks");
     if (cached?.data) {
-      // Fuzzy match: try exact, then includes both ways, then by space ID if we have a mapping
+      // Fuzzy match: try exact project name, then includes both ways
       const matchingTask = cached.data.find((task) => {
         const taskName = task.name.toLowerCase().trim();
         return taskName === projectLower || taskName.includes(projectLower) || projectLower.includes(taskName);
-      }) ?? cached.data.find((task) => {
-        // Secondary: match tasks belonging to the client's ClickUp space
-        // This helps when project names differ slightly between systems
-        const taskSpaceId = task.space?.id;
-        const clientMapping = CLIENT_MAPPINGS.find((m) => {
+      }) ?? (() => {
+        // Secondary: find the client's ClickUp space using getMappingBySpaceName (3-tier fuzzy match)
+        // This handles cases like "Bose" where the ClickUp space name may differ slightly
+        const clientMapping = getMappingBySpaceName(clientParam);
+        if (!clientMapping) return undefined;
+        // Also try matching clientParam directly against space names in CLIENT_MAPPINGS
+        // using includes/startsWith both ways for maximum coverage
+        const allMatchingSpaceIds = new Set<string>();
+        allMatchingSpaceIds.add(clientMapping.clickupSpaceId);
+        for (const m of CLIENT_MAPPINGS) {
           const spaceLower = m.clickupSpaceName.toLowerCase();
-          return (
+          if (spaceLower === "other customers") continue;
+          if (
             spaceLower === clientLower ||
             clientLower.includes(spaceLower) ||
-            spaceLower.includes(clientLower)
-          );
+            spaceLower.includes(clientLower) ||
+            clientLower.startsWith(spaceLower) ||
+            spaceLower.startsWith(clientLower)
+          ) {
+            allMatchingSpaceIds.add(m.clickupSpaceId);
+          }
+        }
+        // Within the client's space(s), try looser name matching
+        return cached.data.find((task) => {
+          const taskSpaceId = task.space?.id;
+          if (!taskSpaceId || !allMatchingSpaceIds.has(taskSpaceId)) return false;
+          const taskName = task.name.toLowerCase().trim();
+          const projectWords = projectLower.split(/[\s\-_]+/).filter((w) => w.length >= 3);
+          return projectWords.length > 0 && projectWords.every((word) => taskName.includes(word));
         });
-        if (!clientMapping || taskSpaceId !== clientMapping.clickupSpaceId) return false;
-        // Within the client's space, try looser name matching
-        const taskName = task.name.toLowerCase().trim();
-        const projectWords = projectLower.split(/[\s\-_]+/).filter((w) => w.length >= 3);
-        return projectWords.length > 0 && projectWords.every((word) => taskName.includes(word));
-      });
+      })();
 
       if (matchingTask?.description) {
         const cleaned = matchingTask.description.replace(/<[^>]+>/g, "").trim();
@@ -328,25 +342,39 @@ export async function GET(request: NextRequest) {
 
         if (briefSection) {
           // Clean: strip URLs, emoji headers, section headers, excessive whitespace
+          // IMPORTANT: strip section headers BEFORE joining lines, so they don't leak
+          // into sentences. Handles patterns like:
+          //   "Introduction/Goal of the project:"
+          //   "🌟 Deliverables:"
+          //   "BRANDING"
+          //   "Source Files:"
           const cleanedBrief = briefSection
             .split("\n")
             .filter((line) => {
               const trimmed = line.trim();
               if (!trimmed) return false;
-              // Strip lines starting with emoji
-              if (/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/u.test(trimmed)) return false;
-              // Strip section headers: lines ending with ":" or matching known header patterns
-              if (/^(introduction|goal|brief|deliverables|source files|branding|others|objective|scope|context|background|overview|description|requirements|assets|timeline|deadline|notes|instructions|reference|format|specifications)/i.test(trimmed) && /[:\-]?\s*$/.test(trimmed)) return false;
-              if (/^(introduction\s*\/?\s*goal)/i.test(trimmed)) return false;
-              // Strip ALL CAPS lines (section headers)
-              if (trimmed.length > 3 && trimmed === trimmed.toUpperCase() && /^[A-Z\s\-/:]+$/.test(trimmed)) return false;
-              // Strip lines that are ONLY a label ending with ":"
-              if (/^[A-Za-z\s\/]+:\s*$/.test(trimmed)) return false;
+              // Strip lines starting with emoji (broad Unicode emoji ranges)
+              if (/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/u.test(trimmed)) return false;
+              // Strip specific emoji characters that may not be caught by ranges
+              if (/^[🌟✈️🚚📍💬➡️🎯📋📦🎨📝🔗💡⚡🏆📸🖼️🎬📐]/u.test(trimmed)) return false;
+              // Strip "Introduction/Goal of the project:" and variants (with or without spaces around /)
+              if (/^introduction\s*[\/\-]\s*(goal|objective)/i.test(trimmed)) return false;
+              // Strip known section header patterns — match at start of line, optionally ending with ":"
+              if (/^(introduction|goal(\s+of\s+the\s+project)?|brief|deliverables|source\s*files?|branding|others|objective|scope|context|background|overview|description|requirements|assets|timeline|deadline|notes|instructions|reference|format|specifications|key\s*(information|details)|project\s*(details|info))\s*[:\-/]?\s*$/i.test(trimmed)) return false;
+              // Strip lines that start with a header keyword followed by ":" even with trailing text
+              // (catches "Introduction: " or "Goal of the project:" inline)
+              if (/^(introduction|goal|brief|deliverables|source\s*files?|branding|others|objective|scope|context|overview|description)\s*[\/\s]*(of\s+the\s+project)?\s*:\s*$/i.test(trimmed)) return false;
+              // Strip ALL CAPS lines (section headers) — at least 4 chars, all uppercase letters/spaces/punctuation
+              if (trimmed.length > 3 && trimmed === trimmed.toUpperCase() && /^[A-Z\s\-/:&]+$/.test(trimmed)) return false;
+              // Strip lines that are ONLY a label ending with ":" (e.g. "Source Files:", "Branding:")
+              if (/^[A-Za-z\s\/\-]+:\s*$/.test(trimmed)) return false;
+              // Strip bullet-style header lines like "- Deliverables:" or "• Branding:"
+              if (/^[\-•*]\s*[A-Za-z\s\/]+:\s*$/.test(trimmed)) return false;
               return true;
             })
             .join(" ")
             .replace(/https?:\/\/\S+/g, "")
-            .replace(/[🌟✈️🚚📍💬➡️]/g, "")
+            .replace(/[🌟✈️🚚📍💬➡️🎯📋📦🎨📝🔗💡⚡🏆📸🖼️🎬📐]/gu, "")
             .replace(/\s{2,}/g, " ")
             .trim()
             .slice(0, 500); // Cap at 500 chars — enough context without flooding
@@ -398,8 +426,18 @@ export async function GET(request: NextRequest) {
           const colProject = findColumnIndex(headers, COL_MAP.project);
           if (colProject === -1) continue;
 
-          // Find the row matching our project (skip header and price row)
-          for (let rowIdx = headerIdx + 2; rowIdx < values.length; rowIdx++) {
+          // Detect the actual price row (may not be headerIdx+1 if there's a sub-header)
+          const standardColIndicesForDetection = new Set<number>();
+          for (const aliases of Object.values(COL_MAP)) {
+            const idx = findColumnIndex(headers, aliases);
+            if (idx !== -1) standardColIndicesForDetection.add(idx);
+          }
+          const detectedPriceRowIdx = detectPriceRowIndex(values, headerIdx, standardColIndicesForDetection);
+
+          // Find the row matching our project — skip header row AND price row
+          // Start searching AFTER the detected price row to avoid treating it as a project
+          const projectSearchStart = Math.max(headerIdx + 2, detectedPriceRowIdx + 1);
+          for (let rowIdx = projectSearchStart; rowIdx < values.length; rowIdx++) {
             const row = values[rowIdx];
             const projectCell = cellToString(row[colProject]).toLowerCase().trim();
 
@@ -410,9 +448,8 @@ export async function GET(request: NextRequest) {
             ) {
               matchedSheetName = sheet.name;
 
-              // Extract asset line items: header = asset names, header+1 = unit prices, rowIdx = quantities
-              const priceRowIdx = headerIdx + 1;
-              const assetItems = extractAssetLineItems(values, headerIdx, priceRowIdx, rowIdx);
+              // Extract asset line items: header = asset names, detectedPriceRowIdx = unit prices, rowIdx = quantities
+              const assetItems = extractAssetLineItems(values, headerIdx, detectedPriceRowIdx, rowIdx);
               if (assetItems.length > 0) {
                 response.lineItems = assetItems;
                 response.sources.lineItems = "excel";
@@ -519,15 +556,20 @@ function buildPurpose(
 
   if (cleanBrief) {
     // BEST CASE: We have the ClickUp brief — extract the essence to show comprehension.
-    // Strip section header lines BEFORE splitting into sentences.
+    // Strip section header fragments BEFORE selecting sentences.
+    // The brief has already been line-filtered, but headers can still leak when
+    // a header line was on the same line as content (e.g., "Introduction/Goal: The project aims to...")
     const strippedBrief = cleanBrief
+      // First, remove any leading header pattern from the joined text
+      .replace(/^(introduction\s*[\/\-]\s*(goal(\s+of\s+the\s+project)?|objective)\s*[:\-]?\s*)/i, "")
+      .replace(/^(introduction|goal|brief|objective|overview|context|scope|description|deliverables)\s*[:\-\/]\s*/i, "")
       .split(/(?<=[.!?])\s+/)
       .filter((s) => {
         const trimmed = s.trim();
         if (trimmed.length <= 10) return false; // Skip very short fragments
-        // Skip lines that look like section headers leaked into sentences
-        if (/^(introduction|goal|brief|deliverables|source files|branding|others|objective|scope|context|overview)\s*[/:\-]/i.test(trimmed)) return false;
-        if (/^[A-Z\s\/]+:$/.test(trimmed)) return false;
+        // Skip fragments that ARE a section header (entire sentence is just a label)
+        if (/^(introduction|goal|brief|deliverables|source\s*files?|branding|others|objective|scope|context|overview|description)\s*[\/\-:\s]*(of\s+the\s+project)?\s*[:\-]?\s*$/i.test(trimmed)) return false;
+        if (/^[A-Z\s\/\-:]+$/.test(trimmed) && trimmed.length < 40) return false;
         return true;
       });
 

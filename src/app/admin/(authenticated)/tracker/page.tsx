@@ -9,18 +9,6 @@ import type {
 } from "@/types/integrations";
 import { CLICKUP_STATUS_MAPPINGS } from "@/lib/integrations/config";
 
-// ─── AI Outputs Types ──────────────────────────────────────────────────────
-
-type OutputsByProject = Record<string, { count: number; agents: string[] }>;
-
-function extractTaskId(url: string): string {
-  if (!url) return "";
-  const match = url.match(/\/t\/([a-zA-Z0-9]+)/);
-  if (match) return match[1];
-  const segments = url.split("/").filter(Boolean);
-  return segments[segments.length - 1] || "";
-}
-
 // ─── Sorting Types ──────────────────────────────────────────────────────────
 
 type SortableColumn = "client" | "project" | "status" | "totalValue" | "date";
@@ -171,10 +159,6 @@ export default function TrackerPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // AI outputs linked to tracker projects
-  const [outputsByProject, setOutputsByProject] =
-    useState<OutputsByProject>({});
-
   // Project preview links (Share Preview feature)
   // Maps projectId -> { url, previewId, isActive }
   const [previewLinks, setPreviewLinks] = useState<
@@ -189,12 +173,13 @@ export default function TrackerPage() {
     type: "success" | "error" | "warning";
   } | null>(null);
 
-  // Filters — default to Open + In progress only
+  // Filters — default to ClickUp-sourced projects only
   const [search, setSearch] = useState("");
   const [clientFilter, setClientFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("Active");
   const [invoiceFilter, setInvoiceFilter] = useState("All");
   const [countryFilter, setCountryFilter] = useState("All");
+  const [sourceFilter, setSourceFilter] = useState<"All" | "ClickUp" | "Excel Only">("ClickUp");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Column visibility (Fix #1 — reduce to 7 visible columns by default)
@@ -293,22 +278,15 @@ export default function TrackerPage() {
         // localStorage full or quota exceeded — ignore
       }
 
-      // Fetch status and AI outputs separately (non-blocking)
+      // Fetch status separately (non-blocking)
       try {
-        const [statusRes, outputsRes] = await Promise.all([
-          fetch("/api/admin/integrations/status"),
-          fetch("/api/admin/agents/outputs-by-project"),
-        ]);
+        const statusRes = await fetch("/api/admin/integrations/status");
         if (statusRes.ok) {
           const statusData: StatusResponse = await statusRes.json();
           setApiStatus(statusData);
         }
-        if (outputsRes.ok) {
-          const outputsData: OutputsByProject = await outputsRes.json();
-          setOutputsByProject(outputsData);
-        }
       } catch {
-        // Status and outputs are informational — ignore failures
+        // Status is informational — ignore failures
       }
     } catch (err) {
       // Only show error if we have NO data at all (neither from API nor from cache)
@@ -335,13 +313,12 @@ export default function TrackerPage() {
         throw new Error(syncErr.error || `Sync failed (${syncRes.status})`);
       }
 
-      // 2. Fetch fresh tracker data (force-refresh invalidates cache) + status + AI outputs
-      const [trackerRes, statusRes, outputsRes] = await Promise.all([
+      // 2. Fetch fresh tracker data (force-refresh invalidates cache) + status
+      const [trackerRes, statusRes] = await Promise.all([
         fetch("/api/admin/integrations/tracker", {
           headers: { "x-force-refresh": "true" },
         }),
         fetch("/api/admin/integrations/status"),
-        fetch("/api/admin/agents/outputs-by-project"),
       ]);
 
       if (!trackerRes.ok) {
@@ -359,10 +336,6 @@ export default function TrackerPage() {
       if (statusRes.ok) {
         const statusData: StatusResponse = await statusRes.json();
         setApiStatus(statusData);
-      }
-      if (outputsRes.ok) {
-        const outputsData: OutputsByProject = await outputsRes.json();
-        setOutputsByProject(outputsData);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -418,6 +391,9 @@ export default function TrackerPage() {
         }
       }
       if (countryFilter !== "All" && (p.country ?? "Other") !== countryFilter) return false;
+      // Source filter: ClickUp = has clickupTaskUrl, Excel Only = no clickupTaskUrl
+      if (sourceFilter === "ClickUp" && !p.clickupTaskUrl) return false;
+      if (sourceFilter === "Excel Only" && p.clickupTaskUrl) return false;
       return true;
     });
 
@@ -447,13 +423,13 @@ export default function TrackerPage() {
     }
 
     return filtered;
-  }, [data, search, clientFilter, statusFilter, invoiceFilter, countryFilter, sort]);
+  }, [data, search, clientFilter, statusFilter, invoiceFilter, countryFilter, sourceFilter, sort]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
     setPageInputValue("1");
-  }, [search, clientFilter, statusFilter, invoiceFilter, countryFilter]);
+  }, [search, clientFilter, statusFilter, invoiceFilter, countryFilter, sourceFilter]);
 
   // Sync page input with currentPage
   useEffect(() => {
@@ -489,7 +465,7 @@ export default function TrackerPage() {
   }, [filteredProjects.length, currentPage]);
 
   // Stats (Fix #9 — scoped to filtered projects when filters active)
-  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All" || countryFilter !== "All";
+  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All" || countryFilter !== "All" || sourceFilter !== "ClickUp";
   const stats = useMemo(() => {
     if (!data) return { total: 0, totalValue: 0, open: 0, overdue: 0, globalTotal: 0 };
     const source = filteredProjects;
@@ -513,6 +489,7 @@ export default function TrackerPage() {
     setStatusFilter("All");
     setInvoiceFilter("All");
     setCountryFilter("All");
+    setSourceFilter("All");
   }, []);
 
   // Toast auto-dismiss
@@ -636,8 +613,9 @@ export default function TrackerPage() {
     if (statusFilter !== "All") count++;
     if (invoiceFilter !== "All") count++;
     if (countryFilter !== "All") count++;
+    if (sourceFilter !== "All") count++;
     return count;
-  }, [clientFilter, statusFilter, invoiceFilter, countryFilter]);
+  }, [clientFilter, statusFilter, invoiceFilter, countryFilter, sourceFilter]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -847,6 +825,16 @@ export default function TrackerPage() {
               </option>
             ))}
           </select>
+          <select
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value as "All" | "ClickUp" | "Excel Only")}
+            aria-label="Filter by data source"
+            className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+          >
+            <option value="All">All Sources</option>
+            <option value="ClickUp">ClickUp</option>
+            <option value="Excel Only">Excel Only</option>
+          </select>
           {/* Fix #11 — Clear all filters link */}
           {(activeFilterCount > 0 || search !== "") && (
             <button
@@ -934,6 +922,16 @@ export default function TrackerPage() {
                       {s === "All" ? "All Invoices" : s}
                     </option>
                   ))}
+                </select>
+                <select
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value as "All" | "ClickUp" | "Excel Only")}
+                  aria-label="Filter by data source"
+                  className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                >
+                  <option value="All">All Sources</option>
+                  <option value="ClickUp">ClickUp</option>
+                  <option value="Excel Only">Excel Only</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-2">

@@ -644,7 +644,9 @@ function RelatedSection({
 export default function ProjectViewPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const id = params.id as string;
+  const rawId = params.id as string;
+  // Decode the composite ID (may be URL-encoded from the route param)
+  const id = decodeURIComponent(rawId);
 
   const [data, setData] = useState<ProjectDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -671,10 +673,11 @@ export default function ProjectViewPage() {
   })();
 
   // Derive client and project names from either query params or composite ID
-  const clientName = trackerInfo?.client || decodeURIComponent(id).split("::")[0] || "";
+  // id is already decoded above via decodeURIComponent(rawId)
+  const clientName = trackerInfo?.client || id.split("::")[0] || "";
   const projectName =
     trackerInfo?.project ||
-    decodeURIComponent(id).split("::").slice(1).join("::") ||
+    id.split("::").slice(1).join("::") ||
     "";
 
   const fetchData = useCallback(async () => {
