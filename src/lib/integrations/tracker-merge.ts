@@ -656,7 +656,8 @@ export function mergeData(
     });
   }
 
-  // Deduplicate by client+project (keep first occurrence — Excel-enriched wins over ClickUp-only)
+  // Deduplicate by client+project (Excel-enriched first since they have richer data from both sources)
+  // Then ClickUp-only fills remaining entries
   const seen = new Map<string, TrackerProject>();
   for (const p of [...excelMerged, ...clickupOnly]) {
     const key = `${p.client.toLowerCase().trim()}::${p.project.toLowerCase().trim()}`;

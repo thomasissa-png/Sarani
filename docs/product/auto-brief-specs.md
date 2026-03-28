@@ -408,3 +408,421 @@ Excel tracker data: {tracker_data}
 ```
 
 ---
+
+## 6. Client Response Generation
+
+### Principe fondateur : miroir de langue
+
+La réponse est **toujours dans la langue de l'email reçu**. Si Sophie écrit en français → réponse en français. Si en anglais → anglais. Si en espagnol → espagnol (via l'agent Translator si nécessaire). Jamais de réponse en français à un email en anglais.
+
+### Ton Sarani obligatoire
+
+- Dynamique, pro, cool, dispo
+- Jamais corporate ou robotique ("We acknowledge receipt of your request" = INTERDIT)
+- Prénom du client en ouverture obligatoire
+- Ponctuation naturelle — pas de listes bureaucratiques
+- Longueur : 4-6 phrases maximum. Court et percutant.
+
+### Structure de la réponse
+
+```
+[Salutation + prénom]
+[Phrase 1 : accusé de réception enthousiaste et spécifique au projet]
+[Phrase 2 : confirmation de compréhension du scope — montrer qu'on a lu]
+[Phrase 3 : confirmation deadline OU demande de précision si absente]
+[Phrase 4 : prochaines étapes Sarani (brief en cours, on revient avec questions)]
+[Signature Sarani]
+```
+
+### Exemples concrets
+
+**Email reçu en anglais :**
+```
+Hi Sophie!
+
+Thanks for reaching out about the Black Friday campaign — exciting stuff.
+We've got the banner brief and the 150-asset scope on our radar.
+We're targeting your Nov 20 deadline and will confirm feasibility by EOD.
+Brief is being prepped now — we'll come back to you with any questions within the hour.
+
+Thomas / Sarani Team
+```
+
+**Email reçu en français :**
+```
+Salut Sophie !
+
+Merci pour ce brief Black Friday — le projet a l'air vraiment sympa.
+On a bien noté la demande de 150 bannières et les formats requis.
+On cible ta deadline du 20 novembre et on te confirme la faisabilité aujourd'hui.
+Le brief est en cours de préparation — on revient vers toi avec les questions d'ici une heure.
+
+Thomas / L'équipe Sarani
+```
+
+### Prompt système réponse client
+
+```
+You are a Sarani client manager. Write a short, warm, professional email reply to a client.
+
+Rules:
+1. ALWAYS reply in the SAME language as the client's email. If French → French. If English → English.
+2. Use the client's first name in the opening. If unknown, use [FIRST NAME].
+3. Tone: dynamic, friendly, professional, available. NEVER corporate.
+4. Maximum 5 sentences. Short and punchy.
+5. Show you understood the specific project (mention project type + key detail).
+6. If deadline detected: confirm it. If no deadline: ask for it naturally.
+7. End with: "Thomas / Sarani Team" (or the appropriate client manager name).
+
+Client first name: {client_firstname}
+Email language detected: {language}
+Project type: {project_type}
+Key deliverables: {deliverables_summary}
+Deadline detected: {deadline}
+Is returning client: {is_returning_client}
+Client's original email:
+---
+{email_body}
+---
+```
+
+### Validation avant envoi
+
+La réponse générée est **toujours un draft** — jamais envoyée automatiquement. Thomas ou le client manager doit :
+1. Lire le draft (< 30 secondes)
+2. Éditer si nécessaire (champ texte inline)
+3. Cliquer "Send reply" pour déclencher l'envoi via Resend
+
+Un envoi automatique sans validation est explicitement interdit en v1.
+
+---
+
+## 7. Technical Architecture
+
+### Endpoints API
+
+#### POST /api/auto-brief/classify
+```json
+// Request
+{
+  "messageId": "string",
+  "from": "email",
+  "subject": "string",
+  "body": "string",
+  "attachments": ["filename1.pdf", "overview.png"]
+}
+
+// Response
+{
+  "classification": "client_brief | noise | uncertain | new_client_potential",
+  "confidence": 0.92,
+  "signals": ["domain_match", "keywords_brief"],
+  "clientId": "clickup_client_id | null",
+  "candidateProjects": [
+    { "id": "clickup_project_id", "name": "Sony — Q4 2025", "status": "active" }
+  ]
+}
+```
+
+#### POST /api/auto-brief/generate
+```json
+// Request
+{
+  "emailId": "string",
+  "clientId": "string | null",
+  "projectId": "string | null",
+  "emailBody": "string",
+  "emailLanguage": "fr | en | es | de | it | auto",
+  "attachments": ["string"],
+  "trackerData": { "type": "string", "quantity": 150, "format": "1080x1080" }
+}
+
+// Response
+{
+  "briefId": "uuid",
+  "sections": {
+    "introduction": "string",
+    "brief": "string",
+    "deliverables": "string",
+    "sourceFiles": "string",
+    "branding": "string",
+    "others": "string"
+  },
+  "deadline": "2025-11-20 | null",
+  "totalDeliverables": 150,
+  "ambiguousFields": ["deadline", "formats"],
+  "clientResponse": {
+    "language": "en",
+    "draft": "string",
+    "clientFirstname": "Sophie | null"
+  }
+}
+```
+
+#### POST /api/auto-brief/validate
+```json
+// Request
+{
+  "briefId": "uuid",
+  "briefSections": {},
+  "clientResponseDraft": "string",
+  "createClickUp": true,
+  "sendClientReply": true,
+  "clickUpWorkspaceId": "string",
+  "clickUpListId": "string"
+}
+
+// Response
+{
+  "status": "success | partial | failed",
+  "clickUpProjectId": "string | null",
+  "clickUpProjectUrl": "string | null",
+  "emailSentAt": "ISO8601 | null",
+  "errors": []
+}
+```
+
+### Matching logic ClickUp
+
+```typescript
+// Priorité de matching (ordre décroissant)
+// 1. domain_exact_match: email.from.domain === clickup_client.domain
+// 2. company_name_match: email.signature.company aprox clickup_client.name (fuzzy 0.85)
+// 3. email_history: previous emails from same sender linked to ClickUp project
+// 4. manual_mapping: Thomas a manuellement lié ce domaine à un client
+// Si aucun match → new_client_potential
+// Si 2+ matches → liste candidats soumis à sélection manuelle
+```
+
+### Intégration Excel tracker
+
+```typescript
+const TRACKER_COLUMN_MAP = {
+  type: ["type", "asset type", "deliverable type", "format type"],
+  quantity: ["quantity", "qty", "nb", "number", "count", "volume"],
+  format: ["format", "size", "dimensions", "spec"],
+  language: ["language", "lang", "locale", "version"],
+  deadline: ["deadline", "due date", "date", "delivery date"]
+}
+// Si colonne non trouvée → champ marqué [TO CONFIRM]
+// Si tracker absent → brief sans calcul auto + signal "Excel tracker unavailable"
+```
+
+### Modèle IA recommandé
+
+- **Classification** : Claude Haiku (latence faible, tâche simple, cible < 300ms)
+- **Génération brief** : Claude Sonnet (qualité de reformulation, connaissance du contexte Sarani)
+- **Génération réponse client** : Claude Sonnet (ton précis, miroir de langue)
+- **Fallback** : si API IA indisponible → classification basée sur règles uniquement (heuristiques section 4), brief en attente "IA unavailable — manual brief required"
+
+---
+
+## 8. UI Wireframes
+
+### Vue 1 — Inbox triée (/admin/inbox)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Inbox                                        [Filter] [Settings]│
+├─────────────────────────────────────────────────────────────────┤
+│  CLIENT BRIEF                                    3 new           │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ Sophie / Sony         "Black Friday banners"             │   │
+│  │   Received 14:32 · 150 assets detected · Nov 20          │   │
+│  │   [View & Validate →]                                    │   │
+│  ├──────────────────────────────────────────────────────────┤   │
+│  │ Marc / GEODIS         "Annual Report slides"             │   │
+│  │   Received 12:01 · 350 slides detected · ASAP            │   │
+│  │   [View & Validate →]                                    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  UNCERTAIN                                       2 items         │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │ info@newco.com         "Hello" — confidence 52%          │   │
+│  │   [Classify manually]                                    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+│  NOISE                                           12 ignored      │
+│  [Show ignored emails ▼]                                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Vue 2 — Validation brief (/admin/inbox/[briefId])
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ← Back to Inbox                                                  │
+│  Brief — Sony / Sophie Martin              Deadline: Nov 20      │
+│  ─────────────────────────────────────────────────────────────  │
+│  [TAB: BRIEF]  [TAB: CLIENT REPLY]  [TAB: ORIGINAL EMAIL]        │
+│                                                                  │
+│  ┌── Introduction / Goal ─────────────────── [Edit] ──────────┐ │
+│  │ Sony Music — Black Friday 2025 campaign. Digital banners   │ │
+│  │ for e-commerce (Amazon, Fnac, Darty). Target: FR market.   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ┌── Brief ───────────────────────────────── [Edit] ──────────┐ │
+│  │ Create 150 Black Friday promotional banners for Sony...    │ │
+│  │ [TO CONFIRM WITH CLIENT] — file format not specified       │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ┌── Deliverables ────────────────────────── [Edit] ──────────┐ │
+│  │ Banners x150 — 1080x1080 / 1200x628 / 320x50              │ │
+│  │ Total: 150 assets                                          │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ┌── Source Files / Branding / Others ──── [collapsed] ───────┐ │
+│  │ [Click to expand]                                          │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  WARNING: 2 fields marked [TO CONFIRM WITH CLIENT]              │
+│                                                                  │
+│  ─────────────────────────────────────────────────────────────  │
+│  [TAB: CLIENT REPLY]                                             │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ Hi Sophie!                                                 │ │
+│  │ Thanks for the Black Friday brief — exciting project.      │ │
+│  │ 150 banners, Nov 20 deadline — all noted...               │ │
+│  │                                          [Show AI draft]  │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+│  ClickUp:  (o) Create new project   ( ) Attach to existing      │
+│  Name:     [Sony — Black Friday 2025                          ]  │
+│                                                                  │
+│  [Cancel]        [Save draft]        [Validate & Launch →]       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Vue 3 — Confirmation post-validation
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Project launched                                               │
+│                                                                  │
+│  ClickUp project created  → Sony — Black Friday 2025 [open ↗]  │
+│  Client reply sent        → Sophie Martin at 14:47              │
+│  Brief archived           → [View brief ↗]                      │
+│                                                                  │
+│  [Back to Inbox]                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 9. Edge Cases
+
+| Scenario | Expected behavior |
+|---|---|
+| **Email forward** (Fwd: Re: Re:) | Extraire l'email original. Mentionner dans le brief "Brief forwarded by [name] from [original sender]". |
+| **Thread email** (10+ messages) | Analyser le dernier message + le premier du thread. Ignorer les messages intermédiaires. |
+| **Email vague** ("Can you help with something?") | Classifié `uncertain`. Si Thomas reclassifie en `client_brief` → brief avec toutes sections `[TO CONFIRM]` + réponse client demandant les détails. |
+| **Multi-projets dans un email** (deux campagnes distinctes) | Détecter les deux projets. Proposer 2 briefs séparés — ne pas fusionner. Thomas confirme. |
+| **Pas de deadline** | Section Deliverables : "Deadline: TBC — to confirm with client". Réponse client : demander la deadline naturellement. Ne jamais inventer de date. |
+| **Email avec uniquement des pièces jointes** | Classifié `uncertain` + flag "Attachment only — manual review required". Brief impossible à générer sans texte extractible. |
+| **Deux emails identiques du même client en 1h** | Traitement séparé. Si même sujet → alerte "Potential duplicate — see also [emailId]". Thomas décide de fusionner. |
+| **Email en langue non couverte** (japonais, arabe) | Brief en anglais via traduction IA. Réponse : flag "Response language: [langue] — verify via Translator agent". |
+| **Lien SharePoint authentifié** (URL directe navigateur) | Signaler dans Source Files : "SharePoint link requires auth — convert to Anyone link". Afficher l'URL avec badge WARNING. |
+| **Email de révision** ("Can you change the colors?") | Détecter mots-clés révision (change, modify, update, revise). Classifier `revision_request`. Proposer d'attacher au projet ClickUp existant comme commentaire, pas nouveau brief. |
+
+---
+
+## 10. Handoff → @fullstack
+
+### Fichiers existants à utiliser (ne pas recréer)
+
+- `src/lib/integrations/email.ts` — webhook email existant. Étendre avec le pipeline de classification.
+- `src/lib/brief-templates.ts` — templates 6 sections. Source de vérité du format brief et des emojis.
+- Client ClickUp existant — réutiliser `CLICKUP_API_KEY` + `CLICKUP_WORKSPACE_ID`.
+- Client Resend existant — réutiliser pour l'envoi de la réponse client.
+- SharePoint integration — vérifier les liens "Anyone" obligatoires (règle absolue project-context.md).
+
+### Nouveaux fichiers à créer
+
+```
+src/
+├── app/api/auto-brief/
+│   ├── classify/route.ts        POST /api/auto-brief/classify
+│   ├── generate/route.ts        POST /api/auto-brief/generate
+│   └── validate/route.ts        POST /api/auto-brief/validate
+├── lib/auto-brief/
+│   ├── classifier.ts            Logique de classification (règles + IA)
+│   ├── brief-generator.ts       Appel Claude Sonnet + parsing 6 sections
+│   ├── response-generator.ts    Génération réponse client (miroir langue)
+│   ├── clickup-matcher.ts       Matching domaine email → projet ClickUp
+│   └── tracker-parser.ts        Parser Excel tracker → livrables structurés
+├── app/admin/inbox/
+│   ├── page.tsx                 Vue 1 : Inbox triée
+│   └── [briefId]/page.tsx       Vue 2 : Validation brief
+└── components/admin/
+    ├── InboxList.tsx             Liste emails par classification
+    ├── BriefPreview.tsx          Preview 6 sections éditable inline
+    ├── ClientReplyEditor.tsx     Draft réponse + bouton Send
+    └── ValidationConfirm.tsx    Vue 3 : confirmation post-validation
+```
+
+### Ordre d'implémentation (dépendances strictes)
+
+1. `classifier.ts` + `/api/auto-brief/classify` — fondation, rien ne fonctionne sans
+2. `clickup-matcher.ts` — dépend du client ClickUp existant
+3. `brief-generator.ts` + `/api/auto-brief/generate` — dépend de classifier + matcher
+4. `response-generator.ts` — parallèle à brief-generator, pas de dépendance
+5. Routes `/admin/inbox` et `/admin/inbox/[briefId]` — dépendent des 3 endpoints
+6. `/api/auto-brief/validate` — dernière étape, agrège tout
+
+### Variables d'environnement à ajouter
+
+```bash
+CLAUDE_API_KEY=                          # génération brief + réponse
+AUTO_BRIEF_MODEL=claude-sonnet-4-6       # génération (qualité)
+AUTO_BRIEF_CLASSIFIER_MODEL=claude-haiku-3  # classification (latence)
+# CLICKUP_API_KEY et RESEND_API_KEY déjà présents — réutiliser
+```
+
+### Contraintes de performance
+
+- Classification : < 300ms (modèle léger obligatoire)
+- Génération brief : < 8 secondes (afficher progress bar pendant la génération)
+- Envoi email Resend : < 2 secondes
+- Création projet ClickUp : < 3 secondes
+- Timeout global validation : 15 secondes — au-delà, erreur gracieuse avec retry
+
+### Points d'attention critiques (@fullstack doit relire)
+
+1. **Jamais d'envoi auto** — `sendClientReply` dans `/api/auto-brief/validate` ne peut être `true` que si Thomas a explicitement cliqué "Send reply" dans l'UI
+2. **SharePoint "Anyone" links** — détecter les URLs SharePoint directes (pattern `sharepoint.com/.../:u:/r/`) et afficher un badge WARNING dans le brief preview
+3. **Doublons** — détecter via header `Message-ID` de l'email source, pas via le sujet ou le corps
+4. **Langue miroir** — détecter la langue de l'email avec `franc` (npm) ou via l'API Claude, jamais avec une liste de mots-clés hardcodée
+5. **Brief original conservé** — stocker l'email source brut en base (non modifiable), accessible via le tab "Original Email" dans la vue validation
+
+---
+
+## Hypothèses à valider
+
+| Hypothèse | Niveau de preuve | Test de validation | Statut |
+|---|---|---|---|
+| Le domaine email client = domaine ClickUp dans 80%+ des cas | Faible | Croiser les clients ClickUp actuels avec les domaines des emails reçus | A valider avec Thomas |
+| Thomas préfère valider chaque réponse avant envoi | Fort (décision explicite) | N/A | Validé |
+| 8 secondes de génération sont acceptables pour l'UX back-office | Moyen | Test utilisateur avec Thomas sur prototype | A valider |
+| Le format 6 sections emoji est compris sans explication par les 35 experts | Fort (format déjà en production) | N/A | Validé |
+
+---
+
+**Handoff → @fullstack**
+
+Fichiers produits :
+- `/home/user/Sarani/docs/product/auto-brief-specs.md`
+
+Décisions prises :
+- Jamais d'envoi automatique — validation humaine obligatoire avant tout envoi (réponse client ET création ClickUp)
+- Brief toujours en anglais (langue de travail Sarani internationale), réponse client en miroir de langue de l'email reçu
+- Réponse client : prénom obligatoire en ouverture, ton Sarani défini avec exemples concrets (section 6)
+- Classification par score pondéré : domaine 40% + mots-clés 40% + structure 20%. Seuil : >= 0.8 = client_brief, 0.5-0.8 = uncertain, < 0.5 = noise
+- 3 endpoints API distincts : classify / generate / validate (payloads complets en section 7)
+- Modèle Haiku pour classification (latence), Sonnet pour génération brief et réponse client
+
+Points d'attention :
+- Réutiliser `src/lib/integrations/email.ts` et `src/lib/brief-templates.ts` existants — ne pas recréer
+- Règle SharePoint "Anyone" links obligatoire — détecter et signaler les URLs directes (section 9, edge case SharePoint)
+- Doublons via `Message-ID` email header (pas le sujet)
+- Ordre d'implémentation documenté en section 10 par dépendances strictes
+- Variables d'environnement listées — `CLAUDE_API_KEY` + deux modèles distincts à configurer
