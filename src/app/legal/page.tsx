@@ -160,7 +160,7 @@ export default function LegalPage() {
             </h3>
             <ul className="list-inside list-disc space-y-1 text-neutral-600">
               <li>Replit, Inc. (hosting) — United States</li>
-              <li>Email service provider — to be confirmed</li>
+              <li>Resend, Inc. (transactional email) — United States</li>
             </ul>
           </section>
 

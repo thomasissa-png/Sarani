@@ -77,10 +77,10 @@ describe("contactFormSchema — required fields", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects missing attribution", () => {
+  it("accepts missing attribution (optional field)", () => {
     const { attribution, ...data } = validPayload();
     const result = contactFormSchema.safeParse(data);
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 });
 

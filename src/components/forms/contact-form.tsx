@@ -151,7 +151,7 @@ export function ContactForm() {
       if (response.ok) {
         track("form_submit", {
           company_size: data.companySize,
-          attribution: data.attribution,
+          attribution: data.attribution ?? "not_specified",
           page: "/contact",
           device: getDevice(),
         });
@@ -430,7 +430,7 @@ export function ContactForm() {
       {/* Attribution */}
       <div>
         <label htmlFor="contact-attribution" className={labelStyles}>
-          How did you hear about us? <span className="text-error">*</span>
+          How did you hear about us?
         </label>
         <select
           id="contact-attribution"

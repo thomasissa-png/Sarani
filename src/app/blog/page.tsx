@@ -29,7 +29,7 @@ export default function BlogPage() {
           Insights
         </p>
         <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
-          Insights from 5 Continents
+          Enterprise Creative Production Blog
         </h1>
         <p className="mb-10 max-w-2xl text-lg leading-relaxed text-neutral-600">
           How enterprise teams like TikTok, Sony, and GEODIS scale creative

@@ -56,9 +56,7 @@ export const contactFormSchema = z.object({
   companySize: z.enum(COMPANY_SIZE_OPTIONS, {
     error: "This field is required.",
   }),
-  attribution: z.enum(ATTRIBUTION_OPTIONS, {
-    error: "This field is required.",
-  }),
+  attribution: z.enum(ATTRIBUTION_OPTIONS).optional(),
   honeypot: z.string().max(0).optional(),
 });
 

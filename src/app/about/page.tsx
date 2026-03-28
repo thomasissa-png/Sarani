@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { ClientLogos } from "@/components/home/client-logos";
@@ -39,6 +40,7 @@ type ProofPoint = {
   challenge: string;
   result: string;
   metric: string;
+  slug: string;
 };
 
 const PROOF_POINTS: ProofPoint[] = [
@@ -47,18 +49,21 @@ const PROOF_POINTS: ProofPoint[] = [
     challenge: "1,500+ video edits needed every month across 10+ markets",
     result: "Delivered on time. Every month. 3 years running. 400M+ total campaign views.",
     metric: "1,500+/mo",
+    slug: "tiktok-video-production",
   },
   {
     client: "Sony",
     challenge: "125 assets for European TV launch across 15 languages — daily Japan HQ approval",
     result: "Day/night relay production over 2 weeks. 8,500\u20AC total.",
     metric: "125 assets",
+    slug: "sony-tv-launch",
   },
   {
     client: "GEODIS",
     challenge: "350 presentations to rebrand in 3 weeks",
     result: "5,700 slides delivered. 8,500\u20AC. Previous agency quoted 80,000\u20AC.",
     metric: "3 weeks",
+    slug: "geodis-presentation-rebranding",
   },
 ];
 
@@ -224,9 +229,10 @@ export default function AboutPage() {
 
           <div className="grid gap-6 sm:grid-cols-3">
             {PROOF_POINTS.map((proof) => (
-              <div
+              <Link
                 key={proof.client}
-                className="rounded-lg border border-neutral-200 bg-white p-6"
+                href={`/work/${proof.slug}`}
+                className="block rounded-lg border border-neutral-200 bg-white p-6 transition-all hover:shadow-md hover:border-brand-flame/40"
               >
                 <p className="mb-1 text-sm font-medium uppercase tracking-wider text-brand-flame">
                   {proof.client}
@@ -240,7 +246,7 @@ export default function AboutPage() {
                 <p className="text-base font-medium leading-relaxed text-brand-black">
                   {proof.result}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
 
