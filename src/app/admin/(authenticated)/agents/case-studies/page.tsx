@@ -131,6 +131,14 @@ export default function CaseStudiesPage() {
     fetchCandidates();
   }, [fetchCandidates]);
 
+  // Auto-poll when any candidate is "generating"
+  useEffect(() => {
+    const hasGenerating = candidates.some((c) => c.status === "generating");
+    if (!hasGenerating) return;
+    const interval = setInterval(fetchCandidates, 5000);
+    return () => clearInterval(interval);
+  }, [candidates, fetchCandidates]);
+
   // ─── Scan action ────────────────────────────────────────────────────────
 
   const runScan = useCallback(async () => {

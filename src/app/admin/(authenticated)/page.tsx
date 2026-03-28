@@ -154,7 +154,7 @@ export default async function AdminDashboardPage() {
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           <QuickActionCard
-            label="Quick Brief"
+            label="Project Brief"
             href="/admin/quick-brief"
             description="Paste & analyze"
           />

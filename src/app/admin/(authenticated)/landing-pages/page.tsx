@@ -136,6 +136,14 @@ export default function LandingPagesPage() {
     fetchPages();
   }, [fetchPages]);
 
+  // Auto-poll when any page is "generating"
+  useEffect(() => {
+    const hasGenerating = pages.some((p) => p.status === "generating");
+    if (!hasGenerating) return;
+    const interval = setInterval(fetchPages, 5000);
+    return () => clearInterval(interval);
+  }, [pages, fetchPages]);
+
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);

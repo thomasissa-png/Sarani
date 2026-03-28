@@ -144,6 +144,14 @@ export default function StoryboardsPage() {
     fetchStoryboards();
   }, [fetchStoryboards]);
 
+  // Auto-poll when any storyboard is "generating"
+  useEffect(() => {
+    const hasGenerating = storyboards.some((s) => s.status === "generating");
+    if (!hasGenerating) return;
+    const interval = setInterval(fetchStoryboards, 5000);
+    return () => clearInterval(interval);
+  }, [storyboards, fetchStoryboards]);
+
   useEffect(() => {
     if (showForm && clientsList.length === 0) {
       fetchClients();
