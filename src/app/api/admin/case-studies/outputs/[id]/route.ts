@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { caseStudyOutputs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { OUTPUT_TYPE_SCHEMAS, type OutputType } from "@/lib/case-studies/schemas";
 
 /**
  * PATCH /api/admin/case-studies/outputs/:id
@@ -30,6 +31,24 @@ export async function PATCH(
 
     if (!existing) {
       return NextResponse.json({ error: "Output not found" }, { status: 404 });
+    }
+
+    // Validate content against the output type schema
+    const schema = OUTPUT_TYPE_SCHEMAS[existing.outputType as OutputType];
+    if (schema) {
+      const parsed = schema.safeParse(body.content);
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            error: "Content validation failed",
+            details: parsed.error.issues.map((i) => ({
+              path: i.path.join("."),
+              message: i.message,
+            })),
+          },
+          { status: 422 }
+        );
+      }
     }
 
     // Append to version history

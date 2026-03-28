@@ -4,6 +4,7 @@ import { caseStudyOutputs, caseStudyCandidates } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
+import { OUTPUT_TYPE_SCHEMAS, type OutputType } from "@/lib/case-studies/schemas";
 
 /**
  * POST /api/admin/case-studies/outputs/:id/regenerate
@@ -98,7 +99,25 @@ Regenerate the ${typeLabel} applying ONLY the instruction in the user_instructio
       timeout: 30_000,
     });
 
-    // 4. Version history
+    // 4. Validate regenerated content against output type schema
+    const schema = OUTPUT_TYPE_SCHEMAS[output.outputType as OutputType];
+    if (schema) {
+      const parsed = schema.safeParse(result.data);
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            error: "Regenerated content failed validation",
+            details: parsed.error.issues.map((i) => ({
+              path: i.path.join("."),
+              message: i.message,
+            })),
+          },
+          { status: 422 }
+        );
+      }
+    }
+
+    // 5. Version history
     const versions = Array.isArray(output.versions) ? [...output.versions] : [];
     if (versions.length >= 5) {
       versions.shift(); // Keep max 5 versions
@@ -112,7 +131,7 @@ Regenerate the ${typeLabel} applying ONLY the instruction in the user_instructio
       instruction,
     });
 
-    // 5. Update DB
+    // 6. Update DB
     const [updated] = await db
       .update(caseStudyOutputs)
       .set({

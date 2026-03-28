@@ -4,66 +4,7 @@ import { caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
-import { z } from "zod";
-
-// ─── Zod schemas for LLM output validation ────────────────────────────────
-
-const CaseStudyCategorySchema = z.enum([
-  "Video & Social",
-  "Graphic Design",
-  "Event",
-  "Multilingual",
-  "Out-of-Home",
-]);
-
-const CaseStudyStatSchema = z.object({
-  label: z.string().min(1),
-  value: z.string().min(1),
-});
-
-const CaseStudyOutputSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  client: z.string().min(1),
-  deliverable: z.string().min(1),
-  volume: z.string().min(1),
-  turnaround: z.string().min(1),
-  outcome: z.string().min(1),
-  brief: z.string().min(10),
-  result: z.string().min(10),
-  headline: z.string().min(5),
-  keyMetric: z.string().min(1),
-  stats: z.tuple([CaseStudyStatSchema, CaseStudyStatSchema, CaseStudyStatSchema]),
-  metaDescription: z.string().min(50).max(160),
-  category: CaseStudyCategorySchema,
-  subtitle: z.string().optional(),
-  challenge: z.string().optional(),
-  solution: z.string().optional(),
-  resultsDetail: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-});
-
-const LinkedInPostSchema = z.object({
-  hook: z.string().min(1),
-  body: z.string().min(10),
-  proofPoints: z.string().min(1),
-  hashtags: z.string().min(1),
-  charCount: z.number(),
-});
-
-const NurturingEmailSchema = z.object({
-  subject: z.string().min(1).max(60),
-  body: z.string().min(50),
-  ctaText: z.string().min(1),
-  suggestedSegment: z.string().min(1),
-});
-
-const GenerationOutputSchema = z.object({
-  caseStudy: CaseStudyOutputSchema,
-  linkedInPost: LinkedInPostSchema,
-  nurturingEmail: NurturingEmailSchema,
-});
-
-type GenerationOutput = z.infer<typeof GenerationOutputSchema>;
+import { GenerationOutputSchema, type GenerationOutput } from "@/lib/case-studies/schemas";
 
 // ─── System prompt ─────────────────────────────────────────────────────────
 
