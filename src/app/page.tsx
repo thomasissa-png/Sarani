@@ -31,7 +31,21 @@ export default function HomePage() {
         aria-label="Hero"
         className="relative flex min-h-dvh flex-col items-center justify-center bg-brand-white pt-[var(--header-height)]"
       >
-        <AnimatedHeroDots />
+        {/* Desktop: real work grid instead of decorative dots */}
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 hidden lg:grid grid-cols-2 gap-3 w-[380px] xl:w-[440px] opacity-90">
+          <div className="aspect-[4/3] overflow-hidden rounded-xl">
+            <img src="/images/hero-adidas-arena.png" alt="Adidas Superstar Concert" className="h-full w-full object-cover" loading="eager" />
+          </div>
+          <div className="aspect-[4/3] overflow-hidden rounded-xl">
+            <img src="/images/hero-lego.png" alt="LEGO Champs-Élysées campaign" className="h-full w-full object-cover" loading="eager" />
+          </div>
+          <div className="aspect-[4/3] overflow-hidden rounded-xl">
+            <img src="/images/case-sony-blackfriday.png" alt="Sony Black Friday banners" className="h-full w-full object-cover" loading="eager" />
+          </div>
+          <div className="aspect-[4/3] overflow-hidden rounded-xl">
+            <img src="/images/case-tiktok-gimmethemic.png" alt="TikTok GimmeTheMic" className="h-full w-full object-cover" loading="eager" />
+          </div>
+        </div>
         <AnimatedHeroContent />
 
         {/* Client logos — trust strip above the fold */}
