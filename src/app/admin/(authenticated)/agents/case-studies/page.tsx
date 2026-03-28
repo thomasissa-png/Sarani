@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { CaseStudyCandidate } from "@/lib/db/schema";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ function getScoreColor(score: number): string {
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function CaseStudiesPage() {
+  const router = useRouter();
   const [candidates, setCandidates] = useState<CaseStudyCandidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +179,40 @@ export default function CaseStudiesPage() {
         await fetchCandidates();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Update failed");
+      } finally {
+        setActionLoading((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    },
+    [fetchCandidates]
+  );
+
+  // ─── Generate action (real LLM) ──────────────────────────────────────
+
+  const generateCaseStudy = useCallback(
+    async (id: string, force: boolean = false) => {
+      setActionLoading((prev) => new Set(prev).add(id));
+      try {
+        const res = await fetch(
+          `/api/admin/case-studies/candidates/${id}/generate`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ force }),
+          }
+        );
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(
+            errData.error || `Generation failed (${res.status})`
+          );
+        }
+        await fetchCandidates();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Generation failed");
       } finally {
         setActionLoading((prev) => {
           const next = new Set(prev);
@@ -454,7 +490,8 @@ export default function CaseStudiesPage() {
                 {candidates.map((c, i) => (
                   <tr
                     key={c.id}
-                    className={`border-b border-neutral-100 hover:bg-neutral-50 transition-colors ${
+                    onClick={() => router.push(`/admin/agents/case-studies/${c.id}`)}
+                    className={`border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer ${
                       i % 2 === 0 ? "bg-white" : "bg-neutral-50/50"
                     }`}
                   >
@@ -516,16 +553,17 @@ export default function CaseStudiesPage() {
                     {/* Actions */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
-                        {/* Generate (mock) — only for suggested/ignored */}
+                        {/* Generate — only for suggested/ignored */}
                         {(c.status === "suggested" ||
                           c.status === "ignored") && (
                           <button
-                            onClick={() =>
-                              updateStatus(c.id, "generated")
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              generateCaseStudy(c.id, c.scoreTotal < 70);
+                            }}
                             disabled={actionLoading.has(c.id)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-black text-white text-xs font-medium rounded-md hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Generate case study (mock)"
+                            title="Generate case study with AI"
                           >
                             {actionLoading.has(c.id) ? (
                               <svg
@@ -558,11 +596,12 @@ export default function CaseStudiesPage() {
                         {c.status !== "excluded" &&
                           c.status !== "published" && (
                             <button
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 updateStatus(c.id, "excluded", {
                                   excludedReason: "Not representative",
-                                })
-                              }
+                                });
+                              }}
                               disabled={actionLoading.has(c.id)}
                               className="inline-flex items-center gap-1 px-2.5 py-1 border border-neutral-300 text-neutral-600 text-xs font-medium rounded-md hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               title="Exclude from pipeline"
@@ -574,9 +613,10 @@ export default function CaseStudiesPage() {
                         {/* Restore — for excluded candidates */}
                         {c.status === "excluded" && (
                           <button
-                            onClick={() =>
-                              updateStatus(c.id, "suggested")
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateStatus(c.id, "suggested");
+                            }}
                             disabled={actionLoading.has(c.id)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 border border-neutral-300 text-neutral-600 text-xs font-medium rounded-md hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Restore to pipeline"
@@ -588,9 +628,10 @@ export default function CaseStudiesPage() {
                         {/* Mark as Reviewed — for generated */}
                         {c.status === "generated" && (
                           <button
-                            onClick={() =>
-                              updateStatus(c.id, "reviewed")
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              updateStatus(c.id, "reviewed");
+                            }}
                             disabled={actionLoading.has(c.id)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 border border-emerald-300 text-emerald-700 text-xs font-medium rounded-md hover:bg-emerald-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Mark as reviewed"
@@ -602,14 +643,15 @@ export default function CaseStudiesPage() {
                         {/* Publish — for reviewed */}
                         {c.status === "reviewed" && (
                           <button
-                            onClick={() =>
-                              updateStatus(c.id, "published")
-                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/admin/agents/case-studies/${c.id}`);
+                            }}
                             disabled={actionLoading.has(c.id)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-700 text-white text-xs font-medium rounded-md hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Publish case study"
+                            title="View and publish case study"
                           >
-                            Publish
+                            View & Publish
                           </button>
                         )}
                       </div>

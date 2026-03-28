@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { caseStudyCandidates } from "@/lib/db/schema";
+import { caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 const VALID_STATUSES = [
@@ -14,6 +14,54 @@ const VALID_STATUSES = [
 ] as const;
 
 type CandidateStatus = (typeof VALID_STATUSES)[number];
+
+/**
+ * GET /api/admin/case-studies/candidates/:id
+ * Fetch single candidate with all its generated outputs.
+ */
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const [candidate] = await db
+      .select()
+      .from(caseStudyCandidates)
+      .where(eq(caseStudyCandidates.id, id))
+      .limit(1);
+
+    if (!candidate) {
+      return NextResponse.json(
+        { error: "Candidate not found" },
+        { status: 404 }
+      );
+    }
+
+    const outputs = await db
+      .select()
+      .from(caseStudyOutputs)
+      .where(eq(caseStudyOutputs.candidateId, id));
+
+    return NextResponse.json({
+      ...candidate,
+      outputs: {
+        caseStudy: outputs.find((o) => o.outputType === "case_study") ?? null,
+        linkedInPost:
+          outputs.find((o) => o.outputType === "linkedin_post") ?? null,
+        nurturingEmail:
+          outputs.find((o) => o.outputType === "nurturing_email") ?? null,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching candidate:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch candidate" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function PATCH(
   request: NextRequest,
