@@ -200,7 +200,7 @@ async function fetchBatches(
           name: item.name,
           // Use the pre-authenticated download URL if available (expires ~1h),
           // fall back to webUrl (requires auth — won't display on public page)
-          webUrl: (item as Record<string, unknown>)["@microsoft.graph.downloadUrl"] as string || item.webUrl,
+          webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
           mimeType: item.file!.mimeType,
           size: item.size,
         }));
