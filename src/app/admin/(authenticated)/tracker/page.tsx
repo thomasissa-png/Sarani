@@ -1061,9 +1061,9 @@ export default function TrackerPage() {
               <caption className="sr-only">Project tracker data</caption>
               <thead>
                 <tr className="border-b border-neutral-200 text-left">
-                  <SortableTh column="client" sort={sort} onToggle={toggleSort} className="w-[15%]">Client</SortableTh>
-                  <Th className="w-[8%]">Country</Th>
-                  <SortableTh column="project" sort={sort} onToggle={toggleSort} className="w-[22%]">Project</SortableTh>
+                  <SortableTh column="client" sort={sort} onToggle={toggleSort} className="w-[10%]">Client</SortableTh>
+                  <Th className="w-[6%]">Country</Th>
+                  <SortableTh column="project" sort={sort} onToggle={toggleSort} className="w-[24%]">Project</SortableTh>
                   {!hiddenColumns.has("contact") && <Th>Contact</Th>}
                   <SortableTh column="status" sort={sort} onToggle={toggleSort} className="w-[8%]">Status</SortableTh>
                   {!hiddenColumns.has("category") && <Th>Category</Th>}
@@ -1160,10 +1160,6 @@ export default function TrackerPage() {
                             isLoading={previewLoading === getProjectId(p)}
                             onShare={handleSharePreview}
                             onDeactivate={handleDeactivatePreview}
-                          />
-                          <LaunchAgentDropdown
-                            clientName={p.client}
-                            projectName={p.project}
                           />
                           <SecondaryActionsDropdown project={p} />
                         </div>
@@ -1293,10 +1289,6 @@ export default function TrackerPage() {
                   isLoading={previewLoading === getProjectId(p)}
                   onShare={handleSharePreview}
                   onDeactivate={handleDeactivatePreview}
-                />
-                <LaunchAgentDropdown
-                  clientName={p.client}
-                  projectName={p.project}
                 />
                 <SecondaryActionsDropdown project={p} />
               </div>
@@ -1548,63 +1540,6 @@ function FolderIcon() {
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
-  );
-}
-
-// ─── Launch Agent Dropdown ─────────────────────────────────────────────────
-
-const AGENT_LINKS = [
-  { label: "Copywriter", href: "/admin/agents/copywriter" },
-  { label: "Art Direction", href: "/admin/agents/creative" },
-  { label: "Translator", href: "/admin/agents/translator" },
-  { label: "Video Script", href: "/admin/agents/video-script" },
-  { label: "Proposal", href: "/admin/agents/proposal" },
-  { label: "Presentation", href: "/admin/agents/presentation" },
-] as const;
-
-function LaunchAgentDropdown({ clientName, projectName }: { clientName: string; projectName: string }) {
-  const [open, setOpen] = useState(false);
-  const params = new URLSearchParams({ client: clientName, project: projectName }).toString();
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setOpen((prev) => !prev);
-        }}
-        className="inline-flex items-center gap-1 px-1.5 py-1 text-xs font-medium rounded border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
-        title="Launch AI Agent"
-        aria-label="Launch AI Agent"
-      >
-        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-        AI
-      </button>
-      {open && (
-        <>
-          <div
-            className="fixed inset-0 z-30"
-            onClick={() => setOpen(false)}
-            aria-hidden="true"
-          />
-          <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-neutral-200 rounded-lg shadow-lg z-40 py-1">
-            {AGENT_LINKS.map((agent) => (
-              <Link
-                key={agent.href}
-                href={`${agent.href}?${params}`}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
-              >
-                {agent.label}
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
   );
 }
 
