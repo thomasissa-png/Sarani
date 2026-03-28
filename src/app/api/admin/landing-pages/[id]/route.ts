@@ -122,7 +122,13 @@ export async function PATCH(
     if (body.noIndex !== undefined) updateData.noIndex = body.noIndex;
     if (body.clickupTaskId !== undefined)
       updateData.clickupTaskId = body.clickupTaskId;
-    if (body.slug !== undefined) updateData.slug = body.slug;
+    if (body.slug !== undefined) {
+      const sanitizedSlug = String(body.slug).toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 100);
+      if (!sanitizedSlug) {
+        return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
+      }
+      updateData.slug = sanitizedSlug;
+    }
 
     const [updated] = await db
       .update(landingPages)

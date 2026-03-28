@@ -486,6 +486,95 @@ export const landingPageVersions = pgTable(
   ]
 );
 
+// ─── Storyboards ───────────────────────────────────────────────────────────
+
+export const storyboards = pgTable(
+  "storyboards",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id").references(() => clients.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    scriptText: text("script_text"),
+    status: varchar("status", { length: 20 }).notNull().default("draft"),
+    // draft | generating | ready | shared | approved | rejected
+    shareToken: uuid("share_token").unique(),
+    shareExpiresAt: timestamp("share_expires_at"),
+    createdBy: text("created_by"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_storyboards_client_id").on(table.clientId),
+    index("idx_storyboards_share_token").on(table.shareToken),
+    index("idx_storyboards_status").on(table.status),
+  ]
+);
+
+// ─── Storyboard Scenes ─────────────────────────────────────────────────────
+
+export const storyboardScenes = pgTable(
+  "storyboard_scenes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyboardId: uuid("storyboard_id")
+      .notNull()
+      .references(() => storyboards.id, { onDelete: "cascade" }),
+    sceneOrder: integer("scene_order").notNull(),
+    description: text("description"),
+    cameraDirection: text("camera_direction"),
+    mood: text("mood"),
+    imageUrl: text("image_url"),
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    // pending | generating | ready | failed
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_storyboard_scenes_storyboard").on(table.storyboardId),
+  ]
+);
+
+// ─── Storyboard Scene Versions ─────────────────────────────────────────────
+
+export const storyboardSceneVersions = pgTable(
+  "storyboard_scene_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sceneId: uuid("scene_id")
+      .notNull()
+      .references(() => storyboardScenes.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    imageUrl: text("image_url").notNull(),
+    promptUsed: text("prompt_used"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_scene_versions_scene").on(table.sceneId),
+  ]
+);
+
+// ─── Storyboard Approvals ──────────────────────────────────────────────────
+
+export const storyboardApprovals = pgTable(
+  "storyboard_approvals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyboardId: uuid("storyboard_id")
+      .notNull()
+      .references(() => storyboards.id, { onDelete: "cascade" }),
+    status: varchar("status", { length: 20 }).notNull(),
+    // pending | approved | rejected
+    feedback: text("feedback"),
+    clientName: text("client_name"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_storyboard_approvals_storyboard").on(table.storyboardId),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -518,3 +607,11 @@ export type LandingPage = typeof landingPages.$inferSelect;
 export type NewLandingPage = typeof landingPages.$inferInsert;
 export type LandingPageVersion = typeof landingPageVersions.$inferSelect;
 export type NewLandingPageVersion = typeof landingPageVersions.$inferInsert;
+export type Storyboard = typeof storyboards.$inferSelect;
+export type NewStoryboard = typeof storyboards.$inferInsert;
+export type StoryboardScene = typeof storyboardScenes.$inferSelect;
+export type NewStoryboardScene = typeof storyboardScenes.$inferInsert;
+export type StoryboardSceneVersion = typeof storyboardSceneVersions.$inferSelect;
+export type NewStoryboardSceneVersion = typeof storyboardSceneVersions.$inferInsert;
+export type StoryboardApproval = typeof storyboardApprovals.$inferSelect;
+export type NewStoryboardApproval = typeof storyboardApprovals.$inferInsert;

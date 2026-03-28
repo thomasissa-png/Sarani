@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(caseStudyCandidates.status, status));
     }
     if (client) {
-      conditions.push(like(caseStudyCandidates.clientName, `%${client}%`));
+      const sanitized = client.replace(/%/g, "\\%").replace(/_/g, "\\_");
+      conditions.push(like(caseStudyCandidates.clientName, `%${sanitized}%`));
     }
     if (minScore) {
       const score = parseInt(minScore, 10);

@@ -55,20 +55,10 @@ export default async function LandingPagePublic({ params }: Props) {
     notFound();
   }
 
-  // Only published pages are viewable publicly
+  // Only published pages are viewable publicly — return 404 for unpublished
+  // to avoid leaking titles or existence of draft pages
   if (page.status !== "published") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-        <div className="text-center space-y-3">
-          <h1 className="text-2xl font-bold text-neutral-800">
-            {page.title}
-          </h1>
-          <p className="text-neutral-500">
-            This landing page is not yet published.
-          </p>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   return (
