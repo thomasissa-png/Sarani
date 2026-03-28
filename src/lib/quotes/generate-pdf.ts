@@ -1084,7 +1084,7 @@ export async function generateQuotePDF(
   // LEGAL FOOTER + PAGE NUMBERS — on every page
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const legalLine = "SARANI SAS \u2014 SIREN 881687503 \u2014 TVA FR76881687503 \u2014 4 rue des Artisans, 25300 Ar\u00e7on, France";
+  const legalLine = "SARANI SAS — SIREN 881687503 — TVA FR76881687503 — 4 rue des Artisans, 25300 Arçon, France";
   const allPages = doc.getPages();
   for (let i = 0; i < allPages.length; i++) {
     const p = allPages[i];

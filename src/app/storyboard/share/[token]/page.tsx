@@ -94,9 +94,22 @@ export default async function StoryboardSharePage({
         <div className="flex items-center gap-4 text-sm text-white/50 mb-12">
           <span>{readyScenes.length} scene{readyScenes.length !== 1 ? "s" : ""}</span>
           <span className="w-1 h-1 rounded-full bg-white/30" />
-          <span>
-            {storyboard.status === "ready" ? "Ready for review" : storyboard.status}
-          </span>
+          {storyboard.status === "approved" ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Approved
+            </span>
+          ) : storyboard.status === "rejected" ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-xs font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+              Changes requested
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              Pending review
+            </span>
+          )}
         </div>
 
         {/* Scenes */}

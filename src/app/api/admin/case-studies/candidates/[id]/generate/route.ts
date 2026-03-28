@@ -254,20 +254,21 @@ export async function POST(
       },
     ];
 
-    // Delete existing outputs for this candidate (regeneration case)
-    await db
-      .delete(caseStudyOutputs)
-      .where(eq(caseStudyOutputs.candidateId, id));
+    // Delete existing outputs + insert new ones + update status atomically
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(caseStudyOutputs)
+        .where(eq(caseStudyOutputs.candidateId, id));
 
-    for (const record of outputRecords) {
-      await db.insert(caseStudyOutputs).values(record);
-    }
+      for (const record of outputRecords) {
+        await tx.insert(caseStudyOutputs).values(record);
+      }
 
-    // 8. Update candidate status
-    await db
-      .update(caseStudyCandidates)
-      .set({ status: "generated", updatedAt: new Date() })
-      .where(eq(caseStudyCandidates.id, id));
+      await tx
+        .update(caseStudyCandidates)
+        .set({ status: "generated", updatedAt: new Date() })
+        .where(eq(caseStudyCandidates.id, id));
+    });
 
     return NextResponse.json({
       success: true,
