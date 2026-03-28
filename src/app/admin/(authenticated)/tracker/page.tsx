@@ -135,6 +135,33 @@ function getConnectionDot(status: string): string {
   return "bg-red-500";
 }
 
+function parseDateToTimestamp(dateStr: string | null | undefined): number {
+  if (!dateStr) return 0;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return 0;
+  // Excel serial dates (5-digit numbers like "45000")
+  if (/^\d{4,5}$/.test(trimmed)) {
+    const n = parseInt(trimmed, 10);
+    if (n > 30000 && n < 60000) {
+      const epoch = new Date(Date.UTC(1899, 11, 30));
+      return epoch.getTime() + n * 86400000;
+    }
+    return 0;
+  }
+  // ISO dates "2026-03-24" or other parseable formats
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime()) && d.getFullYear() >= 1990 && d.getFullYear() <= 2100) {
+    return d.getTime();
+  }
+  // "DD Mon YYYY" e.g. "24 Mar 2026"
+  const ddMonYyyy = trimmed.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+  if (ddMonYyyy) {
+    const parsed = new Date(`${ddMonYyyy[2]} ${ddMonYyyy[1]}, ${ddMonYyyy[3]}`);
+    if (!isNaN(parsed.getTime())) return parsed.getTime();
+  }
+  return 0;
+}
+
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function TrackerPage() {
@@ -195,7 +222,7 @@ export default function TrackerPage() {
     } catch {
       // ignore parse errors
     }
-    return null;
+    return { column: "date" as SortableColumn, direction: "desc" as SortDirection };
   });
 
   // Pagination
@@ -412,7 +439,7 @@ export default function TrackerPage() {
             cmp = (a.totalValue ?? 0) - (b.totalValue ?? 0);
             break;
           case "date":
-            cmp = (a.date || "").localeCompare(b.date || "");
+            cmp = parseDateToTimestamp(a.date) - parseDateToTimestamp(b.date);
             break;
         }
         return sort.direction === "asc" ? cmp : -cmp;
@@ -1057,7 +1084,7 @@ export default function TrackerPage() {
                   {!hiddenColumns.has("po") && <Th>PO</Th>}
                   <Th className="w-[8%]">Invoice</Th>
                   <SortableTh column="date" sort={sort} onToggle={toggleSort} className="w-[10%]">Date</SortableTh>
-                  <Th className="w-[19%]">Actions</Th>
+                  <Th className="w-[12%]">Actions</Th>
                 </tr>
               </thead>
               <tbody>
@@ -1086,6 +1113,19 @@ export default function TrackerPage() {
                         >
                           {p.project}
                         </Link>
+                        {(() => {
+                          const taskId = extractTaskId(p.clickupTaskUrl);
+                          const outputs = taskId ? outputsByProject[taskId] : null;
+                          if (!outputs) return null;
+                          return (
+                            <span
+                              className="ml-1.5 text-[10px] font-medium text-purple-600"
+                              title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
+                            >
+                              ({outputs.count} AI)
+                            </span>
+                          );
+                        })()}
                       </td>
                       {!hiddenColumns.has("contact") && (
                         <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
@@ -1095,7 +1135,7 @@ export default function TrackerPage() {
                       <td className="px-5 py-3.5">
                         {p.status ? (
                           <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusBadgeClasses(p.status)}`}
+                            className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getStatusBadgeClasses(p.status)}`}
                           >
                             {p.status}
                           </span>
@@ -1130,54 +1170,16 @@ export default function TrackerPage() {
                       <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
                         {formatDate(p.date)}
                       </td>
-                      {/* Actions — text label buttons */}
+                      {/* Actions — primary: Quote, Share, Launch | secondary: ... dropdown */}
                       <td className="px-3 py-3.5">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           <Link
                             href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
-                            className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+                            className="px-1.5 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors whitespace-nowrap"
                             title="Create a new quote for this project"
                           >
                             Quote
                           </Link>
-                          {p.excelTrackerUrl ? (
-                            <a href={p.excelTrackerUrl} target="_blank" rel="noopener noreferrer"
-                              className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                              title={`Open Tracker${p.excelSheetName ? ` (${p.excelSheetName})` : ""}`}
-                            >Tracker</a>
-                          ) : (
-                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Excel</span>
-                          )}
-                          {p.clickupTaskUrl ? (
-                            <a href={p.clickupTaskUrl} target="_blank" rel="noopener noreferrer"
-                              className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                              title="Open in ClickUp"
-                            >ClickUp</a>
-                          ) : (
-                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">ClickUp</span>
-                          )}
-                          {p.sharepointLink ? (
-                            <a href={p.sharepointLink} target="_blank" rel="noopener noreferrer"
-                              className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                              title="Open Project Folder"
-                            >Folder</a>
-                          ) : (
-                            <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Files</span>
-                          )}
-                          {(() => {
-                            const taskId = extractTaskId(p.clickupTaskUrl);
-                            const outputs = taskId ? outputsByProject[taskId] : null;
-                            if (!outputs) return null;
-                            return (
-                              <Link
-                                href={`/admin/projects?clickupTaskId=${encodeURIComponent(taskId)}`}
-                                className="px-2 py-1 text-xs font-medium rounded border border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
-                                title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
-                              >
-                                AI {outputs.count}
-                              </Link>
-                            );
-                          })()}
                           <SharePreviewButton
                             project={p}
                             preview={previewLinks[getProjectId(p)]}
@@ -1189,6 +1191,7 @@ export default function TrackerPage() {
                             clientName={p.client}
                             projectName={p.project}
                           />
+                          <SecondaryActionsDropdown project={p} />
                         </div>
                       </td>
                     </tr>
@@ -1258,12 +1261,27 @@ export default function TrackerPage() {
                     <span className="ml-1.5 text-neutral-300">{p.country}</span>
                   )}
                 </p>
-                <Link
-                  href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
-                  className="text-sm font-medium text-brand-black mt-0.5 hover:text-flame hover:underline transition-colors block"
-                >
-                  {p.project}
-                </Link>
+                <span className="flex items-center gap-1 mt-0.5">
+                  <Link
+                    href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
+                    className="text-sm font-medium text-brand-black hover:text-flame hover:underline transition-colors"
+                  >
+                    {p.project}
+                  </Link>
+                  {(() => {
+                    const taskId = extractTaskId(p.clickupTaskUrl);
+                    const outputs = taskId ? outputsByProject[taskId] : null;
+                    if (!outputs) return null;
+                    return (
+                      <span
+                        className="text-[10px] font-medium text-purple-600"
+                        title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
+                      >
+                        ({outputs.count} AI)
+                      </span>
+                    );
+                  })()}
+                </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {p.status && (
@@ -1329,20 +1347,6 @@ export default function TrackerPage() {
                 ) : (
                   <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Files</span>
                 )}
-                {(() => {
-                  const taskId = extractTaskId(p.clickupTaskUrl);
-                  const outputs = taskId ? outputsByProject[taskId] : null;
-                  if (!outputs) return null;
-                  return (
-                    <Link
-                      href={`/admin/projects?clickupTaskId=${encodeURIComponent(taskId)}`}
-                      className="px-2 py-1 text-xs font-medium rounded border border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
-                      title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
-                    >
-                      AI {outputs.count}
-                    </Link>
-                  );
-                })()}
                 <SharePreviewButton
                   project={p}
                   preview={previewLinks[getProjectId(p)]}
@@ -1649,7 +1653,7 @@ function LaunchAgentDropdown({ clientName, projectName }: { clientName: string; 
           e.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+        className="inline-flex items-center gap-1 px-1.5 py-1 text-xs font-medium rounded border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
         title="Launch AI Agent"
         aria-label="Launch AI Agent"
       >
@@ -1771,7 +1775,7 @@ function SharePreviewButton({
       type="button"
       onClick={() => onShare(project)}
       disabled={isLoading}
-      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-brand-cerulean/30 bg-brand-cerulean/5 text-brand-cerulean hover:bg-brand-cerulean/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-1 px-1.5 py-1 text-xs font-medium rounded border border-brand-cerulean/30 bg-brand-cerulean/5 text-brand-cerulean hover:bg-brand-cerulean/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       title="Generate and copy a public preview link"
     >
       {isLoading ? (
@@ -1785,7 +1789,86 @@ function SharePreviewButton({
           <line x1="12" y1="2" x2="12" y2="15" />
         </svg>
       )}
-      {isLoading ? "Generating..." : "Share"}
+      {isLoading ? "..." : "Share"}
     </button>
+  );
+}
+
+// ─── Secondary Actions Dropdown (ClickUp, Folder, Tracker) ────────────────
+
+function SecondaryActionsDropdown({ project }: { project: TrackerProject }) {
+  const [open, setOpen] = useState(false);
+
+  const hasClickUp = !!project.clickupTaskUrl;
+  const hasSharepoint = !!project.sharepointLink;
+  const hasTracker = !!project.excelTrackerUrl;
+
+  // If no secondary links exist, don't render the dropdown
+  if (!hasClickUp && !hasSharepoint && !hasTracker) return null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
+        className="inline-flex items-center justify-center w-7 h-7 text-xs font-medium rounded border border-neutral-300 text-neutral-500 hover:bg-neutral-100 hover:text-brand-black transition-colors"
+        title="More actions"
+        aria-label="More actions"
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
+        </svg>
+      </button>
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="absolute right-0 top-full mt-1 w-40 bg-white border border-neutral-200 rounded-lg shadow-lg z-40 py-1">
+            {hasClickUp && (
+              <a
+                href={project.clickupTaskUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
+              >
+                <ExternalLinkIcon />
+                ClickUp
+              </a>
+            )}
+            {hasSharepoint && (
+              <a
+                href={project.sharepointLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
+              >
+                <FolderIcon />
+                Folder
+              </a>
+            )}
+            {hasTracker && (
+              <a
+                href={project.excelTrackerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
+              >
+                <SharePointIcon />
+                Tracker
+              </a>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 }

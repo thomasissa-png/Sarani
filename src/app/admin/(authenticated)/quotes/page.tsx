@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -125,23 +125,63 @@ function QuotesPage() {
 
   // Pre-fill from query params (e.g. from Tracker "Generate Quote" link)
   const searchParams = useSearchParams();
+  const prefillRanRef = useRef(false);
+
+  // Client matching effect — runs when clients finish loading
   useEffect(() => {
     const qClientId = searchParams.get("clientId");
     const qClient = searchParams.get("client");
+
+    // Prefer clientId if available
+    if (qClientId) {
+      setSelectedClientId(qClientId);
+      return;
+    }
+
+    // Fall back to matching by name — only attempt when clients are loaded
+    if (!qClient || clients.length === 0) return;
+
+    const qClientLower = qClient.toLowerCase();
+
+    // 1. Exact match
+    let matched = clients.find(
+      (c) => c.name.toLowerCase() === qClientLower
+    );
+
+    // 2. Fuzzy: startsWith
+    if (!matched) {
+      matched = clients.find(
+        (c) => c.name.toLowerCase().startsWith(qClientLower) || qClientLower.startsWith(c.name.toLowerCase())
+      );
+    }
+
+    // 3. Fuzzy: includes
+    if (!matched) {
+      matched = clients.find(
+        (c) => c.name.toLowerCase().includes(qClientLower) || qClientLower.includes(c.name.toLowerCase())
+      );
+    }
+
+    if (matched) {
+      setSelectedClientId(matched.id);
+    } else {
+      // No match found — switch to new client mode and pre-fill the name
+      setIsNewClient(true);
+      setCustomClientName(qClient);
+    }
+  }, [searchParams, clients]);
+
+  // Form prefill effect — runs once when query params are present
+  useEffect(() => {
     const qProject = searchParams.get("project");
     const qContact = searchParams.get("contact");
     const qAmount = searchParams.get("amount");
     const qCategory = searchParams.get("category");
+    const qClient = searchParams.get("client");
 
-    // Prefer clientId if available; fall back to matching by name
-    if (qClientId) {
-      setSelectedClientId(qClientId);
-    } else if (qClient && clients.length > 0) {
-      const matched = clients.find(
-        (c) => c.name.toLowerCase() === qClient.toLowerCase()
-      );
-      if (matched) setSelectedClientId(matched.id);
-    }
+    if (prefillRanRef.current) return;
+    if (!qProject && !qClient) return;
+    prefillRanRef.current = true;
 
     if (qProject) setProjectName(qProject);
     if (qContact) setContactName(qContact);
@@ -195,7 +235,7 @@ function QuotesPage() {
         })
         .finally(() => setPrefilling(false));
     }
-  }, [searchParams, clients]);
+  }, [searchParams]);
 
   const fetchClients = useCallback(async () => {
     try {

@@ -45,119 +45,184 @@ export async function GET(
       );
     }
 
-    // 1. Find the client record (if any)
-    const clientRecords = await db
-      .select()
-      .from(clients)
-      .where(like(clients.name, clientName));
+    console.log(`[project-details] Querying for client="${clientName}", project="${projectName ?? "(none)"}"`);
 
-    const client = clientRecords[0] ?? null;
-    const clientId = client?.id ?? null;
+    // 1. Find the client record (if any) — fuzzy match with wildcards
+    let client: typeof clients.$inferSelect | null = null;
+    let clientId: string | null = null;
+    try {
+      const clientRecords = await db
+        .select()
+        .from(clients)
+        .where(like(clients.name, `%${clientName}%`));
+
+      client = clientRecords[0] ?? null;
+      clientId = client?.id ?? null;
+      console.log(`[project-details] Client lookup: found=${!!client}, clientId=${clientId}, matchedName="${client?.name ?? ""}"`);
+    } catch (err) {
+      console.error("[project-details] Failed to query clients table:", err);
+    }
 
     // 2. Agent outputs for this client
-    const outputs = clientId
-      ? await db
-          .select({
-            id: agentOutputs.id,
-            agentType: agentOutputs.agentType,
-            status: agentOutputs.status,
-            inputPayload: agentOutputs.inputPayload,
-            outputContent: agentOutputs.outputContent,
-            createdAt: agentOutputs.createdAt,
-            createdBy: agentOutputs.createdBy,
-          })
-          .from(agentOutputs)
-          .where(eq(agentOutputs.clientId, clientId))
-          .orderBy(desc(agentOutputs.createdAt))
-          .limit(100)
-      : [];
+    let outputs: Array<{
+      id: string;
+      agentType: string;
+      status: string;
+      inputPayload: unknown;
+      outputContent: string | null;
+      createdAt: Date;
+      createdBy: string | null;
+    }> = [];
+    try {
+      outputs = clientId
+        ? await db
+            .select({
+              id: agentOutputs.id,
+              agentType: agentOutputs.agentType,
+              status: agentOutputs.status,
+              inputPayload: agentOutputs.inputPayload,
+              outputContent: agentOutputs.outputContent,
+              createdAt: agentOutputs.createdAt,
+              createdBy: agentOutputs.createdBy,
+            })
+            .from(agentOutputs)
+            .where(eq(agentOutputs.clientId, clientId))
+            .orderBy(desc(agentOutputs.createdAt))
+            .limit(100)
+        : [];
+    } catch (err) {
+      console.error("[project-details] Failed to query agent_outputs:", err);
+    }
 
-    // 3. Case study candidates for this client
-    const caseStudies = await db
-      .select()
-      .from(caseStudyCandidates)
-      .where(like(caseStudyCandidates.clientName, clientName))
-      .orderBy(desc(caseStudyCandidates.createdAt))
-      .limit(20);
+    // 3. Case study candidates for this client — fuzzy match
+    let caseStudies: Array<typeof caseStudyCandidates.$inferSelect> = [];
+    try {
+      caseStudies = await db
+        .select()
+        .from(caseStudyCandidates)
+        .where(like(caseStudyCandidates.clientName, `%${clientName}%`))
+        .orderBy(desc(caseStudyCandidates.createdAt))
+        .limit(20);
+    } catch (err) {
+      console.error("[project-details] Failed to query case_study_candidates:", err);
+    }
 
     // 4. Landing pages for this client
-    const pages = clientId
-      ? await db
-          .select({
-            id: landingPages.id,
-            title: landingPages.title,
-            slug: landingPages.slug,
-            status: landingPages.status,
-            language: landingPages.language,
-            createdAt: landingPages.createdAt,
-          })
-          .from(landingPages)
-          .where(eq(landingPages.clientId, clientId))
-          .orderBy(desc(landingPages.createdAt))
-          .limit(20)
-      : [];
+    let pages: Array<{
+      id: string;
+      title: string;
+      slug: string;
+      status: string;
+      language: string;
+      createdAt: Date;
+    }> = [];
+    try {
+      pages = clientId
+        ? await db
+            .select({
+              id: landingPages.id,
+              title: landingPages.title,
+              slug: landingPages.slug,
+              status: landingPages.status,
+              language: landingPages.language,
+              createdAt: landingPages.createdAt,
+            })
+            .from(landingPages)
+            .where(eq(landingPages.clientId, clientId))
+            .orderBy(desc(landingPages.createdAt))
+            .limit(20)
+        : [];
+    } catch (err) {
+      console.error("[project-details] Failed to query landing_pages:", err);
+    }
 
     // 5. Storyboards for this client
-    const boards = clientId
-      ? await db
-          .select({
-            id: storyboards.id,
-            title: storyboards.title,
-            status: storyboards.status,
-            shareToken: storyboards.shareToken,
-            createdAt: storyboards.createdAt,
-          })
-          .from(storyboards)
-          .where(eq(storyboards.clientId, clientId))
-          .orderBy(desc(storyboards.createdAt))
-          .limit(20)
-      : [];
+    let boards: Array<{
+      id: string;
+      title: string;
+      status: string;
+      shareToken: string | null;
+      createdAt: Date;
+    }> = [];
+    try {
+      boards = clientId
+        ? await db
+            .select({
+              id: storyboards.id,
+              title: storyboards.title,
+              status: storyboards.status,
+              shareToken: storyboards.shareToken,
+              createdAt: storyboards.createdAt,
+            })
+            .from(storyboards)
+            .where(eq(storyboards.clientId, clientId))
+            .orderBy(desc(storyboards.createdAt))
+            .limit(20)
+        : [];
+    } catch (err) {
+      console.error("[project-details] Failed to query storyboards:", err);
+    }
 
     // 6. Storyboard scene counts (avoid N+1)
     const boardIds = boards.map((b) => b.id);
     const sceneCounts: Record<string, number> = {};
     if (boardIds.length > 0) {
       for (const bid of boardIds) {
-        const scenes = await db
-          .select({ id: storyboardScenes.id })
-          .from(storyboardScenes)
-          .where(eq(storyboardScenes.storyboardId, bid));
-        sceneCounts[bid] = scenes.length;
+        try {
+          const scenes = await db
+            .select({ id: storyboardScenes.id })
+            .from(storyboardScenes)
+            .where(eq(storyboardScenes.storyboardId, bid));
+          sceneCounts[bid] = scenes.length;
+        } catch (err) {
+          console.error(`[project-details] Failed to query scenes for storyboard ${bid}:`, err);
+          sceneCounts[bid] = 0;
+        }
       }
     }
 
     // 7. Project previews — use the composite projectId pattern "client::project"
-    const projectId = `${clientName}::${projectName ?? ""}`;
-    const previews = await db
-      .select()
-      .from(projectPreviews)
-      .where(eq(projectPreviews.projectId, projectId));
+    let allPreviews: Array<typeof projectPreviews.$inferSelect> = [];
+    try {
+      const projectId = `${clientName}::${projectName ?? ""}`;
+      const previews = await db
+        .select()
+        .from(projectPreviews)
+        .where(eq(projectPreviews.projectId, projectId));
 
-    // Also try matching by clientName if no exact projectId match
-    const previewsByClient = previews.length === 0
-      ? await db
-          .select()
-          .from(projectPreviews)
-          .where(like(projectPreviews.clientName, clientName))
-          .limit(10)
-      : [];
+      // Also try matching by clientName if no exact projectId match
+      const previewsByClient = previews.length === 0
+        ? await db
+            .select()
+            .from(projectPreviews)
+            .where(like(projectPreviews.clientName, `%${clientName}%`))
+            .limit(10)
+        : [];
 
-    const allPreviews = previews.length > 0 ? previews : previewsByClient;
+      allPreviews = previews.length > 0 ? previews : previewsByClient;
+    } catch (err) {
+      console.error("[project-details] Failed to query project_previews:", err);
+    }
 
-    // 8. Quotes for this client + project
-    const projectQuotes = await db
-      .select()
-      .from(quotes)
-      .where(
-        projectName
-          ? and(
-              like(quotes.clientName, clientName),
-              like(quotes.projectName, `%${projectName}%`)
-            )
-          : like(quotes.clientName, clientName)
-      )
-      .orderBy(desc(quotes.createdAt))
-      .limit(10);
+    // 8. Quotes for this client + project — fuzzy match
+    let projectQuotes: Array<typeof quotes.$inferSelect> = [];
+    try {
+      projectQuotes = await db
+        .select()
+        .from(quotes)
+        .where(
+          projectName
+            ? and(
+                like(quotes.clientName, `%${clientName}%`),
+                like(quotes.projectName, `%${projectName}%`)
+              )
+            : like(quotes.clientName, `%${clientName}%`)
+        )
+        .orderBy(desc(quotes.createdAt))
+        .limit(10);
+    } catch (err) {
+      console.error("[project-details] Failed to query quotes:", err);
+    }
 
     return NextResponse.json({
       client: client

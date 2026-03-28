@@ -85,25 +85,27 @@ const STANDARD_COL_ALIASES: Set<string> = new Set(
 );
 
 /**
- * Detect asset columns in the Excel tracker.
- * Asset columns are those AFTER the standard project columns (V onwards, roughly).
- * They typically have a header like "Social Video 15s", "Key Visual", etc.
- * and contain a price or quantity in the data rows.
+ * Detect asset columns in the Excel tracker and extract line items.
  *
- * Strategy:
- * 1. Find the header row
- * 2. Identify columns whose header is NOT a standard COL_MAP alias
- * 3. For the matched project row, check if these columns have numeric values
- * 4. Group by pairs: some trackers use (asset name col, price col) or single col with price
+ * Excel structure:
+ * - headerRowIndex: row with asset type names (e.g., "Banner creation (static)")
+ * - priceRowIndex: row just below header with unit prices (e.g., 120, 35, 220)
+ * - projectRowIndex: the project's row with quantities (e.g., 1, 24, 1)
+ *
+ * For each non-standard column:
+ *   description = header cell, unitPrice = price row cell, quantity = project row cell
+ *   total = unitPrice * quantity. Only include if quantity > 0.
  */
 function extractAssetLineItems(
   values: (string | number | boolean | null)[][],
   headerRowIndex: number,
+  priceRowIndex: number,
   projectRowIndex: number
 ): PrefillLineItem[] {
   const headers = values[headerRowIndex];
+  const priceRow = values[priceRowIndex];
   const dataRow = values[projectRowIndex];
-  if (!headers || !dataRow) return [];
+  if (!headers || !priceRow || !dataRow) return [];
 
   const items: PrefillLineItem[] = [];
 
@@ -115,8 +117,7 @@ function extractAssetLineItems(
     if (idx !== -1) standardColIndices.add(idx);
   }
 
-  // Scan ALL columns — any non-standard column with a numeric value is a potential asset
-  // This handles Sony France where asset columns (V-BC) are interleaved, not just at the end
+  // Scan ALL columns — any non-standard column with a quantity > 0 is an asset
   for (let col = 0; col < headers.length; col++) {
     // Skip standard columns (project, status, date, contact, value, PO, etc.)
     if (standardColIndices.has(col)) continue;
@@ -127,18 +128,20 @@ function extractAssetLineItems(
     // Skip if this is a standard column alias we missed
     if (STANDARD_COL_ALIASES.has(header.toLowerCase().trim())) continue;
 
-    const cellValue = dataRow[col];
-    const numericValue = cellToNumber(cellValue);
+    // Quantity comes from the project row
+    const quantity = cellToNumber(dataRow[col]);
+    if (quantity === null || quantity <= 0) continue;
 
-    // If the cell has a numeric value > 0, it's likely a price for this asset type
-    if (numericValue !== null && numericValue > 0) {
-      items.push({
-        description: header,
-        quantity: 1,
-        unitPrice: numericValue,
-        total: numericValue,
-      });
-    }
+    // Unit price comes from the price row (row just below header)
+    const unitPrice = cellToNumber(priceRow[col]);
+    if (unitPrice === null || unitPrice <= 0) continue;
+
+    items.push({
+      description: header,
+      quantity,
+      unitPrice,
+      total: unitPrice * quantity,
+    });
   }
 
   return items;
@@ -281,8 +284,8 @@ export async function GET(request: NextRequest) {
           const colProject = findColumnIndex(headers, COL_MAP.project);
           if (colProject === -1) continue;
 
-          // Find the row matching our project
-          for (let rowIdx = headerIdx + 1; rowIdx < values.length; rowIdx++) {
+          // Find the row matching our project (skip header and price row)
+          for (let rowIdx = headerIdx + 2; rowIdx < values.length; rowIdx++) {
             const row = values[rowIdx];
             const projectCell = cellToString(row[colProject]).toLowerCase().trim();
 
@@ -293,8 +296,9 @@ export async function GET(request: NextRequest) {
             ) {
               matchedSheetName = sheet.name;
 
-              // Extract asset line items from columns beyond standard ones
-              const assetItems = extractAssetLineItems(values, headerIdx, rowIdx);
+              // Extract asset line items: header = asset names, header+1 = unit prices, rowIdx = quantities
+              const priceRowIdx = headerIdx + 1;
+              const assetItems = extractAssetLineItems(values, headerIdx, priceRowIdx, rowIdx);
               if (assetItems.length > 0) {
                 response.lineItems = assetItems;
                 response.sources.lineItems = "excel";
@@ -351,7 +355,8 @@ export async function GET(request: NextRequest) {
 /**
  * Build a clean, professional purpose-of-work description.
  * NEVER includes URLs, raw briefs, or internal metadata.
- * Always produces 1-2 readable sentences.
+ * NEVER just repeats the project name as the purpose.
+ * Always produces exactly 2 sentences.
  */
 function buildPurpose(
   clientName: string,
@@ -368,34 +373,35 @@ function buildPurpose(
   const cleanCategory = cleanStr(category);
   const cleanType = cleanStr(projectType);
 
-  // Build the asset list summary
-  let assetSummary = "";
+  // Sentence 1: What Sarani will deliver
+  let sentence1: string;
+
   if (lineItems.length > 0) {
-    const names = lineItems.slice(0, 4).map((i) => i.description);
-    assetSummary = names.join(", ");
-    if (lineItems.length > 4) {
-      assetSummary += ` and ${lineItems.length - 4} additional item${lineItems.length - 4 > 1 ? "s" : ""}`;
+    // Build a human-readable list of asset types from line items
+    const assetNames = lineItems.map((i) => i.description.toLowerCase());
+    let assetList: string;
+    if (assetNames.length === 1) {
+      assetList = assetNames[0];
+    } else if (assetNames.length === 2) {
+      assetList = `${assetNames[0]} and ${assetNames[1]}`;
+    } else {
+      const last = assetNames[assetNames.length - 1];
+      assetList = assetNames.slice(0, -1).join(", ") + `, and ${last}`;
     }
-  }
-
-  // Compose the purpose sentence
-  const parts: string[] = [];
-
-  // Type of work (e.g. "Graphic design", "Video production")
-  if (cleanType && cleanType !== "generic") {
-    parts.push(cleanType.charAt(0).toUpperCase() + cleanType.slice(1));
+    sentence1 = `Creation and delivery of ${assetList} as part of the ${cleanProject} project.`;
+  } else if (cleanType && cleanType !== "generic") {
+    // Use ClickUp type/category to describe scope
+    const typeLabel = cleanType.charAt(0).toUpperCase() + cleanType.slice(1).toLowerCase();
+    sentence1 = `${typeLabel} services for the ${cleanProject} project, including all associated deliverables.`;
   } else if (cleanCategory) {
-    parts.push(cleanCategory);
-  }
-
-  // What: project name + deliverables
-  if (assetSummary) {
-    parts.push(`${cleanProject}: ${assetSummary}`);
+    sentence1 = `${cleanCategory} for the ${cleanProject} project, including all associated deliverables.`;
   } else {
-    parts.push(cleanProject);
+    // Fallback — no line items and no category
+    sentence1 = `Creative production services for the ${cleanProject} project.`;
   }
 
-  // Build final sentence: "Production of [description] for [client]."
-  const description = parts.join(" — ");
-  return `${description} for ${clientName}.`;
+  // Sentence 2: Context/scope — client name and nature of engagement
+  const sentence2 = `This project is produced by Sarani for ${clientName}, covering all deliverables and revisions until final approval.`;
+
+  return `${sentence1} ${sentence2}`;
 }

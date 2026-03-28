@@ -55,77 +55,85 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Check if a preview already exists for this projectId
-  const [existing] = await db
-    .select()
-    .from(projectPreviews)
-    .where(eq(projectPreviews.projectId, projectId));
-
-  if (existing) {
-    if (!existing.isActive) {
-      // Reactivate
-      await db
-        .update(projectPreviews)
-        .set({ isActive: true, updatedAt: new Date() })
-        .where(eq(projectPreviews.id, existing.id));
-    }
-    const url = `/project/${existing.clientSlug}/${existing.projectSlug}`;
-    return NextResponse.json({ url, created: false, id: existing.id }, { status: 200 });
-  }
-
-  // Generate slugs
-  const clientSlug = slugify(clientName);
-  let projectSlug = slugify(projectName);
-
-  if (!clientSlug || !projectSlug) {
-    return NextResponse.json(
-      {
-        error: "VALIDATION",
-        message: "Could not generate valid slugs from client/project names.",
-      },
-      { status: 400 }
-    );
-  }
-
-  // Handle slug collision: check if (clientSlug, projectSlug) already exists
-  let finalSlug = projectSlug;
-  let suffix = 1;
-  const MAX_COLLISION_ATTEMPTS = 20;
-
-  while (suffix <= MAX_COLLISION_ATTEMPTS) {
-    const [collision] = await db
-      .select({ id: projectPreviews.id })
+  try {
+    // Check if a preview already exists for this projectId
+    const [existing] = await db
+      .select()
       .from(projectPreviews)
-      .where(
-        and(
-          eq(projectPreviews.clientSlug, clientSlug),
-          eq(projectPreviews.projectSlug, finalSlug)
-        )
+      .where(eq(projectPreviews.projectId, projectId));
+
+    if (existing) {
+      if (!existing.isActive) {
+        // Reactivate
+        await db
+          .update(projectPreviews)
+          .set({ isActive: true, updatedAt: new Date() })
+          .where(eq(projectPreviews.id, existing.id));
+      }
+      const url = `/project/${existing.clientSlug}/${existing.projectSlug}`;
+      return NextResponse.json({ url, created: false, id: existing.id }, { status: 200 });
+    }
+
+    // Generate slugs
+    const clientSlug = slugify(clientName);
+    let projectSlug = slugify(projectName);
+
+    if (!clientSlug || !projectSlug) {
+      return NextResponse.json(
+        {
+          error: "VALIDATION",
+          message: "Could not generate valid slugs from client/project names.",
+        },
+        { status: 400 }
       );
+    }
 
-    if (!collision) break;
+    // Handle slug collision: check if (clientSlug, projectSlug) already exists
+    let finalSlug = projectSlug;
+    let suffix = 1;
+    const MAX_COLLISION_ATTEMPTS = 20;
 
-    suffix++;
-    finalSlug = `${projectSlug}-${suffix}`;
-  }
+    while (suffix <= MAX_COLLISION_ATTEMPTS) {
+      const [collision] = await db
+        .select({ id: projectPreviews.id })
+        .from(projectPreviews)
+        .where(
+          and(
+            eq(projectPreviews.clientSlug, clientSlug),
+            eq(projectPreviews.projectSlug, finalSlug)
+          )
+        );
 
-  if (suffix > MAX_COLLISION_ATTEMPTS) {
+      if (!collision) break;
+
+      suffix++;
+      finalSlug = `${projectSlug}-${suffix}`;
+    }
+
+    if (suffix > MAX_COLLISION_ATTEMPTS) {
+      return NextResponse.json(
+        { error: "SLUG_COLLISION", message: "Too many projects with similar names." },
+        { status: 409 }
+      );
+    }
+
+    // Insert new preview
+    const [inserted] = await db.insert(projectPreviews).values({
+      projectId,
+      clientSlug,
+      projectSlug: finalSlug,
+      clientName,
+      projectName,
+      isActive: true,
+    }).returning({ id: projectPreviews.id });
+
+    const url = `/project/${clientSlug}/${finalSlug}`;
+    return NextResponse.json({ url, created: true, id: inserted.id }, { status: 201 });
+  } catch (error) {
+    console.error("[project-previews] POST error:", error);
     return NextResponse.json(
-      { error: "SLUG_COLLISION", message: "Too many projects with similar names." },
-      { status: 409 }
+      { error: "INTERNAL", message: "Failed to create project preview." },
+      { status: 500 }
     );
   }
-
-  // Insert new preview
-  const [inserted] = await db.insert(projectPreviews).values({
-    projectId,
-    clientSlug,
-    projectSlug: finalSlug,
-    clientName,
-    projectName,
-    isActive: true,
-  }).returning({ id: projectPreviews.id });
-
-  const url = `/project/${clientSlug}/${finalSlug}`;
-  return NextResponse.json({ url, created: true, id: inserted.id }, { status: 201 });
 }
