@@ -26,10 +26,11 @@
 | 3c | Phase 3 — Back-Office V1 (ClickUp + SharePoint + Evoliz + Tracker + Quotes) | COMPLETE | @fullstack, @product-manager, @infrastructure, @agent-factory | Phase 3 |
 | 3d | Phase 3 — Back-Office V2 (Brief, Email Import, Quote Redesign, Sidebar) | COMPLETE | @fullstack, @product-manager, @ux, @design | Phase 3c |
 | 3e | Front-Office Polish (Page consistency, Services images, Footer, Case studies) | COMPLETE | @fullstack, @design, @ux | Phase 3 |
-| 3f | Back-Office V3 — Video AI Preview (Storyboard + Video) | FOUNDATION IMPLEMENTED (specs 10/10 + prompt library + DB/API/UI) | @fullstack, @ia, @qa, @infrastructure | Phase 3d (indépendant de 3e) |
-| 3g | AI Case Study Generator (auto-scan + auto-gen) | FOUNDATION IMPLEMENTED (specs 10/10 + DB/API/UI) | @fullstack, @creative-strategy, @ia | Phase 3d |
-| 3h | Landing Page Generator | FOUNDATION IMPLEMENTED (specs 10/10 + DB/API/UI + /lp/[slug]) | @fullstack, @design, @ia | Phase 3d |
-| 4 | QA & Pre-Launch | IN PROGRESS (~30%) | @qa, @infrastructure, @legal | Phase 3e |
+| 3f | Back-Office V3 — Video AI Preview (Storyboard + Video) | LLM INTEGRATED (fal.ai Flux.1 Pro images, storyboard share page rebuilt, approve/request changes) | @fullstack, @ia, @qa, @infrastructure | Phase 3d |
+| 3g | AI Case Study Generator (auto-scan + auto-gen) | LLM INTEGRATED (ClickUp scan + Claude Sonnet generation + publish to website + gallery SharePoint) | @fullstack, @creative-strategy, @ia | Phase 3d |
+| 3h | Landing Page Generator | LLM INTEGRATED (Claude Sonnet generation + renderer refonte gallery/pricing/team + OG images) | @fullstack, @design, @ia | Phase 3d |
+| 3i | Project Presentation Link | COMPLETE (specs + implementation + Share Preview button tracker) | @fullstack, @product-manager | Phase 3d |
+| 4 | QA & Pre-Launch | IN PROGRESS (~50%) — security P0/P1 fixed, RBAC, transactions, Zod validation, 36 unit tests pass | @qa, @infrastructure, @legal | Phase 3e |
 | 5 | Launch & Post-Launch | NOT STARTED | @orchestrator, @reviewer, @data-analyst, @growth, @social | Phase 4 |
 
 ---

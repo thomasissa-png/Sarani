@@ -42,8 +42,17 @@
 - [S7] Grille de validation visuelle Thomas (7 critères, chacun 10/10) : PRO, BEAU, SARANI, MÊME IDENTITÉ QUE LE SITE, PROPRE, BIEN ALIGNÉ, AÉRÉ.
 - [S7] Les montants dans les tableaux financiers DOIVENT être alignés à droite. Standard comptable non négociable.
 
+## UX et design des pages
+
+- [S8] **Conviction-first, not conversion-first.** Chaque page doit correspondre à l'INTENTION du visiteur. Les CTAs commerciaux ("Start a project") ne doivent apparaître qu'en conclusion d'une page de conviction, PAS en hero. Seules les pages d'action (homepage hero, contact) ont des CTAs above-the-fold. Pages d'évaluation (Services, Work), d'éducation (Blog), de conviction (About) = CTA en fin de parcours uniquement.
+- [S8] **H1 uniques par page.** Chaque page doit avoir un H1 qui répond à "pourquoi suis-je sur CETTE page ?". Si le H1 pourrait être sur une autre page du site, il est trop générique.
+- [S8] **CTA texte BLANC sur Flame.** Thomas a explicitement rejeté le texte noir sur Flame (ne ressort pas). Le blanc est WCAG AA pour le large text (bold 16px+ = 3.94:1 > 3:1 seuil).
+- [S8] **Hero homepage = dots animés uniquement.** Le grid d'images a été rejeté ("cata"). Les dots colorés (Flame/Cerulean/Lemon) sont la signature créative du logo Sarani — ne JAMAIS remplacer par des images, carrousel, ou visuel statique.
+- [S8] **Footer categories = liens avec filtre actif.** Cliquer une catégorie dans le footer doit amener directement sur /work avec le filtre correspondant pré-activé.
+
 ## Automatisation et autonomie
 
 - [S7] Thomas veut l'automatisation maximale — les case studies doivent être "générés tout seul" sans intervention humaine. Chaque feature doit fonctionner en autonomie par défaut.
 - [S7] Les proposals commerciaux doivent être des liens web (pas PDF), pré-remplis avec les données Sarani (case studies, conditions unlimited revisions/D+1, références clients).
 - [S7] Thomas préfère les flux progressifs avec points de validation intermédiaires (brief → storyboard → vidéo) plutôt que les flux directs (brief → vidéo).
+- [S8] **Les images des livrables clients sont dans SharePoint** — toujours les utiliser (via API Graph) plutôt que demander à Thomas de fournir des assets. Les dossiers "Batch" contiennent les visuels de production réels.
