@@ -568,13 +568,11 @@ export default function TrackerPage() {
         return;
       }
 
-      const data: { url: string; created: boolean } = await res.json();
+      const data: { url: string; created: boolean; id?: string } = await res.json();
 
-      // We need the preview DB id for deactivation. Extract from a follow-up or store url.
-      // For simplicity, we store what we have and re-fetch if needed.
       setPreviewLinks((prev) => ({
         ...prev,
-        [projectId]: { url: data.url, previewId: "", isActive: true },
+        [projectId]: { url: data.url, previewId: data.id ?? "", isActive: true },
       }));
 
       try {
