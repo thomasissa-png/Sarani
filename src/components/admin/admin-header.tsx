@@ -40,10 +40,32 @@ function getPageTitle(pathname: string): string {
   // Dynamic routes: /admin/clients/[id]
   if (/^\/admin\/clients\/[^/]+$/.test(path)) return "Client Details";
 
-  // Fallback: extract last segment
+  // Dynamic routes: /admin/projects/[compositeId]
+  // The composite ID is "client::project" — decode and show as "Client — Project"
+  if (/^\/admin\/projects\/[^/]+$/.test(path)) {
+    const segments = path.split("/").filter(Boolean);
+    const rawId = segments[segments.length - 1] ?? "";
+    try {
+      const decoded = decodeURIComponent(rawId);
+      const parts = decoded.split("::");
+      if (parts.length >= 2) {
+        return `${parts[0]} — ${parts.slice(1).join("::")}`;
+      }
+      return decoded;
+    } catch {
+      return "Project Details";
+    }
+  }
+
+  // Fallback: extract last segment and decode
   const segments = path.split("/").filter(Boolean);
   const last = segments[segments.length - 1] ?? "Admin";
-  return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
+  try {
+    const decoded = decodeURIComponent(last);
+    return decoded.charAt(0).toUpperCase() + decoded.slice(1).replace(/-/g, " ");
+  } catch {
+    return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, " ");
+  }
 }
 
 export function AdminHeader() {
