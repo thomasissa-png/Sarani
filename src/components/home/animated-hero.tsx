@@ -94,7 +94,7 @@ export function AnimatedHeroContent() {
             <br />
             Delivered in 24 hours.
           </h1>
-          <p className="mb-6 max-w-2xl text-lg text-neutral-600 md:text-xl">
+          <p className="mb-6 max-w-2xl text-lg text-neutral-700 md:text-xl">
             {SUBTITLE}
           </p>
           {/* Stats row */}
@@ -102,7 +102,7 @@ export function AnimatedHeroContent() {
             {HERO_STATS.map((stat) => (
               <div key={stat.label} className="flex flex-col items-center lg:items-start">
                 <span className="text-2xl font-bold text-brand-black">{stat.value}</span>
-                <span className="text-xs uppercase tracking-wide text-neutral-500">{stat.label}</span>
+                <span className="text-xs uppercase tracking-wide text-neutral-600">{stat.label}</span>
               </div>
             ))}
           </div>
@@ -134,7 +134,7 @@ export function AnimatedHeroContent() {
               See our work
             </TrackedCta>
           </div>
-          <p className="mt-3 text-sm text-neutral-500">
+          <p className="mt-3 text-sm text-neutral-600">
             First project satisfaction or no invoice.
           </p>
         </div>
@@ -189,7 +189,7 @@ export function AnimatedHeroContent() {
 
         {/* Subtitle — persona-focused value proposition */}
         <motion.p
-          className="mb-6 max-w-2xl text-lg text-neutral-600 md:text-xl"
+          className="mb-6 max-w-2xl text-lg text-neutral-700 md:text-xl"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{
@@ -215,7 +215,7 @@ export function AnimatedHeroContent() {
           {HERO_STATS.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center lg:items-start">
               <span className="text-2xl font-bold text-brand-black">{stat.value}</span>
-              <span className="text-xs uppercase tracking-wide text-neutral-500">{stat.label}</span>
+              <span className="text-xs uppercase tracking-wide text-neutral-600">{stat.label}</span>
             </div>
           ))}
         </motion.div>
@@ -268,7 +268,7 @@ export function AnimatedHeroContent() {
           </TrackedCta>
         </motion.div>
         <motion.p
-          className="mt-3 text-sm text-neutral-500"
+          className="mt-3 text-sm text-neutral-600"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.7, ease: [0.25, 0.1, 0.25, 1] }}

@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Sarani Pricing — Fixed Rates, No Subscription",
   description:
     "Transparent fixed pricing for enterprise creative work. Banners from 150€. Full rebrand from 5,000€. No monthly retainer. No surprise invoices.",
+  alternates: {
+    canonical: "https://sarani.studio/pricing",
+  },
 };
 
 /* ------------------------------------------------------------------ */
@@ -433,7 +436,7 @@ function PricingCard({ category }: { category: PricingCategory }) {
               <span className="shrink-0 text-right">
                 <span className="font-bold text-brand-black">{item.price}</span>
                 {item.priceUsd && (
-                  <span className="block text-xs text-neutral-400">{item.priceUsd}</span>
+                  <span className="block text-xs text-neutral-500">{item.priceUsd}</span>
                 )}
               </span>
             </div>

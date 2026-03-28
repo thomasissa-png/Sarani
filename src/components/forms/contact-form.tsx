@@ -511,8 +511,8 @@ export function ContactForm() {
         className={[
           "w-full rounded-full py-4 text-base font-bold transition-all duration-150",
           isSubmitting
-            ? "cursor-not-allowed bg-brand-flame-dark text-brand-white/60"
-            : "cursor-pointer bg-brand-flame text-brand-white hover:bg-brand-flame-dark hover:scale-[1.02] active:scale-[0.98]",
+            ? "cursor-not-allowed bg-brand-flame-dark text-brand-black/60"
+            : "cursor-pointer bg-brand-flame text-brand-black hover:bg-brand-flame-dark hover:scale-[1.02] active:scale-[0.98]",
           "focus-visible:outline-3 focus-visible:outline-brand-cerulean focus-visible:outline-offset-2",
         ].join(" ")}
       >
