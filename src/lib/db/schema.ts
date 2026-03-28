@@ -6,6 +6,7 @@ import {
   timestamp,
   jsonb,
   index,
+  uniqueIndex,
   varchar,
   integer,
   numeric,
@@ -575,6 +576,28 @@ export const storyboardApprovals = pgTable(
   ]
 );
 
+// ─── Project Previews ──────────────────────────────────────────────────────
+// Public presentation links for sharing project progress with clients.
+
+export const projectPreviews = pgTable(
+  "project_previews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: text("project_id").notNull().unique(),
+    clientSlug: text("client_slug").notNull(),
+    projectSlug: text("project_slug").notNull(),
+    clientName: text("client_name").notNull(),
+    projectName: text("project_name").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("uq_client_project_slug").on(table.clientSlug, table.projectSlug),
+    index("idx_project_previews_project_id").on(table.projectId),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -615,3 +638,5 @@ export type StoryboardSceneVersion = typeof storyboardSceneVersions.$inferSelect
 export type NewStoryboardSceneVersion = typeof storyboardSceneVersions.$inferInsert;
 export type StoryboardApproval = typeof storyboardApprovals.$inferSelect;
 export type NewStoryboardApproval = typeof storyboardApprovals.$inferInsert;
+export type ProjectPreview = typeof projectPreviews.$inferSelect;
+export type NewProjectPreview = typeof projectPreviews.$inferInsert;

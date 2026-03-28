@@ -1,0 +1,131 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { projectPreviews } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
+import { slugify } from "@/lib/slugify";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+/**
+ * POST /api/admin/project-previews
+ * Create or reactivate a project presentation link.
+ * Auth: protected by middleware (admin session cookie).
+ *
+ * Projects come from ClickUp/Excel merge (not a DB table), so the frontend
+ * passes clientName + projectName directly alongside projectId.
+ */
+export async function POST(request: NextRequest) {
+  // Rate limit: 20 req/min per session
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  if (!checkRateLimit(`preview-create:${ip}`, 20, 60_000)) {
+    return NextResponse.json(
+      { error: "RATE_LIMITED", message: "Too many requests. Try again later." },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
+  }
+
+  let body: { projectId?: string; clientName?: string; projectName?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: "INVALID_JSON", message: "Invalid request body." },
+      { status: 400 }
+    );
+  }
+
+  const { projectId, clientName, projectName } = body;
+
+  if (!projectId || typeof projectId !== "string") {
+    return NextResponse.json(
+      { error: "VALIDATION", message: "projectId is required." },
+      { status: 400 }
+    );
+  }
+  if (!clientName || typeof clientName !== "string") {
+    return NextResponse.json(
+      { error: "VALIDATION", message: "clientName is required." },
+      { status: 400 }
+    );
+  }
+  if (!projectName || typeof projectName !== "string") {
+    return NextResponse.json(
+      { error: "VALIDATION", message: "projectName is required." },
+      { status: 400 }
+    );
+  }
+
+  // Check if a preview already exists for this projectId
+  const [existing] = await db
+    .select()
+    .from(projectPreviews)
+    .where(eq(projectPreviews.projectId, projectId));
+
+  if (existing) {
+    if (!existing.isActive) {
+      // Reactivate
+      await db
+        .update(projectPreviews)
+        .set({ isActive: true, updatedAt: new Date() })
+        .where(eq(projectPreviews.id, existing.id));
+    }
+    const url = `/project/${existing.clientSlug}/${existing.projectSlug}`;
+    return NextResponse.json({ url, created: false }, { status: 200 });
+  }
+
+  // Generate slugs
+  const clientSlug = slugify(clientName);
+  let projectSlug = slugify(projectName);
+
+  if (!clientSlug || !projectSlug) {
+    return NextResponse.json(
+      {
+        error: "VALIDATION",
+        message: "Could not generate valid slugs from client/project names.",
+      },
+      { status: 400 }
+    );
+  }
+
+  // Handle slug collision: check if (clientSlug, projectSlug) already exists
+  let finalSlug = projectSlug;
+  let suffix = 1;
+  const MAX_COLLISION_ATTEMPTS = 20;
+
+  while (suffix <= MAX_COLLISION_ATTEMPTS) {
+    const [collision] = await db
+      .select({ id: projectPreviews.id })
+      .from(projectPreviews)
+      .where(
+        and(
+          eq(projectPreviews.clientSlug, clientSlug),
+          eq(projectPreviews.projectSlug, finalSlug)
+        )
+      );
+
+    if (!collision) break;
+
+    suffix++;
+    finalSlug = `${projectSlug}-${suffix}`;
+  }
+
+  if (suffix > MAX_COLLISION_ATTEMPTS) {
+    return NextResponse.json(
+      { error: "SLUG_COLLISION", message: "Too many projects with similar names." },
+      { status: 409 }
+    );
+  }
+
+  // Insert new preview
+  await db.insert(projectPreviews).values({
+    projectId,
+    clientSlug,
+    projectSlug: finalSlug,
+    clientName,
+    projectName,
+    isActive: true,
+  });
+
+  const url = `/project/${clientSlug}/${finalSlug}`;
+  return NextResponse.json({ url, created: true }, { status: 201 });
+}
