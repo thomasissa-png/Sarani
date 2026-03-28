@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { ClientLogos } from "@/components/home/client-logos";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "About Sarani — 35 Experts, 5 Continents, Since 2020",
@@ -74,6 +76,7 @@ const PROOF_POINTS: ProofPoint[] = [
 export default function AboutPage() {
   return (
     <div className="pt-[var(--header-height)]">
+      <BreadcrumbSchema items={BREADCRUMBS.about} />
       {/* ── Hero: The Sarani premise in 3 seconds ── */}
       <Section ariaLabel="About Sarani">
         <div className="max-w-3xl">

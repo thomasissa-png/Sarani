@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { ClientLogos } from "@/components/home/client-logos";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "Sarani Pricing — Fixed Rates, No Subscription",
@@ -229,6 +231,7 @@ const FAQ_JSON_LD = {
 export default function PricingPage() {
   return (
     <div className="pt-[var(--header-height)]">
+      <BreadcrumbSchema items={BREADCRUMBS.pricing} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_JSON_LD) }}

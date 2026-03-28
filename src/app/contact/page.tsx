@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
 import { ContactForm } from "@/components/forms/contact-form";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "Start a Project — Sarani Creative Agency",
@@ -14,6 +16,7 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className="pt-[var(--header-height)]">
+      <BreadcrumbSchema items={BREADCRUMBS.contact} />
       <Section ariaLabel="Contact form">
         <div className="mx-auto max-w-screen-xl">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_420px] lg:gap-16">

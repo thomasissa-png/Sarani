@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { clients, agentOutputs } from "@/lib/db/schema";
-import { sql, eq, desc, gte } from "drizzle-orm";
+import { clients, agentOutputs, caseStudyCandidates, landingPages } from "@/lib/db/schema";
+import { sql, eq, desc, gte, and } from "drizzle-orm";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +49,9 @@ export default async function AdminDashboardPage() {
   weekStart.setDate(now.getDate() - mondayOffset);
   weekStart.setHours(0, 0, 0, 0);
 
+  // 48h ago for action-required alerts
+  const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
   // Run all queries in parallel
   const [
     totalClientsResult,
@@ -56,6 +59,9 @@ export default async function AdminDashboardPage() {
     totalOutputsResult,
     outputsThisWeekResult,
     recentOutputs,
+    errorOutputsCount,
+    caseStudiesGeneratingCount,
+    landingPagesGeneratingCount,
   ] = await Promise.all([
     db
       .select({ count: sql<number>`count(*)` })
@@ -88,6 +94,29 @@ export default async function AdminDashboardPage() {
       .leftJoin(clients, eq(agentOutputs.clientId, clients.id))
       .orderBy(desc(agentOutputs.createdAt))
       .limit(10),
+    // Action Required: errors in last 48h
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(agentOutputs)
+      .where(
+        and(
+          eq(agentOutputs.status, "error"),
+          gte(agentOutputs.createdAt, fortyEightHoursAgo)
+        )
+      )
+      .then((r) => Number(r[0]?.count ?? 0)),
+    // Action Required: case studies generating
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(caseStudyCandidates)
+      .where(eq(caseStudyCandidates.status, "generating"))
+      .then((r) => Number(r[0]?.count ?? 0)),
+    // Action Required: landing pages generating
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(landingPages)
+      .where(eq(landingPages.status, "generating"))
+      .then((r) => Number(r[0]?.count ?? 0)),
   ]);
 
   return (
@@ -98,6 +127,13 @@ export default async function AdminDashboardPage() {
           Overview of your clients and agent activity
         </p>
       </div>
+
+      {/* Action Required */}
+      <ActionRequiredSection
+        errors={errorOutputsCount}
+        caseStudiesGenerating={caseStudiesGeneratingCount}
+        landingPagesGenerating={landingPagesGeneratingCount}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -345,6 +381,121 @@ function AgentTypeBadge({ agentType }: { agentType: string }) {
       className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${colorClass}`}
     >
       {initials}
+    </div>
+  );
+}
+
+function ActionRequiredSection({
+  errors,
+  caseStudiesGenerating,
+  landingPagesGenerating,
+}: {
+  errors: number;
+  caseStudiesGenerating: number;
+  landingPagesGenerating: number;
+}) {
+  const hasErrors = errors > 0;
+  const hasGenerating = caseStudiesGenerating > 0 || landingPagesGenerating > 0;
+  const allClear = !hasErrors && !hasGenerating;
+
+  return (
+    <div className="rounded-xl border border-neutral-300 bg-white p-5">
+      <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-3">
+        Action Required
+      </h2>
+
+      {allClear ? (
+        <div className="flex items-center gap-3 py-2">
+          <svg
+            className="w-5 h-5 text-green-500 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
+          </svg>
+          <span className="text-sm text-neutral-600">
+            All clear &mdash; no actions pending
+          </span>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {hasErrors && (
+            <Link
+              href="/admin/projects?status=error"
+              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-neutral-50 transition-colors group"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
+              <span className="text-sm text-brand-black group-hover:text-brand-cerulean transition-colors">
+                {errors} output{errors > 1 ? "s" : ""} failed &mdash; needs retry
+              </span>
+              <svg
+                className="w-4 h-4 ml-auto text-neutral-400 group-hover:text-brand-cerulean transition-colors shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+          )}
+          {caseStudiesGenerating > 0 && (
+            <Link
+              href="/admin/agents/case-studies"
+              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-neutral-50 transition-colors group"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <span className="text-sm text-brand-black group-hover:text-brand-cerulean transition-colors">
+                {caseStudiesGenerating} case stud{caseStudiesGenerating > 1 ? "ies" : "y"} generating...
+              </span>
+              <svg
+                className="w-4 h-4 ml-auto text-neutral-400 group-hover:text-brand-cerulean transition-colors shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+          )}
+          {landingPagesGenerating > 0 && (
+            <Link
+              href="/admin/landing-pages"
+              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-neutral-50 transition-colors group"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <span className="text-sm text-brand-black group-hover:text-brand-cerulean transition-colors">
+                {landingPagesGenerating} landing page{landingPagesGenerating > 1 ? "s" : ""} generating...
+              </span>
+              <svg
+                className="w-4 h-4 ml-auto text-neutral-400 group-hover:text-brand-cerulean transition-colors shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }

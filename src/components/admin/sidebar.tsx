@@ -202,12 +202,57 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
   return <span aria-hidden="true">{icon}</span>;
 }
 
+// ─── Badge context ──────────────────────────────────────────────────────────
+// Shared badge counts fetched from /api/admin/badges every 60s.
+
+type BadgeCounts = {
+  errors: number;
+  generating: number;
+};
+
+const BadgeContext = createContext<BadgeCounts>({ errors: 0, generating: 0 });
+
+function BadgeProvider({ children }: { children: React.ReactNode }) {
+  const [counts, setCounts] = useState<BadgeCounts>({ errors: 0, generating: 0 });
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchBadges() {
+      try {
+        const res = await fetch("/api/admin/badges");
+        if (res.ok && mounted) {
+          const data = await res.json();
+          setCounts({ errors: data.errors ?? 0, generating: data.generating ?? 0 });
+        }
+      } catch {
+        // Silently ignore — badges are non-critical
+      }
+    }
+
+    fetchBadges();
+    const interval = setInterval(fetchBadges, 60_000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <BadgeContext.Provider value={counts}>{children}</BadgeContext.Provider>
+  );
+}
+
 function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const badges = useContext(BadgeContext);
   const isActive =
     item.href === "/admin"
       ? pathname === "/admin"
       : pathname.startsWith(item.href);
+
+  // Show badge on Dashboard if there are errors
+  const showBadge = item.href === "/admin" && badges.errors > 0;
 
   return (
     <Link
@@ -222,13 +267,18 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
     >
       <NavIcon name={item.icon} className="w-4 h-4 shrink-0" />
       {item.label}
+      {showBadge && (
+        <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold text-white bg-red-500 rounded-full">
+          {badges.errors}
+        </span>
+      )}
     </Link>
   );
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <>
+    <BadgeProvider>
       <div className="p-4 border-b border-neutral-300" onClick={onNavigate}>
         <div className="inline-flex items-center gap-2">
           <Logo variant="dark" width={100} href="/admin" />
@@ -274,7 +324,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
       </nav>
-    </>
+    </BadgeProvider>
   );
 }
 

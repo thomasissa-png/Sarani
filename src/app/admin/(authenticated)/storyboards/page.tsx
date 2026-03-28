@@ -470,9 +470,9 @@ export default function StoryboardsPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
-        {loading ? (
+      {/* Loading state */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <div className="flex items-center justify-center py-16">
             <svg
               className="w-6 h-6 animate-spin text-neutral-400"
@@ -488,7 +488,12 @@ export default function StoryboardsPage() {
               Loading storyboards...
             </span>
           </div>
-        ) : storyboards.length === 0 ? (
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && storyboards.length === 0 && (
+        <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <svg
               className="w-10 h-10 text-neutral-300 mb-3"
@@ -513,7 +518,74 @@ export default function StoryboardsPage() {
               New Storyboard
             </button>
           </div>
-        ) : (
+        </div>
+      )}
+
+      {/* Mobile cards */}
+      {!loading && storyboards.length > 0 && (
+        <div className="md:hidden space-y-3">
+          {storyboards.map((sb) => (
+            <div
+              key={sb.id}
+              className="rounded-xl border border-neutral-200 bg-white p-4 space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-brand-black truncate mr-2">
+                  {sb.title}
+                </p>
+                <span
+                  className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${getStatusBadgeClasses(sb.status)}`}
+                >
+                  {sb.status.charAt(0).toUpperCase() + sb.status.slice(1)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-neutral-600">
+                <span>{sb.clientName || "--"}</span>
+                <span className="text-neutral-300">&middot;</span>
+                <span>{sb.scenesCount} scene{sb.scenesCount !== 1 ? "s" : ""}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {sb.status === "draft" && (
+                  <button
+                    onClick={() => handleGenerate(sb.id)}
+                    disabled={actionLoading.has(sb.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-black text-white text-xs font-medium rounded-md hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {actionLoading.has(sb.id) ? (
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                    ) : (
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                    )}
+                    Generate
+                  </button>
+                )}
+                {(sb.status === "ready" || sb.status === "shared") && (
+                  <button
+                    onClick={() => handleShare(sb.id)}
+                    disabled={actionLoading.has(sb.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-blue-300 text-blue-700 text-xs font-medium rounded-md hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Share
+                  </button>
+                )}
+                <a
+                  href={`/api/admin/storyboards/${sb.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 border border-neutral-300 text-neutral-600 text-xs font-medium rounded-md hover:bg-neutral-100 transition-colors"
+                >
+                  View
+                </a>
+              </div>
+              <p className="text-xs text-neutral-400">{formatDate(sb.createdAt)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop table */}
+      {!loading && storyboards.length > 0 && (
+        <div className="hidden md:block bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <caption className="sr-only">Storyboards list</caption>
@@ -547,22 +619,15 @@ export default function StoryboardsPage() {
                       i % 2 === 0 ? "bg-white" : "bg-neutral-50/50"
                     }`}
                   >
-                    {/* Client */}
                     <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
                       {sb.clientName || "--"}
                     </td>
-
-                    {/* Title */}
                     <td className="px-5 py-3.5 text-sm text-brand-black max-w-[250px] truncate">
                       {sb.title}
                     </td>
-
-                    {/* Scenes count */}
                     <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
                       {sb.scenesCount}
                     </td>
-
-                    {/* Status */}
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(sb.status)}`}
@@ -570,16 +635,11 @@ export default function StoryboardsPage() {
                         {sb.status.charAt(0).toUpperCase() + sb.status.slice(1)}
                       </span>
                     </td>
-
-                    {/* Date */}
                     <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
                       {formatDate(sb.createdAt)}
                     </td>
-
-                    {/* Actions */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
-                        {/* Generate (mock) — for draft */}
                         {sb.status === "draft" && (
                           <button
                             onClick={() => handleGenerate(sb.id)}
@@ -613,8 +673,6 @@ export default function StoryboardsPage() {
                             Generate
                           </button>
                         )}
-
-                        {/* Share — for ready/shared */}
                         {(sb.status === "ready" || sb.status === "shared") && (
                           <button
                             onClick={() => handleShare(sb.id)}
@@ -625,8 +683,6 @@ export default function StoryboardsPage() {
                             Share
                           </button>
                         )}
-
-                        {/* View — always available */}
                         <a
                           href={`/api/admin/storyboards/${sb.id}`}
                           target="_blank"
@@ -643,8 +699,8 @@ export default function StoryboardsPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Total count */}
       {!loading && storyboards.length > 0 && (

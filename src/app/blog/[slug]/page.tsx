@@ -10,6 +10,8 @@ import {
   getRelatedBlogPosts,
   formatBlogDate,
 } from "@/data/blog-posts";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { blogArticleBreadcrumb } from "@/lib/breadcrumb-jsonld";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -149,6 +151,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       />
 
       <div className="pt-[var(--header-height)]">
+        <BreadcrumbSchema items={blogArticleBreadcrumb(post.title, slug)} />
         {/* Article header */}
         <Section ariaLabel="Article header" tight>
           <div className="mx-auto max-w-2xl">

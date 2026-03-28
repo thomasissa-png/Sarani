@@ -3,6 +3,8 @@ import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { getSortedBlogPosts, getBlogCategories } from "@/data/blog-posts";
 import { BlogCategoryFilter } from "@/components/blog/BlogCategoryFilter";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "Blog — Creative Production Insights for Enterprise Teams",
@@ -24,6 +26,7 @@ export default function BlogPage() {
 
   return (
     <div className="pt-[var(--header-height)]">
+      <BreadcrumbSchema items={BREADCRUMBS.blog} />
       <Section ariaLabel="Blog articles">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
           Insights

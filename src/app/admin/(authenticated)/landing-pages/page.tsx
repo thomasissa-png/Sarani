@@ -467,9 +467,9 @@ export default function LandingPagesPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
-        {loading ? (
+      {/* Loading state */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <div className="flex items-center justify-center py-16">
             <svg
               className="w-6 h-6 animate-spin text-neutral-400"
@@ -485,7 +485,12 @@ export default function LandingPagesPage() {
               Loading landing pages...
             </span>
           </div>
-        ) : pages.length === 0 ? (
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!loading && pages.length === 0 && (
+        <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <svg
               className="w-10 h-10 text-neutral-300 mb-3"
@@ -511,7 +516,94 @@ export default function LandingPagesPage() {
               New Landing Page
             </button>
           </div>
-        ) : (
+        </div>
+      )}
+
+      {/* Mobile cards */}
+      {!loading && pages.length > 0 && (
+        <div className="md:hidden space-y-3">
+          {pages.map((p) => (
+            <div
+              key={p.id}
+              className="rounded-xl border border-neutral-200 bg-white p-4 space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-brand-black truncate mr-2">
+                  {p.title}
+                </p>
+                <span
+                  className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${getStatusBadgeClasses(p.status)}`}
+                >
+                  {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-neutral-600">
+                <span>{p.clientName || "--"}</span>
+                <span className="text-neutral-300">&middot;</span>
+                <span>{p.language}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {(p.status === "draft" || p.status === "ready") && (
+                  <button
+                    onClick={() => generatePage(p.id)}
+                    disabled={actionLoading.has(p.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-black text-white text-xs font-medium rounded-md hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {actionLoading.has(p.id) ? (
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                    ) : (
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                    )}
+                    Generate
+                  </button>
+                )}
+                {p.status === "ready" && (
+                  <button
+                    onClick={() => updateStatus(p.id, "published")}
+                    disabled={actionLoading.has(p.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-700 text-white text-xs font-medium rounded-md hover:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Publish
+                  </button>
+                )}
+                {p.status === "published" && (
+                  <a
+                    href={`/lp/${p.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-neutral-300 text-neutral-600 text-xs font-medium rounded-md hover:bg-neutral-100 transition-colors"
+                  >
+                    View
+                  </a>
+                )}
+                {p.status !== "archived" && (
+                  <button
+                    onClick={() => updateStatus(p.id, "archived")}
+                    disabled={actionLoading.has(p.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-neutral-300 text-neutral-600 text-xs font-medium rounded-md hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Archive
+                  </button>
+                )}
+                {p.status === "archived" && (
+                  <button
+                    onClick={() => updateStatus(p.id, "draft")}
+                    disabled={actionLoading.has(p.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-neutral-300 text-neutral-600 text-xs font-medium rounded-md hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Restore
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-neutral-400">{formatDate(p.createdAt)}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop table */}
+      {!loading && pages.length > 0 && (
+        <div className="hidden md:block bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <caption className="sr-only">Landing pages list</caption>
@@ -542,20 +634,15 @@ export default function LandingPagesPage() {
                       i % 2 === 0 ? "bg-white" : "bg-neutral-50/50"
                     }`}
                   >
-                    {/* Client */}
                     <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
                       {p.clientName || "--"}
                     </td>
-
-                    {/* Title */}
                     <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px]">
                       <div className="truncate">{p.title}</div>
                       <div className="text-xs text-neutral-400 truncate">
                         /lp/{p.slug}
                       </div>
                     </td>
-
-                    {/* Status */}
                     <td className="px-5 py-3.5">
                       <span
                         className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(p.status)}`}
@@ -563,16 +650,11 @@ export default function LandingPagesPage() {
                         {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
                       </span>
                     </td>
-
-                    {/* Created */}
                     <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
                       {formatDate(p.createdAt)}
                     </td>
-
-                    {/* Actions */}
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2">
-                        {/* Generate — only for draft/ready */}
                         {(p.status === "draft" || p.status === "ready") && (
                           <button
                             onClick={() => generatePage(p.id)}
@@ -606,8 +688,6 @@ export default function LandingPagesPage() {
                             Generate
                           </button>
                         )}
-
-                        {/* Publish — for ready */}
                         {p.status === "ready" && (
                           <button
                             onClick={() => updateStatus(p.id, "published")}
@@ -618,8 +698,6 @@ export default function LandingPagesPage() {
                             Publish
                           </button>
                         )}
-
-                        {/* View — for published */}
                         {p.status === "published" && (
                           <a
                             href={`/lp/${p.slug}`}
@@ -644,8 +722,6 @@ export default function LandingPagesPage() {
                             View
                           </a>
                         )}
-
-                        {/* Archive — for non-archived */}
                         {p.status !== "archived" && (
                           <button
                             onClick={() => updateStatus(p.id, "archived")}
@@ -656,8 +732,6 @@ export default function LandingPagesPage() {
                             Archive
                           </button>
                         )}
-
-                        {/* Restore — for archived */}
                         {p.status === "archived" && (
                           <button
                             onClick={() => updateStatus(p.id, "draft")}
@@ -675,8 +749,8 @@ export default function LandingPagesPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Total count */}
       {!loading && pages.length > 0 && (

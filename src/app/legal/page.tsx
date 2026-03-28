@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Section } from "@/components/layout/section";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "Legal & Privacy — Sarani",
@@ -22,6 +24,7 @@ const TOC_ITEMS = [
 export default function LegalPage() {
   return (
     <div className="pt-[var(--header-height)]">
+      <BreadcrumbSchema items={BREADCRUMBS.legal} />
       <Section ariaLabel="Legal and privacy">
         <div className="max-w-3xl">
           <h1 className="mb-4 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">

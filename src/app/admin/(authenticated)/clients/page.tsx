@@ -79,23 +79,58 @@ export default function ClientsListPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-neutral-300 overflow-hidden">
-        {loading ? (
-          <div className="py-12 text-center text-neutral-400 text-sm">
-            Loading...
-          </div>
-        ) : clients.length === 0 ? (
-          <div className="py-12 text-center text-neutral-400 text-sm">
-            No clients found.{" "}
+      {/* Loading / Empty states */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-neutral-300 py-12 text-center text-neutral-400 text-sm">
+          Loading...
+        </div>
+      )}
+
+      {!loading && clients.length === 0 && (
+        <div className="bg-white rounded-xl border border-neutral-300 py-12 text-center text-neutral-400 text-sm">
+          No clients found.{" "}
+          <Link
+            href="/admin/clients/new"
+            className="text-brand-cerulean hover:underline"
+          >
+            Create your first client
+          </Link>
+        </div>
+      )}
+
+      {/* Mobile cards */}
+      {!loading && clients.length > 0 && (
+        <div className="md:hidden space-y-3">
+          {clients.map((client) => (
             <Link
-              href="/admin/clients/new"
-              className="text-brand-cerulean hover:underline"
+              key={client.id}
+              href={`/admin/clients/${client.id}`}
+              className="block rounded-xl border border-neutral-200 bg-white p-4 space-y-2 active:bg-neutral-50 transition-colors"
             >
-              Create your first client
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-brand-black truncate mr-2">
+                  {client.name}
+                </p>
+                <StatusBadge status={client.status} />
+              </div>
+              <div className="flex items-center gap-2 text-xs text-neutral-600">
+                <span className="capitalize">{client.industry}</span>
+                <span className="text-neutral-300">&middot;</span>
+                <span>{client.primaryLanguage}</span>
+              </div>
+              {client.primaryContactEmail && (
+                <p className="text-xs text-neutral-500 truncate">
+                  {client.primaryContactEmail}
+                </p>
+              )}
             </Link>
-          </div>
-        ) : (
+          ))}
+        </div>
+      )}
+
+      {/* Desktop table */}
+      {!loading && clients.length > 0 && (
+        <div className="hidden md:block bg-white rounded-xl border border-neutral-300 overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-200 text-left">
@@ -146,8 +181,8 @@ export default function ClientsListPage() {
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

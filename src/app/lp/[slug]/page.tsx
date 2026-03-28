@@ -142,6 +142,9 @@ export default async function LandingPagePublic({ params }: Props) {
       {sections.features && sections.features.length > 0 && (
         <section className="px-6 py-20 bg-white/5">
           <div className="max-w-5xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
+              Why choose us
+            </h2>
             <div
               className={`grid gap-8 ${
                 sections.features.length <= 3

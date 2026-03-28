@@ -3,6 +3,8 @@ import Image from "next/image";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { ClientLogos } from "@/components/home/client-logos";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "Services — Sarani Enterprise Creative",
@@ -136,6 +138,7 @@ const SERVICE_SECTIONS: ServiceSection[] = [
 export default function ServicesPage() {
   return (
     <div className="pt-[var(--header-height)]">
+      <BreadcrumbSchema items={BREADCRUMBS.services} />
       {/* Hero */}
       <Section ariaLabel="Services hero" className="!pb-8">
         <div>

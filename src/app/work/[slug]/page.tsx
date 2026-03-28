@@ -11,6 +11,8 @@ import {
   getRelatedCaseStudies,
   getAdjacentCaseStudies,
 } from "@/data/case-studies";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { workDetailBreadcrumb } from "@/lib/breadcrumb-jsonld";
 
 /* ---------- SSG ---------- */
 
@@ -74,6 +76,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
 
   return (
     <div className="relative pt-[var(--header-height)]">
+      <BreadcrumbSchema items={workDetailBreadcrumb(cs.client, slug)} />
       {/* JSON-LD */}
       <script
         type="application/ld+json"

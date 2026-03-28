@@ -31,6 +31,8 @@ export interface QuotePDFData {
   validUntil: string | null; // ISO date string, e.g. "2026-04-26"
   language: "en" | "fr"; // Quote language — defaults to "en"
   paymentTermsDays: number; // Payment terms in days — defaults to 45
+  signatoryName?: string; // Defaults to "Emmanuel Gomez"
+  signatoryTitle?: string; // Defaults to "CEO"
 }
 
 // ─── Translations ────────────────────────────────────────────────────────────
@@ -1023,7 +1025,9 @@ export async function generateQuotePDF(
   });
   y -= 20;
 
-  const signatureName = "Emmanuel Gomez, CEO, Sarani";
+  const sigName = data.signatoryName ?? "Emmanuel Gomez";
+  const sigTitle = data.signatoryTitle ?? "CEO";
+  const signatureName = `${sigName}, ${sigTitle}, Sarani`;
   const signatureWidth = fontBold.widthOfTextAtSize(signatureName, FONT_BODY);
   currentPage.drawText(signatureName, {
     x: PAGE_WIDTH - MARGIN_RIGHT - signatureWidth,

@@ -3,6 +3,8 @@ import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { WorkGrid } from "@/components/case-studies/work-grid";
 import { getOrderedCaseStudies, getCategories } from "@/data/case-studies";
+import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
+import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 
 export const metadata: Metadata = {
   title: "Work — Enterprise Creative at Scale | Sarani",
@@ -25,6 +27,7 @@ export default function WorkPage() {
 
   return (
     <div className="pt-[var(--header-height)]">
+      <BreadcrumbSchema items={BREADCRUMBS.work} />
       {/* Hero */}
       <Section ariaLabel="Work overview">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
