@@ -157,9 +157,20 @@ function levenshteinSimilarity(a: string, b: string): number {
   return 1 - matrix[a.length][b.length] / maxLen;
 }
 
+// ─── Concurrency guard ─────────────────────────────────────────────────────
+
+let scanInProgress = false;
+
 // ─── POST /api/admin/case-studies/scan ─────────────────────────────────────
 
 export async function POST() {
+  if (scanInProgress) {
+    return NextResponse.json(
+      { error: "A scan is already in progress. Please wait for it to complete." },
+      { status: 409 }
+    );
+  }
+  scanInProgress = true;
   try {
     // 1. Get published case study sectors for diversity scoring
     const publishedCandidates = await db
@@ -324,5 +335,7 @@ export async function POST() {
       { error: "Scan failed" },
       { status: 500 }
     );
+  } finally {
+    scanInProgress = false;
   }
 }

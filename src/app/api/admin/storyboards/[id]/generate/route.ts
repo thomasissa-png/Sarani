@@ -243,6 +243,13 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error generating storyboard:", error);
+    // Rollback storyboard status on unexpected failure
+    const { id: storyboardId } = await params;
+    await db
+      .update(storyboards)
+      .set({ status: "draft", updatedAt: new Date() })
+      .where(eq(storyboards.id, storyboardId))
+      .catch(() => {}); // Best-effort rollback
     return NextResponse.json(
       { error: "Failed to generate storyboard" },
       { status: 500 }

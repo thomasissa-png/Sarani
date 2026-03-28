@@ -15,7 +15,7 @@ const LandingPageOutputSchema = z.object({
     subheadline: z.string().min(10),
     ctaText: z.string().min(1),
     ctaUrl: z.string().default("#contact"),
-    backgroundType: z.enum(["color", "gradient", "image"]).default("color"),
+    backgroundType: z.enum(["color", "image"]).default("color"),
   }),
   features: z
     .array(

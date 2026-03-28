@@ -6,6 +6,15 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { LandingPageSections } from "@/lib/db/schema";
 
+/** Validate URL to prevent javascript: XSS */
+function safeHref(url: string | undefined): string {
+  if (!url) return "#contact";
+  if (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("#") || url.startsWith("/")) {
+    return url;
+  }
+  return "#contact";
+}
+
 type Props = {
   params: Promise<{ slug: string }>;
 };
@@ -92,7 +101,7 @@ export default async function LandingPagePublic({ params }: Props) {
         backgroundColor: bgColor,
         color: "#ffffff",
         fontFamily: page.clientFontName
-          ? `"${page.clientFontName}", system-ui, sans-serif`
+          ? `"${page.clientFontName.replace(/[^a-zA-Z0-9\s-]/g, "")}", system-ui, sans-serif`
           : '"Outfit", system-ui, sans-serif',
       }}
     >
@@ -115,7 +124,7 @@ export default async function LandingPagePublic({ params }: Props) {
             </p>
             <div className="mt-10">
               <a
-                href={sections.hero.ctaUrl || "#contact"}
+                href={safeHref(sections.hero.ctaUrl)}
                 className="inline-flex items-center px-8 py-4 text-lg font-semibold rounded-full transition-all hover:scale-105"
                 style={{
                   backgroundColor: primaryColor,
@@ -198,7 +207,7 @@ export default async function LandingPagePublic({ params }: Props) {
               {sections.cta.subtext}
             </p>
             <a
-              href={sections.cta.buttonUrl || "#contact"}
+              href={safeHref(sections.cta.buttonUrl)}
               className="inline-flex items-center px-8 py-4 text-lg font-semibold rounded-full transition-all hover:scale-105"
               style={{
                 backgroundColor: primaryColor,
