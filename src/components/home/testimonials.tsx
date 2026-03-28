@@ -112,7 +112,7 @@ export function Testimonials() {
           transition={{ duration: 0.25 }}
         >
           <p className="text-base font-bold text-brand-black">{t.name}</p>
-          <p className="text-sm text-neutral-500">{t.role}</p>
+          <p className="text-sm text-neutral-500">{t.role}{t.company ? `, ${t.company}` : ""}</p>
           <p className="mt-1 text-xs font-bold uppercase tracking-wider text-brand-flame-dark">
             {t.service}
           </p>
