@@ -1756,6 +1756,7 @@ function SharePreviewButton({
 
 function SecondaryActionsDropdown({ project }: { project: TrackerProject }) {
   const [open, setOpen] = useState(false);
+  const [folderLoading, setFolderLoading] = useState(false);
 
   const hasClickUp = !!project.clickupTaskUrl;
   const hasSharepoint = !!project.sharepointLink;
@@ -1763,6 +1764,43 @@ function SecondaryActionsDropdown({ project }: { project: TrackerProject }) {
 
   // If no secondary links exist, don't render the dropdown
   if (!hasClickUp && !hasSharepoint && !hasTracker) return null;
+
+  // Open folder with anonymous sharing link (converts on-demand)
+  const handleFolderClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const url = project.sharepointLink;
+    // If already a sharing link (contains /:f:/ or /:r:/), open directly
+    if (url.includes("/:f:/") || url.includes("/:r:/") || url.includes("/s/") || url.includes("guestaccess")) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      setOpen(false);
+      return;
+    }
+
+    // Convert to anonymous sharing link via API
+    setFolderLoading(true);
+    try {
+      const res = await fetch("/api/admin/integrations/sharepoint/share-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        window.open(data.sharingLink, "_blank", "noopener,noreferrer");
+      } else {
+        // Fallback: open the direct URL if conversion fails
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+    } catch {
+      // Fallback: open the direct URL
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setFolderLoading(false);
+      setOpen(false);
+    }
+  };
 
   return (
     <div className="relative">
@@ -1801,16 +1839,15 @@ function SecondaryActionsDropdown({ project }: { project: TrackerProject }) {
               </a>
             )}
             {hasSharepoint && (
-              <a
-                href={project.sharepointLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
+              <button
+                type="button"
+                onClick={handleFolderClick}
+                disabled={folderLoading}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors disabled:opacity-50"
               >
                 <FolderIcon />
-                Folder
-              </a>
+                {folderLoading ? "Opening..." : "Folder"}
+              </button>
             )}
             {hasTracker && (
               <a

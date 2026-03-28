@@ -509,6 +509,75 @@ export async function getDriveItemByPath(
   return graphFetch<DriveItem>(`/drives/${driveId}/root:${encodedPath}`);
 }
 
+// ─── Sharing Links ─────────────────────────────────────────────────────────
+
+/**
+ * Resolve a SharePoint URL to a driveItem using the shares API.
+ * Encodes the URL as a sharing token: "u!" + base64url(url).
+ */
+export async function resolveSharePointUrl(
+  url: string
+): Promise<DriveItem | null> {
+  try {
+    // Encode URL as sharing token per Microsoft docs
+    const base64 = Buffer.from(url, "utf-8").toString("base64");
+    const shareToken = "u!" + base64.replace(/=+$/, "").replace(/\//g, "_").replace(/\+/g, "-");
+    return await graphFetch<DriveItem>(`/shares/${shareToken}/driveItem`);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Create an anonymous "Anyone" sharing link for a drive item.
+ * This generates a link that works without sign-in (like the SharePoint "Anyone" option).
+ * If a sharing link already exists, the Graph API returns the existing one.
+ */
+export async function createAnonymousSharingLink(
+  driveId: string,
+  itemId: string
+): Promise<string | null> {
+  try {
+    const result = await graphFetch<{ link: { webUrl: string } }>(
+      `/drives/${driveId}/items/${itemId}/createLink`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          type: "view",
+          scope: "anonymous",
+        }),
+      }
+    );
+    return result.link?.webUrl ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Convert a direct SharePoint URL to an anonymous sharing link.
+ * Combines resolveSharePointUrl + createAnonymousSharingLink.
+ * Returns the original URL as fallback if conversion fails.
+ */
+export async function getPublicSharingLink(url: string): Promise<string> {
+  if (!url) return url;
+
+  // If it's already a sharing link (contains /:f:/ or /s/ or guestaccess), return as-is
+  if (url.includes("/:f:/") || url.includes("/:r:/") || url.includes("/s/") || url.includes("guestaccess")) {
+    return url;
+  }
+
+  const item = await resolveSharePointUrl(url);
+  if (!item?.id || !item?.parentReference?.driveId) return url;
+
+  const sharingLink = await createAnonymousSharingLink(
+    item.parentReference.driveId,
+    item.id
+  );
+
+  return sharingLink ?? url;
+}
+
 // ─── Health Check ───────────────────────────────────────────────────────────
 
 /**
