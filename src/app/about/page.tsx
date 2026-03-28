@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "About Sarani — 35 Experts, 5 Continents, Since 2020",
   description:
     "Built in 2020 to do what traditional agencies can't: deliver enterprise-grade creative work in 24 hours, at fixed prices, with unlimited revisions.",
+  alternates: {
+    canonical: "https://sarani.studio/about",
+  },
 };
 
 /* ------------------------------------------------------------------ */

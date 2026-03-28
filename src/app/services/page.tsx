@@ -14,6 +14,9 @@ export const metadata: Metadata = {
       "Enterprise creative delivered in 24 hours. 35 experts, 5 continents, working in relay. Fixed prices. Unlimited revisions.",
     url: "/services",
   },
+  alternates: {
+    canonical: "https://sarani.studio/services",
+  },
 };
 
 /* ------------------------------------------------------------------ */

@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Start a Project — Sarani Creative Agency",
   description:
     "Send your brief. Get a response within hours. Sarani's team works 24/7 across 5 continents \u2014 your project starts the moment you reach out.",
+  alternates: {
+    canonical: "https://sarani.studio/contact",
+  },
 };
 
 export default function ContactPage() {

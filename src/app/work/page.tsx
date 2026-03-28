@@ -14,6 +14,9 @@ export const metadata: Metadata = {
       "TikTok, Sony, Adidas, LEGO, IKEA, GEODIS. Real briefs. Real deadlines. Real results.",
     url: "/work",
   },
+  alternates: {
+    canonical: "https://sarani.studio/work",
+  },
 };
 
 export default function WorkPage() {

@@ -37,6 +37,9 @@ export async function generateMetadata({
       publishedTime: post.publishedAt,
       authors: [post.author],
     },
+    alternates: {
+      canonical: `https://sarani.studio/blog/${slug}`,
+    },
   };
 }
 

@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Legal & Privacy — Sarani",
   description:
     "Legal information, privacy policy, and GDPR compliance for Sarani Studio. SARANI SAS, SIREN 881687503.",
+  alternates: {
+    canonical: "https://sarani.studio/legal",
+  },
 };
 
 const TOC_ITEMS = [

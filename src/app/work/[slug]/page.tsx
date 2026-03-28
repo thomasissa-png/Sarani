@@ -38,6 +38,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       url: `/work/${cs.slug}`,
       type: "article",
     },
+    alternates: {
+      canonical: `https://sarani.studio/work/${slug}`,
+    },
   };
 }
 

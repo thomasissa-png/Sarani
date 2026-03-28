@@ -14,6 +14,9 @@ export const metadata: Metadata = {
       "Thought leadership and industry insights on enterprise creative production at scale.",
     url: "/blog",
   },
+  alternates: {
+    canonical: "https://sarani.studio/blog",
+  },
 };
 
 export default function BlogPage() {
