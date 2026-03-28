@@ -6,6 +6,7 @@ import {
   storyboardSceneVersions,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
 
 // ─── fal.ai Flux.1 Pro integration ────────────────────────────────────────
 
@@ -107,6 +108,15 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+    if (!checkRateLimit("llm-storyboard-generate", 5, 60_000)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Max 5 storyboard generations per minute." },
+        { status: 429 }
+      );
+    }
 
     // 1. Verify storyboard exists
     const [storyboard] = await db

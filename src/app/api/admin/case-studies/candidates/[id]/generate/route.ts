@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
+import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
 import { z } from "zod";
 
 // ─── Zod schemas for LLM output validation ────────────────────────────────
@@ -97,6 +98,15 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+    if (!checkRateLimit("llm-cs-generate", 10, 60_000)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Max 10 generations per minute." },
+        { status: 429 }
+      );
+    }
     const body = await request.json().catch(() => ({}));
     const force = body.force === true;
 

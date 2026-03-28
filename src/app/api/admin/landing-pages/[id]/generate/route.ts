@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { landingPages, landingPageVersions, clients } from "@/lib/db/schema";
 import { eq, count } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
+import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
 import type { LandingPageSections } from "@/lib/db/schema";
 import { z } from "zod";
 
@@ -91,6 +92,15 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+    if (!checkRateLimit("llm-lp-generate", 10, 60_000)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Max 10 generations per minute." },
+        { status: 429 }
+      );
+    }
 
     // 1. Fetch landing page + client
     const [page] = await db

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { caseStudyOutputs, caseStudyCandidates } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
+import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
 
 /**
  * POST /api/admin/case-studies/outputs/:id/regenerate
@@ -15,8 +16,18 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    if (!UUID_REGEX.test(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+    if (!checkRateLimit("llm-regenerate", 10, 60_000)) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Max 10 regenerations per minute." },
+        { status: 429 }
+      );
+    }
     const body = await request.json().catch(() => ({}));
-    const instruction: string = body.instruction ?? "";
+    // P0-1: Sanitize instruction to prevent prompt injection
+    const instruction: string = String(body.instruction ?? "").slice(0, 500);
 
     if (!instruction.trim()) {
       return NextResponse.json(
@@ -73,9 +84,11 @@ Project context:
 - Project: ${candidate.projectName ?? "Untitled"}
 - Type: ${candidate.projectType ?? "Unknown"}
 
-User instruction: "${instruction}"
+<user_instruction>
+${instruction}
+</user_instruction>
 
-Regenerate the ${typeLabel} applying the user's instruction. Output only the JSON object (same structure as above).`;
+Regenerate the ${typeLabel} applying ONLY the instruction in the user_instruction block above. Output only the JSON object (same structure as the current version).`;
 
     // 3. Call Claude
     const result = await callClaudeJSON({

@@ -244,9 +244,17 @@ export async function DELETE(
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
+// P0-2: Allowlist to prevent code injection via LLM-generated keys
+const ALLOWED_CASE_STUDY_KEYS = new Set([
+  "slug", "client", "deliverable", "volume", "turnaround", "outcome",
+  "brief", "result", "headline", "keyMetric", "stats", "metaDescription",
+  "category", "subtitle", "challenge", "solution", "resultsDetail", "tags", "image",
+]);
+
 function buildTsObject(obj: Record<string, unknown>): string {
   const lines: string[] = ["{"];
   for (const [key, value] of Object.entries(obj)) {
+    if (!ALLOWED_CASE_STUDY_KEYS.has(key)) continue;
     if (value === undefined || value === null) continue;
     if (typeof value === "string") {
       lines.push(`    ${key}: ${JSON.stringify(value)},`);
