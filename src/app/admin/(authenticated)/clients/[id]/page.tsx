@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ClientForm } from "@/components/admin/client-form";
@@ -71,6 +71,46 @@ export default function ClientDetailPage() {
   const [activeTab, setActiveTab] = useState<"outputs" | "settings">(
     "outputs"
   );
+
+  // Report download state
+  const [reportMonth, setReportMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  });
+  const [reportLoading, setReportLoading] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const monthPickerRef = useRef<HTMLDivElement>(null);
+
+  async function handleDownloadReport() {
+    setReportLoading(true);
+    try {
+      const res = await fetch(
+        `/api/admin/clients/${id}/report?month=${reportMonth}`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || "Failed to generate report");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        res.headers.get("Content-Disposition")?.match(/filename="(.+)"/)?.[1] ??
+        `report-${reportMonth}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setShowMonthPicker(false);
+    } catch {
+      setError("Failed to download report");
+    } finally {
+      setReportLoading(false);
+    }
+  }
 
   const fetchClient = useCallback(async () => {
     try {

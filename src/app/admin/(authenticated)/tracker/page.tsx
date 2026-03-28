@@ -1180,6 +1180,10 @@ export default function TrackerPage() {
                             onShare={handleSharePreview}
                             onDeactivate={handleDeactivatePreview}
                           />
+                          <LaunchAgentDropdown
+                            clientName={p.client}
+                            projectName={p.project}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -1337,6 +1341,10 @@ export default function TrackerPage() {
                   isLoading={previewLoading === getProjectId(p)}
                   onShare={handleSharePreview}
                   onDeactivate={handleDeactivatePreview}
+                />
+                <LaunchAgentDropdown
+                  clientName={p.client}
+                  projectName={p.project}
                 />
               </div>
             </div>
@@ -1607,6 +1615,63 @@ function FolderIcon() {
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
+  );
+}
+
+// ─── Launch Agent Dropdown ─────────────────────────────────────────────────
+
+const AGENT_LINKS = [
+  { label: "Copywriter", href: "/admin/agents/copywriter" },
+  { label: "Art Direction", href: "/admin/agents/creative" },
+  { label: "Translator", href: "/admin/agents/translator" },
+  { label: "Video Script", href: "/admin/agents/video-script" },
+  { label: "Proposal", href: "/admin/agents/proposal" },
+  { label: "Presentation", href: "/admin/agents/presentation" },
+] as const;
+
+function LaunchAgentDropdown({ clientName, projectName }: { clientName: string; projectName: string }) {
+  const [open, setOpen] = useState(false);
+  const params = new URLSearchParams({ client: clientName, project: projectName }).toString();
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((prev) => !prev);
+        }}
+        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+        title="Launch AI Agent"
+        aria-label="Launch AI Agent"
+      >
+        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+        AI
+      </button>
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-neutral-200 rounded-lg shadow-lg z-40 py-1">
+            {AGENT_LINKS.map((agent) => (
+              <Link
+                key={agent.href}
+                href={`${agent.href}?${params}`}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
+              >
+                {agent.label}
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
