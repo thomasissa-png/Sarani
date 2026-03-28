@@ -4,10 +4,16 @@
 // Matching strategy: exact name > word-overlap > token overlap > unmatched
 //
 // Match levels (in priority order):
-//   L1: Exact normalized name match
-//   L2: High word-overlap (≥ 70%) within same client
-//   L3: Medium word-overlap (≥ 50%) + date proximity (≤ 14 days) within same client
-//   L4: Token match (2+ tokens of 4+ chars shared) within same client
+//   L1a: Exact normalized name match within same client (safest)
+//   L1b: Exact normalized name match globally (cross-client fallback)
+//   L2:  High word-overlap (≥ 70%) within same client
+//   L2c: Contains match (one name fully inside the other, ≥8 chars, ≥40% length ratio)
+//   L3:  Medium word-overlap (≥ 50%) + date proximity (≤ 14 days) within same client
+//   L4:  Token match (2+ tokens of 4+ chars shared) within same client
+//
+// Client resolution for "Other customers" space:
+//   Tasks use list.name as client key (not the generic space name).
+//   Client lookup uses fuzzy matching (contains, first-word) as fallback.
 
 import type { ClickUpTask } from "@/lib/integrations/clickup";
 import type { EvolizInvoice } from "@/lib/integrations/evoliz";
@@ -69,6 +75,7 @@ function normalizeForMatch(s: string): string {
     .trim();
 }
 
+
 /**
  * Legacy exact-key normalization: strips ALL non-alphanumeric for exact lookup.
  * Used only for the exact-match index (Level 1).
@@ -79,16 +86,19 @@ function normalizeForExactKey(s: string): string {
 
 /**
  * Extract significant words (≥ minLen chars) from a normalized string.
+ * Uses minLen=2 by default to catch codes like "Q2", "15", "3D", etc.
  */
-function extractWords(normalized: string, minLen = 3): string[] {
+function extractWords(normalized: string, minLen = 2): string[] {
   return normalized.split(" ").filter((w) => w.length >= minLen);
 }
 
 /**
  * Calculate word-overlap score between two strings.
- * Returns a ratio (0–1) of how many significant words (≥3 chars) overlap
+ * Returns a ratio (0–1) of how many significant words (≥2 chars) overlap
  * relative to the shorter word list. This ensures short names like "LEGO Q2"
  * match well against longer names like "LEGO Q2 Campaign".
+ *
+ * Also checks for numeric prefix matches: "15s" matches "15" (same number).
  */
 function wordOverlapScore(a: string, b: string): number {
   const wordsA = extractWords(normalizeForMatch(a));
@@ -98,7 +108,21 @@ function wordOverlapScore(a: string, b: string): number {
   const setB = new Set(wordsB);
   let overlap = 0;
   for (const w of wordsA) {
-    if (setB.has(w)) overlap++;
+    if (setB.has(w)) {
+      overlap++;
+    } else {
+      // Numeric prefix match: "15s" matches "15sec", "15" matches "15s"
+      const numA = w.match(/^(\d+)/)?.[1];
+      if (numA) {
+        for (const wb of wordsB) {
+          const numB = wb.match(/^(\d+)/)?.[1];
+          if (numB && numA === numB) {
+            overlap += 0.8; // partial credit for numeric prefix match
+            break;
+          }
+        }
+      }
+    }
   }
 
   // Ratio relative to the shorter list — so "LEGO Q2" (2 words, both match)
@@ -149,6 +173,44 @@ function datesWithinRange(
 function fuzzyMatch(a: string, b: string): boolean {
   if (!a || !b) return false;
   return a.includes(b) || b.includes(a);
+}
+
+/**
+ * Find client tasks with fuzzy client key matching.
+ * Tries exact key first, then contains-match and first-word match against all keys.
+ * This handles cases where Excel says "GEODIS" but ClickUp list is "Geodis SAS".
+ */
+function findClientTasks(
+  clientName: string,
+  tasksByClient: Map<string, ClickUpTask[]>
+): ClickUpTask[] {
+  const clientKey = normalizeForMatch(clientName);
+
+  // 1. Exact key
+  const exact = tasksByClient.get(clientKey);
+  if (exact?.length) return exact;
+
+  // 2. Contains match: "geodis" in "geodis sas" or vice versa
+  for (const [key, tasks] of tasksByClient) {
+    if (key.includes(clientKey) || clientKey.includes(key)) {
+      debugLog(`  Fuzzy client match: "${clientKey}" ~ "${key}" (contains)`);
+      return tasks;
+    }
+  }
+
+  // 3. First-word match: "geodis" matches "geodis sas"
+  const firstWord = clientKey.split(" ")[0];
+  if (firstWord && firstWord.length >= 3) {
+    for (const [key, tasks] of tasksByClient) {
+      const keyFirst = key.split(" ")[0];
+      if (keyFirst === firstWord) {
+        debugLog(`  Fuzzy client match: "${clientKey}" ~ "${key}" (first-word)`);
+        return tasks;
+      }
+    }
+  }
+
+  return [];
 }
 
 function mapEvolizStatus(status: string): string {
@@ -217,10 +279,12 @@ function getClickUpTaskDate(task: ClickUpTask): string {
  * Merge data from Excel, ClickUp, and Evoliz into unified TrackerProject records.
  *
  * Matching strategy (in priority order):
- *   L1. Exact name match (normalized, stripped)
- *   L2. High word-overlap (≥ 70%) within same client
- *   L3. Medium word-overlap (≥ 50%) + date proximity (≤ 14 days) within same client
- *   L4. Token match (2+ tokens of 4+ chars shared) within same client
+ *   L1a. Exact name match within same client (safest)
+ *   L1b. Exact name match globally (cross-client fallback)
+ *   L2.  High word-overlap (≥ 70%) within same client
+ *   L2c. Contains match (one name inside the other) within same client
+ *   L3.  Medium word-overlap (≥ 50%) + date proximity (≤ 14 days)
+ *   L4.  Token match (2+ tokens of 4+ chars shared) within same client
  *   Unmatched Excel rows → shown with Excel data only
  *   Unmatched ClickUp tasks → shown with ClickUp data only
  */
@@ -297,32 +361,54 @@ export function mergeData(
 
   /**
    * Find the best ClickUp task match for an Excel project.
-   * Priority: L1 exact > L2 word-overlap 70% > L3 word-overlap 50% + date > L4 token
+   * Priority:
+   *   L1a: Exact normalized name match within same client (safest)
+   *   L1b: Exact normalized name match globally (cross-client, risky for short names)
+   *   L2:  High word-overlap (≥ 70%) within same client
+   *   L2c: One normalized name fully contains the other within same client
+   *   L3:  Medium word-overlap (≥ 50%) + date proximity (≤ 14 days) within same client
+   *   L4:  Token match (2+ tokens of 4+ chars shared) within same client
    */
   function findClickUpMatch(
     ep: ExcelProject
   ): { task: ClickUpTask; level: string } | undefined {
     const exactKey = normalizeForExactKey(ep.project);
+    const normalizedProject = normalizeForMatch(ep.project);
 
-    // L1: Exact name match (stripped)
-    const exactMatches = tasksByExactName.get(exactKey);
-    if (exactMatches?.length) {
-      const best = exactMatches.sort(
+    // Get client tasks for scoped matching (L1a, L2–L4)
+    const clientTasks = findClientTasks(ep.client, tasksByClient);
+
+    // L1a: Exact name match within same client (preferred — avoids cross-client collisions)
+    if (clientTasks.length) {
+      const clientExact = clientTasks.filter(
+        (t) => normalizeForExactKey(t.name) === exactKey
+      );
+      if (clientExact.length) {
+        const best = clientExact.sort(
+          (a, b) => parseInt(b.date_updated) - parseInt(a.date_updated)
+        )[0];
+        debugLog(
+          `L1a EXACT+CLIENT: "${ep.project}" → "${best.name}" [${ep.client}]`
+        );
+        return { task: best, level: "L1" };
+      }
+    }
+
+    // L1b: Exact name match globally (fallback — risky for short/generic names)
+    const globalExact = tasksByExactName.get(exactKey);
+    if (globalExact?.length) {
+      const best = globalExact.sort(
         (a, b) => parseInt(b.date_updated) - parseInt(a.date_updated)
       )[0];
       debugLog(
-        `L1 EXACT: "${ep.project}" → "${best.name}" [${ep.client}]`
+        `L1b EXACT+GLOBAL: "${ep.project}" → "${best.name}" [${ep.client}] (task client: ${resolveTaskClientName(best)})`
       );
       return { task: best, level: "L1" };
     }
 
-    // Get client tasks for L2–L4
-    const clientKey = normalizeForMatch(ep.client);
-    const clientTasks = tasksByClient.get(clientKey);
-
-    if (!clientTasks?.length) {
+    if (!clientTasks.length) {
       debugLog(
-        `NO CLIENT TASKS for "${ep.client}" (key: "${clientKey}"). Excel project: "${ep.project}"`
+        `NO CLIENT TASKS for "${ep.client}" (key: "${normalizeForMatch(ep.client)}"). Available keys: [${Array.from(tasksByClient.keys()).join(", ")}]. Excel project: "${ep.project}"`
       );
       return undefined;
     }
@@ -340,6 +426,32 @@ export function mergeData(
         `L2 WORD-OVERLAP(${(bestL2.score * 100).toFixed(0)}%): "${ep.project}" → "${bestL2.task.name}" [${ep.client}]`
       );
       return { task: bestL2.task, level: "L2" };
+    }
+
+    // L2c: Contains match — one normalized name fully contains the other
+    // Catches "LEGO Q2" ⊂ "LEGO Q2 Campaign - January" where word overlap may be < 70%
+    // Guard: require the shorter name to be ≥ 8 chars to avoid false positives
+    if (normalizedProject.length >= 8) {
+      let bestContains: { task: ClickUpTask; lenRatio: number } | undefined;
+      for (const t of clientTasks) {
+        const normalizedTask = normalizeForMatch(t.name);
+        if (normalizedTask.includes(normalizedProject) || normalizedProject.includes(normalizedTask)) {
+          const shorter = Math.min(normalizedProject.length, normalizedTask.length);
+          const longer = Math.max(normalizedProject.length, normalizedTask.length);
+          const lenRatio = shorter / longer;
+          // Only accept if the shorter string is at least 40% of the longer
+          // (prevents "video" matching "video production campaign q2 france")
+          if (lenRatio >= 0.4 && (!bestContains || lenRatio > bestContains.lenRatio)) {
+            bestContains = { task: t, lenRatio };
+          }
+        }
+      }
+      if (bestContains) {
+        debugLog(
+          `L2c CONTAINS(ratio ${(bestContains.lenRatio * 100).toFixed(0)}%): "${ep.project}" → "${bestContains.task.name}" [${ep.client}]`
+        );
+        return { task: bestContains.task, level: "L2" };
+      }
     }
 
     // L3: Medium word-overlap (≥ 50%) + date proximity (≤ 14 days)
@@ -377,9 +489,28 @@ export function mergeData(
       return { task: bestL4.task, level: "L4" };
     }
 
-    debugLog(
-      `NO MATCH: "${ep.project}" [${ep.client}] — ${clientTasks.length} client tasks checked`
-    );
+    // Debug: show top candidates that almost matched
+    if (MERGE_DEBUG) {
+      const candidates = clientTasks
+        .map((t) => ({
+          name: t.name,
+          wordScore: wordOverlapScore(ep.project, t.name),
+          tokenCount: sharedTokenCount(ep.project, t.name),
+        }))
+        .filter((c) => c.wordScore > 0.2 || c.tokenCount >= 1)
+        .sort((a, b) => b.wordScore - a.wordScore)
+        .slice(0, 5);
+      if (candidates.length) {
+        debugLog(
+          `NO MATCH: "${ep.project}" [${ep.client}] — top candidates:`,
+          candidates.map((c) => `"${c.name}" (words:${(c.wordScore * 100).toFixed(0)}%, tokens:${c.tokenCount})`).join(", ")
+        );
+      } else {
+        debugLog(
+          `NO MATCH: "${ep.project}" [${ep.client}] — ${clientTasks.length} client tasks, no candidates above threshold`
+        );
+      }
+    }
     return undefined;
   }
 
@@ -556,8 +687,11 @@ export function mergeData(
     }
   }
 
+  const total = matchStats.L1 + matchStats.L2 + matchStats.L3 + matchStats.L4 + matchStats.none;
+  const matched = total - matchStats.none;
+  const matchRate = total > 0 ? ((matched / total) * 100).toFixed(1) : "0";
   debugLog(
-    `Match stats: L1=${matchStats.L1}, L2=${matchStats.L2}, L3=${matchStats.L3}, L4=${matchStats.L4}, unmatched=${matchStats.none}`
+    `Match stats: L1=${matchStats.L1}, L2=${matchStats.L2}, L3=${matchStats.L3}, L4=${matchStats.L4}, unmatched=${matchStats.none} — rate: ${matchRate}%`
   );
   debugLog(`Final: ${seen.size} merged projects`);
 
