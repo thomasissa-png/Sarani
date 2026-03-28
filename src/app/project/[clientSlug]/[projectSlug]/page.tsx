@@ -49,10 +49,20 @@ const ALLOWED_MIMETYPES = new Set([
   "application/pdf",
 ]);
 
-// Match ANY subfolder that likely contains deliverables
-// Covers: Batch 01, Banner 1, Delivery 3, Round 2, V1, Version 2, etc.
-// Excludes: "00. Brief", internal folders starting with "." or "_"
-const SKIP_FOLDER_PATTERN = /^(00\.\s*Brief|\.|\_{2,}|node_modules)/i;
+// Folders to SKIP when scanning for deliverables
+const SKIP_FOLDER_NAMES = new Set([
+  "supporting files",
+  "rework",
+  "00. brief",
+  "brief",
+  "source files",
+  "sources",
+  "assets source",
+  "archive",
+  "old",
+  "template",
+  "templates",
+]);
 
 function normalizeForMatch(input: string): string {
   return input
@@ -137,15 +147,39 @@ async function fetchBatches(
       projectFolderPath
     );
 
-    // Include ALL subfolders as deliverable groups (except "00. Brief" and hidden folders)
-    const batchFolders = projectItems
-      .filter((item) => item.folder && !SKIP_FOLDER_PATTERN.test(item.name))
+    // Smart folder discovery:
+    // Some projects have assets directly in subfolders (Batch 01, Banner 1, etc.)
+    // Others have a NESTED project folder (same name as project) containing the asset folders
+    // Strategy: if we find a subfolder matching the project name → go one level deeper
+    let assetRoot = projectFolderPath;
+    let assetRootItems = projectItems;
+
+    const deliveryFolders = projectItems.filter(
+      (item) => item.folder && !SKIP_FOLDER_NAMES.has(item.name.toLowerCase().trim())
+    );
+
+    // Check if one of the subfolders matches the project name (nested structure)
+    const nestedProjectFolder = deliveryFolders.find((f) => {
+      const normalizedFolder = normalizeForMatch(f.name);
+      const normalizedProject = normalizeForMatch(projectName);
+      return normalizedFolder.includes(normalizedProject) || normalizedProject.includes(normalizedFolder);
+    });
+
+    if (nestedProjectFolder) {
+      // Go one level deeper — the real assets are inside this subfolder
+      assetRoot = `${projectFolderPath}/${nestedProjectFolder.name}`;
+      assetRootItems = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, assetRoot);
+    }
+
+    // Now scan the asset root for deliverable folders
+    const batchFolders = assetRootItems
+      .filter((item) => item.folder && !SKIP_FOLDER_NAMES.has(item.name.toLowerCase().trim()))
       .sort((a, b) => naturalSort(a.name, b.name));
 
     const batches: BatchGroup[] = [];
 
     for (const batchFolder of batchFolders) {
-      const batchPath = `${projectFolderPath}/${batchFolder.name}`;
+      const batchPath = `${assetRoot}/${batchFolder.name}`;
       const batchItems = await listDriveItems(
         SHAREPOINT_ASSETS_DRIVE_ID,
         batchPath
