@@ -215,13 +215,31 @@ async function fetchBatches(
       }
     }
 
+    // If no batch subfolders found, scan the asset root directly for images
+    if (batches.length === 0) {
+      console.log(`[share-page] No subfolders with images found, scanning root for direct files`);
+      const rootImages = assetRootItems
+        .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
+        .map((item) => ({
+          name: item.name,
+          webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+          mimeType: item.file!.mimeType,
+          size: item.size,
+        }));
+      if (rootImages.length > 0) {
+        batches.push({ name: "Assets", items: rootImages });
+      }
+    }
+
+    console.log(`[share-page] Found ${batches.length} groups, ${batches.reduce((s, b) => s + b.items.length, 0)} total assets`);
     return { batches };
   } catch (err) {
     console.error(
-      "[project-preview-page] SharePoint error:",
-      err instanceof SharePointApiError ? err.message : err
+      "[share-page] SharePoint error:",
+      err instanceof SharePointApiError ? `${err.message} (status: ${(err as Record<string,unknown>).statusCode})` : err
     );
-    return { batches: [], error: "SHAREPOINT_UNAVAILABLE" };
+    // Return empty batches instead of error — show the brief without assets
+    return { batches: [] };
   }
 }
 
@@ -285,14 +303,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
       {/* Header */}
       <header className="border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Image
-            src="/sarani-logo-white.png"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sarani-logo-white-sm.png"
             alt="Sarani"
             width={120}
-            height={46}
+            height={57}
             className="h-8 w-auto"
-            priority
-            unoptimized
           />
           <a
             href="https://sarani.studio"
@@ -355,17 +372,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
           Creative Proposal
         </h2>
 
-        {spError === "SHAREPOINT_UNAVAILABLE" ? (
-          <div className="rounded-xl border border-white/10 bg-white/5 px-6 py-12 text-center">
-            <p className="text-white/50">Assets temporarily unavailable.</p>
-            <p className="text-white/30 text-sm mt-2">
-              The rest of the project information is shown above.
-            </p>
-          </div>
-        ) : batches.length === 0 ? (
+        {batches.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/5 px-6 py-12 text-center">
             <p className="text-white/50">
-              Assets are being prepared and will be available shortly.
+              Creative assets are being prepared and will be available shortly.
+            </p>
+            <p className="text-white/30 text-sm mt-2">
+              Please check back in a few moments.
             </p>
           </div>
         ) : (
