@@ -1080,7 +1080,12 @@ export default function TrackerPage() {
                         {p.country ?? "Other"}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
-                        {p.project}
+                        <Link
+                          href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
+                          className="hover:text-flame hover:underline transition-colors"
+                        >
+                          {p.project}
+                        </Link>
                       </td>
                       {!hiddenColumns.has("contact") && (
                         <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
@@ -1253,9 +1258,12 @@ export default function TrackerPage() {
                     <span className="ml-1.5 text-neutral-300">{p.country}</span>
                   )}
                 </p>
-                <p className="text-sm font-medium text-brand-black mt-0.5">
+                <Link
+                  href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
+                  className="text-sm font-medium text-brand-black mt-0.5 hover:text-flame hover:underline transition-colors block"
+                >
                   {p.project}
-                </p>
+                </Link>
               </div>
               <div className="flex flex-wrap gap-2">
                 {p.status && (

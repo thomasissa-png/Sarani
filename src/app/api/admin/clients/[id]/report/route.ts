@@ -798,7 +798,7 @@ export async function POST(
     const sanitizedName = client.name.replace(/[^a-zA-Z0-9-_ ]/g, "").replace(/\s+/g, "-");
     const filename = `Sarani-Report-${sanitizedName}-${month}.pdf`;
 
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

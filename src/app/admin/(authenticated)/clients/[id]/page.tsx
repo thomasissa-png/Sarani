@@ -279,12 +279,87 @@ export default function ClientDetailPage() {
             {client.industry}
           </span>
         </div>
-        <button
-          onClick={handleDelete}
-          className="text-sm text-error hover:text-error/80 transition-colors"
-        >
-          Delete client
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Download Report */}
+          <div className="relative" ref={monthPickerRef}>
+            <button
+              onClick={() => setShowMonthPicker(!showMonthPicker)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-brand-black/90 transition-colors"
+            >
+              {reportLoading ? (
+                <>
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Report
+                </>
+              )}
+            </button>
+            {showMonthPicker && (
+              <div className="absolute right-0 top-full mt-2 bg-white rounded-lg border border-neutral-200 shadow-lg p-3 z-10 min-w-[220px]">
+                <label className="block text-xs font-medium text-neutral-500 mb-1.5">
+                  Select month
+                </label>
+                <input
+                  type="month"
+                  value={reportMonth}
+                  onChange={(e) => setReportMonth(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-sm border border-neutral-300 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-black"
+                />
+                <button
+                  onClick={handleDownloadReport}
+                  disabled={reportLoading}
+                  className="mt-2 w-full px-3 py-1.5 text-sm font-medium rounded-md bg-brand-flame text-white hover:bg-brand-flame/90 transition-colors disabled:opacity-50"
+                >
+                  {reportLoading ? "Generating..." : "Download PDF"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleDelete}
+            className="text-sm text-error hover:text-error/80 transition-colors"
+          >
+            Delete client
+          </button>
+        </div>
       </div>
 
       {error && (
