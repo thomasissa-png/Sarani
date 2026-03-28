@@ -50,6 +50,15 @@
 - [S8] **Hero homepage = dots animés uniquement.** Le grid d'images a été rejeté ("cata"). Les dots colorés (Flame/Cerulean/Lemon) sont la signature créative du logo Sarani — ne JAMAIS remplacer par des images, carrousel, ou visuel statique.
 - [S8] **Footer categories = liens avec filtre actif.** Cliquer une catégorie dans le footer doit amener directement sur /work avec le filtre correspondant pré-activé.
 
+## Ton des réponses client (registre Sarani)
+
+- [S9] **Le ton Sarani dans les réponses client** : dynamiques, pro et bons, toujours cool et toujours dispo. On ne fait jamais "corporate lourd". On est l'agence qui répond vite, qui comprend le besoin, et qui donne confiance.
+- [S9] **Miroir de la langue reçue** : si le client écrit en français → réponse en français. En anglais → anglais. En allemand → allemand. Toujours la même langue que le mail reçu.
+- [S9] **Miroir du registre** : si le client écrit casual → casual. Formel → formel. Mais toujours dans le style Sarani (jamais "Nous accusons réception de votre demande" → plutôt "Reçu ! On s'en occupe.").
+- [S9] **Prénom du client** : toujours utiliser le prénom. On connait nos clients et on les aime bien.
+- [S9] **Structure d'une réponse client type** : (1) Confirmation de réception, (2) Résumé de ce qu'on a compris (montre la compréhension), (3) Si infos manquantes → les demander naturellement (pas une liste froide), (4) Délai estimé ou "on revient vers toi d'ici [X]", (5) Signature Sarani.
+- [S9] **La réponse est un draft** que Thomas/le client manager valide avant envoi — jamais envoyée automatiquement.
+
 ## Automatisation et autonomie
 
 - [S7] Thomas veut l'automatisation maximale — les case studies doivent être "générés tout seul" sans intervention humaine. Chaque feature doit fonctionner en autonomie par défaut.
