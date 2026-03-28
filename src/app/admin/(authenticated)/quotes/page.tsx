@@ -226,10 +226,10 @@ function QuotesPage() {
             }]);
           }
 
-          // Build scope from line items — a proper deliverables summary
+          // Build scope from line items — deliverables list without prices (prices are in the pricing section)
           if (prefill.lineItems.length > 0) {
             const scopeLines = prefill.lineItems.map(
-              (li) => `${li.quantity}x ${li.description} (${li.unitPrice}€/unit)`
+              (li) => `${li.quantity}x ${li.description}`
             );
             setScope(scopeLines.join("\n"));
           } else if (qProject) {
@@ -327,21 +327,10 @@ function QuotesPage() {
     return true;
   };
 
-  // ─── Preview ──────────────────────────────────────────────────────────
-
-  const handlePreview = () => {
-    if (validateForm()) {
-      setShowPreview(true);
-    }
-  };
-
-  const handleEditFromPreview = () => {
-    setShowPreview(false);
-  };
-
-  // ─── Submit (from preview confirmation) ──────────────────────────────
+  // ─── Submit (generate directly, no preview step) ──────────────────────
 
   const handleConfirmGenerate = async () => {
+    if (!validateForm()) return;
     setError(null);
     setSuccess(null);
 
@@ -792,15 +781,16 @@ function QuotesPage() {
           </div>
         )}
 
-        {/* Submit / Preview toggle */}
+        {/* Generate directly — no preview step */}
         {!showPreview && (
           <div className="flex justify-end">
             <button
               type="button"
-              onClick={handlePreview}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              onClick={handleConfirmGenerate}
+              disabled={generating}
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
             >
-              Preview Quote
+              {generating ? "Generating..." : "Generate Quote"}
             </button>
           </div>
         )}

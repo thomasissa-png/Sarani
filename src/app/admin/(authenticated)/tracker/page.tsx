@@ -182,10 +182,10 @@ export default function TrackerPage() {
   const [sourceFilter, setSourceFilter] = useState<"All" | "ClickUp" | "Excel Only">("ClickUp");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Column visibility (Fix #1 — reduce to 7 visible columns by default)
-  type HideableColumn = "contact" | "category" | "po";
+  // Column visibility — hide non-essential columns by default to prevent horizontal overflow
+  type HideableColumn = "contact" | "category" | "po" | "country" | "invoice";
   const [hiddenColumns, setHiddenColumns] = useState<Set<HideableColumn>>(
-    () => new Set<HideableColumn>(["contact", "category", "po"])
+    () => new Set<HideableColumn>(["contact", "category", "po", "country", "invoice"])
   );
   const [columnsDropdownOpen, setColumnsDropdownOpen] = useState(false);
 
@@ -1043,13 +1043,13 @@ export default function TrackerPage() {
                   <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
                 </svg>
                 Columns
-                {hiddenColumns.size < 3 && (
-                  <span className="text-neutral-400">({3 - hiddenColumns.size} extra)</span>
+                {hiddenColumns.size < 5 && (
+                  <span className="text-neutral-400">({5 - hiddenColumns.size} extra)</span>
                 )}
               </button>
               {columnsDropdownOpen && (
                 <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg z-20 py-1">
-                  {(["contact", "category", "po"] as const).map((col) => (
+                  {(["contact", "category", "po", "country", "invoice"] as const).map((col) => (
                     <button
                       key={col}
                       type="button"
@@ -1073,17 +1073,17 @@ export default function TrackerPage() {
               <caption className="sr-only">Project tracker data</caption>
               <thead>
                 <tr className="border-b border-neutral-200 text-left">
-                  <SortableTh column="client" sort={sort} onToggle={toggleSort} className="w-[10%]">Client</SortableTh>
-                  <Th className="w-[6%]">Country</Th>
-                  <SortableTh column="project" sort={sort} onToggle={toggleSort} className="w-[24%]">Project</SortableTh>
+                  <SortableTh column="client" sort={sort} onToggle={toggleSort} className="w-[12%]">Client</SortableTh>
+                  {!hiddenColumns.has("country") && <Th className="w-[6%]">Country</Th>}
+                  <SortableTh column="project" sort={sort} onToggle={toggleSort} className="w-[30%]">Project</SortableTh>
                   {!hiddenColumns.has("contact") && <Th>Contact</Th>}
                   <SortableTh column="status" sort={sort} onToggle={toggleSort} className="w-[8%]">Status</SortableTh>
                   {!hiddenColumns.has("category") && <Th>Category</Th>}
-                  <SortableTh column="totalValue" sort={sort} onToggle={toggleSort} className="w-[10%]">Value</SortableTh>
+                  <SortableTh column="totalValue" sort={sort} onToggle={toggleSort} className="w-[8%]">Value</SortableTh>
                   {!hiddenColumns.has("po") && <Th>PO</Th>}
-                  <Th className="w-[8%]">Invoice</Th>
+                  {!hiddenColumns.has("invoice") && <Th className="w-[8%]">Invoice</Th>}
                   <SortableTh column="date" sort={sort} onToggle={toggleSort} className="w-[10%]">Date</SortableTh>
-                  <Th className="w-[12%]">Actions</Th>
+                  <Th className="w-[10%]">Actions</Th>
                 </tr>
               </thead>
               <tbody>
@@ -1094,7 +1094,7 @@ export default function TrackerPage() {
                       key={rowKey}
                       className="border-b border-neutral-100 hover:bg-neutral-200/50 transition-colors"
                     >
-                      <td className="px-5 py-3.5 text-sm font-medium text-brand-black whitespace-nowrap">
+                      <td className="px-3 py-3 text-sm font-medium text-brand-black whitespace-nowrap">
                         <div>
                           {p.displayClient ?? p.client}
                           {p.displayClient && p.displayClient !== p.client && (
@@ -1102,10 +1102,12 @@ export default function TrackerPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-neutral-500 whitespace-nowrap">
-                        {p.country ?? "Other"}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
+                      {!hiddenColumns.has("country") && (
+                        <td className="px-3 py-3.5 text-xs text-neutral-500 whitespace-nowrap">
+                          {p.country ?? "Other"}
+                        </td>
+                      )}
+                      <td className="px-3 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
                         <Link
                           href={`/admin/projects/${getProjectId(p)}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
                           className="hover:text-flame hover:underline transition-colors"
@@ -1114,11 +1116,11 @@ export default function TrackerPage() {
                         </Link>
                       </td>
                       {!hiddenColumns.has("contact") && (
-                        <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                        <td className="px-3 py-3 text-sm text-neutral-600 whitespace-nowrap">
                           {p.contact || "--"}
                         </td>
                       )}
-                      <td className="px-5 py-3.5">
+                      <td className="px-3 py-3">
                         {p.status ? (
                           <span
                             className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getStatusBadgeClasses(p.status)}`}
@@ -1130,30 +1132,32 @@ export default function TrackerPage() {
                         )}
                       </td>
                       {!hiddenColumns.has("category") && (
-                        <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                        <td className="px-3 py-3 text-sm text-neutral-600 whitespace-nowrap">
                           {p.category || "--"}
                         </td>
                       )}
-                      <td className="px-5 py-3.5 text-sm text-brand-black whitespace-nowrap font-medium">
+                      <td className="px-3 py-3 text-sm text-brand-black whitespace-nowrap font-medium">
                         {formatCurrency(p.totalValue)}
                       </td>
                       {!hiddenColumns.has("po") && (
-                        <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                        <td className="px-3 py-3 text-sm text-neutral-600 whitespace-nowrap">
                           {p.poNumber || "--"}
                         </td>
                       )}
-                      <td className="px-5 py-3.5">
-                        {p.invoiceStatus ? (
-                          <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
-                          >
-                            {p.invoiceStatus}{p.invoiceStatus?.toLowerCase() === "open po" && p.date && !isNaN(new Date(p.date).getTime()) && Date.now() - new Date(p.date).getTime() > 60 * 86400000 ? " (stale)" : ""}
-                          </span>
-                        ) : (
-                          <span className="text-neutral-400 text-xs">--</span>
-                        )}
-                      </td>
-                      <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
+                      {!hiddenColumns.has("invoice") && (
+                        <td className="px-3 py-3.5">
+                          {p.invoiceStatus ? (
+                            <span
+                              className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
+                            >
+                              {p.invoiceStatus}{p.invoiceStatus?.toLowerCase() === "open po" && p.date && !isNaN(new Date(p.date).getTime()) && Date.now() - new Date(p.date).getTime() > 60 * 86400000 ? " (stale)" : ""}
+                            </span>
+                          ) : (
+                            <span className="text-neutral-400 text-xs">--</span>
+                          )}
+                        </td>
+                      )}
+                      <td className="px-3 py-3 text-sm text-neutral-600 whitespace-nowrap">
                         {formatDate(p.date)}
                       </td>
                       {/* Actions — primary: Quote, Share, Launch | secondary: ... dropdown */}
