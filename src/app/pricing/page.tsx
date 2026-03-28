@@ -191,7 +191,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What if I'm not satisfied with the first project?",
-    a: "You don't pay. No questions, no negotiation. First project satisfaction or no invoice — it is that simple.",
+    a: "You don't pay. If the delivered assets do not meet the approved brief after two rounds of revisions, the project is cancelled at no charge. No questions, no negotiation. First project satisfaction or no invoice — capped at 2,000\u20AC, with a 5-day notice period.",
   },
   {
     q: "Can you handle volume?",

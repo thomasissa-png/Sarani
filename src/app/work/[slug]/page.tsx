@@ -253,6 +253,25 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
         </p>
       </Section>
 
+      {/* Client Testimonial */}
+      {cs.testimonial && (
+        <Section ariaLabel="Client testimonial">
+          <div className="mx-auto max-w-3xl text-center">
+            <blockquote className="text-xl md:text-2xl font-medium italic leading-relaxed text-brand-black">
+              &ldquo;{cs.testimonial.quote}&rdquo;
+            </blockquote>
+            <div className="mt-6">
+              <p className="font-semibold text-brand-black">
+                {cs.testimonial.author}
+              </p>
+              <p className="text-sm text-neutral-500">
+                {cs.testimonial.role}, {cs.testimonial.company}
+              </p>
+            </div>
+          </div>
+        </Section>
+      )}
+
       {/* Prev / Next navigation */}
       {(prev || next) && (
         <Section ariaLabel="Navigate case studies" tight>

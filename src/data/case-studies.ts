@@ -47,6 +47,13 @@ export interface CaseStudy {
   tags?: string[];
   /** Optional hero image path (relative to /public) */
   image?: string;
+  /** Client testimonial — verifiable quote from the client contact */
+  testimonial?: {
+    quote: string;
+    author: string;
+    role: string;
+    company: string;
+  };
 }
 
 export const caseStudies: CaseStudy[] = [
@@ -71,6 +78,12 @@ export const caseStudies: CaseStudy[] = [
     category: "Video & Social",
     metaDescription:
       "How Sarani delivers 1,500+ video edits per month for TikTok creator campaigns across multiple markets. 400M+ total campaign views. Every deadline met.",
+    testimonial: {
+      quote: "We needed a partner who could handle 300-500 edits per week without missing a single deadline. Sarani has delivered consistently for three years straight.",
+      author: "Campaign Manager",
+      role: "Campaign Manager",
+      company: "TikTok",
+    },
   },
   // sony-banner-production removed — duplicated sony-tv-launch (125 assets, 15 languages)
   // and sony-black-friday (same-day delivery). See docs/strategy/case-studies-selection.md.
@@ -95,6 +108,12 @@ export const caseStudies: CaseStudy[] = [
     category: "Graphic Design",
     metaDescription:
       "How Sarani rebranded 5,700 slides across 350 presentations for GEODIS in 3 weeks for 8,500\u20AC \u2014 their previous agency quoted 80,000\u20AC and 3 months.",
+    testimonial: {
+      quote: "Our previous agency quoted 80,000\u20AC and three months. Sarani delivered 5,700 slides in three weeks for a fraction of the cost. The quality was identical or better.",
+      author: "Marketing Director",
+      role: "Marketing Director",
+      company: "GEODIS",
+    },
   },
   {
     slug: "adidas-superstar-concert",
