@@ -4,6 +4,7 @@
  * Dark-themed (Sarani brand: bg-black, text-white, accent Flame).
  */
 import { Metadata } from "next";
+import Image from "next/image";
 import ImageLightbox from "@/components/ui/ImageLightbox";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
@@ -124,21 +125,26 @@ async function fetchBatches(
 ): Promise<{ batches: BatchGroup[]; error?: string }> {
   const mapping = getMappingBySpaceName(clientName);
   if (!mapping) {
+    console.log(`[share-page] No mapping for client "${clientName}"`);
     return { batches: [] };
   }
 
   try {
     const customerFolderPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
+    console.log(`[share-page] Scanning ${customerFolderPath} for project "${projectName}"`);
 
     const customerItems = await listDriveItems(
       SHAREPOINT_ASSETS_DRIVE_ID,
       customerFolderPath
     );
+    console.log(`[share-page] Found ${customerItems.length} items in customer folder. Folders: ${customerItems.filter(i => i.folder).map(i => i.name).join(", ")}`);
 
     const projectFolder = findProjectFolder(customerItems, projectName);
     if (!projectFolder) {
+      console.log(`[share-page] No project folder matching "${projectName}"`);
       return { batches: [] };
     }
+    console.log(`[share-page] Matched project folder: "${projectFolder.name}"`);
 
     const projectFolderPath = `${customerFolderPath}/${projectFolder.name}`;
     const projectItems = await listDriveItems(
@@ -279,13 +285,14 @@ export default async function ProjectPreviewPage({ params }: Props) {
       {/* Header */}
       <header className="border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/sarani-logo-white.png"
             alt="Sarani"
             width={120}
-            height={32}
+            height={46}
             className="h-8 w-auto"
+            priority
+            unoptimized
           />
           <a
             href="https://sarani.studio"
@@ -308,10 +315,10 @@ export default async function ProjectPreviewPage({ params }: Props) {
         </h1>
 
         <div className="flex flex-wrap items-center gap-4 text-sm text-white/50 mb-8">
-          {preview.createdAt && (
+          {(
             <span>
-              Created{" "}
-              {new Date(preview.createdAt).toLocaleDateString("en-GB", {
+              {new Date().toLocaleDateString("en-GB", {
+                day: "numeric",
                 month: "long",
                 year: "numeric",
               })}
@@ -342,10 +349,10 @@ export default async function ProjectPreviewPage({ params }: Props) {
         )}
       </section>
 
-      {/* Deliverables */}
+      {/* Creative Proposal */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
         <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40 mb-10">
-          Deliverables
+          Creative Proposal
         </h2>
 
         {spError === "SHAREPOINT_UNAVAILABLE" ? (

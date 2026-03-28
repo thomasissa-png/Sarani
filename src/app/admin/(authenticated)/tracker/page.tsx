@@ -523,17 +523,9 @@ export default function TrackerPage() {
 
     setPreviewLoading(projectId);
     try {
-      // Fetch purpose of work from prefill API to use as the preview brief
-      let briefText = `Sarani will manage all creative production for ${p.displayClient ?? p.client}'s ${p.project} project, ensuring delivery to the highest standards within the agreed timeline.`;
-      try {
-        const prefillRes = await fetch(`/api/admin/quotes/prefill?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}`);
-        if (prefillRes.ok) {
-          const prefill = await prefillRes.json();
-          if (prefill.purpose) briefText = prefill.purpose;
-        }
-      } catch {
-        // Non-critical — use default brief
-      }
+      // Brief for the share page — clean description, no API call (avoids timeout)
+      const clientDisplay = p.displayClient ?? p.client;
+      const briefText = `As part of ${clientDisplay}'s ${p.project} initiative, Sarani will handle all creative production needs to ensure the project is delivered on time and to the highest creative standards. The scope covers all required assets and deliverables, with unlimited revisions included until final client approval.`;
 
       const res = await fetch("/api/admin/project-previews", {
         method: "POST",
