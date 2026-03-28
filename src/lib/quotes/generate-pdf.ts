@@ -47,9 +47,9 @@ const TRANSLATIONS = {
     scopeAndDeliverables: "Scope and deliverables",
     projectSchedule: "Project schedule",
     scheduleItems: [
-      "Proposal delivered to {client} – {date}",
-      "Work commences once PO is raised",
-      "Final work to be delivered to {client} by specified deadline",
+      "Proposal valid until {validUntil}",
+      "Work commences within 24 hours of PO receipt",
+      "Delivery timeline confirmed at brief acceptance",
     ],
     pricing: "Pricing, payment, terms and conditions",
     item: "Item",
@@ -82,9 +82,9 @@ const TRANSLATIONS = {
     scopeAndDeliverables: "Périmètre et livrables",
     projectSchedule: "Calendrier du projet",
     scheduleItems: [
-      "Proposition remise à {client} – {date}",
-      "Les travaux démarrent à réception du bon de commande",
-      "Livraison finale à {client} selon le délai convenu",
+      "Proposition valable jusqu'au {validUntil}",
+      "Les travaux démarrent dans les 24 heures suivant la réception du bon de commande",
+      "Délai de livraison confirmé à l'acceptation du brief",
     ],
     pricing: "Tarification, paiement, termes et conditions",
     item: "Prestation",
@@ -126,7 +126,7 @@ const COLOR_BLACK = rgb(0, 0, 0); // #000000 — primary
 const COLOR_DARK_TEXT = rgb(0.13, 0.13, 0.13); // #222222 — body text
 const COLOR_GRAY_TEXT = rgb(0.35, 0.35, 0.35); // #595959 — secondary
 const COLOR_GRAY_LIGHT_TEXT = rgb(0.55, 0.55, 0.55); // #8c8c8c — subtle labels
-const COLOR_SECTION_BG = rgb(0.98, 0.976, 0.961); // #faf9f5 — warm neutral-200 from design system
+const COLOR_SECTION_BG = rgb(0.96, 0.96, 0.97); // #f5f5f7 — cool premium gray
 const COLOR_ROW_ALT = rgb(0.953, 0.949, 0.937); // #f3f2ef — visible alternation
 const COLOR_TABLE_BORDER = rgb(0.9, 0.9, 0.9); // #e6e6e6
 const COLOR_WHITE = rgb(1, 1, 1);
@@ -445,26 +445,18 @@ export async function generateQuotePDF(
     });
   }
 
-  // Small Flame accent dot in the header (subtle brand touch, fixed position)
-  currentPage.drawCircle({
-    x: PAGE_WIDTH - MARGIN_RIGHT - 120,
-    y: PAGE_HEIGHT - headerHeight / 2,
-    size: 2.5,
-    color: COLOR_FLAME,
-  });
-
   y = PAGE_HEIGHT - headerHeight - 48; // generous post-header gap
 
   // ═══════════════════════════════════════════════════════════════════════════
   // TITLE — "Service Proposal" (elegant, not loud)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // Small Flame line above title (2px, 40px wide — subtle accent)
+  // Flame accent line above title (3px, 80px wide — intentional brand mark)
   currentPage.drawRectangle({
     x: MARGIN_LEFT,
-    y: y + 14,
-    width: 56,
-    height: 2,
+    y: y + 22,
+    width: 80,
+    height: 3,
     color: COLOR_FLAME,
   });
 
@@ -551,73 +543,86 @@ export async function generateQuotePDF(
   y -= SECTION_GAP;
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // SCOPE AND DELIVERABLES — with Flame accent bar
+  // SCOPE AND DELIVERABLES — with Flame accent bar (hidden if scope is empty/generic)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  currentPage = pageRef.current;
-  y = ensureSpace(pageRef, y, 60);
-  currentPage = pageRef.current;
-
-  y = drawSectionHeading(currentPage, t.scopeAndDeliverables, y, fontBold);
-
-  y = drawWrappedText(
-    pageRef,
-    data.scope,
-    bodyIndent,
-    y,
-    fontRegular,
-    FONT_BODY,
-    bodyWidth,
-    COLOR_GRAY_TEXT,
-    1.6
-  );
-  y -= SECTION_GAP;
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // PROJECT SCHEDULE — with Flame accent bar
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  currentPage = pageRef.current;
-  y = ensureSpace(pageRef, y, 80);
-  currentPage = pageRef.current;
-
-  y = drawSectionHeading(currentPage, t.projectSchedule, y, fontBold);
-
-  const scheduleItems = t.scheduleItems.map((s) =>
-    s.replace("{client}", data.clientName).replace("{date}", data.date)
-  );
-
-  for (const item of scheduleItems) {
+  const scopeTrimmed = (data.scope ?? "").trim();
+  if (scopeTrimmed.length >= 10) {
     currentPage = pageRef.current;
-    y = ensureSpace(pageRef, y, 20);
+    y = ensureSpace(pageRef, y, 60);
     currentPage = pageRef.current;
 
-    // Bullet point
-    currentPage.drawText("\u2022", {
-      x: bodyIndent,
-      y,
-      size: FONT_BODY,
-      font: fontRegular,
-      color: COLOR_DARK_TEXT,
-    });
+    y = drawSectionHeading(currentPage, t.scopeAndDeliverables, y, fontBold);
 
-    // Bullet text
-    const bulletTextX = bodyIndent + 14;
-    const bulletMaxWidth = bodyWidth - 18;
     y = drawWrappedText(
       pageRef,
-      item,
-      bulletTextX,
+      data.scope,
+      bodyIndent,
       y,
       fontRegular,
       FONT_BODY,
-      bulletMaxWidth,
+      bodyWidth,
       COLOR_GRAY_TEXT,
       1.6
     );
-    y -= 4;
+    y -= SECTION_GAP;
   }
-  y -= TABLE_TOP_GAP;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROJECT SCHEDULE — conditional: only shown when validUntil is provided
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (data.validUntil) {
+    currentPage = pageRef.current;
+    y = ensureSpace(pageRef, y, 80);
+    currentPage = pageRef.current;
+
+    y = drawSectionHeading(currentPage, t.projectSchedule, y, fontBold);
+
+    const validDate = new Date(data.validUntil + "T00:00:00");
+    const locale = data.language === "fr" ? "fr-FR" : "en-US";
+    const formattedValidUntil = validDate.toLocaleDateString(locale, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const scheduleItems = t.scheduleItems.map((s) =>
+      s.replace("{validUntil}", formattedValidUntil)
+    );
+
+    for (const item of scheduleItems) {
+      currentPage = pageRef.current;
+      y = ensureSpace(pageRef, y, 20);
+      currentPage = pageRef.current;
+
+      // Bullet point
+      currentPage.drawText("\u2022", {
+        x: bodyIndent,
+        y,
+        size: FONT_BODY,
+        font: fontRegular,
+        color: COLOR_DARK_TEXT,
+      });
+
+      // Bullet text
+      const bulletTextX = bodyIndent + 14;
+      const bulletMaxWidth = bodyWidth - 18;
+      y = drawWrappedText(
+        pageRef,
+        item,
+        bulletTextX,
+        y,
+        fontRegular,
+        FONT_BODY,
+        bulletMaxWidth,
+        COLOR_GRAY_TEXT,
+        1.6
+      );
+      y -= 4;
+    }
+    y -= TABLE_TOP_GAP;
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // PRICING TABLE — Flame header, alternating rows, black total
@@ -1088,23 +1093,23 @@ export async function generateQuotePDF(
   const allPages = doc.getPages();
   for (let i = 0; i < allPages.length; i++) {
     const p = allPages[i];
-    const legalWidth = fontRegular.widthOfTextAtSize(legalLine, 6.5);
+    const legalWidth = fontRegular.widthOfTextAtSize(legalLine, 7);
     p.drawText(legalLine, {
       x: (PAGE_WIDTH - legalWidth) / 2,
-      y: 20,
-      size: 6.5,
+      y: 24,
+      size: 7,
       font: fontRegular,
-      color: COLOR_GRAY_LIGHT_TEXT,
+      color: COLOR_GRAY_TEXT,
     });
     if (allPages.length > 1) {
       const pageNum = `${i + 1} / ${allPages.length}`;
       const pageNumWidth = fontRegular.widthOfTextAtSize(pageNum, 7);
       p.drawText(pageNum, {
         x: PAGE_WIDTH - MARGIN_RIGHT - pageNumWidth,
-        y: 20,
+        y: 24,
         size: 7,
         font: fontRegular,
-        color: COLOR_GRAY_LIGHT_TEXT,
+        color: COLOR_GRAY_TEXT,
       });
     }
   }
