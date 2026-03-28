@@ -101,6 +101,9 @@
 - **Evoliz** : API key + company ID à ajouter avant lancement (comme Resend — env vars)
 - **Données ClickUp/Evoliz prioritaires** : [À REPOSER — utilisateur veut répondre plus tard]
 
+### Règle SharePoint — Liens "Anyone" obligatoires
+- **RÈGLE ABSOLUE** : Tout lien SharePoint utilisé dans le back-office (affichage, stockage, partage, envoi au client, intégration dans un livrable) DOIT être un lien de partage anonyme ("Anyone" / "Link works for anyone, doesn't require sign-in"). Ne JAMAIS utiliser les URLs directes du navigateur SharePoint qui nécessitent une authentification. Le code convertit automatiquement les URLs directes via l'API Graph `createLink` avec `scope: "anonymous"`.
+
 ### Équipe d'agents IA internes (concept clé)
 
 **Vision** : Le back-office donne accès à une équipe projet d'agents IA spécialisés, comme une équipe virtuelle permanente. Chaque agent a un profil métier précis. L'équipe Sarani interagit avec ces agents pour leurs besoins quotidiens sur les projets clients.

@@ -1,5 +1,12 @@
 # Lessons Learned — Sarani
 
+## Session 9 — 2026-03-28
+
+| Session | Date | Catégorie | Sévérité | Description | Correction appliquée | Recommandation framework | Cible propagation | Fichiers impactés | Statut correction | Statut propagation |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S9 | 2026-03-28 | préférence fondateur | P0 | [PRÉFÉRENCE FONDATEUR] Tout lien SharePoint dans le back-office (affichage, stockage, partage) DOIT être un lien anonyme "Anyone" — jamais une URL directe navigateur qui nécessite auth. | Ajout getPublicSharingLink() dans sharepoint.ts + API endpoint share-link + bouton Folder convertit on-demand | **RÈGLE : Liens SharePoint "Anyone" obligatoires.** Tout lien SP affiché, stocké ou partagé dans le back-office doit être converti en lien anonyme via Graph API createLink scope:anonymous. Ne JAMAIS afficher/stocker les URLs directes du navigateur. | règle-globale | project-context.md, .claude/agents/fullstack.md, .claude/agents/infrastructure.md | fait | non-propagé |
+| S9 | 2026-03-28 | insistance | P0 | Thomas a demandé 5+ fois que le Purpose of Work des quotes soit 2 vraies phrases montrant la compréhension du projet — pas juste le titre répété ou un tiret. | Réécriture buildPurpose() : utilise le brief ClickUp quand disponible, fallback intelligent category/type. Toujours 2 phrases : compréhension + livrables. | Le Purpose of Work d'un devis est un texte commercial qui montre la compréhension du projet client. Il doit utiliser le brief ClickUp quand disponible. Jamais juste répéter le nom du projet. | agent-spécifique | .claude/agents/fullstack.md | fait | non-propagé |
+
 ## Session 8 — 2026-03-28
 
 | Session | Date | Catégorie | Sévérité | Description | Correction appliquée | Recommandation framework | Cible propagation | Fichiers impactés | Statut correction | Statut propagation |
