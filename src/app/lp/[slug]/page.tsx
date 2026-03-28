@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { LandingPageSections } from "@/lib/db/schema";
 import ImageLightbox from "@/components/ui/ImageLightbox";
+import { StylizedAvatar } from "@/components/ui/StylizedAvatar";
 
 /** Validate URL to prevent javascript: XSS */
 function safeHref(url: string | undefined): string {
@@ -418,20 +419,12 @@ export default async function LandingPagePublic({ params }: Props) {
                     border: `1px solid ${borderColor}`,
                   }}
                 >
-                  {/* Avatar placeholder */}
-                  <div
-                    className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-xl font-bold"
-                    style={{
-                      backgroundColor: `${primaryColor}20`,
-                      color: primaryColor,
-                    }}
-                  >
-                    {member.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
+                  {/* Stylized avatar with silhouette + initials */}
+                  <div className="mx-auto mb-4 w-fit">
+                    <StylizedAvatar
+                      name={member.name}
+                      color={primaryColor}
+                    />
                   </div>
                   <p className="font-semibold">{member.name}</p>
                   <p className="text-sm" style={{ color: mutedText }}>

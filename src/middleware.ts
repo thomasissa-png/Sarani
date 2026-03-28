@@ -22,8 +22,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin-only routes: /api/admin/users requires admin role
-  if (pathname.startsWith("/api/admin/users")) {
+  // Admin-only: all write operations on protected API routes require admin role
+  const isWriteMethod = request.method !== "GET" && request.method !== "HEAD";
+  const adminOnlyPaths = [
+    "/api/admin/users",
+    "/api/admin/case-studies",
+    "/api/admin/landing-pages",
+    "/api/admin/storyboards",
+    "/api/admin/project-previews",
+  ];
+  if (isWriteMethod && adminOnlyPaths.some((p) => pathname.startsWith(p))) {
     if (auth.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
