@@ -1284,7 +1284,7 @@ export default function TrackerPage() {
               <div className="flex flex-wrap gap-2">
                 {p.status && (
                   <span
-                    className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusBadgeClasses(p.status)}`}
+                    className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getStatusBadgeClasses(p.status)}`}
                   >
                     {p.status}
                   </span>
@@ -1540,26 +1540,6 @@ function TrackerSkeleton() {
         ))}
       </div>
     </div>
-  );
-}
-
-function QuoteIcon() {
-  return (
-    <svg
-      className="w-4 h-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1z" />
-      <line x1="8" y1="7" x2="16" y2="7" />
-      <line x1="8" y1="11" x2="16" y2="11" />
-      <line x1="8" y1="15" x2="12" y2="15" />
-    </svg>
   );
 }
 
