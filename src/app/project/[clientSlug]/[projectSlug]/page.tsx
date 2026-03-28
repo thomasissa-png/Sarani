@@ -299,7 +299,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
         ) : batches.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/5 px-6 py-12 text-center">
             <p className="text-white/50">
-              Assets coming soon — check back later.
+              Assets are being prepared and will be available shortly.
             </p>
           </div>
         ) : (
@@ -327,7 +327,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
                           href={item.webUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="group relative block aspect-square rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 transition-colors"
+                          className="group relative block aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 transition-colors"
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
