@@ -301,6 +301,10 @@ export default function PricingPage() {
             detailed invoice upon delivery — no hidden fees, no revision
             surcharges.
           </p>
+          <p>
+            Standard payment terms: 45 days net from invoice date. Volume
+            contracts and retainers: negotiable.
+          </p>
         </div>
       </Section>
 

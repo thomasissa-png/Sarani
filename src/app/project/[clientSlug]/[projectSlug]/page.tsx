@@ -5,6 +5,7 @@
  */
 import { Metadata } from "next";
 import Image from "next/image";
+import ImageLightbox from "@/components/ui/ImageLightbox";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -92,6 +93,12 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatBatchName(name: string): string {
+  const match = name.match(/batch\s*(\d+)/i);
+  if (match) return `Delivery ${parseInt(match[1], 10)}`;
+  return name;
 }
 
 // ─── SharePoint Batch Fetching ─────────────────────────────────────────────
@@ -277,10 +284,16 @@ export default async function ProjectPreviewPage({ params }: Props) {
           {batches.length > 0 && (
             <span className="flex items-center gap-1.5">
               <span className="w-1 h-1 rounded-full bg-white/30" />
-              {batches.length} batch{batches.length !== 1 ? "es" : ""}
+              {batches.length} delivery{batches.length !== 1 ? " batches" : ""}
             </span>
           )}
         </div>
+
+        {preview.brief && (
+          <p className="text-base text-white/70 leading-relaxed max-w-3xl">
+            {preview.brief}
+          </p>
+        )}
       </section>
 
       {/* Deliverables */}
@@ -315,33 +328,33 @@ export default async function ProjectPreviewPage({ params }: Props) {
               return (
                 <div key={batch.name}>
                   <h3 className="text-lg font-semibold mb-5 text-white/80">
-                    {batch.name}
+                    {formatBatchName(batch.name)}
                   </h3>
 
                   {/* Image Grid */}
                   {batchImages.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
                       {batchImages.map((item) => (
-                        <a
+                        <ImageLightbox
                           key={item.webUrl}
-                          href={item.webUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group relative block aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 transition-colors"
+                          src={item.webUrl}
+                          alt={item.name}
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={item.webUrl}
-                            alt={item.name}
-                            loading="lazy"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                            <span className="text-xs text-white/80 truncate">
-                              {item.name}
-                            </span>
+                          <div className="group relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 transition-colors">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={item.webUrl}
+                              alt={item.name}
+                              loading="lazy"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                              <span className="text-xs text-white/80 truncate">
+                                {item.name}
+                              </span>
+                            </div>
                           </div>
-                        </a>
+                        </ImageLightbox>
                       ))}
                     </div>
                   )}

@@ -68,6 +68,10 @@ const TRANSLATIONS = {
     ],
     bestRegards: "Best regards,",
     validUntil: "Valid until",
+    nextStep: "Next Step",
+    nextStepText:
+      "To proceed, reply to this email or raise a Purchase Order referencing quote {quoteNumber}. Our team begins work within 24 hours of PO receipt.",
+    nextStepEmail: "team@sarani.studio",
   },
   fr: {
     serviceProposal: "Proposition de service",
@@ -91,7 +95,7 @@ const TRANSLATIONS = {
     vat: "TVA",
     references: "Références",
     referencesText:
-      "Sarani est une agence créative internationale réunissant 35 experts sur 5 continents et 18 langues. Nous opérons 24h/24 pour livrer une créativité illimitée avec un délai de livraison J+1. Nos clients incluent Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica et PICO. Nous avons été reconnus pour notre travail à travers de nombreux prix et benchmarks sectoriels.",
+      "Approuvé par TikTok (1 500+ montages vidéo par mois), Sony (livraison le jour même en 15 langues), GEODIS (5 700 slides rebrandées en 3 semaines) et Adidas (production événementielle à grande échelle). Références disponibles sur demande.",
     paymentTerms: [
       "Les travaux démarrent à réception du bon de commande (PO).",
       "Nombre illimité de révisions inclus avant tournage et en post-production.",
@@ -99,6 +103,10 @@ const TRANSLATIONS = {
     ],
     bestRegards: "Cordialement,",
     validUntil: "Valable jusqu'au",
+    nextStep: "Prochaine étape",
+    nextStepText:
+      "Pour démarrer, répondez à cet email ou émettez un bon de commande en référençant le devis {quoteNumber}. Notre équipe commence les travaux dans les 24 heures suivant la réception du PO.",
+    nextStepEmail: "team@sarani.studio",
   },
 } as const;
 
@@ -1036,6 +1044,70 @@ export async function generateQuotePDF(
     font: fontBold,
     color: COLOR_BLACK,
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // NEXT STEP — clear CTA for procurement
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  y -= SECTION_GAP;
+
+  y = ensureSpace(pageRef, y, 80);
+  currentPage = pageRef.current;
+
+  y = drawSectionHeading(currentPage, t.nextStep, y, fontBold, COLOR_FLAME);
+
+  const nextStepBody = t.nextStepText.replace("{quoteNumber}", data.quoteNumber);
+  y = drawWrappedText(
+    pageRef,
+    nextStepBody,
+    bodyIndent,
+    y,
+    fontRegular,
+    FONT_BODY,
+    bodyWidth,
+    COLOR_DARK_TEXT,
+    1.6
+  );
+  y -= 6;
+
+  // Email address
+  currentPage = pageRef.current;
+  currentPage.drawText(t.nextStepEmail, {
+    x: bodyIndent,
+    y,
+    size: FONT_BODY,
+    font: fontBold,
+    color: COLOR_FLAME,
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEGAL FOOTER + PAGE NUMBERS — on every page
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const legalLine = "SARANI SAS \u2014 SIREN 881687503 \u2014 TVA FR76881687503 \u2014 4 rue des Artisans, 25300 Ar\u00e7on, France";
+  const allPages = doc.getPages();
+  for (let i = 0; i < allPages.length; i++) {
+    const p = allPages[i];
+    const legalWidth = fontRegular.widthOfTextAtSize(legalLine, 6.5);
+    p.drawText(legalLine, {
+      x: (PAGE_WIDTH - legalWidth) / 2,
+      y: 20,
+      size: 6.5,
+      font: fontRegular,
+      color: COLOR_GRAY_LIGHT_TEXT,
+    });
+    if (allPages.length > 1) {
+      const pageNum = `${i + 1} / ${allPages.length}`;
+      const pageNumWidth = fontRegular.widthOfTextAtSize(pageNum, 7);
+      p.drawText(pageNum, {
+        x: PAGE_WIDTH - MARGIN_RIGHT - pageNumWidth,
+        y: 20,
+        size: 7,
+        font: fontRegular,
+        color: COLOR_GRAY_LIGHT_TEXT,
+      });
+    }
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SERIALIZE

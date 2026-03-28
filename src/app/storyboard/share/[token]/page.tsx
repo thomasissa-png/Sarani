@@ -4,6 +4,7 @@ import { storyboards, storyboardScenes, clients } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import StoryboardFeedbackBar from "@/components/ui/StoryboardFeedbackBar";
 
 export const metadata: Metadata = {
   title: "Storyboard Preview — Sarani",
@@ -161,13 +162,16 @@ export default async function StoryboardSharePage({
       </div>
 
       {/* Footer */}
-      <footer className="px-6 py-8 border-t border-white/10 mt-12">
+      <footer className="px-6 py-8 border-t border-white/10 mt-12 pb-24">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <a href="https://sarani.studio" className="text-xs text-white/20 hover:text-white/40 transition-colors">
             sarani.studio
           </a>
         </div>
       </footer>
+
+      {/* Approval / Feedback Bar */}
+      <StoryboardFeedbackBar storyboardId={storyboard.id} />
     </div>
   );
 }
