@@ -10,6 +10,8 @@ export interface DriveItem {
   size: number;
   lastModifiedDateTime: string;
   webUrl: string;
+  /** Pre-authenticated temporary download URL (valid ~1 hour). Returned by Graph API for file items. */
+  "@microsoft.graph.downloadUrl"?: string;
   folder?: { childCount: number };
   file?: { mimeType: string };
   parentReference?: {

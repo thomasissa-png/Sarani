@@ -13,6 +13,8 @@ import {
 } from "@/data/case-studies";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { workDetailBreadcrumb } from "@/lib/breadcrumb-jsonld";
+import { fetchCaseStudyGallery } from "@/lib/case-studies/fetch-gallery";
+import ImageLightbox from "@/components/ui/ImageLightbox";
 
 /* ---------- SSG ---------- */
 
@@ -56,6 +58,9 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
   const related = getRelatedCaseStudies(slug);
   const { prev, next } = getAdjacentCaseStudies(slug);
   const pagePath = `/work/${cs.slug}`;
+
+  // Fetch gallery images from SharePoint (graceful fallback to empty array)
+  const galleryImages = await fetchCaseStudyGallery(cs.client, cs.deliverable);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -153,6 +158,30 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
           </div>
         )}
       </Section>
+
+      {/* Project Gallery — dynamically fetched from SharePoint */}
+      {galleryImages.length > 0 && (
+        <Section ariaLabel="Project gallery">
+          <h2 className="mb-8 text-center text-2xl font-bold text-brand-black">
+            The Work
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {galleryImages.map((img) => (
+              <ImageLightbox key={img.url} src={img.url} alt={img.name}>
+                <div className="aspect-video overflow-hidden rounded-xl bg-neutral-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.url}
+                    alt={img.name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </ImageLightbox>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {/* Challenge + Solution */}
       <Section ariaLabel="Challenge and solution">
