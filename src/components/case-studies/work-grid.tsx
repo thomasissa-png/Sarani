@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { track, getDevice, getReferrer } from "@/lib/analytics";
 import type { CaseStudy, CaseStudyCategory } from "@/data/case-studies";
 
@@ -20,7 +21,11 @@ interface WorkGridProps {
 }
 
 export function WorkGrid({ caseStudies, categories }: WorkGridProps) {
-  const [activeCategory, setActiveCategory] = useState<CaseStudyCategory | "all">("all");
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get("category") as CaseStudyCategory | null;
+  const [activeCategory, setActiveCategory] = useState<CaseStudyCategory | "all">(
+    initialCategory && categories.includes(initialCategory) ? initialCategory : "all"
+  );
   const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const detailRef = useRef<HTMLDivElement>(null);
 

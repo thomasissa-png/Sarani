@@ -11,11 +11,11 @@ const ABOUT_LINKS = [
 ] as const;
 
 const CATEGORY_LINKS = [
-  { href: "/work", label: "Video & Social" },
-  { href: "/work", label: "Graphic Design" },
-  { href: "/work", label: "Events" },
-  { href: "/work", label: "Multilingual" },
-  { href: "/work", label: "Out-of-Home" },
+  { href: "/work?category=Video+%26+Social", label: "Video & Social" },
+  { href: "/work?category=Graphic+Design", label: "Graphic Design" },
+  { href: "/work?category=Event", label: "Events" },
+  { href: "/work?category=Multilingual", label: "Multilingual" },
+  { href: "/work?category=Out-of-Home", label: "Out-of-Home" },
 ] as const;
 
 const SUPPORT_LINKS = [

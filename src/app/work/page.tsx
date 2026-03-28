@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { WorkGrid } from "@/components/case-studies/work-grid";
@@ -50,7 +51,9 @@ export default function WorkPage() {
 
       {/* Filtered grid */}
       <Section ariaLabel="Case studies">
-        <WorkGrid caseStudies={orderedStudies} categories={categories} />
+        <Suspense>
+          <WorkGrid caseStudies={orderedStudies} categories={categories} />
+        </Suspense>
       </Section>
 
       {/* Footer CTA */}
