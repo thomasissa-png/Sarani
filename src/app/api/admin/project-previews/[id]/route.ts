@@ -27,7 +27,7 @@ export async function PATCH(
     );
   }
 
-  let body: { is_active?: boolean };
+  let body: { is_active?: boolean; brief?: string };
   try {
     body = await request.json();
   } catch {
@@ -37,9 +37,9 @@ export async function PATCH(
     );
   }
 
-  if (typeof body.is_active !== "boolean") {
+  if (typeof body.is_active !== "boolean" && typeof body.brief !== "string") {
     return NextResponse.json(
-      { error: "VALIDATION", message: "is_active (boolean) is required." },
+      { error: "VALIDATION", message: "is_active (boolean) or brief (string) is required." },
       { status: 400 }
     );
   }
@@ -61,14 +61,18 @@ export async function PATCH(
     return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
   }
 
-  // Update
+  // Update — build set object from provided fields
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (typeof body.is_active === "boolean") updates.isActive = body.is_active;
+  if (typeof body.brief === "string") updates.brief = body.brief;
+
   await db
     .update(projectPreviews)
-    .set({ isActive: body.is_active, updatedAt: new Date() })
+    .set(updates)
     .where(eq(projectPreviews.id, existing.id));
 
   return NextResponse.json(
-    { updated: true, is_active: body.is_active },
+    { updated: true, is_active: body.is_active ?? existing.isActive, brief: body.brief ?? existing.brief },
     { status: 200 }
   );
 }

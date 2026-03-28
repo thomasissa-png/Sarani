@@ -645,8 +645,14 @@ export default function ProjectViewPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const rawId = params.id as string;
-  // Decode the composite ID (may be URL-encoded from the route param)
-  const id = decodeURIComponent(rawId);
+  // Decode the composite ID (may be URL-encoded from the route param).
+  // Use try/catch to handle values that are already decoded or have invalid encoding.
+  let id: string;
+  try {
+    id = decodeURIComponent(rawId);
+  } catch {
+    id = rawId;
+  }
 
   const [data, setData] = useState<ProjectDetails | null>(null);
   const [loading, setLoading] = useState(true);

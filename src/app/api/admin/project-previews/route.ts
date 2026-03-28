@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { projectId?: string; clientName?: string; projectName?: string };
+  let body: { projectId?: string; clientName?: string; projectName?: string; brief?: string };
   try {
     body = await request.json();
   } catch {
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { projectId, clientName, projectName } = body;
+  const { projectId, clientName, projectName, brief } = body;
 
   if (!projectId || typeof projectId !== "string") {
     return NextResponse.json(
@@ -63,11 +63,15 @@ export async function POST(request: NextRequest) {
       .where(eq(projectPreviews.projectId, projectId));
 
     if (existing) {
-      if (!existing.isActive) {
-        // Reactivate
+      // Reactivate and/or update brief if provided
+      const updates: Record<string, unknown> = { updatedAt: new Date() };
+      if (!existing.isActive) updates.isActive = true;
+      if (brief && typeof brief === "string") updates.brief = brief;
+
+      if (Object.keys(updates).length > 1) {
         await db
           .update(projectPreviews)
-          .set({ isActive: true, updatedAt: new Date() })
+          .set(updates)
           .where(eq(projectPreviews.id, existing.id));
       }
       const url = `/project/${existing.clientSlug}/${existing.projectSlug}`;
@@ -124,6 +128,7 @@ export async function POST(request: NextRequest) {
       projectSlug: finalSlug,
       clientName,
       projectName,
+      brief: brief && typeof brief === "string" ? brief : null,
       isActive: true,
     }).returning({ id: projectPreviews.id });
 

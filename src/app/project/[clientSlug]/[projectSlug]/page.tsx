@@ -289,9 +289,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
           )}
         </div>
 
-        {preview.brief && (
+        {preview.brief ? (
           <p className="text-base text-white/70 leading-relaxed max-w-3xl">
             {preview.brief}
+          </p>
+        ) : (
+          <p className="text-base text-white/40 leading-relaxed max-w-3xl italic">
+            Project presentation for {preview.clientName}.
           </p>
         )}
       </section>

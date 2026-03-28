@@ -1094,7 +1094,7 @@ export default function TrackerPage() {
                       </td>
                       <td className="px-5 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
                         <Link
-                          href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
+                          href={`/admin/projects/${getProjectId(p)}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
                           className="hover:text-flame hover:underline transition-colors"
                         >
                           {p.project}
@@ -1236,7 +1236,7 @@ export default function TrackerPage() {
                 </p>
                 <span className="flex items-center gap-1 mt-0.5">
                   <Link
-                    href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
+                    href={`/admin/projects/${getProjectId(p)}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}`}
                     className="text-sm font-medium text-brand-black hover:text-flame hover:underline transition-colors"
                   >
                     {p.project}
