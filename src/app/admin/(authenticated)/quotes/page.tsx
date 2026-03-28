@@ -186,18 +186,9 @@ function QuotesPage() {
     if (qProject) setProjectName(qProject);
     if (qContact) setContactName(qContact);
     // Don't use raw category (e.g. "EMEA") as scope — it will be overridden by prefill
-    // Auto-create a line item from tracker data (fallback if prefill doesn't return items)
-    if (qProject && qAmount && parseFloat(qAmount) > 0) {
-      setItems([{
-        id: generateId(),
-        description: qProject,
-        quantity: 1,
-        unitPrice: parseFloat(qAmount),
-        total: parseFloat(qAmount),
-      }]);
-    }
 
     // Call prefill API to get purpose, line items from Excel, and VAT auto-detection
+    // The prefill returns the real line items — do NOT create a fallback item here
     if (qClient && qProject) {
       setPrefilling(true);
       fetch(`/api/admin/quotes/prefill?client=${encodeURIComponent(qClient)}&project=${encodeURIComponent(qProject)}`)
@@ -213,7 +204,7 @@ function QuotesPage() {
             setDescription((prev: string) => prev || prefill.purpose);
           }
 
-          // Set line items from Excel assets (overrides the single amount-based item)
+          // Set line items from Excel assets
           if (prefill.lineItems.length > 0) {
             setItems(
               prefill.lineItems.map((li) => ({
@@ -224,6 +215,15 @@ function QuotesPage() {
                 total: li.total,
               }))
             );
+          } else if (qAmount && parseFloat(qAmount) > 0) {
+            // Fallback: single item with project name + total amount (only if no Excel line items)
+            setItems([{
+              id: generateId(),
+              description: qProject || "Project deliverables",
+              quantity: 1,
+              unitPrice: parseFloat(qAmount),
+              total: parseFloat(qAmount),
+            }]);
           }
 
           // Build scope from line items — a proper deliverables summary
