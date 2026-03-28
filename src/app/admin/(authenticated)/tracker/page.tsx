@@ -523,6 +523,18 @@ export default function TrackerPage() {
 
     setPreviewLoading(projectId);
     try {
+      // Fetch purpose of work from prefill API to use as the preview brief
+      let briefText = `Sarani will manage all creative production for ${p.displayClient ?? p.client}'s ${p.project} project, ensuring delivery to the highest standards within the agreed timeline.`;
+      try {
+        const prefillRes = await fetch(`/api/admin/quotes/prefill?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}`);
+        if (prefillRes.ok) {
+          const prefill = await prefillRes.json();
+          if (prefill.purpose) briefText = prefill.purpose;
+        }
+      } catch {
+        // Non-critical — use default brief
+      }
+
       const res = await fetch("/api/admin/project-previews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -530,7 +542,7 @@ export default function TrackerPage() {
           projectId,
           clientName: p.client,
           projectName: p.project,
-          brief: `Project ${p.project} for ${p.displayClient ?? p.client}. ${p.category ? `Category: ${p.category}.` : ""} ${p.status ? `Status: ${p.status}.` : ""} ${p.totalValue ? `Value: €${p.totalValue.toLocaleString()}.` : ""}`.trim(),
+          brief: briefText,
         }),
       });
 

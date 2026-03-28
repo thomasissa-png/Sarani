@@ -49,7 +49,10 @@ const ALLOWED_MIMETYPES = new Set([
   "application/pdf",
 ]);
 
-const BATCH_PATTERN = /^Batch\s*\d+/i;
+// Match ANY subfolder that likely contains deliverables
+// Covers: Batch 01, Banner 1, Delivery 3, Round 2, V1, Version 2, etc.
+// Excludes: "00. Brief", internal folders starting with "." or "_"
+const SKIP_FOLDER_PATTERN = /^(00\.\s*Brief|\.|\_{2,}|node_modules)/i;
 
 function normalizeForMatch(input: string): string {
   return input
@@ -96,9 +99,12 @@ function formatFileSize(bytes: number): string {
 }
 
 function formatBatchName(name: string): string {
-  const match = name.match(/batch\s*(\d+)/i);
-  if (match) return `Delivery ${parseInt(match[1], 10)}`;
-  return name;
+  // "Batch 01" → "Delivery 1"
+  const batchMatch = name.match(/batch\s*(\d+)/i);
+  if (batchMatch) return `Delivery ${parseInt(batchMatch[1], 10)}`;
+  // Clean up folder names: remove leading numbers/dots ("01. Brief" → "Brief")
+  const cleaned = name.replace(/^\d+\.\s*/, "").trim();
+  return cleaned || name;
 }
 
 // ─── SharePoint Batch Fetching ─────────────────────────────────────────────
@@ -131,8 +137,9 @@ async function fetchBatches(
       projectFolderPath
     );
 
+    // Include ALL subfolders as deliverable groups (except "00. Brief" and hidden folders)
     const batchFolders = projectItems
-      .filter((item) => item.folder && BATCH_PATTERN.test(item.name))
+      .filter((item) => item.folder && !SKIP_FOLDER_PATTERN.test(item.name))
       .sort((a, b) => naturalSort(a.name, b.name));
 
     const batches: BatchGroup[] = [];
@@ -157,7 +164,9 @@ async function fetchBatches(
         })
         .map((item) => ({
           name: item.name,
-          webUrl: item.webUrl,
+          // Use the pre-authenticated download URL if available (expires ~1h),
+          // fall back to webUrl (requires auth — won't display on public page)
+          webUrl: (item as Record<string, unknown>)["@microsoft.graph.downloadUrl"] as string || item.webUrl,
           mimeType: item.file!.mimeType,
           size: item.size,
         }));
@@ -237,13 +246,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
       {/* Header */}
       <header className="border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src="/sarani-logo-white.png"
             alt="Sarani"
             width={120}
             height={32}
             className="h-8 w-auto"
-            priority
           />
           <a
             href="https://sarani.studio"
