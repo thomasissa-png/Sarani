@@ -4,7 +4,6 @@
  * Dark-themed (Sarani brand: bg-black, text-white, accent Flame).
  */
 import { Metadata } from "next";
-import Image from "next/image";
 import ImageLightbox from "@/components/ui/ImageLightbox";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";

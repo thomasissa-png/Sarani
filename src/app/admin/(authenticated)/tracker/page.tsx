@@ -1145,7 +1145,7 @@ export default function TrackerPage() {
                       <td className="px-5 py-3.5">
                         {p.invoiceStatus ? (
                           <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
+                            className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
                           >
                             {p.invoiceStatus}{p.invoiceStatus?.toLowerCase() === "open po" && p.date && !isNaN(new Date(p.date).getTime()) && Date.now() - new Date(p.date).getTime() > 60 * 86400000 ? " (stale)" : ""}
                           </span>
@@ -1262,7 +1262,7 @@ export default function TrackerPage() {
                 )}
                 {p.invoiceStatus && (
                   <span
-                    className={`text-xs font-medium px-2 py-1 rounded-full ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
+                    className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getInvoiceBadgeClasses(p.invoiceStatus, p.date)}`}
                   >
                     {p.invoiceStatus}{p.invoiceStatus?.toLowerCase() === "open po" && p.date && !isNaN(new Date(p.date).getTime()) && Date.now() - new Date(p.date).getTime() > 60 * 86400000 ? " (stale)" : ""}
                   </span>
