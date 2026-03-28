@@ -212,6 +212,7 @@ export async function GET(request: NextRequest) {
 
   let clickupCategory = "";
   let clickupType = "";
+  let clickupBrief = ""; // The actual brief content — rich context about the project
 
   try {
     const cached = await readCache<ClickUpTask[]>("tracker:clickup_all_tasks");
@@ -224,13 +225,29 @@ export async function GET(request: NextRequest) {
       if (matchingTask?.description) {
         const cleaned = matchingTask.description.replace(/<[^>]+>/g, "").trim();
         const separatorIdx = cleaned.indexOf("---");
-        const metadataSection = separatorIdx > 0 ? cleaned.slice(0, separatorIdx).trim() : "";
 
+        // Extract metadata (before ---) for category/type
+        const metadataSection = separatorIdx > 0 ? cleaned.slice(0, separatorIdx).trim() : "";
         if (metadataSection) {
           for (const line of metadataSection.split("\n").filter(Boolean)) {
             if (line.startsWith("Category:")) clickupCategory = line.replace("Category:", "").trim();
             if (line.startsWith("Type:")) clickupType = line.replace("Type:", "").trim();
           }
+        }
+
+        // Extract brief content (after ---) — this is the rich project context
+        const briefSection = separatorIdx > 0
+          ? cleaned.slice(separatorIdx + 3).trim()
+          : (metadataSection ? "" : cleaned); // If no separator, treat whole description as brief if no metadata found
+
+        if (briefSection) {
+          // Clean: strip URLs, emoji headers, excessive whitespace, keep meaningful text
+          clickupBrief = briefSection
+            .replace(/https?:\/\/\S+/g, "")
+            .replace(/[🌟✈️🚚📍💬➡️]/g, "")
+            .replace(/\s{2,}/g, " ")
+            .trim()
+            .slice(0, 500); // Cap at 500 chars — enough context without flooding
         }
       }
     }
@@ -345,9 +362,10 @@ export async function GET(request: NextRequest) {
     projectParam,
     clickupCategory,
     clickupType,
+    clickupBrief,
     response.lineItems
   );
-  response.sources.purpose = clickupCategory ? "clickup" : response.lineItems.length > 0 ? "excel" : "none";
+  response.sources.purpose = clickupBrief ? "clickup" : clickupCategory ? "clickup" : response.lineItems.length > 0 ? "excel" : "none";
 
   return NextResponse.json(response);
 }
@@ -357,17 +375,21 @@ export async function GET(request: NextRequest) {
  * of the client's project. This is NOT a brief, NOT a list of deliverables.
  * It's a 2-sentence text that shows we understand WHAT the client needs and WHY.
  *
- * Sentence 1: Our understanding of the project scope and objective.
- * Sentence 2: What Sarani will concretely deliver and how.
+ * PRIORITY 1: Use the ClickUp brief to show real understanding of the project context.
+ * PRIORITY 2: Fallback to category/type + line items when no brief is available.
+ *
+ * Sentence 1: Our understanding of the project — what it's about, what the client needs.
+ * Sentence 2: What Sarani will concretely deliver.
  *
  * NEVER just repeats the project name. NEVER includes URLs or raw metadata.
- * Thomas has flagged this 5 times — get it right.
+ * Thomas has flagged this 5 times — the purpose must show COMPREHENSION.
  */
 function buildPurpose(
   clientName: string,
   projectName: string,
   category: string,
   projectType: string,
+  brief: string,
   lineItems: PrefillLineItem[]
 ): string {
   // Clean inputs — strip any URLs that may have leaked in
@@ -377,13 +399,7 @@ function buildPurpose(
   const cleanProject = cleanStr(projectName);
   const cleanCategory = cleanStr(category);
   const cleanType = cleanStr(projectType);
-
-  // Derive the scope descriptor from category/type
-  const scopeLabel = (cleanType && cleanType !== "generic")
-    ? cleanType.toLowerCase()
-    : cleanCategory
-      ? cleanCategory.toLowerCase()
-      : "creative production";
+  const cleanBrief = cleanStr(brief);
 
   // Build a human-readable deliverables summary from line items
   let deliverablesText = "";
@@ -400,11 +416,49 @@ function buildPurpose(
     }
   }
 
-  // Sentence 1: Show understanding of the project's purpose and context
-  // We extract meaning from the project name (often contains campaign name, season, initiative)
-  const sentence1 = `As part of ${clientName}'s ${cleanProject} initiative, Sarani will handle all ${scopeLabel} needs to ensure the project is delivered on time and to the highest creative standards.`;
+  // ─── SENTENCE 1: Show understanding of the project ───────────────────────
 
-  // Sentence 2: Concrete deliverables and commitment
+  let sentence1: string;
+
+  if (cleanBrief) {
+    // BEST CASE: We have the ClickUp brief — extract the essence to show comprehension.
+    // Take the first meaningful chunk (up to ~200 chars, ending at a sentence boundary).
+    const briefSentences = cleanBrief
+      .split(/(?<=[.!?])\s+/)
+      .filter((s) => s.length > 10); // Skip very short fragments
+
+    if (briefSentences.length >= 2) {
+      // Use the first 1-2 sentences from the brief, capped at ~250 chars
+      let extracted = briefSentences[0];
+      if (extracted.length < 150 && briefSentences[1]) {
+        extracted += " " + briefSentences[1];
+      }
+      // Ensure it ends with a period
+      if (!extracted.endsWith(".") && !extracted.endsWith("!") && !extracted.endsWith("?")) {
+        extracted += ".";
+      }
+      sentence1 = extracted;
+    } else if (briefSentences.length === 1) {
+      sentence1 = briefSentences[0];
+      if (!sentence1.endsWith(".")) sentence1 += ".";
+    } else {
+      // Brief exists but no clean sentences — use it as context with our framing
+      const briefSnippet = cleanBrief.slice(0, 200).trim();
+      sentence1 = `${clientName} requires support on the ${cleanProject} project: ${briefSnippet}.`;
+    }
+  } else {
+    // FALLBACK: No brief available — build from category/type/project name
+    const scopeLabel = (cleanType && cleanType !== "generic")
+      ? cleanType.toLowerCase()
+      : cleanCategory
+        ? cleanCategory.toLowerCase()
+        : "creative production";
+
+    sentence1 = `As part of ${clientName}'s ${cleanProject} initiative, Sarani will handle all ${scopeLabel} needs to ensure the project is delivered on time and to the highest creative standards.`;
+  }
+
+  // ─── SENTENCE 2: Concrete deliverables and commitment ────────────────────
+
   let sentence2: string;
   if (deliverablesText) {
     sentence2 = `The scope of work includes ${deliverablesText}, with unlimited revisions included until final client approval.`;
