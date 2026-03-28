@@ -451,15 +451,6 @@ export async function generateQuotePDF(
   // TITLE — "Service Proposal" (elegant, not loud)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // Flame accent line above title (3px, 80px wide — intentional brand mark)
-  currentPage.drawRectangle({
-    x: MARGIN_LEFT,
-    y: y + 22,
-    width: 80,
-    height: 3,
-    color: COLOR_FLAME,
-  });
-
   currentPage.drawText(t.serviceProposal, {
     x: MARGIN_LEFT,
     y,
@@ -632,7 +623,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 40);
   currentPage = pageRef.current;
 
-  y = drawSectionHeading(currentPage, t.pricing, y, fontBold, COLOR_FLAME);
+  y = drawSectionHeading(currentPage, t.pricing, y, fontBold);
   y -= 10;
 
   // Calculate table dimensions
@@ -1017,16 +1008,6 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 60);
   currentPage = pageRef.current;
 
-  // Small Flame accent line before signature
-  const sigLineWidth = 40;
-  currentPage.drawRectangle({
-    x: PAGE_WIDTH - MARGIN_RIGHT - sigLineWidth,
-    y: y + 8,
-    width: sigLineWidth,
-    height: 2,
-    color: COLOR_FLAME,
-  });
-
   const regardsText = t.bestRegards;
   const regardsWidth = fontRegular.widthOfTextAtSize(regardsText, FONT_BODY);
   currentPage.drawText(regardsText, {
@@ -1059,7 +1040,7 @@ export async function generateQuotePDF(
   y = ensureSpace(pageRef, y, 80);
   currentPage = pageRef.current;
 
-  y = drawSectionHeading(currentPage, t.nextStep, y, fontBold, COLOR_FLAME);
+  y = drawSectionHeading(currentPage, t.nextStep, y, fontBold);
 
   const nextStepBody = t.nextStepText.replace("{quoteNumber}", data.quoteNumber);
   y = drawWrappedText(
@@ -1082,7 +1063,7 @@ export async function generateQuotePDF(
     y,
     size: FONT_BODY,
     font: fontBold,
-    color: COLOR_FLAME,
+    color: COLOR_BLACK,
   });
 
   // ═══════════════════════════════════════════════════════════════════════════

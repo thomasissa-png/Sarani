@@ -85,11 +85,73 @@ const STANDARD_COL_ALIASES: Set<string> = new Set(
 );
 
 /**
+ * Detect the price row by scanning rows after the header for the first row
+ * that has mostly numeric values in the non-standard (asset) columns.
+ * Some trackers have a sub-header row between the header and the price row.
+ */
+function detectPriceRowIndex(
+  values: (string | number | boolean | null)[][],
+  headerRowIndex: number,
+  standardColIndices: Set<number>,
+  maxScanRows = 3
+): number {
+  const headers = values[headerRowIndex];
+  if (!headers) return headerRowIndex + 1;
+
+  // Count how many non-standard columns exist (potential asset columns)
+  let assetColCount = 0;
+  for (let col = 0; col < headers.length; col++) {
+    if (standardColIndices.has(col)) continue;
+    const header = headers[col];
+    if (header !== null && header !== undefined && String(header).trim()) {
+      assetColCount++;
+    }
+  }
+
+  if (assetColCount === 0) return headerRowIndex + 1;
+
+  // Scan rows headerRowIndex+1, +2, +3 for the one with the most numeric values in asset columns
+  let bestRow = headerRowIndex + 1;
+  let bestNumericRatio = 0;
+
+  const limit = Math.min(headerRowIndex + 1 + maxScanRows, values.length);
+  for (let rowIdx = headerRowIndex + 1; rowIdx < limit; rowIdx++) {
+    const row = values[rowIdx];
+    if (!row) continue;
+
+    let numericCount = 0;
+    let nonEmptyCount = 0;
+    for (let col = 0; col < headers.length; col++) {
+      if (standardColIndices.has(col)) continue;
+      const header = headers[col];
+      if (!header || !String(header).trim()) continue;
+
+      const cellVal = row[col];
+      if (cellVal === null || cellVal === undefined || String(cellVal).trim() === "") continue;
+      nonEmptyCount++;
+      const num = cellToNumber(cellVal);
+      if (num !== null && num > 0) numericCount++;
+    }
+
+    // Ratio of numeric cells among non-empty asset cells
+    const ratio = nonEmptyCount > 0 ? numericCount / nonEmptyCount : 0;
+    // A price row should have a high ratio of numeric values (>= 0.5) and at least some values
+    if (ratio > bestNumericRatio && numericCount >= 2) {
+      bestNumericRatio = ratio;
+      bestRow = rowIdx;
+    }
+  }
+
+  return bestRow;
+}
+
+/**
  * Detect asset columns in the Excel tracker and extract line items.
  *
  * Excel structure:
  * - headerRowIndex: row with asset type names (e.g., "Banner creation (static)")
  * - priceRowIndex: row just below header with unit prices (e.g., 120, 35, 220)
+ *   (auto-detected if the provided row doesn't have mostly numeric values)
  * - projectRowIndex: the project's row with quantities (e.g., 1, 24, 1)
  *
  * For each non-standard column:
@@ -103,9 +165,9 @@ function extractAssetLineItems(
   projectRowIndex: number
 ): PrefillLineItem[] {
   const headers = values[headerRowIndex];
-  const priceRow = values[priceRowIndex];
+  if (!headers) return [];
   const dataRow = values[projectRowIndex];
-  if (!headers || !priceRow || !dataRow) return [];
+  if (!dataRow) return [];
 
   const items: PrefillLineItem[] = [];
 
@@ -116,6 +178,12 @@ function extractAssetLineItems(
     const idx = findColumnIndex(headerStrings, aliases);
     if (idx !== -1) standardColIndices.add(idx);
   }
+
+  // Auto-detect the actual price row — the provided priceRowIndex may not have prices
+  // (e.g., sub-header row between header and prices). Scan rows N+1..N+3 for numeric content.
+  const actualPriceRowIdx = detectPriceRowIndex(values, headerRowIndex, standardColIndices);
+  const priceRow = values[actualPriceRowIdx];
+  if (!priceRow) return [];
 
   // Scan ALL columns — any non-standard column with a quantity > 0 is an asset
   for (let col = 0; col < headers.length; col++) {
@@ -132,7 +200,7 @@ function extractAssetLineItems(
     const quantity = cellToNumber(dataRow[col]);
     if (quantity === null || quantity <= 0) continue;
 
-    // Unit price comes from the price row (row just below header)
+    // Unit price comes from the detected price row
     const unitPrice = cellToNumber(priceRow[col]);
     if (unitPrice === null || unitPrice <= 0) continue;
 
@@ -217,9 +285,27 @@ export async function GET(request: NextRequest) {
   try {
     const cached = await readCache<ClickUpTask[]>("tracker:clickup_all_tasks");
     if (cached?.data) {
+      // Fuzzy match: try exact, then includes both ways, then by space ID if we have a mapping
       const matchingTask = cached.data.find((task) => {
         const taskName = task.name.toLowerCase().trim();
         return taskName === projectLower || taskName.includes(projectLower) || projectLower.includes(taskName);
+      }) ?? cached.data.find((task) => {
+        // Secondary: match tasks belonging to the client's ClickUp space
+        // This helps when project names differ slightly between systems
+        const taskSpaceId = task.space?.id;
+        const clientMapping = CLIENT_MAPPINGS.find((m) => {
+          const spaceLower = m.clickupSpaceName.toLowerCase();
+          return (
+            spaceLower === clientLower ||
+            clientLower.includes(spaceLower) ||
+            spaceLower.includes(clientLower)
+          );
+        });
+        if (!clientMapping || taskSpaceId !== clientMapping.clickupSpaceId) return false;
+        // Within the client's space, try looser name matching
+        const taskName = task.name.toLowerCase().trim();
+        const projectWords = projectLower.split(/[\s\-_]+/).filter((w) => w.length >= 3);
+        return projectWords.length > 0 && projectWords.every((word) => taskName.includes(word));
       });
 
       if (matchingTask?.description) {
@@ -241,13 +327,30 @@ export async function GET(request: NextRequest) {
           : (metadataSection ? "" : cleaned); // If no separator, treat whole description as brief if no metadata found
 
         if (briefSection) {
-          // Clean: strip URLs, emoji headers, excessive whitespace, keep meaningful text
-          clickupBrief = briefSection
+          // Clean: strip URLs, emoji headers, section headers, excessive whitespace
+          const cleanedBrief = briefSection
+            .split("\n")
+            .filter((line) => {
+              const trimmed = line.trim();
+              if (!trimmed) return false;
+              // Strip lines starting with emoji
+              if (/^[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/u.test(trimmed)) return false;
+              // Strip section headers: lines ending with ":" or matching known header patterns
+              if (/^(introduction|goal|brief|deliverables|source files|branding|others|objective|scope|context|background|overview|description|requirements|assets|timeline|deadline|notes|instructions|reference|format|specifications)/i.test(trimmed) && /[:\-]?\s*$/.test(trimmed)) return false;
+              if (/^(introduction\s*\/?\s*goal)/i.test(trimmed)) return false;
+              // Strip ALL CAPS lines (section headers)
+              if (trimmed.length > 3 && trimmed === trimmed.toUpperCase() && /^[A-Z\s\-/:]+$/.test(trimmed)) return false;
+              // Strip lines that are ONLY a label ending with ":"
+              if (/^[A-Za-z\s\/]+:\s*$/.test(trimmed)) return false;
+              return true;
+            })
+            .join(" ")
             .replace(/https?:\/\/\S+/g, "")
             .replace(/[🌟✈️🚚📍💬➡️]/g, "")
             .replace(/\s{2,}/g, " ")
             .trim()
             .slice(0, 500); // Cap at 500 chars — enough context without flooding
+          clickupBrief = cleanedBrief;
         }
       }
     }
@@ -258,14 +361,8 @@ export async function GET(request: NextRequest) {
   // ─── 2. Try to get line items from Excel tracker ────────────────────────
 
   // Find the client mapping to know which Excel file to read
-  const mapping = CLIENT_MAPPINGS.find((m) => {
-    const spaceLower = m.clickupSpaceName.toLowerCase();
-    return (
-      spaceLower === clientLower ||
-      clientLower.includes(spaceLower) ||
-      spaceLower.includes(clientLower)
-    );
-  });
+  // Use the robust 3-tier matching from getMappingBySpaceName (exact, contains, first-word)
+  const mapping = getMappingBySpaceName(clientParam);
 
   let matchedSheetName: string | undefined;
 
@@ -422,29 +519,35 @@ function buildPurpose(
 
   if (cleanBrief) {
     // BEST CASE: We have the ClickUp brief — extract the essence to show comprehension.
-    // Take the first meaningful chunk (up to ~200 chars, ending at a sentence boundary).
-    const briefSentences = cleanBrief
+    // Strip section header lines BEFORE splitting into sentences.
+    const strippedBrief = cleanBrief
       .split(/(?<=[.!?])\s+/)
-      .filter((s) => s.length > 10); // Skip very short fragments
+      .filter((s) => {
+        const trimmed = s.trim();
+        if (trimmed.length <= 10) return false; // Skip very short fragments
+        // Skip lines that look like section headers leaked into sentences
+        if (/^(introduction|goal|brief|deliverables|source files|branding|others|objective|scope|context|overview)\s*[/:\-]/i.test(trimmed)) return false;
+        if (/^[A-Z\s\/]+:$/.test(trimmed)) return false;
+        return true;
+      });
 
-    if (briefSentences.length >= 2) {
+    if (strippedBrief.length >= 2) {
       // Use the first 1-2 sentences from the brief, capped at ~250 chars
-      let extracted = briefSentences[0];
-      if (extracted.length < 150 && briefSentences[1]) {
-        extracted += " " + briefSentences[1];
+      let extracted = strippedBrief[0];
+      if (extracted.length < 150 && strippedBrief[1]) {
+        extracted += " " + strippedBrief[1];
       }
       // Ensure it ends with a period
       if (!extracted.endsWith(".") && !extracted.endsWith("!") && !extracted.endsWith("?")) {
         extracted += ".";
       }
       sentence1 = extracted;
-    } else if (briefSentences.length === 1) {
-      sentence1 = briefSentences[0];
+    } else if (strippedBrief.length === 1) {
+      sentence1 = strippedBrief[0];
       if (!sentence1.endsWith(".")) sentence1 += ".";
     } else {
-      // Brief exists but no clean sentences — use it as context with our framing
-      const briefSnippet = cleanBrief.slice(0, 200).trim();
-      sentence1 = `${clientName} requires support on the ${cleanProject} project: ${briefSnippet}.`;
+      // Brief exists but no clean sentences after stripping — use structured fallback
+      sentence1 = `Sarani will manage all creative production for ${clientName}'s ${cleanProject} project, ensuring delivery to the highest standards within the agreed timeline.`;
     }
   } else {
     // FALLBACK: No brief available — build from category/type/project name
@@ -454,7 +557,12 @@ function buildPurpose(
         ? cleanCategory.toLowerCase()
         : "creative production";
 
-    sentence1 = `As part of ${clientName}'s ${cleanProject} initiative, Sarani will handle all ${scopeLabel} needs to ensure the project is delivered on time and to the highest creative standards.`;
+    if (scopeLabel === "creative production" && !cleanCategory && !cleanType) {
+      // Worst case: no brief, no category, no type — use the guaranteed meaningful fallback
+      sentence1 = `Sarani will manage all creative production for ${clientName}'s ${cleanProject} project, ensuring delivery to the highest standards within the agreed timeline.`;
+    } else {
+      sentence1 = `As part of ${clientName}'s ${cleanProject} initiative, Sarani will handle all ${scopeLabel} needs to ensure the project is delivered on time and to the highest creative standards.`;
+    }
   }
 
   // ─── SENTENCE 2: Concrete deliverables and commitment ────────────────────

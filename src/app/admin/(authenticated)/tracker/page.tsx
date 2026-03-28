@@ -531,19 +531,16 @@ export default function TrackerPage() {
   const handleSharePreview = useCallback(async (p: TrackerProject) => {
     const projectId = getProjectId(p);
 
-    // If already active, just copy the URL
+    // If already active, open the preview directly
     const existing = previewLinks[projectId];
     if (existing?.isActive) {
-      try {
-        await navigator.clipboard.writeText(`${window.location.origin}${existing.url}`);
-        setToast({
-          message: "Preview link copied — already exists",
-          detail: existing.url,
-          type: "success",
-        });
-      } catch {
-        setToast({ message: "Could not copy to clipboard", type: "error" });
-      }
+      const fullUrl = `${window.location.origin}${existing.url}`;
+      window.open(fullUrl, "_blank");
+      setToast({
+        message: "Preview opened in new tab",
+        detail: existing.url,
+        type: "success",
+      });
       return;
     }
 
@@ -575,20 +572,13 @@ export default function TrackerPage() {
         [projectId]: { url: data.url, previewId: data.id ?? "", isActive: true },
       }));
 
-      try {
-        await navigator.clipboard.writeText(`${window.location.origin}${data.url}`);
-        setToast({
-          message: "Preview link copied to clipboard",
-          detail: data.url,
-          type: "success",
-        });
-      } catch {
-        setToast({
-          message: "Preview link created (copy failed)",
-          detail: data.url,
-          type: "warning",
-        });
-      }
+      const fullUrl = `${window.location.origin}${data.url}`;
+      window.open(fullUrl, "_blank");
+      setToast({
+        message: "Preview opened in new tab",
+        detail: data.url,
+        type: "success",
+      });
     } catch {
       setToast({
         message: "Could not generate preview link. Try again.",
@@ -1072,9 +1062,9 @@ export default function TrackerPage() {
               <caption className="sr-only">Project tracker data</caption>
               <thead>
                 <tr className="border-b border-neutral-200 text-left">
-                  <SortableTh column="client" sort={sort} onToggle={toggleSort} className="w-[20%]">Client</SortableTh>
+                  <SortableTh column="client" sort={sort} onToggle={toggleSort} className="w-[15%]">Client</SortableTh>
                   <Th className="w-[8%]">Country</Th>
-                  <SortableTh column="project" sort={sort} onToggle={toggleSort} className="w-[25%]">Project</SortableTh>
+                  <SortableTh column="project" sort={sort} onToggle={toggleSort} className="w-[22%]">Project</SortableTh>
                   {!hiddenColumns.has("contact") && <Th>Contact</Th>}
                   <SortableTh column="status" sort={sort} onToggle={toggleSort} className="w-[8%]">Status</SortableTh>
                   {!hiddenColumns.has("category") && <Th>Category</Th>}
@@ -1111,19 +1101,6 @@ export default function TrackerPage() {
                         >
                           {p.project}
                         </Link>
-                        {(() => {
-                          const taskId = extractTaskId(p.clickupTaskUrl);
-                          const outputs = taskId ? outputsByProject[taskId] : null;
-                          if (!outputs) return null;
-                          return (
-                            <span
-                              className="ml-1.5 text-[10px] font-medium text-purple-600"
-                              title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
-                            >
-                              ({outputs.count} AI)
-                            </span>
-                          );
-                        })()}
                       </td>
                       {!hiddenColumns.has("contact") && (
                         <td className="px-5 py-3.5 text-sm text-neutral-600 whitespace-nowrap">
@@ -1266,19 +1243,6 @@ export default function TrackerPage() {
                   >
                     {p.project}
                   </Link>
-                  {(() => {
-                    const taskId = extractTaskId(p.clickupTaskUrl);
-                    const outputs = taskId ? outputsByProject[taskId] : null;
-                    if (!outputs) return null;
-                    return (
-                      <span
-                        className="text-[10px] font-medium text-purple-600"
-                        title={`${outputs.count} AI output(s): ${outputs.agents.join(", ")}`}
-                      >
-                        ({outputs.count} AI)
-                      </span>
-                    );
-                  })()}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1699,10 +1663,11 @@ function SharePreviewButton({
                 className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
                 </svg>
-                Copy link
+                Open
               </button>
               <button
                 type="button"
@@ -1734,7 +1699,7 @@ function SharePreviewButton({
       onClick={() => onShare(project)}
       disabled={isLoading}
       className="inline-flex items-center gap-1 px-1.5 py-1 text-xs font-medium rounded border border-brand-cerulean/30 bg-brand-cerulean/5 text-brand-cerulean hover:bg-brand-cerulean/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      title="Generate and copy a public preview link"
+      title="Generate and open a public preview link"
     >
       {isLoading ? (
         <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
