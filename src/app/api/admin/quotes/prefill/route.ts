@@ -554,44 +554,10 @@ function buildPurpose(
 
   let sentence1: string;
 
-  if (cleanBrief) {
-    // BEST CASE: We have the ClickUp brief — extract the essence to show comprehension.
-    // Strip section header fragments BEFORE selecting sentences.
-    // The brief has already been line-filtered, but headers can still leak when
-    // a header line was on the same line as content (e.g., "Introduction/Goal: The project aims to...")
-    const strippedBrief = cleanBrief
-      // First, remove any leading header pattern from the joined text
-      .replace(/^(introduction\s*[\/\-]\s*(goal(\s+of\s+the\s+project)?|objective)\s*[:\-]?\s*)/i, "")
-      .replace(/^(introduction|goal|brief|objective|overview|context|scope|description|deliverables)\s*[:\-\/]\s*/i, "")
-      .split(/(?<=[.!?])\s+/)
-      .filter((s) => {
-        const trimmed = s.trim();
-        if (trimmed.length <= 10) return false; // Skip very short fragments
-        // Skip fragments that ARE a section header (entire sentence is just a label)
-        if (/^(introduction|goal|brief|deliverables|source\s*files?|branding|others|objective|scope|context|overview|description)\s*[\/\-:\s]*(of\s+the\s+project)?\s*[:\-]?\s*$/i.test(trimmed)) return false;
-        if (/^[A-Z\s\/\-:]+$/.test(trimmed) && trimmed.length < 40) return false;
-        return true;
-      });
-
-    if (strippedBrief.length >= 2) {
-      // Use the first 1-2 sentences from the brief, capped at ~250 chars
-      let extracted = strippedBrief[0];
-      if (extracted.length < 150 && strippedBrief[1]) {
-        extracted += " " + strippedBrief[1];
-      }
-      // Ensure it ends with a period
-      if (!extracted.endsWith(".") && !extracted.endsWith("!") && !extracted.endsWith("?")) {
-        extracted += ".";
-      }
-      sentence1 = extracted;
-    } else if (strippedBrief.length === 1) {
-      sentence1 = strippedBrief[0];
-      if (!sentence1.endsWith(".")) sentence1 += ".";
-    } else {
-      // Brief exists but no clean sentences after stripping — use structured fallback
-      sentence1 = `Sarani will manage all creative production for ${clientName}'s ${cleanProject} project, ensuring delivery to the highest standards within the agreed timeline.`;
-    }
-  } else {
+  // IMPORTANT: The ClickUp brief is an INTERNAL document (instructions for the Sarani team).
+  // It must NEVER be copied into the Purpose of Work which is CLIENT-FACING.
+  // We build the purpose from: client name, project name, category/type, and deliverables list.
+  {
     // FALLBACK: No brief available — build from category/type/project name
     const scopeLabel = (cleanType && cleanType !== "generic")
       ? cleanType.toLowerCase()
