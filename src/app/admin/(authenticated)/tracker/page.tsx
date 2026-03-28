@@ -148,6 +148,20 @@ export default function TrackerPage() {
   const [outputsByProject, setOutputsByProject] =
     useState<OutputsByProject>({});
 
+  // Project preview links (Share Preview feature)
+  // Maps projectId -> { url, previewId, isActive }
+  const [previewLinks, setPreviewLinks] = useState<
+    Record<string, { url: string; previewId: string; isActive: boolean }>
+  >({});
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+
+  // Toast notification
+  const [toast, setToast] = useState<{
+    message: string;
+    detail?: string;
+    type: "success" | "error" | "warning";
+  } | null>(null);
+
   // Filters — default to Open + In progress only
   const [search, setSearch] = useState("");
   const [clientFilter, setClientFilter] = useState("All");
@@ -473,6 +487,132 @@ export default function TrackerPage() {
     setInvoiceFilter("All");
     setCountryFilter("All");
   }, []);
+
+  // Toast auto-dismiss
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // Build a stable project ID from tracker row (no DB project ID exists)
+  const getProjectId = useCallback((p: TrackerProject) => {
+    return `${p.client}::${p.project}`;
+  }, []);
+
+  // Share Preview: create or copy existing preview link
+  const handleSharePreview = useCallback(async (p: TrackerProject) => {
+    const projectId = getProjectId(p);
+
+    // If already active, just copy the URL
+    const existing = previewLinks[projectId];
+    if (existing?.isActive) {
+      try {
+        await navigator.clipboard.writeText(`${window.location.origin}${existing.url}`);
+        setToast({
+          message: "Preview link copied — already exists",
+          detail: existing.url,
+          type: "success",
+        });
+      } catch {
+        setToast({ message: "Could not copy to clipboard", type: "error" });
+      }
+      return;
+    }
+
+    setPreviewLoading(projectId);
+    try {
+      const res = await fetch("/api/admin/project-previews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          clientName: p.client,
+          projectName: p.project,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Unknown error" }));
+        setToast({
+          message: err.message || "Could not generate preview link. Try again.",
+          type: "error",
+        });
+        return;
+      }
+
+      const data: { url: string; created: boolean } = await res.json();
+
+      // We need the preview DB id for deactivation. Extract from a follow-up or store url.
+      // For simplicity, we store what we have and re-fetch if needed.
+      setPreviewLinks((prev) => ({
+        ...prev,
+        [projectId]: { url: data.url, previewId: "", isActive: true },
+      }));
+
+      try {
+        await navigator.clipboard.writeText(`${window.location.origin}${data.url}`);
+        setToast({
+          message: "Preview link copied to clipboard",
+          detail: data.url,
+          type: "success",
+        });
+      } catch {
+        setToast({
+          message: "Preview link created (copy failed)",
+          detail: data.url,
+          type: "warning",
+        });
+      }
+    } catch {
+      setToast({
+        message: "Could not generate preview link. Try again.",
+        type: "error",
+      });
+    } finally {
+      setPreviewLoading(null);
+    }
+  }, [getProjectId, previewLinks]);
+
+  // Deactivate a preview link
+  const handleDeactivatePreview = useCallback(async (p: TrackerProject) => {
+    const projectId = getProjectId(p);
+    const existing = previewLinks[projectId];
+    if (!existing) return;
+
+    setPreviewLoading(projectId);
+    try {
+      const patchRes = await fetch(`/api/admin/project-previews/${encodeURIComponent(projectId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: false }),
+      });
+
+      if (!patchRes.ok) {
+        setToast({
+          message: "Could not deactivate. Try again.",
+          type: "error",
+        });
+        return;
+      }
+
+      setPreviewLinks((prev) => ({
+        ...prev,
+        [projectId]: { ...prev[projectId], isActive: false },
+      }));
+      setToast({
+        message: "Preview link deactivated.",
+        type: "warning",
+      });
+    } catch {
+      setToast({
+        message: "Could not deactivate. Try again.",
+        type: "error",
+      });
+    } finally {
+      setPreviewLoading(null);
+    }
+  }, [getProjectId, previewLinks]);
 
   // Active filter count (for mobile badge)
   const activeFilterCount = useMemo(() => {
@@ -1033,6 +1173,13 @@ export default function TrackerPage() {
                               </Link>
                             );
                           })()}
+                          <SharePreviewButton
+                            project={p}
+                            preview={previewLinks[getProjectId(p)]}
+                            isLoading={previewLoading === getProjectId(p)}
+                            onShare={handleSharePreview}
+                            onDeactivate={handleDeactivatePreview}
+                          />
                         </div>
                       </td>
                     </tr>
@@ -1184,6 +1331,13 @@ export default function TrackerPage() {
                     </Link>
                   );
                 })()}
+                <SharePreviewButton
+                  project={p}
+                  preview={previewLinks[getProjectId(p)]}
+                  isLoading={previewLoading === getProjectId(p)}
+                  onShare={handleSharePreview}
+                  onDeactivate={handleDeactivatePreview}
+                />
               </div>
             </div>
           ))}
@@ -1230,6 +1384,45 @@ export default function TrackerPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div
+            className={`flex items-start gap-3 px-5 py-4 rounded-xl shadow-lg border max-w-sm ${
+              toast.type === "success"
+                ? "bg-white border-green-200 text-green-800"
+                : toast.type === "error"
+                  ? "bg-white border-red-200 text-red-800"
+                  : "bg-white border-yellow-200 text-yellow-800"
+            }`}
+          >
+            <span className="text-sm shrink-0 mt-0.5">
+              {toast.type === "success" ? (
+                <svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+              ) : toast.type === "error" ? (
+                <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+              ) : (
+                <svg className="w-4 h-4 text-yellow-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+              )}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">{toast.message}</p>
+              {toast.detail && (
+                <p className="text-xs mt-1 opacity-70 truncate">{toast.detail}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors"
+              aria-label="Dismiss notification"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -1414,5 +1607,112 @@ function FolderIcon() {
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
+  );
+}
+
+// ─── Share Preview Button ──────────────────────────────────────────────────
+
+function SharePreviewButton({
+  project,
+  preview,
+  isLoading,
+  onShare,
+  onDeactivate,
+}: {
+  project: TrackerProject;
+  preview?: { url: string; previewId: string; isActive: boolean };
+  isLoading: boolean;
+  onShare: (p: TrackerProject) => void;
+  onDeactivate: (p: TrackerProject) => void;
+}) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // If preview is active, show "Active" badge with dropdown
+  if (preview?.isActive) {
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDropdownOpen((prev) => !prev);
+          }}
+          disabled={isLoading}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-green-300 bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+          Active
+          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {dropdownOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-30"
+              onClick={() => setDropdownOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-neutral-200 rounded-lg shadow-lg z-40 py-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDropdownOpen(false);
+                  onShare(project);
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                Copy link
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDropdownOpen(false);
+                  onDeactivate(project);
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                Deactivate
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Default state: show "Share" button
+  return (
+    <button
+      type="button"
+      onClick={() => onShare(project)}
+      disabled={isLoading}
+      className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-brand-cerulean/30 bg-brand-cerulean/5 text-brand-cerulean hover:bg-brand-cerulean/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Generate and copy a public preview link"
+    >
+      {isLoading ? (
+        <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+        </svg>
+      ) : (
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
+      )}
+      {isLoading ? "Generating..." : "Share"}
+    </button>
   );
 }

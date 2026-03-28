@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         .where(eq(projectPreviews.id, existing.id));
     }
     const url = `/project/${existing.clientSlug}/${existing.projectSlug}`;
-    return NextResponse.json({ url, created: false }, { status: 200 });
+    return NextResponse.json({ url, created: false, id: existing.id }, { status: 200 });
   }
 
   // Generate slugs
@@ -117,15 +117,15 @@ export async function POST(request: NextRequest) {
   }
 
   // Insert new preview
-  await db.insert(projectPreviews).values({
+  const [inserted] = await db.insert(projectPreviews).values({
     projectId,
     clientSlug,
     projectSlug: finalSlug,
     clientName,
     projectName,
     isActive: true,
-  });
+  }).returning({ id: projectPreviews.id });
 
   const url = `/project/${clientSlug}/${finalSlug}`;
-  return NextResponse.json({ url, created: true }, { status: 201 });
+  return NextResponse.json({ url, created: true, id: inserted.id }, { status: 201 });
 }
