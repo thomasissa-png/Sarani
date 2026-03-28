@@ -60,7 +60,7 @@ const TRANSLATIONS = {
     vat: "VAT",
     references: "References",
     referencesText:
-      "Sarani is a Paris-born creative agency uniting 35 experts across 5 continents and 18 languages. We operate 24/7 to deliver unlimited creativity with next-day turnaround. Our clients include Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica, and PICO. We have been recognized for our work across multiple awards and industry benchmarks.",
+      "Trusted by TikTok (1,500+ monthly video edits), Sony (same-day delivery across 15 languages), GEODIS (5,700 slides rebranded in 3 weeks), and Adidas (arena-scale event production). References available upon request.",
     paymentTerms: [
       "Work commences once a PO is raised.",
       "Unlimited rounds of revisions are offered before filming and on post-production.",

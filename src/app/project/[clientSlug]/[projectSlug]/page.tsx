@@ -409,24 +409,14 @@ export default async function ProjectPreviewPage({ params }: Props) {
       {/* Footer */}
       <footer className="border-t border-white/10">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-white/30">
-            Powered by{" "}
-            <a
-              href="https://sarani.studio"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/50 hover:text-white/80 transition-colors"
-            >
-              Sarani
-            </a>
-          </p>
-          <Image
-            src="/sarani-logo-white.png"
-            alt="Sarani"
-            width={80}
-            height={22}
-            className="h-5 w-auto opacity-30"
-          />
+          <a
+            href="https://sarani.studio"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-white/20 hover:text-white/40 transition-colors"
+          >
+            sarani.studio
+          </a>
         </div>
       </footer>
     </div>

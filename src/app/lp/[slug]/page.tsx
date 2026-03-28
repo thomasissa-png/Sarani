@@ -228,8 +228,8 @@ export default async function LandingPagePublic({ params }: Props) {
         <footer className="px-6 py-12 border-t border-white/10">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-sm text-white/50">{sections.footer.tagline}</p>
-            <p className="text-xs text-white/30 mt-2">
-              Powered by Sarani Studio
+            <p className="text-xs text-white/20 mt-2">
+              sarani.studio
             </p>
           </div>
         </footer>

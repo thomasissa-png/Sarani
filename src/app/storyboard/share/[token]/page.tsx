@@ -163,8 +163,7 @@ export default async function StoryboardSharePage({
       {/* Footer */}
       <footer className="px-6 py-8 border-t border-white/10 mt-12">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <p className="text-xs text-white/30">Powered by Sarani</p>
-          <a href="https://sarani.studio" className="text-xs text-white/30 hover:text-white/60 transition-colors">
+          <a href="https://sarani.studio" className="text-xs text-white/20 hover:text-white/40 transition-colors">
             sarani.studio
           </a>
         </div>
