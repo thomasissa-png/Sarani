@@ -45,7 +45,7 @@ export function StickyCTAMobile() {
             device: getDevice(),
           })
         }
-        className="block w-full rounded-full bg-brand-flame py-3.5 text-center text-base font-bold text-brand-black transition-colors hover:bg-brand-flame-dark"
+        className="block w-full rounded-full bg-brand-flame py-3.5 text-center text-base font-bold text-brand-white transition-colors hover:bg-brand-flame-dark"
       >
         Start a project
       </Link>

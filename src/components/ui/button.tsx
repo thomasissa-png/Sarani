@@ -27,7 +27,7 @@ type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: [
-    "bg-brand-flame text-brand-black",
+    "bg-brand-flame text-brand-white",
     "hover:bg-brand-flame-dark",
     "disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed",
   ].join(" "),

@@ -15,7 +15,38 @@ const PILL_STYLES = [
   "bg-brand-black/8 text-brand-black",
 ] as const;
 
-/* ---------- Animated Hero Dots (larger, min 12-20px) ---------- */
+/* ---------- Animated Hero Dots — Premium orbital composition ---------- */
+/* Sarani's three brand dots (Flame, Cerulean, Lemon) in a layered,       */
+/* organic floating composition on the right side of the hero.             */
+/* Multiple sizes, varied opacities, staggered orbit-like drift.          */
+
+const DOTS: Array<{
+  color: string;
+  size: string;
+  top: string;
+  right: string;
+  delay: number;
+  distance: number;
+  blur?: string;
+}> = [
+  // Primary constellation — large dots, full opacity
+  { color: "bg-brand-flame", size: "w-14 h-14", top: "22%", right: "18%", delay: 0, distance: 20 },
+  { color: "bg-brand-cerulean", size: "w-12 h-12", top: "42%", right: "8%", delay: 0.8, distance: 16 },
+  { color: "bg-brand-lemon", size: "w-10 h-10", top: "62%", right: "22%", delay: 1.6, distance: 18 },
+
+  // Secondary — medium dots, slightly transparent
+  { color: "bg-brand-cerulean/70", size: "w-8 h-8", top: "15%", right: "8%", delay: 0.4, distance: 14 },
+  { color: "bg-brand-flame/60", size: "w-7 h-7", top: "52%", right: "30%", delay: 1.2, distance: 12 },
+  { color: "bg-brand-lemon/70", size: "w-9 h-9", top: "32%", right: "28%", delay: 2.0, distance: 22 },
+
+  // Ambient — small dots, low opacity, background depth
+  { color: "bg-brand-flame/30", size: "w-5 h-5", top: "75%", right: "12%", delay: 0.6, distance: 10, blur: "blur-[1px]" },
+  { color: "bg-brand-cerulean/25", size: "w-4 h-4", top: "8%", right: "24%", delay: 1.4, distance: 8, blur: "blur-[1px]" },
+  { color: "bg-brand-lemon/20", size: "w-6 h-6", top: "80%", right: "28%", delay: 2.4, distance: 12, blur: "blur-[2px]" },
+  { color: "bg-brand-cerulean/15", size: "w-16 h-16", top: "35%", right: "2%", delay: 0.2, distance: 24, blur: "blur-[3px]" },
+  { color: "bg-brand-flame/15", size: "w-20 h-20", top: "58%", right: "35%", delay: 1.0, distance: 28, blur: "blur-[4px]" },
+  { color: "bg-brand-lemon/10", size: "w-24 h-24", top: "10%", right: "38%", delay: 1.8, distance: 30, blur: "blur-[5px]" },
+];
 
 export function AnimatedHeroDots() {
   return (
@@ -23,32 +54,15 @@ export function AnimatedHeroDots() {
       className="pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden="true"
     >
-      {/* Dots concentrated in the right half only */}
-      <FloatingDot
-        className="absolute top-[15%] right-[30%] h-4 w-4 rounded-full bg-brand-cerulean hidden lg:block"
-        delay={0.5}
-        distance={12}
-      />
-      <FloatingDot
-        className="absolute top-[35%] right-[12%] h-5 w-5 rounded-full bg-brand-lemon hidden lg:block"
-        delay={0}
-        distance={14}
-      />
-      <FloatingDot
-        className="absolute top-[50%] right-[25%] h-3.5 w-3.5 rounded-full bg-brand-flame hidden lg:block"
-        delay={1}
-        distance={10}
-      />
-      <FloatingDot
-        className="absolute top-[25%] right-[18%] h-5 w-5 rounded-full bg-brand-cerulean/50 hidden lg:block"
-        delay={1.8}
-        distance={15}
-      />
-      <FloatingDot
-        className="absolute top-[65%] right-[15%] h-6 w-6 rounded-full bg-brand-lemon/60 hidden lg:block"
-        delay={0.3}
-        distance={18}
-      />
+      {DOTS.map((dot, i) => (
+        <FloatingDot
+          key={i}
+          className={`absolute rounded-full hidden lg:block ${dot.color} ${dot.size} ${dot.blur ?? ""}`}
+          style={{ top: dot.top, right: dot.right }}
+          delay={dot.delay}
+          distance={dot.distance}
+        />
+      ))}
     </div>
   );
 }
