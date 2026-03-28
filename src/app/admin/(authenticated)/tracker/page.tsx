@@ -523,9 +523,35 @@ export default function TrackerPage() {
 
     setPreviewLoading(projectId);
     try {
-      // Brief for the share page — clean description, no API call (avoids timeout)
+      // Brief for the share page — personalized by project type
       const clientDisplay = p.displayClient ?? p.client;
-      const briefText = `As part of ${clientDisplay}'s ${p.project} initiative, Sarani will handle all creative production needs to ensure the project is delivered on time and to the highest creative standards. The scope covers all required assets and deliverables, with unlimited revisions included until final client approval.`;
+      const cat = (p.category || "").toLowerCase();
+      const proj = p.project;
+
+      const briefVariants: Record<string, string> = {
+        design: `Delivering pixel-perfect for ${clientDisplay}'s ${proj} — from concept to final asset, Sarani's design team is on it around the clock. Expect sharp visuals, unlimited revisions, and zero back-and-forth friction.`,
+        video: `Every frame of ${clientDisplay}'s ${proj} is in expert hands. Sarani's video editors and motion designers work in relay across time zones so your content never waits.`,
+        translation: `${clientDisplay}'s ${proj} speaks 18 languages — because great work deserves to land perfectly in every market. Sarani's localization team ensures nothing gets lost in translation.`,
+        presentation: `When ${clientDisplay} needs to make an impression, every slide counts. Sarani is handling the full ${proj} deck — structured, designed, and ready to command the room.`,
+        social: `Content that stops the scroll — Sarani is producing all social assets for ${clientDisplay}'s ${proj}, built for platform, audience, and the pace your feeds actually move at.`,
+        brand: `A brand that resonates starts with decisions that are clear. Sarani is building the full ${proj} identity for ${clientDisplay} — consistent, distinctive, and ready to scale.`,
+        print: `From file to print-ready, ${clientDisplay}'s ${proj} production is handled without compromise. Sarani ensures every spec, bleed, and finish is exactly right before anything goes to press.`,
+        default: `Sarani is the creative partner behind ${clientDisplay}'s ${proj} — fast, reliable, and built for the pace your business actually runs at.`,
+      };
+
+      // Match category to variant
+      let briefText = briefVariants.default;
+      if (cat.includes("design") || cat.includes("banner") || cat.includes("graphic")) briefText = briefVariants.design;
+      else if (cat.includes("video") || cat.includes("motion") || cat.includes("edit")) briefText = briefVariants.video;
+      else if (cat.includes("translat") || cat.includes("locali")) briefText = briefVariants.translation;
+      else if (cat.includes("present") || cat.includes("slide") || cat.includes("deck")) briefText = briefVariants.presentation;
+      else if (cat.includes("social")) briefText = briefVariants.social;
+      else if (cat.includes("brand") || cat.includes("identity")) briefText = briefVariants.brand;
+      else if (cat.includes("print") || cat.includes("packag")) briefText = briefVariants.print;
+      // Also check project name for hints
+      else if (proj.toLowerCase().includes("banner") || proj.toLowerCase().includes("visual")) briefText = briefVariants.design;
+      else if (proj.toLowerCase().includes("video") || proj.toLowerCase().includes("motion")) briefText = briefVariants.video;
+      else if (proj.toLowerCase().includes("slide") || proj.toLowerCase().includes("deck") || proj.toLowerCase().includes("present")) briefText = briefVariants.presentation;
 
       const res = await fetch("/api/admin/project-previews", {
         method: "POST",
