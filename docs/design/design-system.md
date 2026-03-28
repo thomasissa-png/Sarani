@@ -89,16 +89,16 @@ All text combinations verified at minimum 4.5:1 (normal text) or 3:1 (large text
 3. Lemon must always pair with black text — white text on lemon is strictly prohibited
 4. Flame, Cerulean, Lemon must never be used as body text color on white or light backgrounds
 
-### 1.4 Dark Mode
+### 1.4 Light-First Design (Decision: Thomas, 2026-03-28)
 
-Sarani's design is **natively dark** — the primary mode is dark (black background). There is no light mode toggle required for v1. If a light-mode section is needed (e.g., a white card section for case study readability), apply these rules:
+Sarani's design is **light-first** — the primary surface is white (#ffffff). Dark sections (black #000000) are used for contrast and emphasis: metrics, footer CTA, team stats, closing sections. This creates a rhythm of light/dark alternation that gives each section visual weight. There is no dark mode toggle required for v1.
 
 | Context | Background | Text | Accent |
 |---|---|---|---|
-| Page (default) | `#000000` | `#ffffff` | Flame / Cerulean / Lemon as above |
-| Elevated card (dark) | `#171717` | `#ffffff` | White or accent |
-| Contrast section (light) | `#ffffff` | `#000000` | Flame for CTA, Cerulean for links |
-| Form inputs (dark) | `#171717` border `#525252` | `#ffffff` | Cerulean focus ring |
+| Page (default) | `#ffffff` | `#000000` | Flame for CTA, Cerulean for links |
+| Dark contrast section | `#000000` | `#ffffff` | Flame / Cerulean / Lemon as above |
+| Elevated card (light) | `#f5f5f5` | `#000000` | Flame for CTA, Cerulean for links |
+| Form inputs (light) | `#ffffff` border `#d4d4d4` | `#000000` | Cerulean focus ring |
 
 ### 1.5 Semantic Color Mapping
 
