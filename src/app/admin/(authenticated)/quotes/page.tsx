@@ -117,8 +117,7 @@ function QuotesPage() {
   const [prefilling, setPrefilling] = useState(false);
   const [prefillSource, setPrefillSource] = useState<PrefillResponse["sources"] | null>(null);
 
-  // Preview state
-  const [showPreview, setShowPreview] = useState(false);
+  // Preview state removed — generate directly
 
   // Filter for past quotes
   const [quoteClientFilter, setQuoteClientFilter] = useState("");
@@ -384,8 +383,6 @@ function QuotesPage() {
           ? `Quote ${quoteNum} generated and uploaded to SharePoint.`
           : `Quote ${quoteNum} generated. SharePoint upload skipped (check logs).`
       );
-
-      setShowPreview(false);
 
       // Refresh quotes list
       fetchQuotes();
@@ -770,19 +767,19 @@ function QuotesPage() {
         </div>
 
         {/* Error (shown in form when not in preview mode) */}
-        {error && !showPreview && (
+        {error && (
           <div className="bg-error-light border border-error rounded-lg px-4 py-3 text-sm text-error">
             {error}
           </div>
         )}
-        {success && !showPreview && (
+        {success && (
           <div className="bg-success-light border border-success rounded-lg px-4 py-3 text-sm text-success">
             {success}
           </div>
         )}
 
         {/* Generate directly — no preview step */}
-        {!showPreview && (
+        {(
           <div className="flex justify-end">
             <button
               type="button"
@@ -795,135 +792,6 @@ function QuotesPage() {
           </div>
         )}
       </div>
-
-      {/* Preview Card */}
-      {showPreview && (
-        <div className="bg-white rounded-xl border-2 border-brand-cerulean p-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-brand-black">Quote Preview</h2>
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-info-light text-info">
-              Draft
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-neutral-400 text-xs font-medium uppercase">Client</p>
-              <p className="text-brand-black font-medium mt-0.5">{clientName}</p>
-            </div>
-            <div>
-              <p className="text-neutral-400 text-xs font-medium uppercase">Contact</p>
-              <p className="text-brand-black font-medium mt-0.5">{contactName}</p>
-            </div>
-            <div>
-              <p className="text-neutral-400 text-xs font-medium uppercase">Currency</p>
-              <p className="text-brand-black font-medium mt-0.5">{currency}</p>
-            </div>
-            <div>
-              <p className="text-neutral-400 text-xs font-medium uppercase">VAT</p>
-              <p className="text-brand-black font-medium mt-0.5">{vatRate !== null ? `${vatRate}%` : "None"}</p>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-neutral-400 text-xs font-medium uppercase">Project</p>
-            <p className="text-brand-black font-medium mt-0.5">{projectName}</p>
-          </div>
-
-          {/* Items summary */}
-          <div className="border border-neutral-200 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-[1fr_80px_100px_100px] bg-neutral-100 px-3 py-2 text-xs font-semibold text-neutral-500 uppercase">
-              <span>Item</span>
-              <span>Qty</span>
-              <span>Unit Price</span>
-              <span>Total</span>
-            </div>
-            {items
-              .filter((i) => i.description.trim())
-              .map((item) => (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-[1fr_80px_100px_100px] px-3 py-2 border-t border-neutral-100 text-sm"
-                >
-                  <span className="text-brand-black truncate">{item.description}</span>
-                  <span className="text-neutral-600">{item.quantity}</span>
-                  <span className="text-neutral-600">{formatCurrency(item.unitPrice, currency)}</span>
-                  <span className="font-medium text-brand-black">{formatCurrency(item.total, currency)}</span>
-                </div>
-              ))}
-            {vatRate !== null && vatRate > 0 && (
-              <>
-                <div className="grid grid-cols-[1fr_100px] px-3 py-2 bg-neutral-50 border-t border-neutral-200">
-                  <span className="text-sm text-neutral-600">Subtotal</span>
-                  <span className="text-sm font-medium text-brand-black">{formatCurrency(grandTotal, currency)}</span>
-                </div>
-                <div className="grid grid-cols-[1fr_100px] px-3 py-2 bg-neutral-50 border-t border-neutral-100">
-                  <span className="text-sm text-neutral-500">VAT ({vatRate}%)</span>
-                  <span className="text-sm text-neutral-600">{formatCurrency(grandTotal * (vatRate / 100), currency)}</span>
-                </div>
-              </>
-            )}
-            <div className="grid grid-cols-[1fr_100px] px-3 py-2.5 bg-neutral-100 border-t border-neutral-200">
-              <span className="text-sm font-bold text-brand-black">
-                {vatRate !== null && vatRate > 0 ? "Total (incl. VAT)" : "Grand Total"}
-              </span>
-              <span className="text-sm font-bold text-brand-black">
-                {formatCurrency(
-                  vatRate !== null && vatRate > 0
-                    ? grandTotal + grandTotal * (vatRate / 100)
-                    : grandTotal,
-                  currency
-                )}
-              </span>
-            </div>
-          </div>
-
-          {/* Error / Success inside preview */}
-          {error && (
-            <div className="bg-error-light border border-error rounded-lg px-4 py-3 text-sm text-error">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="bg-success-light border border-success rounded-lg px-4 py-3 text-sm text-success">
-              {success}
-            </div>
-          )}
-
-          {/* Progress bar */}
-          {generating && (
-            <div className="h-1 w-full rounded-full bg-neutral-200 overflow-hidden">
-              <div className="h-full w-1/3 rounded-full bg-brand-cerulean animate-[indeterminate_1.5s_ease-in-out_infinite]" />
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={handleEditFromPreview}
-              disabled={generating}
-              className="px-5 py-2.5 text-sm font-semibold text-brand-black border border-neutral-300 rounded-lg hover:bg-neutral-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmGenerate}
-              disabled={generating}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {generating && (
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              )}
-              {generating ? "Generating..." : "Download PDF"}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Past Quotes */}
       <div className="space-y-4">
