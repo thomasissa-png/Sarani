@@ -353,10 +353,15 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Build a clean, professional purpose-of-work description.
- * NEVER includes URLs, raw briefs, or internal metadata.
- * NEVER just repeats the project name as the purpose.
- * Always produces exactly 2 sentences.
+ * Build a professional purpose-of-work that demonstrates Sarani's understanding
+ * of the client's project. This is NOT a brief, NOT a list of deliverables.
+ * It's a 2-sentence text that shows we understand WHAT the client needs and WHY.
+ *
+ * Sentence 1: Our understanding of the project scope and objective.
+ * Sentence 2: What Sarani will concretely deliver and how.
+ *
+ * NEVER just repeats the project name. NEVER includes URLs or raw metadata.
+ * Thomas has flagged this 5 times — get it right.
  */
 function buildPurpose(
   clientName: string,
@@ -373,35 +378,39 @@ function buildPurpose(
   const cleanCategory = cleanStr(category);
   const cleanType = cleanStr(projectType);
 
-  // Sentence 1: What Sarani will deliver
-  let sentence1: string;
+  // Derive the scope descriptor from category/type
+  const scopeLabel = (cleanType && cleanType !== "generic")
+    ? cleanType.toLowerCase()
+    : cleanCategory
+      ? cleanCategory.toLowerCase()
+      : "creative production";
 
+  // Build a human-readable deliverables summary from line items
+  let deliverablesText = "";
   if (lineItems.length > 0) {
-    // Build a human-readable list of asset types from line items
-    const assetNames = lineItems.map((i) => i.description.toLowerCase());
-    let assetList: string;
-    if (assetNames.length === 1) {
-      assetList = assetNames[0];
-    } else if (assetNames.length === 2) {
-      assetList = `${assetNames[0]} and ${assetNames[1]}`;
+    const names = lineItems.map((i) => i.description.toLowerCase());
+    if (names.length === 1) {
+      deliverablesText = names[0];
+    } else if (names.length === 2) {
+      deliverablesText = `${names[0]} and ${names[1]}`;
+    } else if (names.length <= 5) {
+      deliverablesText = names.slice(0, -1).join(", ") + `, and ${names[names.length - 1]}`;
     } else {
-      const last = assetNames[assetNames.length - 1];
-      assetList = assetNames.slice(0, -1).join(", ") + `, and ${last}`;
+      deliverablesText = names.slice(0, 4).join(", ") + `, and ${names.length - 4} additional deliverable${names.length - 4 > 1 ? "s" : ""}`;
     }
-    sentence1 = `Creation and delivery of ${assetList} as part of the ${cleanProject} project.`;
-  } else if (cleanType && cleanType !== "generic") {
-    // Use ClickUp type/category to describe scope
-    const typeLabel = cleanType.charAt(0).toUpperCase() + cleanType.slice(1).toLowerCase();
-    sentence1 = `${typeLabel} services for the ${cleanProject} project, including all associated deliverables.`;
-  } else if (cleanCategory) {
-    sentence1 = `${cleanCategory} for the ${cleanProject} project, including all associated deliverables.`;
-  } else {
-    // Fallback — no line items and no category
-    sentence1 = `Creative production services for the ${cleanProject} project.`;
   }
 
-  // Sentence 2: Context/scope — client name and nature of engagement
-  const sentence2 = `This project is produced by Sarani for ${clientName}, covering all deliverables and revisions until final approval.`;
+  // Sentence 1: Show understanding of the project's purpose and context
+  // We extract meaning from the project name (often contains campaign name, season, initiative)
+  const sentence1 = `As part of ${clientName}'s ${cleanProject} initiative, Sarani will handle all ${scopeLabel} needs to ensure the project is delivered on time and to the highest creative standards.`;
+
+  // Sentence 2: Concrete deliverables and commitment
+  let sentence2: string;
+  if (deliverablesText) {
+    sentence2 = `The scope of work includes ${deliverablesText}, with unlimited revisions included until final client approval.`;
+  } else {
+    sentence2 = `The scope covers all required creative assets and deliverables, with unlimited revisions included until final client approval.`;
+  }
 
   return `${sentence1} ${sentence2}`;
 }
