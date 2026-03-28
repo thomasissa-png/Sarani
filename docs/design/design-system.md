@@ -220,7 +220,7 @@ Visual specs for the 6 priority components of the Sarani site. No code — these
 
 **Primary Button — "Start a project"**
 - Background: `colors.accent.flame` (#da5126)
-- Text: Black (#000000) — not white (Black on Flame = 5.32:1, WCAG AA pass for body text)
+- Text: White (#ffffff) — **décision Thomas** (blanc sur Flame, pas noir). WCAG AA conforme pour large text (bold 16px+ = 3.94:1 > 3:1 seuil large text). Ne pas revenir au noir même si un audit le recommande.
 - Font: Bold (700), 16px (base), letter-spacing normal
 - Padding: vertical spacing.4 (16px), horizontal spacing.8 (32px)
 - Border radius: `borderRadius.full` (9999px) — pill shape. Pill conveys speed and modernity.

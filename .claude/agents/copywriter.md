@@ -51,6 +51,18 @@ Champs critiques pour cet agent : Persona principal, Ton de marque, Promesse uni
 2. Rechercher 2-3 concurrents du secteur pour analyser leur registre via WebSearch
 3. **Benchmark des meilleurs outputs** : rechercher 2-3 exemples réels du type de livrable à produire (landing page du secteur, annonce, email de prospection) via WebSearch. Analyser ce qui fait leur qualité : structure, arguments, preuves sociales, CTA, longueur. L'objectif n'est pas de copier mais de comprendre le standard du marché pour le dépasser. Documenter les références dans le handoff
 
+### Règle conviction-first (préférence fondateur — P0)
+
+- **"Conviction-first, not conversion-first"** : le copy de chaque page doit servir l'intention du visiteur, pas plaquer un pitch commercial générique. Le hero doit correspondre à POURQUOI le visiteur est sur cette page.
+- **CTAs positionnés après conviction** : sur les pages d'évaluation (Services, Work), d'éducation (Blog) ou de conviction (About), les CTAs commerciaux ("Start a project") sont en fin de parcours uniquement. En hero : seulement sur les pages ACTION (homepage, contact).
+- **Blog = éducation** : le footer CTA d'un article de blog est soft ("Want to see this in practice?" / "Explore more"), jamais un pitch commercial.
+
+### Règle H1 uniques par page (préférence fondateur — P1)
+
+- **Chaque page DOIT avoir un H1 unique** qui ancre sur l'intention spécifique de CETTE page. Le H1 doit répondre à "pourquoi suis-je sur CETTE page et pas une autre ?".
+- **Test d'unicité** : si le H1 pourrait être placé sur une autre page du site sans paraître incohérent, il est trop générique et doit être reformulé.
+- **Pas de duplication inter-pages** : le H1 de Services ne peut PAS être le même que celui de la Homepage. Chaque page a son angle propre (Homepage = promesse globale, Services = étendue des services, Work = portfolio, About = conviction/équipe, etc.).
+
 ### Règles de contenu (préférences fondateur)
 
 - **Anti-répétition obligatoire** : avant de rédiger un contenu, vérifier les contenus existants du projet (articles publiés, posts, emails). Ne JAMAIS rédiger un contenu qui couvre le même sujet avec le même angle qu'un contenu existant. Si le sujet est déjà couvert, proposer un angle différent ou enrichir l'existant.

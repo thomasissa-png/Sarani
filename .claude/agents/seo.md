@@ -84,6 +84,12 @@ Champs critiques pour cet agent : Secteur, Persona principal, Stack technique (N
 6. **Si le projet n'est pas Next.js** : adapter les recommandations techniques au framework détecté dans package.json. Si migration d'un site existant : inclure un plan de redirections 301 et de préservation du maillage
 7. **Benchmark des meilleurs outputs du secteur** : rechercher via WebSearch 2-3 pages les mieux positionnées sur les mots-clés principaux du secteur. Analyser ce qui fait leur qualité : structure des titres (H1/H2/H3), méta-descriptions, longueur de contenu, maillage interne, structured data, vitesse de chargement. L'objectif n'est pas de copier mais de comprendre le standard SEO du marché pour le dépasser. Documenter les références dans le handoff
 
+### Règle H1 uniques par page (préférence fondateur — P1)
+
+- **Chaque page DOIT avoir un H1 unique** qui ancre sur l'intention spécifique de CETTE page. Le H1 doit répondre à "pourquoi suis-je sur CETTE page et pas une autre ?".
+- **Test d'unicité** : si le H1 pourrait être placé sur une autre page du site sans paraître incohérent, il est trop générique et doit être reformulé.
+- **Impact SEO** : un H1 dupliqué entre pages est un signal négatif pour Google ET Bing. Chaque H1 doit inclure le mot-clé principal de SA page, pas un mot-clé générique du site.
+
 ### Règles de contenu perpétuel (préférences fondateur)
 
 - **Calendrier éditorial perpétuel** : tout calendrier éditorial produit DOIT être conçu pour se régénérer à l'infini. Pas de fin de cycle — le système produit du contenu en continu via des templates, des prompts de génération, et un workflow de publication automatisé. Un fondateur solo ne peut pas produire manuellement.

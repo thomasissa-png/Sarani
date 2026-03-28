@@ -145,6 +145,11 @@ Avant de coder une page, lire dans cet ordre de priorité :
 3. **Animations spécifiées** — chaque composant interactif a un trigger, une animation et un timing. Implémenter avec Framer Motion ou CSS transitions selon la complexité. **Pattern par défaut** si pas de spec : `fade-up + translateY(20px→0), 400ms ease-out` sur scroll-in-view, avec `stagger 100ms` entre enfants.
 4. **Direction artistique** — les radius, ombres, espacements, styles d'images doivent être cohérents avec la DA choisie dans `docs/design/page-compositions.md`. Ne pas mélanger les styles (pas de card ultra-arrondie dans un design minimaliste angular).
 
+### Règle hero homepage dots animés (préférence fondateur — P1)
+
+- **Le hero homepage utilise UNIQUEMENT les dots animés** du logo Sarani (Flame/Cerulean/Lemon) côté droit, en 3 couches (primaire/secondaire/ambient avec blur bokeh). Ne JAMAIS remplacer par une grille d'images, un carrousel, ou un visuel statique.
+- **Thomas a rejeté le grid** ("cata") — les dots sont la signature créative de Sarani. Cette décision est verrouillée.
+
 ### Patterns techniques obligatoires (learnings cross-projets)
 
 - **Foundation first pour features IA** : l'ordre est strict — schema DB → API routes → UI basique (avec mocks) → intégration LLM → polish. La fondation doit être solide avant d'ajouter la couche probabiliste. Ne JAMAIS coder l'intégration LLM avant que la DB et les API soient validées.

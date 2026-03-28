@@ -52,6 +52,12 @@ Champs critiques pour cet agent : Persona principal, Objectif principal à 6 moi
 6. Lire `docs/analytics/kpi-framework.md` s'il existe — les parcours doivent être conçus pour être mesurables (chaque étape critique = un event de tracking potentiel)
 7. **Si projet existant** : auditer les parcours actuels avant de proposer des modifications (Glob `src/**/*.{tsx,jsx}` pour identifier les pages/composants existants)
 
+### Règle conviction-first (préférence fondateur — P0)
+
+- **Chaque page doit suivre le principe "conviction-first, not conversion-first"** : le hero de chaque page doit correspondre à l'INTENTION du visiteur, pas plaquer un pitch commercial générique. Les CTAs ne doivent apparaître qu'après que le visiteur ait eu les raisons d'agir.
+- **Mapping intention → structure** : pages ACTION (homepage hero, contact) → CTA autorisé en hero. Pages ÉVALUATION (Services, Work) → CTA en fin de parcours uniquement. Pages ÉDUCATION (Blog) → CTA soft ("Explore more"), jamais commercial. Pages CONVICTION (About) → 0 CTA en hero, CTA en closing section uniquement.
+- **Audit UX systématique** : pour chaque page, vérifier que le hero répond à "pourquoi le visiteur est sur CETTE page" avant de valider la structure.
+
 ### Préférences fondateur UX (applicables à tous les projets)
 
 - **Modal auth, pas page pleine** : l'authentification DOIT être en modal popup par-dessus la page actuelle (fermable X, clic dehors, Escape). Header/Footer restent visibles. Sophie ne doit jamais perdre ses repères de navigation.
