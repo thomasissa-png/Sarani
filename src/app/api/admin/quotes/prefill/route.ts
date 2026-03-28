@@ -149,64 +149,113 @@ function detectPriceRowIndex(
 /**
  * Detect asset columns in the Excel tracker and extract line items.
  *
- * Excel structure:
- * - headerRowIndex: row with asset type names (e.g., "Banner creation (static)")
- * - priceRowIndex: row just below header with unit prices (e.g., 120, 35, 220)
- *   (auto-detected if the provided row doesn't have mostly numeric values)
- * - projectRowIndex: the project's row with quantities (e.g., 1, 24, 1)
+ * CRITICAL: Sarani trackers have a MULTI-ROW HEADER structure:
  *
- * For each non-standard column:
- *   description = header cell, unitPrice = price row cell, quantity = project row cell
- *   total = unitPrice * quantity. Only include if quantity > 0.
+ *   Row A (asset names):   |           | ... | Banner creation (static) | Banner adaptation (static) |
+ *   Row B (totals):        |           | ... | 21                       | 38                         |
+ *   Row C (revenue):       |           | ... | 5805                     | 17395                      |
+ *   Row D (standard hdr):  | Date      | Project | Invoice | Statut    | 135 €                      | 35 €  |
+ *   Row E+ (projects):     | 01/2026   | Boulanger Banners | ...       | 1                          | 27    |
+ *
+ * - findHeaderRowIndex() finds Row D (the standard header with "Date", "Project", etc.)
+ * - The ASSET NAMES are in Row A (above the standard header, NOT on the same row)
+ * - The UNIT PRICES are on Row D itself (same row as standard headers), in the asset columns
+ * - The QUANTITIES are in the project rows (Row E+)
+ *
+ * Strategy:
+ * 1. Find standard columns on the header row (Date, Project, Status, etc.)
+ * 2. For non-standard columns on the header row, check if the value looks like a price (number with € or just number)
+ * 3. If it IS a price → the asset NAME is in the rows ABOVE (scan upward to find a text label)
+ * 4. The quantity comes from the project row
  */
 function extractAssetLineItems(
   values: (string | number | boolean | null)[][],
   headerRowIndex: number,
-  priceRowIndex: number,
+  _priceRowIndex: number, // kept for signature compat but we detect internally
   projectRowIndex: number
 ): PrefillLineItem[] {
-  const headers = values[headerRowIndex];
-  if (!headers) return [];
+  const headerRow = values[headerRowIndex];
+  if (!headerRow) return [];
   const dataRow = values[projectRowIndex];
   if (!dataRow) return [];
 
   const items: PrefillLineItem[] = [];
 
-  // Identify standard columns to exclude
+  // Identify standard columns on the header row
   const standardColIndices = new Set<number>();
-  const headerStrings = headers.map((h) => (h !== null && h !== undefined ? String(h) : ""));
+  const headerStrings = headerRow.map((h) => (h !== null && h !== undefined ? String(h) : ""));
   for (const aliases of Object.values(COL_MAP)) {
     const idx = findColumnIndex(headerStrings, aliases);
     if (idx !== -1) standardColIndices.add(idx);
   }
 
-  // Auto-detect the actual price row — the provided priceRowIndex may not have prices
-  // (e.g., sub-header row between header and prices). Scan rows N+1..N+3 for numeric content.
-  const actualPriceRowIdx = detectPriceRowIndex(values, headerRowIndex, standardColIndices);
-  const priceRow = values[actualPriceRowIdx];
-  if (!priceRow) return [];
-
-  // Scan ALL columns — any non-standard column with a quantity > 0 is an asset
-  for (let col = 0; col < headers.length; col++) {
-    // Skip standard columns (project, status, date, contact, value, PO, etc.)
+  // For each non-standard column, determine:
+  // - Is the header row cell a PRICE (number) or an ASSET NAME (text)?
+  // - If price: look UP for the asset name
+  // - If text: look DOWN for the price (next row)
+  for (let col = 0; col < headerRow.length; col++) {
     if (standardColIndices.has(col)) continue;
 
-    const header = cellToString(headers[col]);
-    if (!header) continue;
+    const headerCellRaw = headerRow[col];
+    const headerCellStr = cellToString(headerCellRaw);
+    if (!headerCellStr) continue;
 
-    // Skip if this is a standard column alias we missed
-    if (STANDARD_COL_ALIASES.has(header.toLowerCase().trim())) continue;
+    // Skip known standard aliases
+    if (STANDARD_COL_ALIASES.has(headerCellStr.toLowerCase().trim())) continue;
 
-    // Quantity comes from the project row
+    // Check if this header cell looks like a price (number, possibly with € symbol)
+    const cleanedForNumber = headerCellStr.replace(/[€$£\s,]/g, "").trim();
+    const headerAsNumber = parseFloat(cleanedForNumber);
+    const headerIsPrice = !isNaN(headerAsNumber) && headerAsNumber > 0 && cleanedForNumber.length > 0;
+
+    let assetName: string;
+    let unitPrice: number;
+
+    if (headerIsPrice) {
+      // The header row has the PRICE — look UPWARD for the asset name
+      unitPrice = headerAsNumber;
+      assetName = "";
+
+      // Scan up from headerRowIndex-1 to find the first non-empty text cell in this column
+      for (let scanRow = headerRowIndex - 1; scanRow >= Math.max(0, headerRowIndex - 5); scanRow--) {
+        const aboveRow = values[scanRow];
+        if (!aboveRow) continue;
+        const aboveCell = cellToString(aboveRow[col]);
+        if (!aboveCell) continue;
+        // Skip if it's a number (totals row, revenue row)
+        const aboveAsNum = parseFloat(aboveCell.replace(/[€$£\s,]/g, "").trim());
+        if (!isNaN(aboveAsNum) && aboveAsNum > 0) continue;
+        // Found a text label — this is the asset name
+        assetName = aboveCell;
+        break;
+      }
+
+      if (!assetName) continue; // No name found — skip this column
+    } else {
+      // The header row has the ASSET NAME — look for price in the row(s) below
+      assetName = headerCellStr;
+
+      // Scan rows below the header for a price value in this column
+      unitPrice = 0;
+      for (let scanRow = headerRowIndex + 1; scanRow < Math.min(headerRowIndex + 4, projectRowIndex); scanRow++) {
+        const belowRow = values[scanRow];
+        if (!belowRow) continue;
+        const belowVal = cellToNumber(belowRow[col]);
+        if (belowVal !== null && belowVal > 0) {
+          unitPrice = belowVal;
+          break;
+        }
+      }
+
+      if (unitPrice <= 0) continue; // No price found — skip
+    }
+
+    // Quantity from the project row
     const quantity = cellToNumber(dataRow[col]);
     if (quantity === null || quantity <= 0) continue;
 
-    // Unit price comes from the detected price row
-    const unitPrice = cellToNumber(priceRow[col]);
-    if (unitPrice === null || unitPrice <= 0) continue;
-
     items.push({
-      description: header,
+      description: assetName,
       quantity,
       unitPrice,
       total: unitPrice * quantity,
