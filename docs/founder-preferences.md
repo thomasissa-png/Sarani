@@ -34,3 +34,16 @@
 
 - [S6] Thomas considère le prompt engineering comme un actif stratégique — veut "le meilleur prompt du monde possible" avant toute implémentation IA (vidéo, image, texte). Le prompt library est un livrable à part entière, pas un détail technique.
 - [S6] Pour la vidéo IA : le prompt doit contrôler composition, mouvement caméra, éclairage, cohérence inter-scènes, style. @ia doit le tester sur les 4 cas d'usage Sarani et itérer jusqu'à 9/10.
+- [S7] Thomas a validé l'abandon de PiAPI + Kling 2.6 au profit de Veo 3.1 + Runway Gen-4 + Kling 3.0 — critère #1 : qualité du rendu, pas le prix.
+
+## Qualité et standards
+
+- [S7] Thomas exige 10/10 sur TOUS les livrables, pas de "bon enough". Chaque livrable doit être audité par les agents spécialisés (@reviewer, @design, @qa) AVANT présentation.
+- [S7] Grille de validation visuelle Thomas (7 critères, chacun 10/10) : PRO, BEAU, SARANI, MÊME IDENTITÉ QUE LE SITE, PROPRE, BIEN ALIGNÉ, AÉRÉ.
+- [S7] Les montants dans les tableaux financiers DOIVENT être alignés à droite. Standard comptable non négociable.
+
+## Automatisation et autonomie
+
+- [S7] Thomas veut l'automatisation maximale — les case studies doivent être "générés tout seul" sans intervention humaine. Chaque feature doit fonctionner en autonomie par défaut.
+- [S7] Les proposals commerciaux doivent être des liens web (pas PDF), pré-remplis avec les données Sarani (case studies, conditions unlimited revisions/D+1, références clients).
+- [S7] Thomas préfère les flux progressifs avec points de validation intermédiaires (brief → storyboard → vidéo) plutôt que les flux directs (brief → vidéo).

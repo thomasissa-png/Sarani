@@ -235,6 +235,13 @@
 | @product-manager | 2026-03-27 | docs/product/video-ai-specs.md | Specs complètes Video AI Preview : vision, 7 user stories Given/When/Then, architecture technique (PiAPI/Kling 2.6), UI/UX, roadmap Phase 3f (3 sessions), 5 risques, 5 hypothèses. Coûts réels sourcés. Note critique prompt engineering ajoutée. | Use case principal : previews de validation client (pas production finale). PiAPI retenu vs Kling direct (minimum $4,200 écarté). SharePoint pour stockage V1. FFmpeg pour assemblage. Prompt engineering identifié comme facteur #1 de qualité — @pm + @ia doivent collaborer avant implémentation. |
 | @creative-strategy + @design | 2026-03-26 | docs/reviews/services-page-audit.md | Audit complet page Services (src/app/services/page.tsx). Score global 6.36/10 (stratégie 6.2/10 × 60% + design 6.6/10 × 40%). 10 critères évalués. Top 5 recommandations : R1 rewrite hero H1 (lead with enterprise+24h, Critical), R2 remplacer 5 CTAs identiques par funnel par intent (High), R3 ajouter module "structural proof" 24/7 relay (High), R4 corriger 150€ → 155€ Sony proof point (High — 1 caractère), R5 logo strip clients sous le hero (Medium). 2 fixes accessibilité : aria-labels sur chaque bouton CTA (5 boutons identiques invisibles au screen reader), vérification contraste WCAG AA sur proof point blocks. | Hero H1 retenu comme critique car c'est le seul moment où Sophie décide en 3 secondes si elle reste. CTA fatigue (5 boutons identiques) identifiée comme le principal leak conversion — une page avec un funnel par intent-stage convertit mieux qu'une page avec répétition du même CTA. Module "relay mechanism" (absent de tous les service blocks) est l'argument structurel qu'aucun concurrent ne peut copier — son absence du corps de page est un angle mort différenciation. 150€ → 155€ : discrepancy factuellement documentée contre brand-platform.md, brand-voice.md et pricing page — fix immédiat sans risque. |
 | @ia | 2026-03-27 | docs/ia/video-prompt-library.md | Bibliotheque de prompts video IA complete : 6 templates par type de contenu (product showcase, event recap, brand story, explainer/motion design, social teaser, corporate), regles prompt engineering par provider (Veo 3.1, Runway Gen-4 Turbo, Kling 3.0), template canonique 12 champs pour description de scene, protocole image-to-video bridge par provider, checklist qualite 15 points. Exemples concrets avec clients Sarani (Sony, Adidas, Pernod Ricard, GEODIS, TikTok, France Chimie). | Templates structures par type de contenu car le back-office genere deja des scripts par scene — les prompts doivent etre assemblables automatiquement. Format canonique 12 champs retenu pour permettre un assemblage provider-specifique (Veo = NLP complet, Runway = motion-only, Kling = 5 couches). Regles provider basees sur WebSearch mars 2026 (guides officiels Google Cloud, Runway Help Center, fal.ai, sources multiples). Runway negative prompts exclus (model inverts them). Kling sweet spot 80-150 mots documente. Veo audio inline natif documente. Bridge image-to-video adapte par provider (Runway = image-first motion-only prompt, Kling = first_frame param, Veo = reference image + full prompt). |
+| @orchestrator | 2026-03-28 | Session 7 complete : migrations, email fix, outputs→tracker, sidebar, PDF redesign, 3 specs, 3 foundations, prompt library | **Migrations** : journal Drizzle corrigé (0002-0009), audit QA 10/10, seed raw SQL. **Email** : fix double /v1.0/. **Outputs→Tracker** : 15 routes + 13 pages + badge AI. **Sidebar** : AI Agents + AI Sarani (SEO, Social, Case Studies) + Settings. **PDF** : redesign 10/10 (Outfit, logo blanc, right-align amounts, premium spacing). **Video** : 5 hypothèses validées, multi-model (Veo 3.1 + Runway + Kling 3.0). **Specs** : storyboard 10/10, landing page 10/10, case study generator 10/10. **Foundations** : Case Study Generator (3g), Landing Page Generator (3h), Storyboard (3f) — DB + API + UI. **Prompt library** : 431 lignes, 6 templates, 3 providers, checklist 15 points. **QA** : audit sécurité 7.5→corrections P0/P1 appliquées. | 35 commits, build vert. Décisions Thomas : multi-model vidéo, storyboard intermédiaire, case study auto-scan, landing page = lien web, proposals pré-remplis Sarani, sidebar AI Sarani. PiAPI abandonné. |
+| @qa | 2026-03-28 | Audit migrations (10/10) + audit sécurité implémentations (7.5/10→corrections) | Migrations : CTE fix 0004, FK CASCADE 0006, idempotence. Sécurité : P0 data leak /lp/[slug] corrigé (notFound au lieu de titre), P0 LIKE injection sanitisé, P1 slug validation ajoutée. | Audit QA systématique sur chaque implémentation. Pattern : d'abord auditer les migrations, puis auditer le code applicatif. |
+| @reviewer | 2026-03-28 | 5 audits de livrables (landing page 6.5→10/10, case study 10/10, storyboard 9.3→10/10, prompt library 6.4→10/10, PDF 8→10/10) | Gates binaires appliquées sur chaque livrable. Corrections : sections vides remplies, Handoff ajoutés, mapping projectType corrigé, contradiction I2V résolue, Sophie/KPI ajoutés. | Boucle itérative systématique : audit → corrections → re-validation. Faux positif G7 sur prompt library (reviewer n'avait pas vu H-03 update). |
+| @design | 2026-03-28 | Audit PDF devis approfondi (6.9→10/10) : 15 corrections précises | Header 100→120px, marges 60→72px, titre 22→24pt, right-align montants, Flame discipline (3 instances max), row alternation visible, client block centré, bullet alignment, Flame dot position fixe. | Le PDF doit "sentir" comme le site web. L'audit a vérifié 7 critères (PRO, BEAU, SARANI, SITE, PROPRE, ALIGNÉ, AÉRÉ) avec corrections code précises par critère. |
+| @fullstack | 2026-03-28 | Phase 3g (Case Study Generator) + 3h (Landing Page Generator) + 3f (Storyboard) foundations | Case Study : migration 0007, 3 tables, 3 API routes, page UI avec filtres/actions/scan. Landing Page : migration 0008, 2 tables, 5 API routes, page UI, /lp/[slug] public. Storyboard : migration 0009, 4 tables, 5 API routes, page UI, /storyboard/share/[token] public. Toutes les migrations dans drizzle/ avec journal. | Pattern réutilisé sur les 3 features : migration IF NOT EXISTS + Drizzle schema + API CRUD + page UI avec table/filtres/actions + page publique placeholder. Sidebar mise à jour pour chaque feature. |
+| @product-manager | 2026-03-28 | docs/product/storyboard-specs.md, docs/product/case-study-generator-specs.md, docs/product/landing-page-generator-specs.md | 3 specs complètes : Storyboard (555 lignes, 6 US, Flux.1 Pro), Case Study Generator (654 lignes, 12 US, scoring engine 6 critères, auto-scan), Landing Page Generator (1000+ lignes, 8 US, templates, proposals Sarani auto-fill). | Storyboard : Flux.1 Pro retenu (vs DALL-E 3 écarté : coût 3x, latence 2x). Case Study : auto-scanning retenu comme mode principal (vs sélection manuelle = secondaire). Landing Page : template Proposal avec pré-remplissage Sarani intégré per Thomas. |
+| @ia | 2026-03-28 | Recherche provider vidéo IA + recommandation multi-model | Benchmark 8 providers (Veo 3.1, Runway Gen-4, Kling 3.0, Sora 2, Luma Ray2, Pika, MiniMax, Stable Video). Top 3 : Veo 3.1 (9.5/10), Runway Gen-4 (9/10), Kling 3.0 (8.5/10). Sora écarté (app fermée mars 2026). | PiAPI écarté (reverse engineering, risque de ban). Kling 2.6 dépassé par 3.0. Stratégie multi-model retenue : Veo (quality), Runway Turbo (speed), Kling (fallback/volume). Cout estimé mix : $3,350/mois. |
 
 ---
 
@@ -354,47 +361,46 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-03-27 ~23:00 UTC (session 7)
+**Date et heure de clôture :** 2026-03-28 ~01:30 UTC (session 7)
 
 **Résumé de la session (session 7) :**
-Session majeure de stabilisation + specs nouvelles features. **Migrations** : journal Drizzle corrigé (0002-0006), QA audit (score 7→corrections appliquées : CTE fix 0004, FK CASCADE 0006, idempotence). Seed script refait avec raw SQL (plus de dépendance au migrator Drizzle). **Email import fix** : double `/v1.0/v1.0/` dans les URLs corrigé — cause racine du 400. **Outputs→Tracker** : 15 routes API + 13 pages agents + nouveau endpoint `/api/admin/agents/outputs-by-project` + badge "AI N" dans le tracker. **Sidebar** : réorganisée — Agent Teams dans AI Agents, nouvelle section "AI Sarani" (SEO, Social, Case Studies). **Quote PDF** : redesign premium (header noir, typographie raffinée, Flame en micro-accent, table header noir). **Video AI** : 5 hypothèses validées par Thomas, stratégie multi-modèle approuvée (Veo 3.1 + Runway Gen-4 + Kling 3.0 — PiAPI abandonné). **3 nouvelles features spécifiées** : Storyboard Preview (Phase 3f), Landing Page Generator (Phase 3h), AI Case Study Generator avec auto-scanning (Phase 3g).
+Session massive — 35 commits. Stabilisation complète (migrations, email, seed) + specs 3 nouvelles features + foundations implémentées + audits 10/10 sur tous les livrables. **Migrations** : journal Drizzle 0002-0009, audit QA 10/10. **Email** : fix cause racine 400 (double /v1.0/). **Outputs→Tracker** : 15 routes + 13 pages + badge AI. **PDF** : redesign 10/10 (Outfit, logo blanc, right-align, premium spacing). **Video** : 5 hypothèses validées, multi-model approuvé (Veo 3.1 + Runway + Kling 3.0). **3 features spécifiées et implémentées (foundations)** : Case Study Generator auto-scan (3g), Landing Page Generator + proposals web (3h), Storyboard Preview (3f). **Prompt library** : 431 lignes, 6 templates × 3 providers. **QA sécurité** : audit + corrections P0/P1 (data leak LP, LIKE injection, slug validation).
 
 **Travaux terminés cette session :**
-- [x] Migrations Drizzle corrigées + audit QA + corrections
-- [x] Seed script avec raw SQL (indépendant du migrator)
+- [x] Migrations Drizzle 0002-0009 (journal + audit QA 10/10 + seed raw SQL)
 - [x] Email import : fix double /v1.0/ (cause racine du 400)
-- [x] Outputs agents rattachés au tracker (ProjectSelector + badge AI)
+- [x] Outputs agents rattachés au tracker (15 routes + 13 pages + badge AI)
 - [x] Sidebar réorganisée (AI Agents + AI Sarani + Settings)
-- [x] Quote PDF redesign (style site web premium)
-- [x] Hypothèses vidéo H-01→H-05 toutes validées
-- [x] Stratégie multi-modèle vidéo validée
-- [x] Specs storyboard (`docs/product/storyboard-specs.md`)
-- [x] Specs landing page generator (`docs/product/landing-page-generator-specs.md`)
-- [x] Specs case study generator (`docs/product/case-study-generator-specs.md`)
-- [x] Roadmap mise à jour (phases 3g, 3h ajoutées)
+- [x] Quote PDF redesign 10/10 (Outfit .ttf, logo blanc, right-align amounts, 15 corrections design)
+- [x] Hypothèses vidéo H-01→H-05 toutes validées + multi-model approuvé
+- [x] Specs 10/10 : storyboard, landing page generator, case study generator
+- [x] Prompt library vidéo 10/10 (Veo 3.1 + Runway Gen-4 + Kling 3.0)
+- [x] Foundation Phase 3g : Case Study Generator (migration 0007, 3 tables, 3 API, page UI)
+- [x] Foundation Phase 3h : Landing Page Generator (migration 0008, 2 tables, 5 API, page UI, /lp/[slug])
+- [x] Foundation Phase 3f : Storyboard (migration 0009, 4 tables, 5 API, page UI, /storyboard/share/[token])
+- [x] QA sécurité : audit + corrections P0/P1 (data leak, LIKE injection, slug validation)
 
 **Travaux en cours / à confirmer :**
-- **Email import** : fix pushé (double /v1.0/). Thomas doit tester — si toujours 400, le problème est côté Azure AD (Mail.Read en Application, pas Delegated).
-- **Quote PDF** : redesign pushé, audits @design et @creative-strategy en cours pour validation 10/10.
-- **Specs audits** : @reviewer a audité les 3 specs (storyboard, case study, landing page) — corrections à appliquer si score < 9/10.
-- **Police Outfit dans PDF** : toujours Helvetica (besoin de fichiers .ttf).
+- **Email import** : fix pushé. Thomas doit tester — si toujours 400, le problème est Azure AD (Mail.Read Application vs Delegated).
 - **Payment terms UI** : migration SQL prête, UI fiche client pas encore implémentée.
+- **Foundations = mocks** : les 3 features (3f/3g/3h) ont les DB + API + UI mais pas d'intégration LLM réelle. Le bouton "Generate" change le status sans appeler d'IA.
 
 **Prochaines actions recommandées :**
-1. **@fullstack — Implémenter Phase 3g (Case Study Generator)** (PRIORITÉ 1) : c'est la feature à impact maximal — génération automatique de contenu marketing à partir des projets existants. Specs prêtes.
-2. **@fullstack — Implémenter Phase 3h (Landing Page Generator)** (PRIORITÉ 2) : génération de landing pages + proposals web. Specs prêtes. Intègre le pré-remplissage Sarani (case studies, conditions, etc.) demandé par Thomas.
-3. **@ia — Prompt library vidéo IA** (PRIORITÉ 3) : avant d'implémenter Phase 3f, produire la bibliothèque de prompts optimisés (Veo 3.1 + Runway Gen-4). Thomas : "le meilleur prompt du monde possible".
-4. **@fullstack — Implémenter Phase 3f (Storyboard + Video AI)** (PRIORITÉ 4) : dépend du prompt library.
+1. **@fullstack + @ia — Intégration LLM Case Study Generator** (PRIORITÉ 1) : connecter le scoring engine à ClickUp réel, intégrer Claude Sonnet pour la génération de case studies/LinkedIn/email. C'est la feature à impact maximal.
+2. **@fullstack + @ia — Intégration LLM Landing Page Generator** (PRIORITÉ 2) : connecter le template engine avec Claude pour la génération de copy, intégrer le pré-remplissage Sarani (case studies, conditions).
+3. **@fullstack + @ia — Intégration Flux.1 Pro + Veo/Runway Storyboard** (PRIORITÉ 3) : connecter fal.ai pour les images storyboard, Veo/Runway pour la vidéo.
+4. **Phase 4 QA complète** (PRIORITÉ 4) : E2E tests Playwright sur les 3 nouvelles features + Lighthouse CI.
 
 **Décisions de Thomas cette session :**
-- Stratégie multi-modèle vidéo : Veo 3.1 (client) + Runway Gen-4 Turbo (interne) + Kling 3.0 (fallback)
-- Storyboard comme étape intermédiaire optionnelle avant la vidéo
-- Case Study Generator avec auto-scanning et scoring automatique des projets
-- Landing Page Generator avec output = lien web (pas PDF)
-- Proposals & Decks : option 1 = lien web, tout pré-rempli avec données Sarani
-- Sidebar : AI Agents (Agent Teams en 1er) + AI Sarani (SEO, Social, Case Studies) + Settings
+- Multi-model vidéo : Veo 3.1 (client) + Runway Gen-4 Turbo (interne) + Kling 3.0 (fallback)
+- Storyboard = étape intermédiaire optionnelle avant la vidéo
+- Case Study Generator = auto-scanning + scoring automatique (mode principal)
+- Landing Page Generator = output = lien web (pas PDF)
+- Proposals & Decks = option 1 lien web, tout pré-rempli avec données Sarani
+- Sidebar = AI Agents (Agent Teams 1er) + AI Sarani (SEO, Social, Case Studies) + Settings
+- Qualité 10/10 exigée sur TOUS les livrables avec audits @reviewer + @design + @qa
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 7 complète. 3 nouvelles features spécifiées (Case Study Generator, Landing Page Generator, Storyboard). Branche : claude/extract-project-context-RzIlU. Prochaines priorités : (1) implémenter Case Study Generator, (2) implémenter Landing Page Generator, (3) prompt library vidéo, (4) implémenter Storyboard + Video AI. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 7 complète — 35 commits. Foundations 3f/3g/3h implémentées (DB+API+UI), prompt library prête. Branche : claude/extract-project-context-RzIlU. Prochaines priorités : (1) intégration LLM Case Study Generator, (2) intégration LLM Landing Page, (3) intégration Flux.1/Veo/Runway Storyboard+Video, (4) Phase 4 QA. Ne lance aucun agent avant mon feu vert.
 ```
