@@ -77,79 +77,29 @@ export default function AboutPage() {
   return (
     <div className="pt-[var(--header-height)]">
       <BreadcrumbSchema items={BREADCRUMBS.about} />
-      {/* ── Hero: The Sarani premise in 3 seconds ── */}
+
+      {/* ── Section 1: Hero narratif — pas de CTA, pas de bruit ── */}
       <Section ariaLabel="About Sarani">
         <div className="max-w-3xl">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
             Since 2020
           </p>
           <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
-            The creative agency enterprises call when every other agency says
-            two weeks.
+            Built to solve one problem: why does enterprise creative take two
+            weeks when the brief is ready today?
           </h1>
-          <p className="mb-8 text-lg leading-relaxed text-neutral-600">
-            35 experts. 5 continents. 18 languages. Enterprise-quality creative,
-            delivered in 24 hours — with unlimited revisions and fixed prices.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Button variant="primary" href="/contact">
-              Start a project
-            </Button>
-            <Button variant="secondary" href="/work">
-              See our work
-            </Button>
-          </div>
-          <p className="mt-4 text-sm text-neutral-500">
-            First project satisfaction or no invoice.
-          </p>
-        </div>
-
-        {/* Visual proof — real work samples */}
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
-          <div className="aspect-video overflow-hidden rounded-xl">
-            <img src="/images/hero-adidas-arena.png" alt="Adidas Superstar Concert — Arena event by Sarani" className="h-full w-full object-cover" loading="lazy" />
-          </div>
-          <div className="aspect-video overflow-hidden rounded-xl">
-            <img src="/images/hero-lego.png" alt="LEGO Le Grand Tournoi des Champs campaign by Sarani" className="h-full w-full object-cover" loading="lazy" />
-          </div>
-          <div className="aspect-video overflow-hidden rounded-xl">
-            <img src="/images/case-sony-blackfriday.png" alt="Sony Black Friday banners by Sarani" className="h-full w-full object-cover" loading="lazy" />
-          </div>
-          <div className="aspect-video overflow-hidden rounded-xl">
-            <img src="/images/case-tiktok-gimmethemic.png" alt="TikTok GimmeTheMic campaign by Sarani" className="h-full w-full object-cover" loading="lazy" />
-          </div>
-        </div>
-      </Section>
-
-      {/* ── Client logos ── */}
-      <Section ariaLabel="Trusted by" tight className="bg-surface-elevated">
-        <ClientLogos />
-      </Section>
-
-      {/* ── Origin story: Why Sarani exists ── */}
-      <Section ariaLabel="Why Sarani exists">
-        <div className="max-w-3xl">
-          <h2 className="mb-4 text-2xl font-bold text-brand-black sm:text-3xl">
-            Why Sarani exists
-          </h2>
-          <p className="mb-6 text-lg leading-relaxed text-neutral-600">
-            The traditional agency model was broken before anyone admitted it.
-            Campaigns don&apos;t pause for weekly status meetings. Budgets
-            don&apos;t expand for revision invoices. And deadlines — real ones —
-            don&apos;t negotiate.
-          </p>
           <p className="text-lg leading-relaxed text-neutral-600">
-            In 2020, the founding team built Sarani not as a response
-            to the pandemic, but as a response to a structural failure. The
-            pandemic simply made it impossible to ignore.
+            The answer became Sarani — 35 in-house experts across 5 continents,
+            working in time-zone relay, delivering at the speed campaigns
+            actually run.
           </p>
         </div>
       </Section>
 
-      {/* ── The problem we saw ── */}
+      {/* ── Section 2: The problem we saw (monte en position 2) ── */}
       <Section ariaLabel="The problem we saw" className="bg-surface-elevated">
         <div className="max-w-3xl">
-          <h2 className="mb-4 text-2xl font-bold text-brand-black sm:text-3xl">
+          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
             The problem we saw
           </h2>
           <p className="mb-6 text-lg leading-relaxed text-neutral-600">
@@ -171,28 +121,62 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── How we work differently ── */}
-      <Section ariaLabel="How we work differently">
+      {/* ── Section 3: Why Sarani exists ── */}
+      <Section ariaLabel="Why Sarani exists">
         <div className="max-w-3xl">
-          <h2 className="mb-4 text-2xl font-bold text-brand-black sm:text-3xl">
-            A different architecture
+          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
+            Why Sarani exists
           </h2>
           <p className="mb-6 text-lg leading-relaxed text-neutral-600">
-            35 in-house experts across 5 continents work in time-zone relay, so
-            your brief never waits for a timezone to wake up. When your brief
-            arrives at 6pm Paris time, your team in Asia has already started.
-            When you wake up, it&apos;s done.
+            The traditional agency model was broken before anyone admitted it.
+            Campaigns don&apos;t pause for weekly status meetings. Budgets
+            don&apos;t expand for revision invoices. And deadlines — real ones —
+            don&apos;t negotiate.
           </p>
-          <p className="text-lg leading-relaxed text-neutral-600">
-            Fixed prices, published on the website. Unlimited revisions,
-            included. D+1 delivery as the default — not a premium add-on. And
-            no subscription lock-in: you start with one project, at 150&#8364;,
-            and scale when it makes sense for you.
+          <p className="mb-6 text-lg leading-relaxed text-neutral-600">
+            In 2020, the founding team built Sarani not as a response
+            to the pandemic, but as a response to a structural failure. The
+            pandemic simply made it impossible to ignore.
+          </p>
+          <p className="text-lg font-medium leading-relaxed text-brand-black">
+            The answer wasn&apos;t a faster version of the same model. It was a
+            different architecture entirely.
           </p>
         </div>
       </Section>
 
-      {/* ── Our team — Stats on black bg ── */}
+      {/* ── Section 4: A different architecture + 1 visuel contextuel ── */}
+      <Section ariaLabel="How we work differently" className="bg-surface-elevated">
+        <div className="grid gap-12 lg:grid-cols-2 items-center max-w-5xl">
+          <div>
+            <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
+              A different architecture
+            </h2>
+            <p className="mb-6 text-lg leading-relaxed text-neutral-600">
+              35 in-house experts across 5 continents work in time-zone relay, so
+              your brief never waits for a timezone to wake up. When your brief
+              arrives at 6pm Paris time, your team in Asia has already started.
+              When you wake up, it&apos;s done.
+            </p>
+            <p className="text-lg leading-relaxed text-neutral-600">
+              Fixed prices, published on the website. Unlimited revisions,
+              included. D+1 delivery as the default — not a premium add-on. And
+              no subscription lock-in: you start with one project, at 155€,
+              and scale when it makes sense for you.
+            </p>
+          </div>
+          <div className="aspect-[4/3] overflow-hidden rounded-2xl">
+            <img
+              src="/images/hero-lego.png"
+              alt="LEGO Le Grand Tournoi des Champs — briefed Friday, delivered Monday"
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Section 5: Sarani by the numbers (dark bg) ── */}
       <section
         aria-label="Sarani by the numbers"
         className="w-full bg-brand-black py-16 md:py-24"
@@ -236,10 +220,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* ── The track record — Individual proof cards ── */}
+      {/* ── Section 6: The track record + proof cards ── */}
       <Section ariaLabel="The track record">
         <div className="max-w-4xl">
-          <h2 className="mb-4 text-2xl font-bold text-brand-black sm:text-3xl">
+          <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
             The track record
           </h2>
           <p className="mb-10 text-lg font-medium leading-relaxed text-brand-black">
@@ -270,12 +254,6 @@ export default function AboutPage() {
           </div>
 
           <div className="mt-10 max-w-3xl">
-            <p className="mb-6 text-lg leading-relaxed text-neutral-600">
-              Enterprise-quality creative should not require an enterprise-sized
-              commitment. A reliable creative partner should be earned project by
-              project — not locked in by contract before the relationship is
-              proven.
-            </p>
             <p className="mb-2 text-xl font-bold leading-relaxed text-brand-black">
               We are the creative agency enterprises call when every other agency
               says two weeks.
@@ -287,7 +265,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── Guarantee block ── */}
+      {/* ── Section 7: Guarantee ── */}
       <Section ariaLabel="Our guarantee" className="bg-surface-elevated">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
@@ -301,7 +279,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── Closing CTA ── */}
+      {/* ── Section 8: CTA unique de cloture ── */}
       <Section ariaLabel="Get started" className="bg-brand-black">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="mb-4 text-3xl font-bold text-brand-white sm:text-4xl">
