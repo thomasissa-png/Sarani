@@ -1326,27 +1326,6 @@ export default function TrackerPage() {
                 >
                   Quote
                 </Link>
-                {p.excelTrackerUrl ? (
-                  <a href={p.excelTrackerUrl} target="_blank" rel="noopener noreferrer"
-                    className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                  >Tracker</a>
-                ) : (
-                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Excel</span>
-                )}
-                {p.clickupTaskUrl ? (
-                  <a href={p.clickupTaskUrl} target="_blank" rel="noopener noreferrer"
-                    className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                  >ClickUp</a>
-                ) : (
-                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">ClickUp</span>
-                )}
-                {p.sharepointLink ? (
-                  <a href={p.sharepointLink} target="_blank" rel="noopener noreferrer"
-                    className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
-                  >Folder</a>
-                ) : (
-                  <span className="px-2 py-1 text-xs font-medium rounded border border-neutral-200 text-neutral-300 cursor-not-allowed pointer-events-none">Files</span>
-                )}
                 <SharePreviewButton
                   project={p}
                   preview={previewLinks[getProjectId(p)]}
@@ -1358,6 +1337,7 @@ export default function TrackerPage() {
                   clientName={p.client}
                   projectName={p.project}
                 />
+                <SecondaryActionsDropdown project={p} />
               </div>
             </div>
           ))}
