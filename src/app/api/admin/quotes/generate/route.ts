@@ -3,7 +3,8 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { getUserFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { quotes } from "@/lib/db/schema";
+import { quotes, users } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { generateQuotePDF, type QuotePDFData } from "@/lib/quotes/generate-pdf";
 import { uploadFile } from "@/lib/integrations/sharepoint";
 import { logSync } from "@/lib/integrations/cache";
@@ -89,6 +90,25 @@ export async function POST(request: NextRequest) {
     // Generate quote number
     const quoteNumber = await generateQuoteNumber();
 
+    // Fetch current user's name and role for the signatory block
+    let signatoryName = "Sarani Team";
+    let signatoryTitle = "";
+    try {
+      if (session.userId && session.userId !== "legacy-admin") {
+        const [user] = await db
+          .select({ name: users.name, role: users.role })
+          .from(users)
+          .where(eq(users.id, session.userId))
+          .limit(1);
+        if (user?.name) {
+          signatoryName = user.name;
+          signatoryTitle = user.role === "admin" ? "Account Director" : "Project Manager";
+        }
+      }
+    } catch {
+      // Non-critical — use defaults
+    }
+
     // Generate PDF
     const pdfData: QuotePDFData = {
       quoteNumber,
@@ -105,6 +125,8 @@ export async function POST(request: NextRequest) {
       validUntil: data.validUntil ?? null,
       language: data.language,
       paymentTermsDays: data.paymentTermsDays,
+      signatoryName,
+      signatoryTitle,
     };
 
     const pdfBytes = await generateQuotePDF(pdfData);

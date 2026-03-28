@@ -530,6 +530,7 @@ export default function TrackerPage() {
           projectId,
           clientName: p.client,
           projectName: p.project,
+          brief: `Project ${p.project} for ${p.displayClient ?? p.client}. ${p.category ? `Category: ${p.category}.` : ""} ${p.status ? `Status: ${p.status}.` : ""} ${p.totalValue ? `Value: €${p.totalValue.toLocaleString()}.` : ""}`.trim(),
         }),
       });
 
