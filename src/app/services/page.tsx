@@ -139,28 +139,22 @@ export default function ServicesPage() {
   return (
     <div className="pt-[var(--header-height)]">
       <BreadcrumbSchema items={BREADCRUMBS.services} />
-      {/* Hero */}
+      {/* Hero — evaluation-first, no premature CTA */}
       <Section ariaLabel="Services hero" className="!pb-8">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-flame mb-4">
             What We Do
           </p>
           <h1 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-brand-black sm:text-5xl lg:text-6xl">
-            Enterprise creative. Every format.
+            8 disciplines. One team.
             <br />
-            Delivered in 24&nbsp;hours.
+            No waiting.
           </h1>
           <p className="max-w-3xl text-lg leading-relaxed text-neutral-600">
             Strategy, content, distribution, on-demand production &mdash;
             produced by 35&nbsp;experts across 5&nbsp;continents, working in relay.
-            No retainer. Fixed prices. Unlimited revisions.
-            First project satisfaction or no invoice.
+            Fixed prices. Unlimited revisions. D+1 delivery.
           </p>
-          <div className="mt-8">
-            <Button variant="secondary" href="/work" aria-label="See examples of our work">
-              See our work
-            </Button>
-          </div>
         </div>
       </Section>
 

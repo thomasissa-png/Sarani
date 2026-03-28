@@ -44,14 +44,23 @@ export default function BlogPage() {
         <BlogCategoryFilter categories={categories} posts={getSortedBlogPosts()} />
       </Section>
 
-      {/* Footer CTA */}
-      <Section ariaLabel="Start your project" className="bg-brand-black">
-        <div className="text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Ready to start?</h2>
-          <p className="text-lg text-neutral-400 max-w-xl mx-auto">First project satisfaction or no invoice.</p>
-          <Button variant="primary" href="/contact">
-            Start a project
-          </Button>
+      {/* Footer — education-first, not conversion */}
+      <Section ariaLabel="Explore more" className="bg-surface-elevated">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-brand-black">
+            Want to see this in practice?
+          </h2>
+          <p className="text-lg text-neutral-600 max-w-xl mx-auto">
+            Explore how enterprise teams like TikTok, Sony, and GEODIS work with Sarani.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 mt-6">
+            <Button variant="secondary" href="/work">
+              See our work
+            </Button>
+            <Button variant="ghost" href="/pricing">
+              View pricing
+            </Button>
+          </div>
         </div>
       </Section>
     </div>
