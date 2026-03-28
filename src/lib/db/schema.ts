@@ -370,16 +370,38 @@ export interface LandingPageSections {
     ctaUrl: string;
     backgroundType: "color" | "image";
     backgroundImageUrl?: string;
+    imageUrl?: string;
   };
   features?: Array<{
     iconName: string;
     title: string;
     description: string;
   }>;
-  socialProof?: {
-    quote: string;
-    author: string;
-    company: string;
+  featuresHeadline?: string;
+  gallery?: Array<{
+    imageUrl: string;
+    caption?: string;
+  }>;
+  socialProof?:
+    | {
+        quote: string;
+        author: string;
+        company: string;
+      }
+    | Array<{
+        quote: string;
+        author: string;
+        company: string;
+      }>;
+  pricing?: {
+    headline: string;
+    items: Array<{ name: string; price: string; description?: string }>;
+    total?: string;
+    note?: string;
+  };
+  team?: {
+    headline: string;
+    members: Array<{ name: string; role: string }>;
   };
   cta: {
     headline: string;

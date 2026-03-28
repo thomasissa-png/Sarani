@@ -103,6 +103,22 @@ export default function AboutPage() {
             First project satisfaction or no invoice.
           </p>
         </div>
+
+        {/* Visual proof — real work samples */}
+        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl">
+          <div className="aspect-video overflow-hidden rounded-xl">
+            <img src="/images/hero-adidas-arena.png" alt="Adidas Superstar Concert — Arena event by Sarani" className="h-full w-full object-cover" loading="lazy" />
+          </div>
+          <div className="aspect-video overflow-hidden rounded-xl">
+            <img src="/images/hero-lego.png" alt="LEGO Le Grand Tournoi des Champs campaign by Sarani" className="h-full w-full object-cover" loading="lazy" />
+          </div>
+          <div className="aspect-video overflow-hidden rounded-xl">
+            <img src="/images/case-sony-blackfriday.png" alt="Sony Black Friday banners by Sarani" className="h-full w-full object-cover" loading="lazy" />
+          </div>
+          <div className="aspect-video overflow-hidden rounded-xl">
+            <img src="/images/case-tiktok-gimmethemic.png" alt="TikTok GimmeTheMic campaign by Sarani" className="h-full w-full object-cover" loading="lazy" />
+          </div>
+        </div>
       </Section>
 
       {/* ── Client logos ── */}

@@ -139,6 +139,19 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
             </div>
           </div>
         </div>
+
+        {/* Hero image — the creative work */}
+        {cs.image && (
+          <div className="mt-10 mx-auto max-w-4xl">
+            <div className="relative aspect-video overflow-hidden rounded-2xl">
+              <img
+                src={cs.image}
+                alt={`${cs.client} — ${cs.headline}`}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* Challenge + Solution */}

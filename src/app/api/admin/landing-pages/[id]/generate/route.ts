@@ -9,6 +9,12 @@ import { z } from "zod";
 
 // ─── Zod schema for LLM output validation ─────────────────────────────────
 
+const TestimonialSchema = z.object({
+  quote: z.string().min(10),
+  author: z.string().min(1),
+  company: z.string().min(1),
+});
+
 const LandingPageOutputSchema = z.object({
   hero: z.object({
     headline: z.string().min(3),
@@ -16,6 +22,7 @@ const LandingPageOutputSchema = z.object({
     ctaText: z.string().min(1),
     ctaUrl: z.string().default("#contact"),
     backgroundType: z.enum(["color", "image"]).default("color"),
+    imageUrl: z.string().url().optional(),
   }),
   features: z
     .array(
@@ -27,11 +34,41 @@ const LandingPageOutputSchema = z.object({
     )
     .min(2)
     .max(6),
+  featuresHeadline: z.string().min(3).optional(),
+  gallery: z
+    .array(
+      z.object({
+        imageUrl: z.string().url(),
+        caption: z.string().optional(),
+      })
+    )
+    .optional(),
   socialProof: z
+    .union([TestimonialSchema, z.array(TestimonialSchema).min(1).max(5)])
+    .optional(),
+  pricing: z
     .object({
-      quote: z.string().min(10),
-      author: z.string().min(1),
-      company: z.string().min(1),
+      headline: z.string().min(3),
+      items: z.array(
+        z.object({
+          name: z.string().min(1),
+          price: z.string().min(1),
+          description: z.string().optional(),
+        })
+      ).min(1),
+      total: z.string().optional(),
+      note: z.string().optional(),
+    })
+    .optional(),
+  team: z
+    .object({
+      headline: z.string().min(3),
+      members: z.array(
+        z.object({
+          name: z.string().min(1),
+          role: z.string().min(1),
+        })
+      ).min(1),
     })
     .optional(),
   cta: z.object({
@@ -60,7 +97,22 @@ function buildSystemPrompt(
 ): string {
   let prompt = `You are a landing page copy generator for Sarani, an international creative agency. You produce compelling, conversion-focused landing page content.
 
-You generate structured JSON for landing page sections: hero, features, socialProof (optional), cta, footer, and meta.
+You generate structured JSON for landing page sections. Available sections:
+
+REQUIRED: hero, features, cta, footer, meta
+OPTIONAL: featuresHeadline, gallery, socialProof, pricing, team
+
+SECTION DETAILS:
+- hero: { headline, subheadline, ctaText, ctaUrl, backgroundType ("color"|"image"), imageUrl? }
+- featuresHeadline: string — a custom title for the features section. Choose something specific to the campaign, NOT generic like "Why choose us"
+- features: array of { iconName, title, description }. Icon options: zap, shield, globe, clock, star, check, target, users, heart, award, briefcase, trending
+- gallery: array of { imageUrl, caption? } — include if the brief mentions visual work, portfolio, or campaign assets
+- socialProof: single object OR array of { quote, author, company } — include 2-3 testimonials when possible for credibility
+- pricing: { headline, items: [{ name, price, description? }], total?, note? } — include ONLY if the brief mentions a proposal, quote, or pricing
+- team: { headline, members: [{ name, role }] } — include ONLY if the brief mentions a team or key people
+- cta: { headline, subtext, buttonText, buttonUrl }
+- footer: { tagline }
+- meta: { title (max 70 chars), description (50-160 chars) }
 
 RULES:
 - The copy must be compelling, specific, and action-oriented
@@ -69,7 +121,7 @@ RULES:
 - The hero headline should be maximum 10 words — punchy and memorable
 - Features should highlight concrete benefits, not abstract promises
 - CTA should create urgency without being pushy
-- Meta description must be 50-160 characters
+- Adapt the structure to the brief: a campaign LP is different from a proposal LP
 - Output ONLY valid JSON. No markdown, no explanation.
 
 CLIENT: ${clientBrand.name}`;
@@ -171,7 +223,13 @@ ${page.brief}
 ${page.clientPrimaryColor ? `Brand primary color: ${page.clientPrimaryColor}` : ""}
 ${page.clientFontName ? `Brand font: ${page.clientFontName}` : ""}
 
-Output a single JSON object with keys: hero, features (array of 3-4 items), socialProof (optional — include only if you can create a credible testimonial for this campaign), cta, footer, meta.`;
+Output a single JSON object. Required keys: hero, features (3-4 items), cta, footer, meta.
+Also include a "featuresHeadline" string — a custom section title specific to this campaign (never use generic titles like "Why choose us").
+Optional keys based on the brief context:
+- socialProof: include 2-3 credible testimonials as an array when possible
+- pricing: include ONLY if the brief mentions a proposal, budget, or pricing
+- team: include ONLY if the brief mentions team members or key contacts
+- gallery: include ONLY if the brief mentions visual assets or portfolio work`;
 
     // 4. Call Claude
     let sections: LandingPageSections;
