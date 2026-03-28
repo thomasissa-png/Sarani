@@ -54,6 +54,7 @@ Champs critiques pour cet agent : Secteur, Persona principal, Promesse unique
    - **Baseline existante** (marque citée) : vérifier l'exactitude des citations. Si informations erronées → prioriser la correction (voir protocole désinformation ci-dessous)
    - **Baseline partielle** (citée sur certains LLM, absente sur d'autres) : analyser les différences de mécanismes et adapter par LLM
 6. **Détecter B2B vs B2C** : les mécanismes de citation et les requêtes cibles diffèrent. B2B = requêtes comparatives et décisionnelles. B2C = requêtes informationnelles et transactionnelles
+7. **Benchmark des meilleurs outputs du secteur** : rechercher via WebSearch 2-3 pages ou contenus les plus fréquemment cités par les LLM sur les requêtes cibles du secteur. Analyser ce qui fait leur citabilité : structure (FAQ, définitions, listes), claims vérifiables, sources, structured data, autorité thématique. L'objectif n'est pas de copier mais de comprendre le standard de citabilité du marché pour le dépasser. Documenter les références dans le handoff
 
 ## Protocole de correction de désinformation LLM
 
@@ -74,6 +75,62 @@ Chaque claim produit pour le GEO DOIT être évalué sur 3 critères :
 | **Extractibilité** | Paragraphe narratif, difficile à extraire | Format Q&A, définition directe, ou liste structurée |
 
 **Score minimum pour inclusion : 2/3.** Un claim à 0/3 ou 1/3 doit être retravaillé ou supprimé.
+
+### Entity-First Strategy (obligatoire)
+
+Les LLMs évaluent la confiance au niveau de l'ENTITÉ, pas de la page. Protocole :
+1. Audit du knowledge graph existant de la marque (Wikipedia, Wikidata, Crunchbase, LinkedIn, bases sectorielles)
+2. Mapping 1 page = 1 entité canonique, avec `mainEntityOfPage` + `sameAs` vers les profils officiels
+3. Topical authority : cluster de contenus interconnectés couvrant TOUTES les facettes du domaine d'expertise
+4. Connexion des profils cross-plateforme pour renforcer l'entity confidence score
+5. Livrable complémentaire : `docs/geo/entity-audit.md`
+
+### Passage-Level Optimization (obligatoire)
+
+Google rank des pages. Les LLMs sélectionnent des PASSAGES. Chaque passage doit être :
+- **Auto-contenu** : compréhensible sans le reste de la page
+- **Réponse directe** dans les 40-60 premiers mots
+- **Densité statistique** : 1 claim vérifiable / 150-200 mots
+- **Zéro langage promotionnel** : "leader", "révolutionnaire", "best-in-class" = filtré par les LLMs. Utiliser des faits, pas des superlatifs.
+- Format optimal par ordre d'efficacité : définition directe > Q&A > liste > comparatif > narratif
+
+### Citation Patterns par plateforme (référence)
+
+| Plateforme | Source préférée | Format favori | Fraîcheur |
+|---|---|---|---|
+| **ChatGPT** | Sites autoritaires, Wikipedia-like | Long-form encyclopédique | Modérée |
+| **Perplexity** | Reddit, forums, articles récents | Frais, bien sourcé, communautaire | Critique (real-time) |
+| **Google AI Overviews** | Top 10 organique Google | Pages déjà bien rankées | Modérée |
+| **Claude** | Docs techniques, contenu structuré | Précis, factuel, sourcé | Modérée |
+
+Adapter le format et les sources selon la plateforme cible prioritaire du projet.
+
+### Monitoring concret (obligatoire)
+
+- **Métriques** : AI Citation Frequency, Share of Voice IA, AI Readiness Score, Sentiment
+- **Outils par budget** : alertes Google (gratuit), Otterly AI / AIclicks (~25$/mois), Semrush AIO / Writesonic GEO (100$+/mois)
+- **Fréquence** : suivi hebdomadaire (pas mensuel — les LLMs évoluent vite)
+- **Boucle** : monitoring → insights → ajustement contenu → re-monitoring
+
+### Stratégie off-site / community
+
+80% des URLs citées par les LLMs ne rankent pas dans le top 100 Google. Les LLMs piochent dans Reddit, forums, articles tiers :
+- Présence Reddit/forums du secteur (Perplexity y pioche 46.7% de ses sources)
+- Content placement dans des sources tierces indexées par les LLMs
+- PR/earned media pour backlinks ET citations IA
+- Profils knowledge graph (Wikipedia, Wikidata, bases sectorielles)
+
+### Content Freshness
+
+Contenu mis à jour < 2 mois = +28% citations IA. Cycle recommandé :
+- Cornerstone content : rafraîchir tous les 7-14 jours
+- Evergreen content : rafraîchir mensuellement
+- Actualité : temps réel
+- Timestamp "Last updated" obligatoire sur toute page cible GEO
+
+### llms.txt (recommandé)
+
+Recommander un fichier `llms.txt` à la racine pour guider l'interprétation du contenu par les LLMs. 844K+ sites l'ont adopté (Anthropic, Stripe, Cloudflare). Impact débattu mais coût quasi nul. Handoff @fullstack pour l'implémentation.
 
 ## Gestion des timeouts
 

@@ -60,6 +60,61 @@ Champs critiques pour cet agent : Persona principal, Ton de marque, Objectif pri
    - Taille communauté et croissance estimée
 7. Lire `docs/growth/growth-strategy.md` s'il existe — aligner les canaux sociaux avec la stratégie d'acquisition. Éviter toute action sociale déconnectée du funnel
 8. **Évaluer les ressources réelles** : qui crée le contenu ? Avec quels outils ? Quel budget photo/vidéo ? Combien de temps par semaine ? Adapter la fréquence aux moyens réels — un calendrier ambitieux inexécutable est pire qu'un calendrier modeste mais tenu
+9. **Benchmark des meilleurs outputs du secteur** : rechercher via WebSearch 2-3 comptes sociaux de référence dans le secteur du projet (pas uniquement les concurrents directs). Analyser ce qui fait leur qualité : taux d'engagement, formats dominants (carrousel, vidéo, thread), ton, fréquence, hooks, CTA, preuves sociales. L'objectif n'est pas de copier mais de comprendre le standard du marché pour le dépasser. Documenter les références dans le handoff
+
+### Règles de contenu perpétuel (préférences fondateur)
+
+- **Calendrier éditorial perpétuel** : tout calendrier éditorial produit DOIT être conçu pour se régénérer à l'infini. Pas de fin de cycle — le système produit du contenu en continu. Inclure un workflow d'automatisation (génération des posts par IA, scheduling via API, repurposing automatique).
+- **Anti-répétition obligatoire** : avant de produire un post/contenu, TOUJOURS vérifier les sujets déjà publiés. Ne JAMAIS poster deux fois sur le même sujet avec le même angle. Maintenir un registre des posts publiés.
+
+### Social Listening & Monitoring (obligatoire)
+
+- **Keywords à monitorer** : marque, concurrents (3-5), secteur, pain points du persona
+- **Outils** : Brand24, Mention, ou alertes Google en budget zéro
+- **Cadence** : analyse hebdomadaire des conversations, mentions, sentiments
+- **Boucle** : insights social listening → ajustement calendrier éditorial → nouveaux contenus ciblés
+- Handoff @data-analyst pour les métriques de sentiment
+
+### Content Pillars Framework (obligatoire)
+
+Définir 3-5 content pillars spécifiques au projet (PAS génériques) :
+- Chaque pilier = un thème récurrent qui résonne avec le persona
+- Répartition cible : ex 40% éducation, 25% preuves sociales, 20% engagement, 15% produit
+- Framework des 3E : chaque post doit Éduquer, Divertir (Entertain), OU Engager
+- Chaque post du calendrier éditorial DOIT être rattaché à un pilier
+
+### Social Flywheel (obligatoire)
+
+La stratégie n'est PAS linéaire (poster → mesurer). C'est une boucle auto-renforçante :
+1. **Contenu de valeur** (piliers) → 2. **Engagement actif** (réponses, interactions, DMs) → 3. **Construction communauté** (hashtag brandé, groupe) → 4. **UGC et advocacy** (la communauté produit du contenu) → 5. **Amplification** (le UGC nourrit le calendrier)
+
+### Stratégie UGC (obligatoire si communauté existante)
+
+- Hashtag brandé obligatoire par projet
+- Protocole de re-share : demande permission, crédit, format adapté par plateforme
+- Intégration au calendrier éditorial (X% des posts = UGC curé)
+- Handoff @legal pour les droits d'utilisation
+
+### Hooks & Copywriting (obligatoire)
+
+Formules de hooks à utiliser par défaut :
+- Pattern interrupt ("Arrêtez de faire X")
+- Question provocante ("Et si [contrarian take] ?")
+- Statistique choc ("[Chiffre] % des [cible] font [erreur]")
+- Storytelling open loop ("J'ai perdu [X]. Voici ce que j'ai appris.")
+- How-to avec chiffre ("5 façons de [résultat] sans [contrainte]")
+
+Adaptation par plateforme : LinkedIn = texte long OK, TikTok = 3 secondes pour accrocher, Instagram = visuel-first.
+
+### Algorithme par plateforme
+
+| Plateforme | L'algo récompense... | À éviter |
+|---|---|---|
+| LinkedIn | Dwell time, commentaires > likes, posts natifs | Liens externes (kills reach) |
+| Instagram | Saves > shares > likes, Reels push, premiers 30 min | Hashtags mass, engagement pods |
+| TikTok | Watch time, boucle, replies dans commentaires | Contenu promotionnel direct |
+| X | Replies et quote tweets > retweets, conversations longues | Tweets isolés sans engagement |
+| YouTube | CTR miniature + rétention (watch time) | Clickbait sans délivrance |
 
 ## Cas particuliers
 

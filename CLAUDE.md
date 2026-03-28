@@ -195,7 +195,7 @@ Dans certains cas, avancer nécessite de poser une hypothèse. C'est acceptable 
 
 Claude Code a une limite de temps par réponse ET une fenêtre de contexte qui se dégrade sur les sessions longues. Un agent qui essaie de tout produire en une seule passe **sera coupé en plein travail** et le livrable sera perdu. Cette règle s'applique à TOUS les agents.
 
-**Limite de session** : l'orchestrateur maintient un compteur de phases/agents et alerte l'utilisateur quand la session risque de dégénérer (voir orchestrator.md — Compteur de session obligatoire). Seuils : ALERTE JAUNE après 2 phases / 6 agents, ALERTE ROUGE après 3 phases / 10 agents. Un projet complet doit être découpé en plusieurs sessions.
+**Limite de session** : l'orchestrateur maintient un compteur de phases et de Task **producteurs** (ceux qui déclenchent un Write/Edit dans `docs/` ou `src/`) et alerte l'utilisateur quand la session risque de dégénérer (voir orchestrator.md — Compteur de session obligatoire). Seuil : ALERTE ROUGE après 6 phases / 18 Task producteurs (seule alerte, pas de JAUNE). Les Task de consultation (review verbale, avis sans fichier) ne comptent pas. Un projet complet doit être découpé en plusieurs sessions.
 
 ### Principes anti-timeout
 
@@ -240,8 +240,10 @@ Si un agent a été interrompu par un timeout :
 8. En mode révision : justifier chaque changement, ne pas tout réécrire
 9. **Après chaque livrable** : mettre à jour le tableau "Historique des interventions agents" dans `project-context.md` avec : agent, date, fichiers produits, décisions clés, **et justification des choix (pourquoi cette décision, quelles alternatives écartées)**
 10. **Respecter les règles anti-timeout** (voir Règle absolue numéro 3) — découper les livrables, sauvegarder au fur et à mesure, ne jamais accumuler sans écrire
-11. **Objectif qualité : 100% gates PASS.** Chaque livrable sera évalué par @reviewer via 20 gates binaires (PASS/FAIL) réparties en BLOQUANT et REQUIS. Le seuil de validation est : 100% gates BLOQUANT PASS + 100% gates REQUIS PASS. Viser l'excellence dès la première passe pour éviter les itérations correctives
+11. **Objectif qualité : 100% gates PASS.** Chaque livrable sera évalué par @reviewer via 32 gates binaires G1-G32 (PASS/FAIL) réparties en BLOQUANT et REQUIS. Le seuil de validation est : 100% gates BLOQUANT PASS + 100% gates REQUIS PASS. Viser l'excellence dès la première passe pour éviter les itérations correctives
 12. **Mise à jour du nom de branche obligatoire.** À chaque changement de branche de développement, l'ancienne référence de branche DOIT être remplacée par la nouvelle dans TOUS les fichiers qui la mentionnent : `index.html` (prompts d'installation frontend), `INSTALL.md`, `install.sh`, `update.sh`, et `project-context.md` (mémo de reprise). Utiliser `Grep` sur l'ancien nom de branche pour s'assurer qu'aucune référence n'a été oubliée. Cette mise à jour est la responsabilité de l'agent qui effectue le changement de branche (typiquement @orchestrator ou l'agent principal de la session)
+13. **Caractères UTF-8 obligatoires dans le code.** Dans les fichiers TSX/JSX/JS, utiliser les vrais caractères UTF-8 (é, è, à, ç, ê, î, ô, û, ë, ï, ù) dans les constantes et strings. Ne JAMAIS utiliser `\u00E9` ni `&eacute;` dans les strings JavaScript. Les entités HTML sont acceptables uniquement dans le JSX rendu directement. Signalé comme P0 sur 2 projets distincts.
+14. **Zéro mention de concurrent par nom dans les livrables client-facing.** Ne JAMAIS mentionner de concurrent par nom dans le code frontend, le copy, le contenu marketing, le SEO ou tout contenu visible par l'utilisateur final. Utiliser des catégories génériques ("freelance marketing", "outil avec templates", "plateforme SaaS"). Exception : les livrables internes (benchmarks concurrentiels, audits stratégiques, analyses de marché) DOIVENT nommer les concurrents pour être actionnables.
 
 ## Protocole de test du framework
 
@@ -281,9 +283,9 @@ Un `project-context.md` fictif mais réaliste est disponible dans `tests/project
 Le contrôle qualité s'effectue en **deux temps** avec des responsabilités distinctes :
 
 1. **Vérification rapide par l'orchestrateur** (après chaque phase) : exécuter les gates BLOQUANT sur chaque livrable. Si 1+ gate BLOQUANT = FAIL → relance corrective immédiate de l'agent avant de passer à la phase suivante. Objectif : éliminer les livrables insuffisants au fil de l'eau.
-2. **Audit complet par @reviewer** (en fin de run, Étape 7) : exécuter les 20 gates (BLOQUANT + REQUIS + CONDITIONNEL) via Grep/Read/comparaison — pas de jugement subjectif. Boucle d'itération si besoin (max 3 passes). Les verdicts sont inscrits dans le tableau "Performance des agents".
+2. **Audit complet par @reviewer** (en fin de run, Étape 7) : exécuter les 32 gates (BLOQUANT + REQUIS + CONDITIONNEL) via Grep/Read/comparaison — pas de jugement subjectif. Boucle d'itération si besoin (max 3 passes). Les verdicts sont inscrits dans le tableau "Performance des agents".
 
-### Les 20 gates binaires (PASS/FAIL)
+### Les 32 gates binaires (PASS/FAIL)
 
 Chaque livrable dans `docs/` est évalué par ces gates. Classification :
 - **BLOQUANT** : 1 FAIL = NO-GO immédiat, relance obligatoire
@@ -340,10 +342,58 @@ Chaque livrable dans `docs/` est évalué par ces gates. Classification :
 | # | Gate | Classe | Vérification |
 |---|---|---|---|
 | G21 | Les 5 états UI documentés par écran interactif (défaut, loading, vide, erreur, succès) | BLOQUANT | Pour specs/wireframes : Grep `loading\|erreur\|vide\|empty\|error\|succes` par écran. Chaque écran avec données dynamiques DOIT avoir les 5 états |
-| G22 | Contrastes WCAG 2.2 AA respectés (>= 4.5:1 texte, >= 3:1 interactifs) | BLOQUANT | Pour design-system/tokens : vérifier chaque combinaison couleur texte/fond. Clair ET dark mode si applicable |
+| G22 | Contrastes WCAG 2.2 AA respectés (>= 4.5:1 texte, >= 3:1 interactifs) + focus-visible sur tous les interactifs + touch targets >= 44x44px mobile + prefers-reduced-motion supporté | BLOQUANT | Pour design-system/tokens : vérifier chaque combinaison couleur texte/fond. Focus-visible : Grep `outline: none` sans alternative. Touch targets : vérifier taille minimum. Reduced-motion : Grep `prefers-reduced-motion`. Clair ET dark mode si applicable |
 | G23 | 0 valeur hardcodée — toute couleur, spacing, typo référence un token nommé | REQUIS | Pour design/specs/code : Grep couleurs hex en dur hors fichiers de tokens, valeurs px hors scale |
 | G24 | Registre tu/vous uniforme dans le livrable (0 alternance non justifiée) | REQUIS | Pour copy/contenu : Grep `tu \|ton \|votre \|vous ` — vérifier cohérence |
 | G25 | Chaque KPI/métrique a une formule de calcul explicite ET un seuil d'alerte défini | REQUIS | Pour analytics/KPI : chaque KPI a (formule ou trigger) + seuil. Grep `formule\|calcul\|seuil\|alerte` |
+
+**PIPELINE & CONFORMITÉ** (gates spécifiques au code déployé — s'appliquent si src/ existe)
+
+| # | Gate | Classe | Vérification |
+|---|---|---|---|
+| G26 | Conformité visuelle : screenshots CI vs baselines approuvées (< 0.5% diff) sur 3 devices | BLOQUANT | Pour code déployé : Playwright screenshots sur iPhone 13 (375px), iPad (768px), Desktop Chrome (1280px). Comparaison pixel-diff avec baselines approuvées dans `tests/screenshots/` (produites par @fullstack via sa boucle visuelle — screenshot page par page, comparaison avec `docs/design/page-compositions.md`, correction avant page suivante). Seuil < 0.5% de pixels différents par screenshot. Si `tests/screenshots/` vide → FAIL (boucle visuelle non exécutée). Si aucune baseline → première exécution crée les baselines, review humain obligatoire |
+| G27 | Matrice de traçabilité : 100% des user stories ont un test correspondant | REQUIS | Pour code + specs : tableau `US-XX → fichier-test:ligne` dans TESTING.md ou qa-strategy.md. Chaque user story de functional-specs.md DOIT avoir au moins 1 test E2E ou intégration. Si une story n'a pas de test → FAIL |
+| G28 | Pipeline pre-deploy PASS : tsc --noEmit + lint + tests | REQUIS | Pour code déployé : `tsc --noEmit` avec 0 erreur TypeScript, ESLint avec 0 erreur (warnings tolérés), tests unitaires PASS. Si un des 3 échoue → FAIL |
+
+**DESIGN & COMPOSITION** (gates spécifiques au design — s'appliquent si le projet a un frontend)
+
+| # | Gate | Classe | Vérification |
+|---|---|---|---|
+| G29 | Chaque section de chaque page a un pattern de layout explicite (pas juste "section X") | REQUIS | Pour design/wireframes : vérifier que `docs/design/page-compositions.md` ou `docs/ux/wireframes.md` spécifie le layout par section (grille, colonnes, responsive). Si les deux existent, `page-compositions.md` est la source de vérité pour le layout visuel. Si une section n'a que son nom sans layout → FAIL |
+| G30 | Chaque page client-facing a au moins 1 image spécifiée (type, sujet, source) | REQUIS | Pour design : vérifier que les compositions de page incluent des specs d'images. Pages client-facing = pages accessibles sans authentification + pages principales post-auth (dashboard, onboarding). Exclues : pages admin, settings, pages techniques. Un site sans images spécifiées = 6/10 max → FAIL |
+
+| G31 | Architecture tokens 3 tiers respectée (primitive → semantic → component) | REQUIS | Pour design-system/code : les composants ne référencent JAMAIS les tokens primitifs directement. Grep dans le code pour des références directes à des tokens primitifs (blue-500, gray-100) au lieu de tokens sémantiques (color-background-primary). Si référence directe → FAIL |
+| G32 | Chaque composant interactif a ses 6 états documentés (default, hover, active, focus-visible, disabled, loading) | REQUIS | Pour component-library.md : Grep les 6 états par composant interactif. Si un composant n'a pas ses 6 états → FAIL. Complémentaire à G21 qui vérifie les états de données par écran |
+
+**GATES TESTEUR-PERSONA (s'appliquent si agents testeurs créés — voir orchestrator.md Phases 1b, 2c, 2d, 5b)**
+
+| # | Gate | Classe | Vérification |
+|---|---|---|---|
+| GP1 | Compréhension immédiate | BLOQUANT | "En 5 secondes, je comprends ce que ce site fait pour moi" |
+| GP2 | Valeur perçue | BLOQUANT | "La valeur promise justifie le prix affiché — j'en ai pour mon argent" |
+| GP3 | Crédibilité | BLOQUANT | "Ce site me donne confiance (design pro, preuves sociales, pas de bullshit)" |
+| GP4 | Parcours fluide | BLOQUANT | "Je sais où cliquer à chaque étape, je ne suis jamais perdu" |
+| GP5 | Pricing acceptable | REQUIS | "Le prix ne me fait pas fuir — le ROI est évident" |
+| GP6 | Recommandation | REQUIS | "Je recommanderais ce service à un collègue de mon métier" |
+| GP7 | Conviction | BLOQUANT | "Après avoir vu la landing + un essai, je suis convaincu de m'inscrire" |
+| GP8 | Look & feel | REQUIS | "Le design correspond à mon secteur — ni trop cheap ni trop corporate" |
+| GP9 | Outputs utiles | BLOQUANT | "Les documents/livrables que la plateforme génère me sont vraiment utiles" |
+| GP10 | Fidélisation | REQUIS | "Je vois pourquoi je resterais abonné mois après mois" |
+
+| # | Gate | Classe | Vérification |
+|---|---|---|---|
+| GC1 | Professionnalisme | BLOQUANT | "Ce document fait professionnel — pas généré par IA" |
+| GC2 | Pertinence | BLOQUANT | "Le contenu répond précisément à mes attentes/critères" |
+| GC3 | Confiance | BLOQUANT | "Ce document me donne confiance dans le prestataire" |
+| GC4 | Action | BLOQUANT | "Après lecture, je suis enclin à contacter/signer/retenir ce prestataire" |
+| GC5 | Complétude | REQUIS | "Il ne manque aucune information critique" |
+| GC6 | Différenciation | REQUIS | "Ce livrable se distingue positivement de ce que je reçois habituellement" |
+| GC7 | Ton et registre | REQUIS | "Le ton est adapté à mon contexte" |
+| GC8 | Zéro erreur factuelle | BLOQUANT | "Aucune information fausse, incohérente ou inventée" |
+| GC9 | Copy convaincant | REQUIS | "Les arguments sont pertinents et hiérarchisés" |
+| GC10 | Design/mise en page | REQUIS | "La présentation est soignée, structurée, facile à lire" |
+
+**Conditions d'application** : les gates GP/GC s'appliquent uniquement si les agents testeur-persona et testeur-client-du-persona ont été créés (Phase 0b). Si non créés → N/A. **Marketplace** : si double persona (vendeur + acheteur), créer un testeur par persona — les gates s'exécutent une fois par testeur, toutes doivent passer. **B2C direct** : gates GC = N/A si le persona n'a pas de client professionnel.
 
 ### Verdict
 
@@ -367,35 +417,42 @@ Les grilles persona (/10, 9 dimensions, seuil 9/10) et B2B (/10, 7 dimensions, s
 
 **Condition GO finale** : 100% gates BLOQUANT PASS + 100% gates REQUIS PASS + gates persona PASS (>= 9/10) + gates B2B PASS (>= 9/10, si applicable).
 
-**Condition GO finale** : 100% gates BLOQUANT PASS + 100% gates REQUIS PASS + gates persona PASS (>= 9/10) + gates B2B PASS (>= 9/10, si applicable).
-
 **Règle (orchestrateur)** : si 1+ gate BLOQUANT FAIL → relancer immédiatement l'agent avec le détail des gates échouées. Ne pas attendre la fin du run.
-**Règle (reviewer)** : en fin de run, exécuter les 20 gates sur chaque livrable. Tout livrable avec 1+ gate BLOQUANT ou REQUIS FAIL déclenche une boucle d'itération (max 3 passes). Voir `orchestrator.md` Étape 7.
+**Règle (reviewer)** : en fin de run, exécuter les 32 gates sur chaque livrable. Tout livrable avec 1+ gate BLOQUANT ou REQUIS FAIL déclenche une boucle d'itération (max 3 passes). Voir `orchestrator.md` Étape 7.
 
 ## Mémoire organisationnelle — Apprentissage inter-projets
 
-Après chaque session (pas seulement chaque projet), l'orchestrateur DOIT mettre à jour `docs/lessons-learned.md` avec le format tableau structuré :
+Après chaque session (pas seulement chaque projet), l'orchestrateur DOIT mettre à jour `docs/lessons-learned.md` avec le format tableau v2 (11 colonnes) :
 
 ```markdown
 ## Session [date] — [Nom du projet]
 
-| Session | Date | Catégorie | Sévérité | Description | Correction appliquée | Recommandation framework | Statut |
-|---|---|---|---|---|---|---|---|
-| [nom] | [date] | problème/insistance/requête/biais/pattern/recommandation/performance-ia | P0/P1/P2 | [description] | [ce qui a été fait] | [ce qu'il faudrait changer dans le framework] | ouvert/appliqué/obsolète |
+| Session | Date | Catégorie | Sévérité | Description | Correction appliquée | Recommandation framework | Cible propagation | Fichiers impactés | Statut correction | Statut propagation |
+|---|---|---|---|---|---|---|---|---|---|---|
+| [nom] | [date] | problème/insistance/requête/biais/pattern/recommandation/performance-ia/préférence fondateur | P0/P1/P2 | [description] | [ce qui a été fait] | [recommandation] | règle-globale/agent-spécifique/prompts/documentation/founder-prefs/aucune | [liste EXACTE des fichiers] | fait/en-cours/à-faire | propagé/non-propagé/n/a |
 ```
 
-**Catégories** : problème (bug/incohérence corrigé), insistance (utilisateur a demandé 2+ fois), requête (demande non couverte), biais (mindset humain détecté), pattern (ce qui a bien marché), recommandation (amélioration framework), performance-ia (coûts/latence/hallucinations).
+**Catégories** : problème (bug/incohérence corrigé), insistance (utilisateur a demandé 2+ fois), requête (demande non couverte), biais (mindset humain détecté), pattern (ce qui a bien marché), recommandation (amélioration framework), performance-ia (coûts/latence/hallucinations), préférence fondateur (calibration @moi).
 
-**Cycle de vie des learnings** :
-1. **Ouvert** : learning identifié, recommandation non encore appliquée
-2. **Appliqué** : la recommandation a été implémentée dans le framework (agent, prompt, CLAUDE.md)
-3. **Obsolète** : le learning n'est plus pertinent (contexte changé, problème disparu)
+**Colonnes de propagation (v2)** :
+- **Cible propagation** : où le learning doit être propagé (CLAUDE.md, agents, prompts, docs, founder-preferences, ou aucune)
+- **Fichiers impactés** : liste EXACTE des fichiers à modifier — jamais de vague "les agents concernés"
+- **Statut correction** : le fix source est-il fait ? (fait / en-cours / à-faire)
+- **Statut propagation** : le fix est-il propagé dans TOUS les fichiers listés ? (propagé / non-propagé / n/a)
 
-**Gestion du volume** : si le fichier contient plus de 30 learnings ouverts, synthétiser les récurrents en règles permanentes (dans CLAUDE.md ou les agents) et archiver les appliqués/obsolètes dans une section "## Archive" en bas du fichier.
+**Règle** : un learning est "terminé" UNIQUEMENT quand correction = `fait` ET propagation = `propagé` (ou `n/a`).
 
-**Boucle fermée** : à chaque reprise de session, l'orchestrateur DOIT lire les learnings ouverts P0/P1 et les intégrer dans son plan d'action — pas juste les signaler.
+**Gate bloquante (reprise de session)** : l'orchestrateur DOIT propager les learnings P0/P1 avec statut propagation = `non-propagé` AVANT tout nouveau travail. C'est une gate au même titre que G7.
+
+**Propagation check (clôture de session)** : avant de clôturer, l'orchestrateur DOIT vérifier que tous les learnings P0/P1 de la session ont statut propagation = `propagé`. Si timeout imminent → documenter dans le mémo de reprise "PROPAGATION P0 EN ATTENTE" avec les fichiers restants.
+
+**Gestion du volume** : si le fichier contient plus de 30 learnings non-terminés, synthétiser les récurrents en règles permanentes (dans CLAUDE.md ou les agents) et archiver les terminés dans une section "## Archive" en bas du fichier.
+
+**Boucle fermée** : la propagation se fait EN CLÔTURE (pas en reprise). La reprise ne fait que vérifier et rattraper les oublis. L'objectif : zéro learning P0/P1 non-propagé entre deux sessions.
 
 **Préférences fondateur** : les learnings de catégorie "préférence fondateur" sont également copiés dans `docs/founder-preferences.md`, source de vérité pour l'agent @moi. Ce fichier est accessible cross-projets via l'URL GitHub raw du repo Agent-Team (branche main). Voir la section "Sources de calibration" de `moi.md` pour le mécanisme complet.
+
+**Promotion des gates ad-hoc** : quand une gate ad-hoc (définie lors d'un audit PVU — voir _base-agent-protocol.md) revient en FAIL sur 3+ audits différents, l'orchestrateur DOIT la proposer pour promotion en gate permanente (G29+). Le processus : (1) documenter la gate récurrente dans lessons-learned.md avec catégorie `recommandation` et cible propagation `règle-globale`, (2) ajouter la gate au tableau des gates de cette section lors de la clôture de session, (3) mettre à jour le compteur de gates (G1-GXX) dans tous les fichiers qui le référencent.
 
 **Pourquoi** : sans cette mémoire, chaque session repart de zéro. Les patterns qui marchent ne sont pas capitalisés. Les erreurs sont répétées. Cette section transforme le framework d'un outil statique en un système qui apprend.
 

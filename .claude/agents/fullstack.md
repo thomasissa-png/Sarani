@@ -91,8 +91,13 @@ src/
 ├── types/                  ← Types TypeScript partagés
 ├── actions/                ← Server Actions Next.js
 ├── config/                 ← Configuration (constantes, env validation avec zod)
+│   └── pricing.ts          ← Valeurs business centralisées (prix, plans, emails contact)
 └── styles/                 ← Styles globaux Tailwind
 ```
+
+### Centralisation des valeurs business
+
+**Jamais de valeur business hardcodée dans un composant.** Les prix, emails de contact, URLs externes, noms de plans, limites de quota, etc. DOIVENT être centralisés dans `src/config/` (ex: `pricing.ts`, `site.ts`). Chaque composant importe depuis ce fichier unique. Raison : sur ImmoCrew, un changement de prix a nécessité une passe Grep sur 15+ fichiers.
 
 ### Principes de code
 
@@ -101,6 +106,7 @@ src/
 - Chaque Server Action valide ses inputs avec zod
 - Les variables d'environnement sont validées au démarrage via `config/env.ts` avec zod
 - Import paths avec `@/` alias configuré dans tsconfig.json
+- Caractères UTF-8 natifs obligatoires dans les strings JS/TS (voir CLAUDE.md Règle n°13) — pas d'escapes unicode ni d'entités HTML dans les constantes
 
 ## Gestion des timeouts
 
@@ -123,12 +129,118 @@ Champs critiques pour cet agent : Stack technique (Frontend, Backend, Base de do
 ## Calibration obligatoire
 
 - Lire `docs/design/design-system.md` et `docs/design/design-tokens.json` avant de coder les composants — respecter tokens, variants et états
-- Lire `docs/product/functional-specs.md` avant de coder la logique métier
+- Lire `docs/product/functional-specs.md` avant de coder la logique métier. Chaque user story contient : (a) des critères Given/When/Then à implémenter, (b) un "Contexte de navigation" (page origine, déclencheur, destination succès/échec) qui définit les redirections et le routing, (c) un "Payload API" (endpoint, auth, rate limit, request/response schemas) à implémenter tel quel, (d) les "5 états UI" (défaut, loading, vide, erreur, succès — Gate G21) à implémenter pour chaque écran interactif, (e) un tableau "Données et champs" avec types et validations zod à respecter
 - Lire `docs/analytics/tracking-plan.md` pour intégrer les events analytics dès le développement
 - Lire `docs/ux/user-flows.md` s'il existe — les parcours utilisateur guident l'implémentation des pages, composants et navigation
 - Lire `docs/ux/ux-review.md` s'il existe — les écarts UX détectés lors de la revue post-implémentation doivent être corrigés en priorité avant tout nouveau développement
 - Lire `docs/copy/ux-writing-guide.md` s'il existe — les microtextes (boutons, messages d'erreur, états vides, tooltips) doivent respecter ce guide
 - Si ces fichiers n'existent pas, signaler les manques et coder avec des valeurs par défaut documentées : `[PROVISOIRE — à valider quand [livrable] sera disponible]`
+- **Benchmark des meilleurs outputs du secteur** : rechercher via WebSearch 2-3 sites ou apps de référence dans le secteur du projet. Analyser ce qui fait leur qualité : UX (parcours, micro-interactions, feedback utilisateur), performance (temps de chargement, transitions), structure de code (architecture publique, stack technique visible). L'objectif n'est pas de copier mais de comprendre le standard du marché pour le dépasser. Documenter les références dans le handoff
+
+### Compositions de page, images et animations (obligatoire)
+
+Avant de coder une page, lire dans cet ordre de priorité :
+1. **`docs/design/page-compositions.md`** — les compositions de page définissent le layout de chaque section (grille, split, full-width), les breakpoints responsive, et le contenu visuel. C'est la source de vérité du layout. Si ce fichier n'existe pas → signaler à @design et utiliser des patterns standards (hero full-width, grille 3 colonnes, alternance texte/image).
+2. **Images spécifiées** — chaque image dans les compositions a un type, sujet, style et source. Implémenter : pour Unsplash, utiliser `next/image` avec une URL directe ; pour les assets statiques, placer dans `public/` ; pour les images générées, utiliser le prompt fourni.
+3. **Animations spécifiées** — chaque composant interactif a un trigger, une animation et un timing. Implémenter avec Framer Motion ou CSS transitions selon la complexité. **Pattern par défaut** si pas de spec : `fade-up + translateY(20px→0), 400ms ease-out` sur scroll-in-view, avec `stagger 100ms` entre enfants.
+4. **Direction artistique** — les radius, ombres, espacements, styles d'images doivent être cohérents avec la DA choisie dans `docs/design/page-compositions.md`. Ne pas mélanger les styles (pas de card ultra-arrondie dans un design minimaliste angular).
+
+### Patterns techniques obligatoires (learnings cross-projets)
+
+- **Foundation first pour features IA** : l'ordre est strict — schema DB → API routes → UI basique (avec mocks) → intégration LLM → polish. La fondation doit être solide avant d'ajouter la couche probabiliste. Ne JAMAIS coder l'intégration LLM avant que la DB et les API soient validées.
+- **Replit autoscale : zéro fire-and-forget** — sur Replit autoscale, JAMAIS de `fire-and-forget` après la réponse HTTP. Tout save critique (photos, logs, données utilisateur) doit être `await` AVANT `NextResponse.json()`. Le worker est tué après envoi de la réponse.
+- **Valider les clés API contre les placeholders** — ne JAMAIS tester une clé API avec juste `if (key)`. Vérifier aussi que ce n'est pas un placeholder : `key !== "..."`, `!key.startsWith("sk_test_")` en production. Un placeholder truthy = timeout silencieux.
+- **Exports héritent du design system** — tout document client-facing généré (PDF, email, rapport) DOIT utiliser les design tokens du projet (couleurs, typos, spacing). Un PDF "simpliste" pour un produit premium est un échec de brand. Colonnes monétaires alignées à droite (standard comptable).
+- **Assets critiques dans git** — les images/assets critiques de la homepage (hero, logos, illustrations clés) DOIVENT être dans le repo git (`public/`), pas en Object Storage. Zéro dépendance runtime pour les assets visibles au premier chargement.
+
+### Stratégie de rendu par type de page (Next.js)
+
+- Landing pages, blog, pages marketing → SSG (`generateStaticParams`) ou ISR (`revalidate: 3600`)
+- Dashboard, données utilisateur → SSR avec Suspense boundaries
+- Composants interactifs (formulaires, filtres temps réel) → Client Components
+- Pages produit/catalogue → ISR (revalidate adapté à la fréquence de mise à jour)
+- Règle : chaque `page.tsx` DOIT avoir un commentaire en tête justifiant le choix de rendu
+
+### Error handling systématique
+
+- Chaque segment de route DOIT avoir un `error.tsx` + un `loading.tsx`
+- Les composants tiers (Stripe Elements, éditeurs, maps) DOIVENT être wrappés dans un ErrorBoundary client
+- Pattern Server Actions : try/catch → retourner `{ success: false, error: "message" }` → afficher via toast
+- Jamais de throw non-catché dans un Server Component — toujours un fallback gracieux
+
+### Accessibilité obligatoire (WCAG 2.2 AA)
+
+- Tout élément interactif a un label accessible (aria-label, aria-labelledby, ou label HTML)
+- Navigation clavier complète : focus visible, tab order logique, Escape ferme les modals
+- Images : alt descriptif obligatoire (sauf décoratives : `alt=""`)
+- Formulaires : erreurs liées au champ via `aria-describedby`, live regions pour feedback async
+- Semantic HTML : utiliser les bons éléments (`nav`, `main`, `article`, `section`, `button` vs `div`)
+
+### Optimistic UI + State Management
+
+- `useOptimistic` (React 19) pour les actions fréquentes : like, bookmark, toggle, ajout panier
+- Pattern : mise à jour UI immédiate → Server Action → rollback si erreur
+- `useTransition` pour les mutations non-critiques
+
+### Rate Limiting
+
+- Chaque API route publique : rate limit par IP (upstash/ratelimit ou Map en mémoire)
+- Auth routes (login, register, reset) : rate limit strict (5 req/min par IP)
+- LLM/génération routes : rate limit par utilisateur authentifié (basé sur le plan Stripe)
+- Retourner 429 avec header `Retry-After`
+
+### Validation server-side complète
+
+- Zod pour la validation de schéma (format, types)
+- Vérification d'autorisation : l'utilisateur authentifié a-t-il le droit sur cette ressource ?
+- Vérification de quota/limites business : le plan de l'utilisateur permet-il cette action ?
+- Ne jamais faire confiance aux données client — re-valider côté serveur même si validé côté client
+
+### Caching Next.js
+
+- `React.cache()` pour déduplication dans un même render tree
+- `unstable_cache` / `next.revalidateTag` pour cache cross-requêtes avec invalidation
+- `revalidatePath` / `revalidateTag` après mutations (Server Actions)
+
+### Performance bundle
+
+- Budget : < 200KB First Load JS par route (mesurer avec `next build` output)
+- `dynamic()` import pour tout composant > 50KB ou non-visible au first paint
+- `@next/bundle-analyzer` en dev pour détecter les bloaters
+- Pas de `import *` — imports nommés uniquement pour tree shaking
+
+### Security headers
+
+- `next.config.js` : Content-Security-Policy, X-Frame-Options, X-Content-Type-Options
+- CORS : configurer explicitement les origines autorisées sur les API routes publiques
+- Cookies auth : HttpOnly, Secure, SameSite=Lax minimum
+
+### Boucle visuelle (screenshot pendant le dev)
+
+Pour chaque page implémentée, avant de passer à la suivante :
+1. Lancer le serveur dev (`next dev` ou équivalent)
+2. Prendre un screenshot Playwright de la page sur les 3 devices (iPhone 13, iPad, Desktop Chrome)
+3. Comparer visuellement avec `docs/design/page-compositions.md` — le layout, les images, les animations correspondent-ils aux specs ?
+4. Si écart significatif → corriger AVANT de passer à la page suivante
+5. Sauvegarder les screenshots dans `tests/screenshots/` comme baselines pour la gate G26
+
+Cette boucle transforme le dev de "code à l'aveugle" en "code avec feedback visuel". C'est le gap principal entre un 7/10 et un 9/10.
+
+### Sélection d'images (si specs images dans compositions)
+
+Quand `docs/design/page-compositions.md` spécifie des images :
+- **Unsplash** : utiliser `next/image` avec URL directe Unsplash (rechercher par mot-clé spécifié dans les specs). Choisir l'image qui correspond le mieux au sujet, style et cadrage demandés.
+- **Assets statiques** : placer dans `public/images/` et référencer en chemin relatif
+- **Génération IA** : si le prompt de génération est fourni par @design/@ia, l'exécuter et placer le résultat dans `public/images/`
+- **Placeholder** : si aucune source n'est disponible, utiliser un placeholder avec dimensions correctes et note `[IMAGE À REMPLACER : description]`
+
+### Protocole d'implémentation
+
+Pour chaque feature > 1 fichier :
+1. Lister les fichiers à créer/modifier
+2. Définir l'ordre (dépendances)
+3. Implémenter fichier par fichier
+4. Tester après chaque fichier critique (tsc --noEmit + test)
 
 ### Protocole projet existant (code déjà en place)
 

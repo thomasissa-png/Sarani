@@ -57,6 +57,31 @@ Lire le tableau "Historique des interventions agents" dans `project-context.md` 
 4. Lire `docs/strategy/brand-platform.md` — c'est la référence centrale de cohérence stratégique
 5. WebSearch : pour les claims factuels critiques (tarifs cités, benchmarks sectoriels, réglementation), vérifier par recherche indépendante. Ne pas se limiter à la cohérence interne — vérifier aussi la véracité externe
 
+### Vérification des versions de livrables amont
+
+Avant d'évaluer un livrable, vérifier que les livrables amont référencés sont dans leur VERSION ACTUELLE :
+- Comparer la date de dernière modification des fichiers référencés avec la date du livrable évalué
+- Si un livrable amont a été modifié APRÈS la production du livrable évalué → signaler comme incohérence potentielle : "Le livrable [X] référence [Y] qui a été modifié depuis. Vérifier que [X] est toujours aligné."
+- Ne PAS déclarer FAIL automatiquement — signaler pour vérification manuelle
+
+### Cohérence Design & UX (vérification enrichie)
+
+Quand des livrables @design et @ux existent, vérifier systématiquement :
+- [ ] L'architecture des tokens suit-elle les 3 tiers (primitive → sémantique → component) ? Aucun composant ne référence un token primitif directement (G31)
+- [ ] Les compositions de page spécifient-elles le layout par section (G29) et les images (G30) ?
+- [ ] Chaque composant interactif a-t-il ses 6 états documentés (G32) ?
+- [ ] L'audit heuristique Nielsen 10 a-t-il été produit par @ux pour chaque flow critique ?
+- [ ] Les métriques HEART sont-elles définies dans les livrables @ux ?
+- [ ] Le page-compositions.md est-il cohérent avec les wireframes.md ? (page-compositions.md prime pour le layout visuel)
+
+### Audits ad-hoc — PVU
+
+Pour les audits hors revue croisée standard, appliquer le PVU de _base-agent-protocol.md. Le reviewer est le destinataire final des gates ad-hoc récurrentes (3+ FAIL sur des audits différents) pour proposition de promotion en gates permanentes (G33+). Documenter dans lessons-learned.md avec catégorie `recommandation` et cible propagation `règle-globale`.
+
+### Top 3 corrections prioritaires
+
+Chaque rapport de revue DOIT inclure un "Top 3" qui identifie les 3 gates FAIL les plus impactantes, indépendamment de leur classification BLOQUANT/REQUIS. Un G5 FAIL (mauvais persona) a plus d'impact qu'un G16 FAIL (nom cité < 3 fois). Le Top 3 guide l'effort de correction.
+
 ## Protocole de revue croisée
 
 Pour chaque paire de livrables, vérifier systématiquement :
@@ -115,12 +140,18 @@ Si `project-context.md` indique un modèle B2B, évaluer du point de vue du **cl
 ### Articulation gates binaires + scoring persona/B2B
 
 Le reviewer utilise deux mécanismes complémentaires :
-1. **Gates binaires livrables** : 20 gates PASS/FAIL (voir CLAUDE.md section "Les 20 gates binaires") exécutées via Grep/Read/comparaison — pas de jugement subjectif. Classées BLOQUANT / REQUIS / CONDITIONNEL
+1. **Gates binaires livrables** : 32 gates G1-G32 PASS/FAIL (voir CLAUDE.md section "Les 32 gates binaires") exécutées via Grep/Read/comparaison — pas de jugement subjectif. Classées BLOQUANT / REQUIS / CONDITIONNEL. Si des agents testeurs existent : vérifier aussi les gates GP1-GP10 et GC1-GC10
 2. **Scoring persona/B2B** : 9+7 dimensions sur une échelle 1-10 avec seuil 9/10 — évalue l'EXPÉRIENCE du point de vue du client. Encadré par les gates pré-requis G5 (persona identique) et G6 (KPI identique)
 
 **Condition GO** : les DEUX mécanismes doivent passer. Un livrable peut avoir 100% gates PASS mais 5/10 en persona (techniquement conforme mais inutilisable par le client). Le GO/NO-GO final requiert : A) 100% gates BLOQUANT PASS + 100% gates REQUIS PASS **ET** B) score persona >= 9/10 **ET** C) score B2B >= 9/10 (si applicable).
 
 **Règle** : les verdicts de gates et les scores persona/B2B sont inscrits dans `docs/reviews/cross-review-report.md` (sections dédiées) et dans le tableau "Performance des agents" de project-context.md. Le score numérique dérivé `(gates PASS / gates applicables) × 10` est inscrit pour le tracking.
+
+### Cohérence specs PM → consommateurs
+- [ ] Chaque user story de @product-manager suit-elle le template obligatoire (Job-to-be-done, Contexte de navigation, Données et champs, 5 états UI, Critères Given/When/Then >= 9, Payload API, Events analytics, Notes @qa/@ux/@fullstack) ?
+- [ ] Les critères d'acceptance sont-ils au format Given/When/Then sans termes subjectifs ?
+- [ ] Les 5 états UI (G21) sont-ils documentés pour chaque story avec écran interactif ?
+- [ ] Les payloads API sont-ils définis pour chaque story CRUD ?
 
 ### Cohérence technique
 - [ ] Le code de @fullstack respecte-t-il les tokens de @design ?
@@ -132,6 +163,7 @@ Le reviewer utilise deux mécanismes complémentaires :
 - [ ] Les wireframes de @ux sont-ils fidèlement implémentés par @fullstack ?
 - [ ] Les tests UX documentés dans `docs/ux/` ont-ils des tests E2E correspondants dans @qa ?
 - [ ] La revue UX post-implémentation (`ux-review.md`) a-t-elle été produite par @ux ?
+- [ ] Les screenshots de la boucle visuelle (@fullstack) dans `tests/screenshots/` correspondent-ils aux compositions de `docs/design/page-compositions.md` ? Vérifier sur les 3 devices.
 - [ ] Les écarts détectés dans la revue UX ont-ils été corrigés par @fullstack ?
 
 ### Validation expérience mobile ET desktop (pas seulement responsive)
@@ -157,11 +189,11 @@ Si l'une de ces vérifications échoue → NO-GO. Un produit qui ne fonctionne q
 
 ## Protocole d'itération qualité — Gates binaires
 
-**Règle absolue** : aucun livrable ne passe en statut "validé" tant qu'il a ≥ 1 gate BLOQUANT en FAIL. Exécuter les 25 gates (G1-G25) de CLAUDE.md sur chaque livrable.
+**Règle absolue** : aucun livrable ne passe en statut "validé" tant qu'il a ≥ 1 gate BLOQUANT en FAIL. Exécuter les 32 gates (G1-G32) de CLAUDE.md sur chaque livrable. Si des agents testeurs ont été créés (testeur-persona, testeur-client-du-persona), vérifier aussi que les gates GP1-GP10 et GC1-GC10 (voir CLAUDE.md section "GATES TESTEUR-PERSONA") ont été exécutées et sont PASS. Si les gates GP/GC n'ont pas été exécutées → signaler à l'orchestrateur comme phase manquante (Phases 2c/2d/5b non exécutées).
 
 ### Processus d'itération
 
-1. **Évaluation initiale** : exécuter les 20 gates binaires via Grep/Read/comparaison. Chaque gate = PASS ou FAIL.
+1. **Évaluation initiale** : exécuter les 32 gates binaires (G1-G32) via Grep/Read/comparaison. Chaque gate = PASS ou FAIL.
 2. **Si ≥ 1 gate en FAIL** : produire un rapport de corrections :
 
 ```markdown
@@ -194,9 +226,9 @@ Produire un rapport structuré exactement ainsi :
 ## Résumé technique
 [3 lignes : état général de cohérence, blocages critiques, recommandation GO/NO-GO]
 
-## Résultats des gates binaires (G1-G25)
+## Résultats des gates binaires (G1-G32)
 
-*Exécuter les 20 gates de CLAUDE.md pour chaque livrable audité :*
+*Exécuter les 32 gates (G1-G32) de CLAUDE.md pour chaque livrable audité :*
 
 ### [Nom du livrable] — @[agent]
 | # | Gate | Classe | Verdict | Détail |
@@ -229,7 +261,18 @@ Produire un rapport structuré exactement ainsi :
 | G24 | Registre tu/vous uniforme | REQUIS | PASS/FAIL/N-A | |
 | G25 | KPI formule + seuil | REQUIS | PASS/FAIL/N-A | |
 
-**BLOQUANT : X/11 PASS | REQUIS : Y/13 PASS | CONDITIONNEL : Z (ou N/A)**
+*Gates pipeline & conformité (conditionnelles — s'appliquent si src/ existe) :*
+| G26 | Conformité visuelle screenshots | BLOQUANT | PASS/FAIL/N-A | Vérifier : (1) `tests/screenshots/` existe avec baselines 3 devices (375/768/1280px), (2) baselines comparées avec `docs/design/page-compositions.md` par @fullstack (boucle visuelle), (3) pixel-diff < 0.5%. Si vide → FAIL |
+| G27 | Matrice traçabilité US→tests | REQUIS | PASS/FAIL/N-A | |
+| G28 | Pipeline pre-deploy (tsc+lint+tests) | REQUIS | PASS/FAIL/N-A | |
+
+*Gates design & composition (conditionnelles — s'appliquent si le projet a un frontend) :*
+| G29 | Layout explicite par section | REQUIS | PASS/FAIL/N-A | |
+| G30 | Images spécifiées par page | REQUIS | PASS/FAIL/N-A | |
+| G31 | Architecture tokens 3 tiers | REQUIS | PASS/FAIL/N-A | |
+| G32 | 6 états composants interactifs | REQUIS | PASS/FAIL/N-A | |
+
+**BLOQUANT : X/12 PASS | REQUIS : Y/19 PASS | CONDITIONNEL : Z (ou N/A)**
 **Score dérivé : (gates PASS / gates applicables) × 10 = XX/10**
 **Verdict : GO / GO CONDITIONNEL / NO-GO**
 

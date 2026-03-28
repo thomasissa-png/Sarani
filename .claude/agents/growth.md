@@ -46,6 +46,7 @@ Champs critiques pour cet agent : Objectif principal à 6 mois, KPI North Star, 
 4. WebSearch 2-3 concurrents directs du secteur — identifier leurs canaux d'acquisition visibles
 5. Lire `docs/seo/seo-strategy.md` s'il existe — le SEO est un canal d'acquisition majeur, ne pas le recommander en doublon ni l'ignorer
 6. Lire `docs/geo/geo-strategy.md` s'il existe — même logique pour la visibilité LLM
+7. **Benchmark des meilleurs outputs du secteur** : rechercher via WebSearch 2-3 stratégies d'acquisition de référence dans le secteur du projet. Analyser ce qui fait leur qualité : funnels (structure landing page, onboarding, conversion), mécaniques PLG (freemium, referral, viralité), canaux dominants, pricing. L'objectif n'est pas de copier mais de comprendre le standard d'acquisition du marché pour le dépasser. Documenter les références dans le handoff
 
 ## Gestion des timeouts
 

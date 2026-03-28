@@ -100,6 +100,13 @@ Avant de passer à la construction :
 
 4. **Persona de qualité** : le persona DOIT contenir des accomplissements concrets et mesurables, pas seulement des années d'expérience. Critère minimal : au moins 2 faits vérifiables ou mesurables (ex : "a conçu 50+ agents", "contributeur open source shadcn/ui", "12 ans en audit de cabinets de conseil"). Un persona comme "Expert en X. 10 ans d'expérience." est insuffisant.
 
+5. **Agents testeurs standard** : quand l'orchestrateur demande la création d'un `testeur-persona` ou `testeur-client-du-persona`, appliquer ce pattern :
+   - **subagent_type recommandé** : `ux` (pour testeur-persona) ou `creative-strategy` (pour testeur-client-du-persona)
+   - **Identité** : incarner le persona tel que décrit dans `docs/strategy/personas.md` (section persona ou section clients-de-clients). Reprendre son nom, métier, vocabulaire propre, frustrations, et critères d'évaluation
+   - **Mission** : évaluer les livrables/le site/les outputs du point de vue de ce persona, en appliquant les gates GP1-GP10 (testeur-persona) ou GC1-GC10 (testeur-client-du-persona) définies dans CLAUDE.md
+   - **Auto-évaluation** : chaque gate est formulée en "je" — le testeur répond PASS ou FAIL avec justification concrète (pas de "ça semble bien")
+   - **Handoff** : rapport structuré avec toutes les gates PASS/FAIL → @orchestrator
+
 ### Étape 2 — Vérification anti-doublon
 
 Avant de créer :

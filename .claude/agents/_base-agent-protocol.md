@@ -14,7 +14,7 @@ Les règles ci-dessous sont AUSSI présentes dans `CLAUDE.md` (qui est toujours 
 1. Lire `project-context.md` à la racine
 2. Si absent → STOP. Afficher : "project-context.md manquant. Remplis le template dans templates/ avant que je puisse travailler."
 3. Lire le tableau "Historique des interventions agents" — comprendre les décisions déjà prises. Ne jamais contredire sans signaler
-4. Lire `docs/lessons-learned.md` si existant — intégrer les leçons des projets précédents (patterns qui marchent, erreurs à éviter)
+4. Lire `docs/lessons-learned.md` si existant — intégrer les leçons des projets précédents (patterns qui marchent, erreurs à éviter). **Attention particulière** aux learnings avec statut propagation = `non-propagé` qui concernent cet agent : si un learning non-propagé impacte le domaine de l'agent, le signaler dans le handoff et l'intégrer dans le livrable
 5. Vérifier que les champs critiques pour cet agent sont remplis
 6. Si champs critiques vides → lister les champs manquants, refuser d'avancer
 ```
@@ -49,6 +49,21 @@ Si un livrable amont référencé dans la calibration n'existe pas :
 4. **Recommander** l'invocation de l'agent manquant pour la suite
 
 **Partie variable** : chaque agent définit quels livrables amont sont bloquants vs optionnels.
+
+---
+
+## Calibration par les meilleures références marché (standard)
+
+Quand un agent produit un livrable destiné à l'utilisateur final ou aux clients du persona (landing page, annonce, mémoire technique, email, rapport, document généré par la plateforme), il DOIT :
+
+1. **Avant de produire** : lire `docs/strategy/competitive-benchmark.md` s'il existe. Identifier les standards de qualité du secteur (format, longueur, structure, niveau de détail, ton)
+2. **WebSearch de référence** : rechercher 2-3 exemples réels du type de livrable à produire dans le secteur du projet (ex: "meilleur mémoire technique appel d'offres BTP", "annonce immobilière premium exemple", "landing page SaaS conversion élevée"). Analyser ce qui fait leur qualité : structure, arguments, preuves, mise en page, CTA
+3. **Objectif : battre la référence marché, pas juste produire un livrable correct.** Le livrable généré doit être au niveau des meilleurs du secteur, pas au niveau moyen. Le testeur-client-du-persona (gates GC1-GC10) évaluera si le livrable "se distingue positivement de ce que je reçois habituellement" (GC6)
+4. **Documenter la référence** dans le handoff : "Références marché consultées : [URLs]. Standard identifié : [ce qui fait la qualité dans ce secteur]."
+
+**Condition d'application** : cette règle s'applique quand l'agent produit un output visible par un tiers (client, prospect, partenaire, acheteur public). Elle ne s'applique PAS aux livrables internes (specs, audits, stratégies).
+
+**Partie variable** : chaque agent peut préciser les types de références pertinents pour son domaine.
 
 ---
 
@@ -165,7 +180,7 @@ Quand on passe un livrable existant à améliorer :
 
 ## Auto-évaluation (standard)
 
-**Objectif qualité : 100% gates PASS.** Chaque livrable sera évalué par @reviewer via 20 gates binaires (PASS/FAIL) — voir CLAUDE.md. Un livrable avec ≥ 1 gate BLOQUANT en FAIL sera renvoyé pour corrections (max 3 itérations). Les gates sont vérifiables objectivement (Grep, Read, comparaison) — pas de jugement subjectif.
+**Objectif qualité : 100% gates PASS.** Chaque livrable sera évalué par @reviewer via 32 gates binaires G1-G32 (PASS/FAIL) — voir CLAUDE.md. Un livrable avec ≥ 1 gate BLOQUANT en FAIL sera renvoyé pour corrections (max 3 itérations). Les gates sont vérifiables objectivement (Grep, Read, comparaison) — pas de jugement subjectif.
 
 Avant de livrer, répondre mentalement à ces questions :
 
@@ -178,6 +193,67 @@ Avant de livrer, répondre mentalement à ces questions :
 □ Zéro placeholder résiduel : aucun `[PLACEHOLDER]`, `[À REMPLIR]`, `[TODO]`, `[NOM]`, `[EXEMPLE]`, `[XX]` ne subsiste dans le livrable ? (critère Anti-placeholder)
 
 **Partie variable** : chaque agent a ≥5 questions spécifiques à son domaine.
+
+---
+
+## Protocole d'audit structuré — PVU (standard)
+
+Quand un agent reçoit une demande d'audit, d'analyse, de vérification ou de review (mots-clés : "audite", "vérifie", "analyse", "review", "check"), il bascule en **mode audit structuré** et applique ce protocole :
+
+**Condition d'application** : le PVU s'applique quand le sujet de la demande est un livrable existant, du code existant, ou un système déployé à vérifier. Il ne s'applique PAS quand la demande est de produire un nouveau livrable (même si le verbe "analyser" est utilisé — ex : "analyse les besoins" = production, pas audit).
+
+### Étape 1 — Construction de la grille de gates
+
+**Couche 1 : Gates existantes applicables** — filtrer parmi G1-G32 les gates pertinentes pour le sujet audité :
+
+| Type d'audit | Gates applicables (minimum) |
+|---|---|
+| Code / feature | G15 (placeholders), G21 (5 états UI), G23 (0 hardcodé), G26 (screenshots), G28 (pipeline) |
+| Contenu / copy | G8 (ton brand), G10 (0 vague), G15 (placeholders), G16-G17 (spécificité), G24 (registre) |
+| Design / UI | G21 (5 états), G22 (contrastes WCAG), G23 (tokens), G26 (screenshots) |
+| SEO / GEO | G13 (0 donnée inventée), G16 (nom projet), G18 (refs livrables) |
+| Stratégie / specs | G5 (persona), G6 (KPI), G7 (0 contradiction), G12 (implémentable), G19 (pas copiable) |
+| Cohérence croisée | G5, G6, G7, G14 (livrables absents), G18 (refs par chemin) |
+| Performance / infra | G28 (pipeline), G23 (0 hardcodé), G15 (placeholders) |
+| Juridique / RGPD | G4 (sources), G13 (0 donnée inventée), G15 (placeholders), G19 (pas copiable) |
+| Analytics / tracking | G25 (KPI formule + seuil), G6 (KPI North Star), G4 (sources) |
+| IA / coûts LLM | G4 (sources), G13 (0 donnée inventée), G12 (implémentable) |
+
+**Couche 2 : Gates ad-hoc** — l'agent génère 3-7 gates spécifiques au sujet, en format binaire PASS/FAIL :
+
+```
+| # | Gate | Classe | Méthode de vérification |
+|---|---|---|---|
+| A1 | [description précise] | BLOQUANT/REQUIS | [Grep X / Read Y / test Z] |
+```
+
+**Règle** : les gates ad-hoc sont définies AVANT l'audit, pas après. Définir les critères d'abord, évaluer ensuite.
+
+### Étape 2 — Exécution et rapport
+
+```markdown
+## Audit [sujet] — @[agent]
+
+### Gates existantes applicables
+| # | Gate | Verdict | Évidence |
+|---|---|---|---|
+| GXX | [description] | PASS/FAIL | [preuve par Grep/Read] |
+
+### Gates ad-hoc
+| # | Gate | Classe | Verdict | Évidence |
+|---|---|---|---|---|
+| A1 | [description] | BLOQUANT | PASS/FAIL | [preuve] |
+
+### Verdict : GO / GO CONDITIONNEL / NO-GO
+- X gates BLOQUANT PASS / Y total
+- Actions correctives : [si FAIL]
+```
+
+### Étape 3 — Learnings
+
+Chaque gate FAIL génère un `[LEARNING DÉTECTÉ]` dans le handoff (voir section "Contribution aux learnings"). Si une gate ad-hoc revient en FAIL sur 3+ audits différents → la signaler pour promotion en gate permanente (G29+).
+
+**Partie variable** : chaque agent a ses gates ad-hoc récurrentes (spécifiques à son domaine). Les documenter dans la section d'auto-évaluation de l'agent.
 
 ---
 
@@ -194,6 +270,19 @@ Quand un agent modifie un livrable existant (pas une première production — un
 ---
 
 ## Protocole de fin de livrable (standard)
+
+### Vérification gates BLOQUANT (obligatoire — mode direct ET autopilot)
+
+Avant de livrer, exécuter via Grep/Read les gates BLOQUANT applicables au type de livrable produit. Utiliser le mapping du PVU (section "Protocole d'audit structuré" ci-dessus) pour sélectionner les gates pertinentes. Minimum :
+- **G5** (persona identique à project-context.md) — Grep le nom du persona
+- **G7** (0 contradiction avec livrables amont) — Read les 2-3 livrables amont référencés, vérifier l'alignement
+- **G12** (implémentable sans question) — chaque recommandation a un verbe d'action + objet clair + critère de done
+- **G15** (0 placeholder résiduel) — Grep patterns ci-dessous
+- **G19** (pas copiable tel quel pour un concurrent) — le livrable est-il spécifique au projet ?
+
+Documenter le résultat dans le handoff : `Gates BLOQUANT vérifiées : G5 PASS, G7 PASS, G12 PASS, G15 PASS, G19 PASS`. Si une gate FAIL → corriger AVANT de livrer. Ne JAMAIS livrer avec une gate BLOQUANT en FAIL.
+
+**Pourquoi** : en mode direct (sans orchestrateur), c'est le SEUL filet de sécurité formel. En mode autopilot, c'est une vérification précoce qui évite les relances correctives.
 
 ### Vérification anti-placeholder (obligatoire)
 
@@ -213,6 +302,21 @@ Ne jamais valider un livrable uniquement sur sa rédaction — valider sur ses *
 - **Agents IA** (@ia) : si le livrable contient des prompts LLM, tester au moins 1 prompt avec un input réaliste et évaluer l'output
 
 Si les vrais outputs révèlent des problèmes (hallucinations, incohérences, placeholders non remplacés, ton inadapté), corriger le livrable AVANT de le finaliser.
+
+### Contribution aux learnings (standard)
+
+Si un agent détecte pendant sa production un problème, un pattern efficace, un biais, ou une incohérence qui pourrait bénéficier aux sessions futures, il DOIT le documenter dans son handoff avec le format :
+
+```
+[LEARNING DÉTECTÉ]
+- Description : [ce qui a été observé]
+- Catégorie : problème / pattern / biais / insistance / recommandation
+- Sévérité estimée : P0 / P1 / P2
+- Cible propagation : règle-globale / agent-spécifique / prompts / documentation / founder-prefs / aucune
+- Fichiers impactés : [liste exacte si connue]
+```
+
+L'orchestrateur collecte ces signaux et les inscrit dans `docs/lessons-learned.md` lors de la clôture. L'agent NE modifie PAS lessons-learned.md lui-même — il signale, l'orchestrateur centralise.
 
 ### Mise à jour de l'historique
 

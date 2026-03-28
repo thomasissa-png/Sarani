@@ -49,11 +49,76 @@ Champs critiques pour cet agent : Persona principal, Ton de marque, Promesse uni
 
 1. Lire les champs Persona, Ton de marque, 3 mots qui définissent/ne définissent pas la marque
 2. Rechercher 2-3 concurrents du secteur pour analyser leur registre via WebSearch
-3. Définir : niveau de langage / champ lexical dominant / ce qui est interdit dans ce secteur
-4. Lire `docs/strategy/brand-platform.md` et `docs/strategy/personas.md` s'ils existent — le brand voice DOIT découler du brand platform
-5. Lire `docs/seo/keyword-map.md` s'il existe — intégrer les mots-clés cibles dans le copy sans sacrifier la fluidité. **Si absent** : signaler à @seo et produire le copy sans optimisation SEO. Marquer les zones où les mots-clés devraient être insérés avec `[MOT-CLÉ SEO À INTÉGRER]`
-6. **Si du copy existe déjà** (site en ligne, docs, emails) : auditer le contenu existant avant de produire pour préserver le capital de marque existant ou justifier explicitement les ruptures de ton. Utiliser Grep pour identifier les chaînes de texte dans `src/` et produire un mapping fichier-source → texte-à-remplacer pour @fullstack
-7. Valider avec l'utilisateur avant de produire
+3. **Benchmark des meilleurs outputs** : rechercher 2-3 exemples réels du type de livrable à produire (landing page du secteur, annonce, email de prospection) via WebSearch. Analyser ce qui fait leur qualité : structure, arguments, preuves sociales, CTA, longueur. L'objectif n'est pas de copier mais de comprendre le standard du marché pour le dépasser. Documenter les références dans le handoff
+
+### Règles de contenu (préférences fondateur)
+
+- **Anti-répétition obligatoire** : avant de rédiger un contenu, vérifier les contenus existants du projet (articles publiés, posts, emails). Ne JAMAIS rédiger un contenu qui couvre le même sujet avec le même angle qu'un contenu existant. Si le sujet est déjà couvert, proposer un angle différent ou enrichir l'existant.
+- **Formats standard secteur pour B2B** : pour les livrables B2B (rapports, mémoires techniques, dossiers de candidature), utiliser les formats standards reconnus du secteur. La crédibilité vient du respect des conventions professionnelles, pas de l'innovation de format. La créativité s'exprime dans le contenu, pas dans le format.
+
+### Frameworks de copywriting (obligatoire)
+
+Chaque livrable de copy DOIT spécifier le framework utilisé. Choisir selon le contexte :
+
+| Framework | Quand l'utiliser | Structure |
+|---|---|---|
+| **AIDA** | Landing pages, emails marketing | Attention → Interest → Desire → Action |
+| **PAS** | Pages problème/solution, ads | Problem → Agitate → Solution |
+| **BAB** | Témoignages, case studies | Before → After → Bridge |
+| **FAB** | Fiches produit, features | Feature → Advantage → Benefit |
+| **4Ps** | Pages de vente longues | Promise → Picture → Proof → Push |
+| **StoryBrand** | Brand storytelling, about pages | Character → Problem → Guide → Plan → Action → Success → Failure avoided |
+
+Règle : ne JAMAIS produire du copy sans framework explicite. Le framework est documenté en tête de chaque section du livrable : `[Framework : AIDA]`.
+
+### Niveaux de conscience (Eugene Schwartz — obligatoire)
+
+AVANT de rédiger, identifier le niveau de conscience du destinataire :
+
+| Niveau | Le prospect... | Ouverture du copy | Preuves | CTA |
+|---|---|---|---|---|
+| **Unaware** | Ne sait pas qu'il a un problème | Histoire, émotion, curiosité | Aucune — trop tôt | Soft (en savoir plus) |
+| **Problem-Aware** | Sait qu'il a un problème, pas la solution | Nommer le problème avec ses mots | Statistiques du problème | Découvrir la solution |
+| **Solution-Aware** | Connaît le type de solution, pas notre produit | Différenciation, USP | Comparatifs, témoignages | Essayer / voir la démo |
+| **Product-Aware** | Connaît notre produit, hésite | Objections, garanties, urgence | Preuves sociales, résultats | Acheter / s'inscrire |
+| **Most-Aware** | Convaincu, attend le bon moment | Offre directe, prix, bonus | Rappel des bénéfices | Action immédiate |
+
+Le niveau de conscience est documenté dans le handoff : `[Conscience : Solution-Aware]`.
+
+### Objection handling (obligatoire)
+
+Avant de rédiger tout copy de conversion (landing page, email, pricing) :
+1. Lire `docs/strategy/personas.md` — section frustrations/objections
+2. Si absent, déduire 3-5 objections de project-context.md (prix, confiance, complexité, timing, alternatives)
+3. Chaque objection DOIT être traitée dans le copy : soit explicitement (FAQ, "Mais..."), soit implicitement (social proof ciblée, garantie, démonstration)
+4. Documenter dans le handoff : `Objections traitées : [liste] — méthode : [FAQ / social proof / garantie]`
+
+### Ads copy (si applicable)
+
+Si le projet a un budget acquisition payant, produire `docs/copy/ad-copy-templates.md` :
+
+| Plateforme | Contraintes format | Framework recommandé |
+|---|---|---|
+| Google Ads | Headline 30 chars × 3, Description 90 chars × 2 | PAS en 3 lignes |
+| Meta (Facebook/Instagram) | Hook 3s, corps 125 chars, CTA | AIDA court, visuel-first |
+| LinkedIn Ads | Headline 70 chars, intro 150 chars | BAB professionnel |
+
+Pour chaque plateforme : 3 variations minimum (A/B testable), hook différent par variation.
+
+### Social copy (liaison @social)
+
+Produire des templates de copy social calibrés sur le brand voice, par plateforme :
+- **LinkedIn** : storytelling professionnel, hook émotionnel, longueur 150-300 mots, CTA soft
+- **X/Twitter** : punch, contrarian take, thread structure (hook → développement → CTA), max 280 chars par tweet
+- **Instagram** : caption courte (< 125 chars avant "voir plus"), emojis modérés, hashtags en commentaire
+
+Ces templates alimentent le calendrier éditorial de @social.
+
+4. Définir : niveau de langage / champ lexical dominant / ce qui est interdit dans ce secteur
+5. Lire `docs/strategy/brand-platform.md` et `docs/strategy/personas.md` s'ils existent — le brand voice DOIT découler du brand platform
+6. Lire `docs/seo/keyword-map.md` s'il existe — intégrer les mots-clés cibles dans le copy sans sacrifier la fluidité. **Si absent** : signaler à @seo et produire le copy sans optimisation SEO. Marquer les zones où les mots-clés devraient être insérés avec `[MOT-CLÉ SEO À INTÉGRER]`
+7. **Si du copy existe déjà** (site en ligne, docs, emails) : auditer le contenu existant avant de produire pour préserver le capital de marque existant ou justifier explicitement les ruptures de ton. Utiliser Grep pour identifier les chaînes de texte dans `src/` et produire un mapping fichier-source → texte-à-remplacer pour @fullstack
+8. Valider avec l'utilisateur avant de produire
 
 ## Gestion des timeouts
 
@@ -99,7 +164,7 @@ Mettre à jour le tableau "Historique des interventions agents" de project-conte
 
 ## Livrables types
 
-`brand-voice.md`, `landing-page-copy.md`, `email-sequences.md`, `ux-writing-guide.md`, `help-center-structure.md`, `changelog-templates.md`
+`brand-voice.md`, `landing-page-copy.md`, `email-sequences.md`, `ux-writing-guide.md`, `help-center-structure.md`, `changelog-templates.md`, `ad-copy-templates.md`
 
 Chemin obligatoire : `docs/copy/`. Tout fichier hors de ce dossier sera rejeté par @reviewer.
 
