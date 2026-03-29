@@ -231,9 +231,17 @@ function extractAssetLineItems(
       }
 
       if (!assetName) continue; // No name found — skip this column
+
+      // Skip generic/summary column names that are NOT real asset types
+      const nameLower = assetName.toLowerCase().trim();
+      if (["assets", "total", "total assets", "sum", "count", "quantity", "nb", "number", "nombre", "online", "offline"].includes(nameLower)) continue;
     } else {
       // The header row has the ASSET NAME — look for price in the row(s) below
       assetName = headerCellStr;
+
+      // Skip generic/summary column names
+      const textNameLower = assetName.toLowerCase().trim();
+      if (["assets", "total", "total assets", "sum", "count", "quantity", "nb", "number", "nombre", "online", "offline"].includes(textNameLower)) continue;
 
       // Scan rows below the header for a price value in this column
       unitPrice = 0;

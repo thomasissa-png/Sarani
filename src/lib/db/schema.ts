@@ -611,6 +611,7 @@ export const projectPreviews = pgTable(
     clientName: text("client_name").notNull(),
     projectName: text("project_name").notNull(),
     brief: text("brief"),
+    sharepointLink: text("sharepoint_link"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
