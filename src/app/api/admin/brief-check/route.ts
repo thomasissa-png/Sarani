@@ -63,8 +63,36 @@ Possible checks (only flag if actually missing):
 - C8: No usage context (web/print/social/etc) → warning
 - C9: Contradiction between volume and deadline → error
 
+CONDITIONAL CHECKS BY PROJECT TYPE:
+Only evaluate these if the project type matches. Add them to the checks array alongside C1-C9.
+
+If the project type is "design", also check:
+- C10-DESIGN: Are exact dimensions specified for each deliverable? (e.g., 728x90px, 1080x1080px) → error
+- C11-DESIGN: Is the output format specified? (PNG, SVG, PDF, JPG) → error
+- C12-DESIGN: Is the number of variations/formats specified? → warning
+- C13-DESIGN: Are brand guidelines referenced or provided? → warning
+
+If the project type is "translation", also check:
+- C10-TRANSLATION: Is the source language explicitly stated? → error
+- C11-TRANSLATION: Are ALL target languages explicitly listed? → error
+- C12-TRANSLATION: Is the register/tone specified? (formal, informal, technical) → warning
+- C13-TRANSLATION: Is an existing client glossary or terminology guide mentioned? → warning
+
+If the project type is "video", also check:
+- C10-VIDEO: Is a target duration specified? (in seconds or minutes) → error
+- C11-VIDEO: Is the aspect ratio specified? (16:9, 9:16, 1:1) → error
+- C12-VIDEO: Is the distribution platform specified? (TikTok, YouTube, LinkedIn, website) → warning
+- C13-VIDEO: Is it specified whether subtitles are required? → warning
+- C14-VIDEO: Is it specified whether voiceover is required? → warning
+
+If the project type is "social", also check:
+- C10-SOCIAL: Are the target platforms listed? (LinkedIn, Instagram, TikTok, etc.) → error
+- C11-SOCIAL: Is the number of posts/variants specified? → error
+- C12-SOCIAL: Are publication dates or a calendar mentioned? → warning
+
 Rules:
 - Only flag REAL issues. If info is present, do not flag.
+- Apply conditional checks ONLY when the project type matches. Do not flag conditional checks for unrelated project types.
 - status = "error" if any check is "error". "warning" if only warnings. "ok" if no issues.
 - Return VALID JSON only. No markdown, no extra text.`;
 
