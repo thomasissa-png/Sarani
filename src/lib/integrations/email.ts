@@ -100,6 +100,106 @@ export async function markEmailAsRead(messageId: string): Promise<void> {
   );
 }
 
+// ─── Send / Reply ─────────────────────────────────────────────────────────
+
+export interface SendEmailParams {
+  to: string;
+  subject: string;
+  body: string; // HTML body
+  replyToMessageId?: string; // for replies — sets In-Reply-To header
+}
+
+export interface SendEmailResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+/**
+ * Send a new email or reply to an existing message.
+ * Uses Microsoft Graph: POST /me/sendMail (new) or POST /me/messages/{id}/reply (reply).
+ * Retries once on 429 (throttled) or 503 (service unavailable).
+ */
+export async function sendEmail(
+  params: SendEmailParams
+): Promise<SendEmailResult> {
+  const { to, subject, body, replyToMessageId } = params;
+
+  const sendWithRetry = async (attempt: number): Promise<SendEmailResult> => {
+    try {
+      if (replyToMessageId) {
+        // Reply to existing message
+        await graphFetch<Record<string, unknown>>(
+          `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(replyToMessageId)}/reply`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              message: {
+                toRecipients: [
+                  {
+                    emailAddress: { address: to },
+                  },
+                ],
+                subject,
+                body: {
+                  contentType: "HTML",
+                  content: body,
+                },
+              },
+              comment: "",
+            }),
+          }
+        );
+
+        // Graph /reply returns 202 with no body — no messageId available
+        return { success: true };
+      } else {
+        // Send new email
+        await graphFetch<Record<string, unknown>>(
+          `/users/${encodeURIComponent(EMAIL_ADDRESS)}/sendMail`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              message: {
+                subject,
+                body: {
+                  contentType: "HTML",
+                  content: body,
+                },
+                toRecipients: [
+                  {
+                    emailAddress: { address: to },
+                  },
+                ],
+              },
+              saveToSentItems: true,
+            }),
+          }
+        );
+
+        // Graph /sendMail returns 202 with no body — no messageId available
+        return { success: true };
+      }
+    } catch (error: unknown) {
+      // Retry once on 429 or 503
+      const statusMatch =
+        error instanceof Error &&
+        (error.message.includes("429") || error.message.includes("503"));
+
+      if (statusMatch && attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return sendWithRetry(1);
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Failed to send email";
+      return { success: false, error: message };
+    }
+  };
+
+  return sendWithRetry(0);
+}
+
 // ─── HTML Stripping ────────────────────────────────────────────────────────
 
 /**
