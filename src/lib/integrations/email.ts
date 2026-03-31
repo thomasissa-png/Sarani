@@ -200,6 +200,85 @@ export async function sendEmail(
   return sendWithRetry(0);
 }
 
+// ─── Draft Creation ───────────────────────────────────────────────────────
+
+export interface CreateDraftParams {
+  to: string;
+  subject: string;
+  body: string; // HTML body
+  replyToMessageId?: string;
+}
+
+export interface CreateDraftResult {
+  success: boolean;
+  draftId?: string;
+  webLink?: string; // Outlook web link for the PM to review and send
+  error?: string;
+}
+
+/**
+ * Create a draft email (NOT sent). The PM reviews and sends manually.
+ * Uses Graph API: POST /me/messages (creates in Drafts folder).
+ * For replies: POST /me/messages/{id}/createReply then PATCH the draft body.
+ */
+export async function createDraft(
+  params: CreateDraftParams
+): Promise<CreateDraftResult> {
+  const { to, subject, body, replyToMessageId } = params;
+
+  try {
+    if (replyToMessageId) {
+      // Create a reply draft
+      const replyDraft = await graphFetch<{ id: string; webLink?: string }>(
+        `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(replyToMessageId)}/createReply`,
+        { method: "POST", body: JSON.stringify({}) }
+      );
+
+      // Update the draft body with our content
+      const updated = await graphFetch<{ id: string; webLink?: string }>(
+        `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(replyDraft.id)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            body: { contentType: "HTML", content: body },
+          }),
+        }
+      );
+
+      return {
+        success: true,
+        draftId: updated.id,
+        webLink: updated.webLink,
+      };
+    }
+
+    // Create a new draft (not a reply)
+    const draft = await graphFetch<{ id: string; webLink?: string }>(
+      `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          subject,
+          body: { contentType: "HTML", content: body },
+          toRecipients: [
+            { emailAddress: { address: to } },
+          ],
+        }),
+      }
+    );
+
+    return {
+      success: true,
+      draftId: draft.id,
+      webLink: draft.webLink,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to create draft";
+    return { success: false, error: message };
+  }
+}
+
 // ─── HTML Stripping ────────────────────────────────────────────────────────
 
 /**

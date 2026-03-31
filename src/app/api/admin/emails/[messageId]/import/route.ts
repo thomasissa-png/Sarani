@@ -52,18 +52,43 @@ interface ImportResponse {
 
 // ─── Claude Prompt ──────────────────────────────────────────────────────────
 
-const EXTRACTION_SYSTEM_PROMPT = `You are Sarani's Project Manager. Analyze this client email and extract a structured project brief.
+const EXTRACTION_SYSTEM_PROMPT = `You are Sarani's Project Manager. Analyze this client email and extract a structured project brief using Sarani's 6-section template.
 
 Return JSON:
 {
   "project_name": "concise title max 60 chars",
   "project_type": "design"|"video"|"translation"|"other",
-  "brief_markdown": "structured Markdown brief: ## Context\\n## Deliverables\\n## Requirements",
+  "brief_markdown": "the brief in Markdown using the 6-section template below",
   "deadline": "ISO date or null",
   "missing_info": ["list of missing critical info"]
 }
 
-Rules: Never invent data. Keep brief factual. Return valid JSON only.`;
+The brief_markdown MUST follow this exact 6-section structure:
+
+🌟 Introduction
+[Context of the project, objective, client background — show understanding of their business need]
+
+✈️ Brief
+[Detailed description of the request, technical specs, references, creative direction — everything the production team needs]
+
+🚚 Deliverables
+[Exhaustive list of deliverables with formats, dimensions, languages, quantities]
+
+📍 Source Files
+[SharePoint links to source assets — or "To be provided by client" if not mentioned in the email]
+
+💬 Branding
+[Client brand guidelines, colors, fonts, logo usage — extract from email or "See client brand guidelines on SharePoint"]
+
+➡️ Others
+[Deadline, special constraints, additional notes — extract any scheduling, budget, or process requirements from the email]
+
+Rules:
+- Never invent data. If information is not in the email, say "To be provided by client" or "Not specified".
+- Keep brief factual and actionable.
+- Each section must have content (even if just "Not specified" or "To be confirmed").
+- Use the emoji headers exactly as shown above.
+- Return valid JSON only.`;
 
 const REPLY_SYSTEM_PROMPT = `You are a project manager at Sarani, an international creative agency (35 experts, 5 continents, 24/7 delivery).
 You are writing a reply to a client email that just came in with a project request.
