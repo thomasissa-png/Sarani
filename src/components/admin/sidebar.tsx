@@ -39,46 +39,31 @@ type NavItem = {
 };
 
 const CORE_NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "grid" },
-  { label: "Tracker", href: "/admin/tracker", icon: "activity" },
-  { label: "Project Brief", href: "/admin/quick-brief", icon: "zap" },
-  { label: "Quotes", href: "/admin/quotes", icon: "receipt" },
-  { label: "Landing Pages", href: "/admin/landing-pages", icon: "monitor" },
+  { label: "Inbox", href: "/admin", icon: "mail" },
+  { label: "Projects", href: "/admin/tracker", icon: "activity" },
+  { label: "Clients", href: "/admin/clients", icon: "users" },
+  { label: "Arya", href: "/admin/arya", icon: "zap" },
 ];
 
 const SETTINGS_NAV: NavItem[] = [
-  { label: "Clients", href: "/admin/clients", icon: "users" },
-  { label: "Users", href: "/admin/users", icon: "user-check" },
+  { label: "Settings", href: "/admin/users", icon: "user-check" },
 ];
 
-type AgentGroup = {
-  label: string;
-  items: NavItem[];
-};
-
-const AGENT_GROUPS: AgentGroup[] = [
-  {
-    label: "AI Agents",
-    items: [
-      { label: "Agent Teams", href: "/admin/teams", icon: "team" },
-      { label: "Storyboards", href: "/admin/storyboards", icon: "film" },
-      { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
-      { label: "Art Direction", href: "/admin/agents/creative", icon: "palette" },
-      { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
-      { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
-      { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
-      { label: "Video Script", href: "/admin/agents/video-script", icon: "video" },
-      { label: "Proposals & Decks", href: "/admin/agents/proposal", icon: "file-text" },
-    ],
-  },
-  {
-    label: "AI Sarani",
-    items: [
-      { label: "SEO", href: "/admin/agents/seo", icon: "search" },
-      { label: "Social", href: "/admin/agents/social", icon: "share" },
-      { label: "Case Studies", href: "/admin/agents/case-studies", icon: "briefcase" },
-    ],
-  },
+// Agent sub-items shown inside collapsible Arya section
+const ARYA_AGENTS: NavItem[] = [
+  { label: "Agent Teams", href: "/admin/teams", icon: "team" },
+  { label: "Storyboards", href: "/admin/storyboards", icon: "film" },
+  { label: "Translator", href: "/admin/agents/translator", icon: "globe" },
+  { label: "Art Direction", href: "/admin/agents/creative", icon: "palette" },
+  { label: "Copywriter", href: "/admin/agents/copywriter", icon: "type" },
+  { label: "Designer", href: "/admin/agents/designer", icon: "pen-tool" },
+  { label: "Legal", href: "/admin/agents/legal", icon: "shield" },
+  { label: "Video Script", href: "/admin/agents/video-script", icon: "video" },
+  { label: "Proposals & Decks", href: "/admin/agents/proposal", icon: "file-text" },
+  { label: "SEO", href: "/admin/agents/seo", icon: "search" },
+  { label: "Social", href: "/admin/agents/social", icon: "share" },
+  { label: "Case Studies", href: "/admin/agents/case-studies", icon: "briefcase" },
+  { label: "Proofreader", href: "/admin/agents/proofreader", icon: "check-circle" },
 ];
 
 function NavIcon({ name, className }: { name: string; className?: string }) {
@@ -243,16 +228,12 @@ function BadgeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
+function NavLink({ item, onNavigate, badgeCount }: { item: NavItem; onNavigate?: () => void; badgeCount?: number }) {
   const pathname = usePathname();
-  const badges = useContext(BadgeContext);
   const isActive =
     item.href === "/admin"
       ? pathname === "/admin"
       : pathname.startsWith(item.href);
-
-  // Show badge on Dashboard if there are errors
-  const showBadge = item.href === "/admin" && badges.errors > 0;
 
   return (
     <Link
@@ -267,18 +248,74 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
     >
       <NavIcon name={item.icon} className="w-4 h-4 shrink-0" />
       {item.label}
-      {showBadge && (
-        <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold text-white bg-red-500 rounded-full">
-          {badges.errors}
+      {badgeCount !== undefined && badgeCount > 0 && (
+        <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold text-white bg-brand-flame rounded-full">
+          {badgeCount}
         </span>
       )}
     </Link>
   );
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function AryaCollapsible({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const isAryaActive = pathname.startsWith("/admin/arya") || pathname.startsWith("/admin/agents") || pathname.startsWith("/admin/teams") || pathname.startsWith("/admin/storyboards");
+  const [open, setOpen] = useState(isAryaActive);
+
   return (
-    <BadgeProvider>
+    <div>
+      {/* Arya parent link + toggle */}
+      <div className="flex items-center">
+        <Link
+          href="/admin/arya"
+          onClick={onNavigate}
+          className={cn(
+            "flex-1 flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+            pathname === "/admin/arya"
+              ? "bg-brand-black text-white"
+              : "text-neutral-600 hover:bg-neutral-200 hover:text-brand-black"
+          )}
+        >
+          <NavIcon name="zap" className="w-4 h-4 shrink-0" />
+          Arya
+        </Link>
+        <button
+          onClick={() => setOpen((prev) => !prev)}
+          className="p-1.5 rounded-lg text-neutral-400 hover:text-brand-black hover:bg-neutral-200 transition-colors"
+          aria-label={open ? "Collapse Arya agents" : "Expand Arya agents"}
+        >
+          <svg
+            className={cn("w-4 h-4 transition-transform", open && "rotate-90")}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Collapsible agent list */}
+      {open && (
+        <div className="ml-4 mt-1 space-y-0.5 border-l border-neutral-200 pl-2">
+          {ARYA_AGENTS.map((agent) => (
+            <NavLink key={agent.href} item={agent} onNavigate={onNavigate} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SidebarContentInner({ onNavigate }: { onNavigate?: () => void }) {
+  const badges = useContext(BadgeContext);
+
+  return (
+    <>
       <div className="p-4 border-b border-neutral-300" onClick={onNavigate}>
         <div className="inline-flex items-center gap-2">
           <Logo variant="dark" width={100} href="/admin" />
@@ -291,32 +328,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="flex-1 p-4 overflow-y-auto flex flex-col">
         {/* Core navigation */}
         <div className="space-y-1">
-          {CORE_NAV.map((item) => (
-            <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+          {CORE_NAV.filter((item) => item.label !== "Arya").map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              onNavigate={onNavigate}
+              badgeCount={item.href === "/admin" ? badges.errors : undefined}
+            />
           ))}
+          <AryaCollapsible onNavigate={onNavigate} />
         </div>
-
-        {/* AI Agents — grouped */}
-        {AGENT_GROUPS.map((group) => (
-          <div key={group.label}>
-            <div className="pt-4 pb-2">
-              <p className="px-3 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-                {group.label}
-              </p>
-            </div>
-            <div className="space-y-1">
-              {group.items.map((item) => (
-                <NavLink key={item.href} item={item} onNavigate={onNavigate} />
-              ))}
-            </div>
-          </div>
-        ))}
 
         {/* Settings — pushed to bottom */}
         <div className="mt-auto pt-4 border-t border-neutral-200">
-          <p className="px-3 pb-2 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-            Settings
-          </p>
           <div className="space-y-1">
             {SETTINGS_NAV.map((item) => (
               <NavLink key={item.href} item={item} onNavigate={onNavigate} />
@@ -324,6 +348,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
       </nav>
+    </>
+  );
+}
+
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <BadgeProvider>
+      <SidebarContentInner onNavigate={onNavigate} />
     </BadgeProvider>
   );
 }

@@ -1,518 +1,409 @@
-import { db } from "@/lib/db";
-import { clients, agentOutputs, caseStudyCandidates, landingPages } from "@/lib/db/schema";
-import { sql, eq, desc, gte, and } from "drizzle-orm";
-import Link from "next/link";
+"use client";
 
-export const dynamic = "force-dynamic";
+// SSR: false — Client Component for interactive inbox with filters and actions.
+// This replaces the old SSR dashboard. The inbox is the PM's primary workspace.
 
-// Agent type labels for display
-const AGENT_TYPE_LABELS: Record<string, string> = {
-  pm: "Project Manager",
-  translator: "Translator",
-  "email-drafter": "Email Drafter",
-  "video-script": "Video Script",
-  creative: "Creative",
-  designer: "Designer",
-  legal: "Legal",
-  social: "Social",
-  seo: "SEO",
-  copywriter: "Copywriter",
-  proposal: "Proposal",
-  presentation: "Presentation",
-  proofreader: "Proofreader",
+import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type InboxItemType =
+  | "email_classified"
+  | "ai_team_complete"
+  | "qa_gates_pass"
+  | "followup_alert";
+
+type InboxItemStatus = "pending" | "in_progress" | "done" | "dismissed";
+
+interface InboxItem {
+  id: string;
+  type: InboxItemType;
+  status: InboxItemStatus;
+  title: string | null;
+  summary: string | null;
+  sourceId: string | null;
+  sourceType: string | null;
+  protocol: string | null;
+  projectId: string | null;
+  priority: string | null;
+  pmId: string | null;
+  processedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const TYPE_CONFIG: Record<
+  InboxItemType,
+  { label: string; color: string; bgColor: string }
+> = {
+  email_classified: {
+    label: "Email",
+    color: "text-blue-700",
+    bgColor: "bg-blue-100",
+  },
+  ai_team_complete: {
+    label: "AI Deliverable",
+    color: "text-orange-700",
+    bgColor: "bg-orange-100",
+  },
+  qa_gates_pass: {
+    label: "QA Pass",
+    color: "text-green-700",
+    bgColor: "bg-green-100",
+  },
+  followup_alert: {
+    label: "Follow-up",
+    color: "text-red-700",
+    bgColor: "bg-red-100",
+  },
 };
 
-function getAgentLabel(agentType: string): string {
-  return AGENT_TYPE_LABELS[agentType] ?? agentType;
-}
+type FilterTab = "all" | "urgent" | "email_classified" | "ai_team_complete" | "qa_gates_pass" | "followup_alert";
 
-function formatRelativeDate(date: Date): string {
+const FILTER_TABS: { key: FilterTab; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "urgent", label: "Urgent" },
+  { key: "email_classified", label: "Emails" },
+  { key: "ai_team_complete", label: "AI Deliverables" },
+  { key: "qa_gates_pass", label: "QA" },
+  { key: "followup_alert", label: "Follow-ups" },
+];
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function formatRelativeTime(dateStr: string): { text: string; isUrgent: boolean } {
+  const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+  const diffHours = diffMs / 3_600_000;
+  const diffDays = diffMs / 86_400_000;
 
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const isUrgent = diffHours > 24;
+
+  if (diffHours < 1) {
+    const mins = Math.floor(diffMs / 60_000);
+    return { text: mins < 1 ? "Just now" : `${mins}m ago`, isUrgent };
+  }
+  if (diffHours < 24) {
+    return { text: `${Math.floor(diffHours)}h ago`, isUrgent };
+  }
+  if (diffDays < 7) {
+    return { text: `${Math.floor(diffDays)}d ago`, isUrgent };
+  }
+  return {
+    text: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    isUrgent,
+  };
 }
 
-export default async function AdminDashboardPage() {
-  // Start of the current week (Monday)
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - mondayOffset);
-  weekStart.setHours(0, 0, 0, 0);
+// ─── Component ──────────────────────────────────────────────────────────────
 
-  // 48h ago for action-required alerts
-  const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+export default function InboxPage() {
+  const [items, setItems] = useState<InboxItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Run all queries in parallel
-  const [
-    totalClientsResult,
-    activeClientsResult,
-    totalOutputsResult,
-    outputsThisWeekResult,
-    recentOutputs,
-    errorOutputsCount,
-    caseStudiesGeneratingCount,
-    landingPagesGeneratingCount,
-  ] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(clients)
-      .then((r) => Number(r[0]?.count ?? 0)),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(clients)
-      .where(eq(clients.status, "active"))
-      .then((r) => Number(r[0]?.count ?? 0)),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(agentOutputs)
-      .then((r) => Number(r[0]?.count ?? 0)),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(agentOutputs)
-      .where(gte(agentOutputs.createdAt, weekStart))
-      .then((r) => Number(r[0]?.count ?? 0)),
-    db
-      .select({
-        id: agentOutputs.id,
-        agentType: agentOutputs.agentType,
-        status: agentOutputs.status,
-        createdAt: agentOutputs.createdAt,
-        clientName: clients.name,
-        clientId: agentOutputs.clientId,
-      })
-      .from(agentOutputs)
-      .leftJoin(clients, eq(agentOutputs.clientId, clients.id))
-      .orderBy(desc(agentOutputs.createdAt))
-      .limit(10),
-    // Action Required: errors in last 48h
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(agentOutputs)
-      .where(
-        and(
-          eq(agentOutputs.status, "error"),
-          gte(agentOutputs.createdAt, fortyEightHoursAgo)
-        )
-      )
-      .then((r) => Number(r[0]?.count ?? 0)),
-    // Action Required: case studies generating
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(caseStudyCandidates)
-      .where(eq(caseStudyCandidates.status, "generating"))
-      .then((r) => Number(r[0]?.count ?? 0)),
-    // Action Required: landing pages generating
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(landingPages)
-      .where(eq(landingPages.status, "generating"))
-      .then((r) => Number(r[0]?.count ?? 0)),
-  ]);
+  const fetchItems = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set("status", "pending");
+
+      const res = await fetch(`/api/admin/inbox?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setItems(data.items ?? []);
+      }
+    } catch {
+      // Silently fail — will show empty state
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
+
+  // Refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(fetchItems, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchItems]);
+
+  const handleAction = async (id: string, status: "done" | "dismissed") => {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/inbox", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+      if (res.ok) {
+        // Optimistic removal
+        setItems((prev) => prev.filter((item) => item.id !== id));
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Filter items
+  const filteredItems = items.filter((item) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "urgent") {
+      const diffMs = Date.now() - new Date(item.createdAt).getTime();
+      return diffMs > 24 * 3_600_000;
+    }
+    return item.type === activeFilter;
+  });
+
+  const urgentCount = items.filter((item) => {
+    const diffMs = Date.now() - new Date(item.createdAt).getTime();
+    return diffMs > 24 * 3_600_000;
+  }).length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-brand-black">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-brand-black">Inbox</h1>
         <p className="text-neutral-500 text-sm mt-1">
-          Overview of your clients and agent activity
+          {loading
+            ? "Loading..."
+            : items.length === 0
+              ? "No items waiting"
+              : `${items.length} item${items.length !== 1 ? "s" : ""} waiting`}
         </p>
       </div>
 
-      {/* Action Required */}
-      <ActionRequiredSection
-        errors={errorOutputsCount}
-        caseStudiesGenerating={caseStudiesGeneratingCount}
-        landingPagesGenerating={landingPagesGeneratingCount}
-      />
+      {/* Filter tabs */}
+      <div className="flex flex-wrap gap-2">
+        {FILTER_TABS.map((tab) => {
+          const isActive = activeFilter === tab.key;
+          const count =
+            tab.key === "all"
+              ? items.length
+              : tab.key === "urgent"
+                ? urgentCount
+                : items.filter((i) => i.type === tab.key).length;
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Total Clients" value={totalClientsResult} />
-        <StatCard label="Active Clients" value={activeClientsResult} />
-        <StatCard label="Total Outputs" value={totalOutputsResult} />
-        <StatCard label="Outputs This Week" value={outputsThisWeekResult} />
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveFilter(tab.key)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                isActive
+                  ? "bg-brand-black text-white"
+                  : "bg-white text-neutral-600 hover:bg-neutral-300 border border-neutral-300"
+              )}
+            >
+              {tab.label}
+              {count > 0 && (
+                <span
+                  className={cn(
+                    "ml-1.5 text-xs px-1.5 py-0.5 rounded-full",
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-neutral-200 text-neutral-500"
+                  )}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Project Tracker CTA */}
-      <Link
-        href="/admin/tracker"
-        className="block rounded-xl border border-neutral-300 bg-white p-5 hover:border-brand-cerulean hover:shadow-sm transition-all group"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-brand-black group-hover:text-brand-cerulean transition-colors">
-              Project Tracker
-            </h2>
-            <p className="text-neutral-500 text-sm mt-0.5">
-              Unified view across ClickUp, SharePoint &amp; Evoliz
-            </p>
-          </div>
-          <svg className="w-5 h-5 text-neutral-400 group-hover:text-brand-cerulean transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </div>
-      </Link>
-
-      {/* Quote Generator CTA */}
-      <Link
-        href="/admin/quotes"
-        className="block rounded-xl border border-neutral-300 bg-white p-5 hover:border-brand-cerulean hover:shadow-sm transition-all group"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-brand-black group-hover:text-brand-cerulean transition-colors">
-              Quote Generator
-            </h2>
-            <p className="text-neutral-500 text-sm mt-0.5">
-              Create professional PDF quotes and upload to SharePoint
-            </p>
-          </div>
-          <svg className="w-5 h-5 text-neutral-400 group-hover:text-brand-cerulean transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </div>
-      </Link>
-
-      {/* Quick Actions — All agents */}
-      <div>
-        <h2 className="text-lg font-semibold text-brand-black mb-3">
-          Agents
-        </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          <QuickActionCard
-            label="Project Brief"
-            href="/admin/quick-brief"
-            description="Paste & analyze"
-          />
-          <QuickActionCard
-            label="Project Manager"
-            href="/admin/agents/pm"
-            description="Dispatch tasks"
-          />
-          <QuickActionCard
-            label="Translator"
-            href="/admin/agents/translator"
-            description="Translate content"
-          />
-          <QuickActionCard
-            label="Copywriter"
-            href="/admin/agents/copywriter"
-            description="Write copy"
-          />
-          <QuickActionCard
-            label="Creative"
-            href="/admin/agents/creative"
-            description="Strategy & brief"
-          />
-          <QuickActionCard
-            label="Designer"
-            href="/admin/agents/designer"
-            description="Generate visuals"
-          />
-          <QuickActionCard
-            label="SEO"
-            href="/admin/agents/seo"
-            description="Optimize content"
-          />
-          <QuickActionCard
-            label="Social"
-            href="/admin/agents/social"
-            description="Social posts"
-          />
-          <QuickActionCard
-            label="Email Drafter"
-            href="/admin/agents/email-drafter"
-            description="Draft emails"
-          />
-          <QuickActionCard
-            label="Video Script"
-            href="/admin/agents/video-script"
-            description="Generate scripts"
-          />
-          <QuickActionCard
-            label="Proposal"
-            href="/admin/agents/proposal"
-            description="Write proposals"
-          />
-          <QuickActionCard
-            label="Presentation"
-            href="/admin/agents/presentation"
-            description="Build decks"
-          />
-          <QuickActionCard
-            label="Legal"
-            href="/admin/agents/legal"
-            description="Draft contracts"
-          />
-          <QuickActionCard
-            label="Proofreader"
-            href="/admin/agents/proofreader"
-            description="Review & correct"
-          />
-        </div>
-      </div>
-
-      {/* Recent Outputs */}
-      <div className="bg-white rounded-xl border border-neutral-300 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-brand-black">
-            Recent Outputs
-          </h2>
-          <Link
-            href="/admin/projects"
-            className="text-sm text-brand-cerulean hover:underline"
-          >
-            View all outputs
-          </Link>
-        </div>
-
-        {recentOutputs.length === 0 ? (
-          <p className="text-neutral-400 text-sm py-8 text-center">
-            No agent outputs yet. Create a client and run an agent to get
-            started.
-          </p>
-        ) : (
-          <div className="divide-y divide-neutral-200">
-            {recentOutputs.map((output) => (
-              <div
-                key={output.id}
-                className="flex items-center justify-between py-3"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <AgentTypeBadge agentType={output.agentType} />
-                  <div className="min-w-0">
-                    {output.clientId ? (
-                      <Link
-                        href={`/admin/clients/${output.clientId}`}
-                        className="text-sm font-medium text-brand-black hover:text-brand-cerulean transition-colors"
-                      >
-                        {output.clientName ?? "Unknown"}
-                      </Link>
-                    ) : (
-                      <span className="text-sm font-medium text-neutral-400">
-                        No client
-                      </span>
-                    )}
-                    <p className="text-xs text-neutral-400">
-                      {getAgentLabel(output.agentType)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-xs text-neutral-400">
-                    {formatRelativeDate(output.createdAt)}
-                  </span>
-                  <StatusBadge status={output.status} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-white rounded-xl border border-neutral-300 p-5">
-      <p className="text-sm text-neutral-500">{label}</p>
-      <p className="text-3xl font-bold text-brand-black mt-1">{value}</p>
-    </div>
-  );
-}
-
-function QuickActionCard({
-  label,
-  href,
-  description,
-}: {
-  label: string;
-  href: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="bg-white rounded-xl border border-neutral-300 p-4 hover:border-brand-cerulean hover:shadow-sm transition-all group"
-    >
-      <p className="text-sm font-semibold text-brand-black group-hover:text-brand-cerulean transition-colors">
-        {label}
-      </p>
-      <p className="text-xs text-neutral-400 mt-0.5">{description}</p>
-    </Link>
-  );
-}
-
-function AgentTypeBadge({ agentType }: { agentType: string }) {
-  const colors: Record<string, string> = {
-    pm: "bg-purple-100 text-purple-700",
-    translator: "bg-blue-100 text-blue-700",
-    "email-drafter": "bg-amber-100 text-amber-700",
-    "video-script": "bg-pink-100 text-pink-700",
-    creative: "bg-orange-100 text-orange-700",
-    designer: "bg-indigo-100 text-indigo-700",
-    legal: "bg-slate-100 text-slate-700",
-    social: "bg-cyan-100 text-cyan-700",
-    seo: "bg-green-100 text-green-700",
-    copywriter: "bg-rose-100 text-rose-700",
-    proposal: "bg-teal-100 text-teal-700",
-    proofreader: "bg-lime-100 text-lime-700",
-  };
-
-  const colorClass = colors[agentType] ?? "bg-neutral-100 text-neutral-600";
-  const initials = agentType
-    .split("-")
-    .map((w) => w[0]?.toUpperCase() ?? "")
-    .join("");
-
-  return (
-    <div
-      className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${colorClass}`}
-    >
-      {initials}
-    </div>
-  );
-}
-
-function ActionRequiredSection({
-  errors,
-  caseStudiesGenerating,
-  landingPagesGenerating,
-}: {
-  errors: number;
-  caseStudiesGenerating: number;
-  landingPagesGenerating: number;
-}) {
-  const hasErrors = errors > 0;
-  const hasGenerating = caseStudiesGenerating > 0 || landingPagesGenerating > 0;
-  const allClear = !hasErrors && !hasGenerating;
-
-  return (
-    <div className="rounded-xl border border-neutral-300 bg-white p-5">
-      <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-3">
-        Action Required
-      </h2>
-
-      {allClear ? (
-        <div className="flex items-center gap-3 py-2">
-          <svg
-            className="w-5 h-5 text-green-500 shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-          <span className="text-sm text-neutral-600">
-            All clear &mdash; no actions pending
-          </span>
-        </div>
+      {/* Content */}
+      {loading ? (
+        <SkeletonList />
+      ) : filteredItems.length === 0 ? (
+        <EmptyState />
       ) : (
-        <div className="space-y-2">
-          {hasErrors && (
-            <Link
-              href="/admin/projects?status=error"
-              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" />
-              <span className="text-sm text-brand-black group-hover:text-brand-cerulean transition-colors">
-                {errors} output{errors > 1 ? "s" : ""} failed &mdash; needs retry
-              </span>
-              <svg
-                className="w-4 h-4 ml-auto text-neutral-400 group-hover:text-brand-cerulean transition-colors shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </Link>
-          )}
-          {caseStudiesGenerating > 0 && (
-            <Link
-              href="/admin/agents/case-studies"
-              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-              <span className="text-sm text-brand-black group-hover:text-brand-cerulean transition-colors">
-                {caseStudiesGenerating} case stud{caseStudiesGenerating > 1 ? "ies" : "y"} generating...
-              </span>
-              <svg
-                className="w-4 h-4 ml-auto text-neutral-400 group-hover:text-brand-cerulean transition-colors shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </Link>
-          )}
-          {landingPagesGenerating > 0 && (
-            <Link
-              href="/admin/landing-pages"
-              className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-neutral-50 transition-colors group"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-              <span className="text-sm text-brand-black group-hover:text-brand-cerulean transition-colors">
-                {landingPagesGenerating} landing page{landingPagesGenerating > 1 ? "s" : ""} generating...
-              </span>
-              <svg
-                className="w-4 h-4 ml-auto text-neutral-400 group-hover:text-brand-cerulean transition-colors shrink-0"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </Link>
-          )}
+        <div className="space-y-3">
+          {filteredItems.map((item) => (
+            <InboxCard
+              key={item.id}
+              item={item}
+              isActioning={actionLoading === item.id}
+              onApprove={() => handleAction(item.id, "done")}
+              onDismiss={() => handleAction(item.id, "dismissed")}
+            />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    done: "bg-success-light text-success",
-    processing: "bg-info-light text-info",
-    pending: "bg-warning-light text-warning-text",
-    error: "bg-error-light text-error",
+// ─── Inbox Card ─────────────────────────────────────────────────────────────
+
+function InboxCard({
+  item,
+  isActioning,
+  onApprove,
+  onDismiss,
+}: {
+  item: InboxItem;
+  isActioning: boolean;
+  onApprove: () => void;
+  onDismiss: () => void;
+}) {
+  const typeConfig = TYPE_CONFIG[item.type] ?? {
+    label: item.type,
+    color: "text-neutral-700",
+    bgColor: "bg-neutral-100",
   };
 
+  const { text: timeText, isUrgent } = formatRelativeTime(item.createdAt);
+
   return (
-    <span
-      className={`text-xs font-medium px-2 py-1 rounded-full ${styles[status] ?? "bg-neutral-200 text-neutral-600"}`}
-    >
-      {status}
-    </span>
+    <div className="bg-white rounded-xl border border-neutral-300 p-5 hover:shadow-sm transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+        {/* Left: content */}
+        <div className="flex-1 min-w-0 space-y-2">
+          {/* Top row: badge + time */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className={cn(
+                "text-xs font-semibold px-2 py-0.5 rounded-full",
+                typeConfig.bgColor,
+                typeConfig.color
+              )}
+            >
+              {typeConfig.label}
+            </span>
+            {item.priority === "high" && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                High
+              </span>
+            )}
+            <span
+              className={cn(
+                "text-xs",
+                isUrgent ? "text-red-600 font-semibold" : "text-neutral-400"
+              )}
+            >
+              {isUrgent ? `Urgent \u2014 ${timeText}` : timeText}
+            </span>
+          </div>
+
+          {/* Title */}
+          <h3 className="text-sm font-semibold text-brand-black truncate">
+            {item.title ?? "Untitled item"}
+          </h3>
+
+          {/* Summary */}
+          {item.summary && (
+            <p className="text-sm text-neutral-500 line-clamp-2">
+              {item.summary}
+            </p>
+          )}
+
+          {/* Protocol / source */}
+          <div className="flex items-center gap-3 text-xs text-neutral-400">
+            {item.protocol && <span>Protocol: {item.protocol}</span>}
+            {item.sourceType && <span>Source: {item.sourceType}</span>}
+          </div>
+        </div>
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-2 shrink-0 sm:pt-1">
+          <button
+            onClick={onApprove}
+            disabled={isActioning}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+            aria-label={`Approve: ${item.title ?? "item"}`}
+          >
+            Approve
+          </button>
+          <button
+            disabled={isActioning}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
+            aria-label={`Edit: ${item.title ?? "item"}`}
+          >
+            Edit
+          </button>
+          <button
+            onClick={onDismiss}
+            disabled={isActioning}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
+            aria-label={`Dismiss: ${item.title ?? "item"}`}
+          >
+            Dismiss
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Empty State ────────────────────────────────────────────────────────────
+
+function EmptyState() {
+  return (
+    <div className="bg-white rounded-xl border border-neutral-300 p-12 text-center">
+      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-success-light flex items-center justify-center">
+        <svg
+          className="w-6 h-6 text-success"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+      </div>
+      <h3 className="text-sm font-semibold text-brand-black mb-1">
+        No items waiting
+      </h3>
+      <p className="text-sm text-neutral-500">
+        Arya is handling everything. Check back later.
+      </p>
+    </div>
+  );
+}
+
+// ─── Skeleton Loading ───────────────────────────────────────────────────────
+
+function SkeletonList() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3, 4].map((i) => (
+        <div
+          key={i}
+          className="bg-white rounded-xl border border-neutral-300 p-5 animate-pulse"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div className="flex-1 space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-16 bg-neutral-200 rounded-full" />
+                <div className="h-4 w-12 bg-neutral-200 rounded" />
+              </div>
+              <div className="h-4 w-3/4 bg-neutral-200 rounded" />
+              <div className="h-4 w-1/2 bg-neutral-200 rounded" />
+            </div>
+            <div className="flex gap-2">
+              <div className="h-8 w-20 bg-neutral-200 rounded-lg" />
+              <div className="h-8 w-16 bg-neutral-200 rounded-lg" />
+              <div className="h-8 w-20 bg-neutral-200 rounded-lg" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
