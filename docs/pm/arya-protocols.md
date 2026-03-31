@@ -29,6 +29,9 @@ Si un appel API échoue (timeout, erreur serveur, rate limit), Arya :
 | PROTO-PROJECT-FOLLOWUP | Scan quotidien / relance | Drafts de relance | 5 min |
 | PROTO-AI-TEAM | Brief faisable par IA | Livrables complets à 10/10 | 30-60 min |
 | PROTO-PITCH | Pitch/présentation client | Deck de pitch | 20-30 min |
+| PROTO-CLIENT-ONBOARDING | Nouveau client signé | Fiche client + ClickUp Space + SharePoint + Excel + brand guidelines | 15-20 min |
+| PROTO-PROJECT-CLOSE | Projet terminé | ClickUp Closed + facture Evoliz + archivage + learnings | 10-15 min |
+| PROTO-ESCALATION | Situation hors norme | Résumé contexte → escalade @moi → exécution décision | 5 min |
 
 ## Mode binôme PM humaine
 
@@ -240,6 +243,133 @@ Arya fait le travail. La PM humaine valide. Le symbole ⏸️ marque les points 
 
 ---
 
+## PROTO-CLIENT-ONBOARDING — Nouveau client → Setup complet
+
+**Trigger** : Nouveau client signé (contrat validé, premier projet confirmé)
+**Endpoints** : POST /api/admin/clients (existant), SharePoint API, ClickUp API, Excel API
+
+### Étapes
+
+1. **Créer la fiche client** → POST /api/admin/clients
+   - Remplir tous les champs identité : nom, industrie, langue principale, contact principal
+   - Statut : "active"
+   - ⏸️ VALIDATION PM — "Fiche client créée. Informations correctes ?"
+
+2. **Créer le Space ClickUp** → via ClickUp API
+   - Nom du Space : nom du client
+   - Créer les listes par défaut : "Active Projects", "Backlog", "Completed"
+   - Configurer les custom fields standards (budget, deadline, priority)
+   - Lier le ClickUp Space ID dans la fiche client
+   - Si l'API échoue → signaler à la PM, fournir les instructions manuelles
+
+3. **Créer la structure SharePoint** → via Graph API
+   - Créer un dossier client dans le drive partagé : `/Clients/[ClientName]/`
+   - Sous-dossiers : `Brand Guidelines/`, `Projects/`, `Deliverables/`, `Admin/`
+   - Générer les liens de partage anonymes (scope: "anonymous", type: "view") pour les dossiers principaux
+   - ⏸️ VALIDATION PM — "Structure SharePoint créée. Liens de partage OK ?"
+
+4. **Créer le fichier Excel tracker** → via Graph API
+   - Template standard Sarani : onglets "Projects", "Financials", "Performance"
+   - Pré-remplir les informations client (nom, contact, devise, conditions de paiement)
+   - Placer dans `/Clients/[ClientName]/Admin/`
+
+5. **Collecter les brand guidelines** → demander à la PM
+   - ⏸️ VALIDATION PM — "Merci de fournir les brand guidelines du client (logo, couleurs, fonts, tone of voice)"
+   - Si fournis : stocker dans `/Clients/[ClientName]/Brand Guidelines/` + extraire les données clés dans la fiche client (couleurs, font, ton)
+   - Si non disponibles : créer un placeholder avec note "[BRAND GUIDELINES À RECEVOIR]"
+
+6. **Confirmer l'onboarding** → résumé final
+   - ⏸️ VALIDATION PM — "Onboarding complet. Récapitulatif : [fiche client, ClickUp Space, SharePoint, Excel, brand guidelines]. Tout est OK ?"
+
+**Output** : Fiche client active + ClickUp Space configuré + SharePoint structuré + Excel tracker + brand guidelines stockées
+
+---
+
+## PROTO-PROJECT-CLOSE — Projet terminé → Clôture complète
+
+**Trigger** : Projet marqué "Completed" dans ClickUp ou confirmation PM
+**Endpoints** : ClickUp API (update), Evoliz API (facture), Graph API (SharePoint)
+
+### Étapes
+
+1. **Vérifier la complétude du projet** → scan ClickUp
+   - Toutes les tâches sont en statut "Closed" ou "Completed"
+   - Si des tâches sont encore ouvertes → ⏸️ VALIDATION PM — "X tâches encore ouvertes. Fermer quand même ?"
+
+2. **Mettre à jour le statut ClickUp** → status = "Closed"
+   - Ajouter un commentaire récapitulatif : dates, livrables produits, montant total
+   - Si l'API échoue → signaler à la PM
+
+3. **Générer la facture Evoliz** → via Evoliz API
+   - Charger les données financières depuis le tracker Excel ou la fiche client
+   - Items de facturation : reprendre les lignes du devis original + éventuels extras validés
+   - Conditions de paiement : depuis la fiche client (paymentTermsDays)
+   - ⏸️ VALIDATION PM — "Facture générée (montant : X €). Vérifier et valider avant envoi."
+
+4. **Archiver les livrables** → SharePoint
+   - S'assurer que tous les livrables finaux sont dans `/Clients/[ClientName]/Deliverables/[ProjectName]/`
+   - Vérifier que les fichiers sources sont aussi archivés si applicable
+   - Générer un lien de partage anonyme du dossier projet final
+
+5. **Capturer les learnings** → base Arya
+   - Questions à poser à la PM :
+     - "Qu'est-ce qui a bien fonctionné sur ce projet ?"
+     - "Qu'est-ce qui pourrait être amélioré ?"
+     - "Le client a-t-il donné un feedback spécifique ?"
+   - ⏸️ VALIDATION PM — réponses aux questions ci-dessus
+   - Stocker les learnings dans client_knowledge (catégorie : positive_feedback / improvement)
+   - Si le projet est éligible case study (score > seuil) → créer une entrée case_study_candidates
+
+6. **Confirmer la clôture** → résumé final
+   - ⏸️ VALIDATION PM — "Projet clôturé. Récapitulatif : [ClickUp fermé, facture X €, livrables archivés, learnings capturés]."
+
+**Output** : Projet ClickUp fermé + facture Evoliz générée + livrables archivés sur SharePoint + learnings dans la base
+
+---
+
+## PROTO-ESCALATION — Situation hors norme → Escalade @moi
+
+**Trigger** : Situation qui dépasse les règles définies dans les protocoles existants, conflit client, décision stratégique, demande inhabituelle, doute sur la marche à suivre
+**Endpoint** : Aucun — escalade humaine pure
+
+### Situations d'escalade (liste non exhaustive)
+
+- Client mécontent ou conflit ouvert
+- Demande de remise / négociation hors tarifs standards
+- Projet hors scope habituel (nouveau type de livrable, nouveau secteur)
+- Erreur significative sur un livrable déjà livré
+- Demande légale (NDA spécial, clause contractuelle inhabituelle)
+- Doute sur le pricing d'un devis (montant > 10K€ ou hors grille)
+- Feedback client négatif récurrent sur le même sujet
+
+### Étapes
+
+1. **Résumer le contexte** → Arya prépare un résumé structuré :
+   - **Qui** : client, contact, projet concerné
+   - **Quoi** : description factuelle de la situation (pas d'interprétation)
+   - **Quand** : timeline des événements
+   - **Impact** : conséquences potentielles si pas de décision rapide
+   - **Options** : 2-3 options possibles avec pros/cons de chacune
+   - Sources : emails pertinents, extraits de conversation, données du tracker
+
+2. **Escalader à @moi** → présenter le résumé à Thomas
+   - ⏸️ VALIDATION @moi — "Situation hors norme nécessitant ta décision. Voici le contexte : [résumé]. Options : [A, B, C]. Quelle direction ?"
+
+3. **Exécuter la décision** → selon la réponse de Thomas
+   - Appliquer la décision dans le protocole approprié (PROTO-CLIENT-REPLY pour un email, PROTO-QUOTE pour un ajustement tarifaire, etc.)
+   - Documenter la décision et la raison dans les learnings Arya (catégorie : "escalation_decision")
+   - Si la situation est récurrente (3+ occurrences similaires) → proposer d'ajouter une règle Arya permanente
+
+4. **Post-mortem rapide** (si applicable)
+   - Qu'est-ce qui a causé la situation ?
+   - La situation aurait-elle pu être évitée avec une règle existante ?
+   - Faut-il modifier un protocole existant pour couvrir ce cas ?
+   - ⏸️ VALIDATION PM — "Post-mortem : [résumé]. Modifier un protocole ?"
+
+**Output** : Résumé structuré pour @moi + exécution de la décision + learning documenté
+
+---
+
 ## Intégration back-office — État des endpoints
 
 | Protocole | Endpoints existants ✅ | Endpoints à créer ❌ |
@@ -251,6 +381,9 @@ Arya fait le travail. La PM humaine valide. Le symbole ⏸️ marque les points 
 | PROJECT-FOLLOWUP | ClickUp read ✅ | Cron/scan endpoint ❌ |
 | AI-TEAM | teams CRUD ✅, execute ✅ | Auto-review loop ❌ |
 | PITCH | presentation/generate ✅ | Case study search ❌ |
+| CLIENT-ONBOARDING | clients CRUD ✅, SharePoint ✅, ClickUp ✅ | Excel template creation ❌ |
+| PROJECT-CLOSE | ClickUp update ✅ | Evoliz invoice ❌ |
+| ESCALATION | — (humain) | — |
 
 ### Endpoints à développer (backlog @fullstack)
 
@@ -284,7 +417,7 @@ Arya fait le travail. La PM humaine valide. Le symbole ⏸️ marque les points 
 - `docs/pm/arya-protocols.md` — ce fichier
 
 **Décisions clés** :
-- 7 protocoles couvrent 100% des workflows opérationnels d'Arya
+- 10 protocoles couvrent 100% des workflows opérationnels d'Arya
 - Mode binôme PM humaine avec gates ⏸️ systématiques — Arya ne fait rien d'irréversible seule
 - 4 endpoints manquants identifiés, dont 2 haute priorité (asset comparison, auto-review loop)
 - Triage IA vs Humain documenté pour PROTO-AI-TEAM

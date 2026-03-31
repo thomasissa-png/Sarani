@@ -259,6 +259,216 @@ export const QUALITY_GATES: Record<TemplateType, QualityGate[]> = {
     },
   ],
 
+  graphic_design: [
+    {
+      id: "DS1",
+      label: "Creative brief per deliverable",
+      description:
+        "Each design deliverable has its own creative brief with rationale and constraints.",
+    },
+    {
+      id: "DS2",
+      label: "Visual hierarchy defined",
+      description:
+        "The design defines a clear visual hierarchy: primary vs. secondary elements, heading vs. body treatment, accent usage.",
+    },
+    {
+      id: "DS3",
+      label: "CTA legibility",
+      description:
+        "All CTAs and action elements meet legibility standards: sufficient contrast, readable font size, clear visual weight.",
+    },
+    {
+      id: "DS4",
+      label: "Brand guidelines compliance",
+      description:
+        "All deliverables conform to the brand guidelines provided in the brief (colors, fonts, logo usage, tone).",
+    },
+    {
+      id: "DS5",
+      label: "Consistent cross-deliverable look",
+      description:
+        "All design touchpoints share a cohesive visual language.",
+    },
+    {
+      id: "DS6",
+      label: "Text legibility on all formats",
+      description:
+        "Body text and captions remain legible across all specified formats (print, web, mobile, social).",
+    },
+  ],
+
+  marketing_campaign: [
+    {
+      id: "MC1",
+      label: "Hook < 150 characters",
+      description:
+        "Each post opens with a hook under 150 characters that contains a question, a number, or a bold statement.",
+    },
+    {
+      id: "MC2",
+      label: "Explicit CTA",
+      description:
+        "Every piece includes a clear call-to-action telling the reader exactly what to do next.",
+    },
+    {
+      id: "MC3",
+      label: "Primary keyword in H1 and meta title",
+      description:
+        "The primary keyword appears naturally in the H1 heading and the meta title for all web content.",
+    },
+    {
+      id: "MC4",
+      label: "Hierarchical Hn structure",
+      description:
+        "Headings follow a strict hierarchy: single H1, logical H2/H3 nesting, no skipped levels.",
+    },
+    {
+      id: "MC5",
+      label: "Tone matches brief",
+      description:
+        "The writing tone, register, and vocabulary are consistent with the brand voice defined in the brief.",
+    },
+    {
+      id: "MC6",
+      label: "Platform-adapted format",
+      description:
+        "Content format matches the target platform specs (character limits, image ratios, carousel structure).",
+    },
+    {
+      id: "MC7",
+      label: "Zero placeholder",
+      description:
+        "No residual placeholders such as [INSERT], [TODO], [BRAND NAME], [XX], or empty sections remain in the deliverable.",
+    },
+  ],
+
+  event_communication: [
+    {
+      id: "EC1",
+      label: "Creative brief per deliverable",
+      description:
+        "Each event deliverable has its own creative brief with rationale and constraints.",
+    },
+    {
+      id: "EC2",
+      label: "Visual hierarchy defined",
+      description:
+        "The design defines a clear visual hierarchy: primary vs. secondary elements, heading vs. body treatment.",
+    },
+    {
+      id: "EC3",
+      label: "Brand guidelines compliance",
+      description:
+        "All deliverables conform to the brand guidelines provided in the brief.",
+    },
+    {
+      id: "EC4",
+      label: "Consistent cross-deliverable look",
+      description:
+        "All event touchpoints (invite, deck, signage, social) share a cohesive visual language.",
+    },
+    {
+      id: "EC5",
+      label: "Text legibility on all formats",
+      description:
+        "Body text and captions remain legible across all specified formats.",
+    },
+    {
+      id: "EC6",
+      label: "Zero placeholder",
+      description:
+        "No residual placeholders such as [INSERT], [TODO], [BRAND NAME], [XX], or empty sections remain in the deliverable.",
+    },
+  ],
+
+  email_marketing: [
+    {
+      id: "EM1",
+      label: "Hook < 150 characters",
+      description:
+        "Subject line is under 60 characters and preview text under 150 characters, containing a hook.",
+    },
+    {
+      id: "EM2",
+      label: "Explicit CTA",
+      description:
+        "Every email includes a clear, single primary call-to-action button or link.",
+    },
+    {
+      id: "EM3",
+      label: "Tone matches brief",
+      description:
+        "The writing tone, register, and vocabulary are consistent with the brand voice defined in the brief.",
+    },
+    {
+      id: "EM4",
+      label: "Zero placeholder",
+      description:
+        "No residual placeholders such as [INSERT], [TODO], [BRAND NAME], [XX], or empty sections remain in the deliverable.",
+    },
+  ],
+
+  presentation: [
+    {
+      id: "PR1",
+      label: "Creative brief per deliverable",
+      description:
+        "The presentation has a creative brief with rationale, audience, key messages, and constraints.",
+    },
+    {
+      id: "PR2",
+      label: "Visual hierarchy defined",
+      description:
+        "Slides define a clear visual hierarchy: title vs. body, data vs. narrative, accent usage.",
+    },
+    {
+      id: "PR3",
+      label: "Brand guidelines compliance",
+      description:
+        "All slides conform to the brand guidelines provided in the brief (colors, fonts, logo usage).",
+    },
+    {
+      id: "PR4",
+      label: "Consistent cross-slide look",
+      description:
+        "All slides share a cohesive visual language with consistent layout, spacing, and typography.",
+    },
+    {
+      id: "PR5",
+      label: "Text legibility on projection",
+      description:
+        "Body text is at least 24pt, headings at least 36pt, legible on standard projection screens.",
+    },
+    {
+      id: "PR6",
+      label: "Zero placeholder",
+      description:
+        "No residual placeholders such as [INSERT], [TODO], [BRAND NAME], [XX], or empty sections remain.",
+    },
+  ],
+
+  legal_review: [
+    {
+      id: "LR1",
+      label: "Deliverable matches brief requirements",
+      description:
+        "Every requirement listed in the brief is addressed in the legal review. No scope item is missing.",
+    },
+    {
+      id: "LR2",
+      label: "Professional quality output",
+      description:
+        "The deliverable meets professional legal standards: correct terminology, proper structure, coherent argumentation.",
+    },
+    {
+      id: "LR3",
+      label: "Zero placeholder",
+      description:
+        "No residual placeholders such as [INSERT], [TODO], [PARTY NAME], [XX], or empty sections remain.",
+    },
+  ],
+
   custom: [
     {
       id: "CU1",

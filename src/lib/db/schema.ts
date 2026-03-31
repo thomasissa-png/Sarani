@@ -828,6 +828,32 @@ export const clientKnowledge = pgTable(
   ]
 );
 
+// ─── Team Knowledge ──────────────────────────────────────────────────────────
+// Structured knowledge about Sarani team members — skills, preferences, work style.
+// Used by Arya to assign the right person and adapt communication.
+
+export const teamKnowledge = pgTable(
+  "team_knowledge",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamMemberEmail: varchar("team_member_email", { length: 255 }).notNull(),
+    teamMemberName: varchar("team_member_name", { length: 255 }).notNull(),
+    role: varchar("role", { length: 50 }).notNull(), // designer | copywriter | video_editor | translator | project_manager | developer | strategist
+    category: varchar("category", { length: 50 }).notNull(), // skill | preference | availability | speed | quality_note | language | tool | style
+    knowledgeText: text("knowledge_text").notNull(),
+    source: varchar("source", { length: 500 }),
+    confidence: varchar("confidence", { length: 20 }).default("observed"), // confirmed | observed | hypothesized
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_tk_email").on(table.teamMemberEmail),
+    index("idx_tk_role").on(table.role),
+    index("idx_tk_category").on(table.category),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -886,3 +912,5 @@ export type AryaRule = typeof aryaRules.$inferSelect;
 export type NewAryaRule = typeof aryaRules.$inferInsert;
 export type ClientKnowledge = typeof clientKnowledge.$inferSelect;
 export type NewClientKnowledge = typeof clientKnowledge.$inferInsert;
+export type TeamKnowledge = typeof teamKnowledge.$inferSelect;
+export type NewTeamKnowledge = typeof teamKnowledge.$inferInsert;

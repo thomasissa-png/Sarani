@@ -11,7 +11,12 @@ export type AgentType =
   | "qa"
   | "video_script"
   | "translator"
-  | "project_manager";
+  | "project_manager"
+  | "designer"
+  | "email_drafter"
+  | "presentation"
+  | "legal"
+  | "proofreader";
 
 export type TemplateType =
   | "social_media"
@@ -20,6 +25,12 @@ export type TemplateType =
   | "video"
   | "translation"
   | "ad_campaign"
+  | "graphic_design"
+  | "marketing_campaign"
+  | "event_communication"
+  | "email_marketing"
+  | "presentation"
+  | "legal_review"
   | "custom";
 
 export interface TemplateStep {
@@ -209,6 +220,185 @@ export const TEAM_TEMPLATES: Record<TemplateType, TeamTemplate> = {
       },
     ],
   },
+  graphic_design: {
+    type: "graphic_design",
+    name: "Graphic Design",
+    description:
+      "Design project: creative strategy, visual design, and quality review.",
+    steps: [
+      {
+        stepOrder: 1,
+        agentType: "creative_strategist",
+        label: "Creative brief & direction",
+      },
+      {
+        stepOrder: 2,
+        agentType: "designer",
+        label: "Visual design & assets",
+      },
+      {
+        stepOrder: 3,
+        agentType: "qa",
+        label: "Brand consistency & quality check",
+      },
+    ],
+  },
+
+  marketing_campaign: {
+    type: "marketing_campaign",
+    name: "Marketing Campaign",
+    description:
+      "Full marketing campaign: strategy, copy, design, social distribution, SEO, and quality review.",
+    steps: [
+      {
+        stepOrder: 1,
+        agentType: "creative_strategist",
+        label: "Campaign strategy & brief",
+      },
+      {
+        stepOrder: 2,
+        agentType: "copywriter",
+        label: "Campaign copy & messaging",
+      },
+      {
+        stepOrder: 3,
+        agentType: "designer",
+        label: "Campaign visuals & assets",
+      },
+      {
+        stepOrder: 4,
+        agentType: "social",
+        label: "Social media distribution plan",
+      },
+      {
+        stepOrder: 5,
+        agentType: "seo",
+        label: "SEO optimisation",
+      },
+      {
+        stepOrder: 6,
+        agentType: "qa",
+        label: "Final review & compliance",
+      },
+    ],
+  },
+
+  event_communication: {
+    type: "event_communication",
+    name: "Event Communication",
+    description:
+      "Event communication package: strategy, copy, design, presentation deck, and quality review.",
+    steps: [
+      {
+        stepOrder: 1,
+        agentType: "creative_strategist",
+        label: "Event strategy & messaging framework",
+      },
+      {
+        stepOrder: 2,
+        agentType: "copywriter",
+        label: "Event copy & invitations",
+      },
+      {
+        stepOrder: 3,
+        agentType: "designer",
+        label: "Event visuals & collateral",
+      },
+      {
+        stepOrder: 4,
+        agentType: "presentation",
+        label: "Presentation deck",
+      },
+      {
+        stepOrder: 5,
+        agentType: "qa",
+        label: "Final review & brand check",
+      },
+    ],
+  },
+
+  email_marketing: {
+    type: "email_marketing",
+    name: "Email Marketing",
+    description:
+      "Email campaign: strategy, copy, email drafting, and quality review.",
+    steps: [
+      {
+        stepOrder: 1,
+        agentType: "creative_strategist",
+        label: "Email strategy & segmentation",
+      },
+      {
+        stepOrder: 2,
+        agentType: "copywriter",
+        label: "Email copy & subject lines",
+      },
+      {
+        stepOrder: 3,
+        agentType: "email_drafter",
+        label: "Email template & layout",
+      },
+      {
+        stepOrder: 4,
+        agentType: "qa",
+        label: "Deliverability & content review",
+      },
+    ],
+  },
+
+  presentation: {
+    type: "presentation",
+    name: "Presentation / Pitch Deck",
+    description:
+      "Presentation project: strategy, narrative copy, slide design, and quality review.",
+    steps: [
+      {
+        stepOrder: 1,
+        agentType: "creative_strategist",
+        label: "Presentation strategy & structure",
+      },
+      {
+        stepOrder: 2,
+        agentType: "copywriter",
+        label: "Slide narrative & copy",
+      },
+      {
+        stepOrder: 3,
+        agentType: "presentation",
+        label: "Slide design & layout",
+      },
+      {
+        stepOrder: 4,
+        agentType: "qa",
+        label: "Final review & consistency check",
+      },
+    ],
+  },
+
+  legal_review: {
+    type: "legal_review",
+    name: "Legal Review",
+    description:
+      "Legal document review: legal analysis, proofreading, and quality check.",
+    steps: [
+      {
+        stepOrder: 1,
+        agentType: "legal",
+        label: "Legal review & compliance check",
+      },
+      {
+        stepOrder: 2,
+        agentType: "proofreader",
+        label: "Proofreading & formatting",
+      },
+      {
+        stepOrder: 3,
+        agentType: "qa",
+        label: "Final quality check",
+      },
+    ],
+  },
+
   custom: {
     type: "custom",
     name: "Custom Team",
@@ -235,4 +425,9 @@ export const AGENT_TYPE_LABELS: Record<AgentType, string> = {
   video_script: "Video Script IA",
   translator: "Translator IA",
   project_manager: "Project Manager IA",
+  designer: "Designer IA",
+  email_drafter: "Email Drafter IA",
+  presentation: "Presentation IA",
+  legal: "Legal IA",
+  proofreader: "Proofreader IA",
 };
