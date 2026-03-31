@@ -7,8 +7,13 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
+    env:
+      # Minimal env vars required for the build and tests to run
+      ADMIN_PASSWORD: ci-test-secret-not-real
+      DATABASE_URL: ${{ secrets.DATABASE_URL || '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +23,38 @@ jobs:
           node-version: 22
           cache: npm
 
+      # ─── Install ─────────────────────────────────────────────
       - run: npm ci
-      - run: npm run lint
-      - run: npx tsc --noEmit
-      - run: npm run build
+
+      # ─── Static analysis (G28 gate) ─────────────────────────
+      - name: Lint
+        run: npm run lint
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      # ─── Build ───────────────────────────────────────────────
+      - name: Build
+        run: npm run build
+
+      # ─── Unit tests (Vitest) ─────────────────────────────────
+      - name: Unit tests
+        run: npm run test
+
+      # ─── E2E tests (Playwright — Chromium only in CI) ────────
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests (Chromium)
+        run: npx playwright test --project=chromium-desktop
+        env:
+          ADMIN_EMAIL: admin@sarani.studio
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD || 'ci-test-secret-not-real' }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

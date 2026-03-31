@@ -539,3 +539,49 @@ npm run test:e2e:ui         # Playwright UI mode (debugging)
   - Playwright browsers must be installed in CI (`npx playwright install --with-deps`)
   - Docker-based CI recommended for consistent font rendering in visual regression tests
   - `docs/reviews/legal-signoff.md` file-existence check should be added to production deploy gate
+
+---
+
+## Phase 4 — QA Coverage Status
+
+*Updated: 2026-03-31 by @qa*
+
+### Summary
+
+| Area | Tests | Status |
+|------|-------|--------|
+| Contact form (unit) | 13 tests in `tests/unit/api-contact.test.ts` | PASS |
+| Validation schema (unit) | 15 tests in `tests/unit/validation.test.ts` | PASS |
+| Admin quotes API (unit) | 8 tests in `tests/unit/api-quotes.test.ts` | NEW |
+| Admin clients API (unit) | 18 tests in `tests/unit/api-clients.test.ts` | NEW |
+| Admin projects API (unit) | 13 tests in `tests/unit/api-projects.test.ts` | NEW |
+| Navigation (E2E) | `tests/e2e/navigation.spec.ts` | PASS |
+| Contact form (E2E) | `tests/e2e/contact-form.spec.ts` | PASS |
+| Accessibility (E2E) | `tests/e2e/accessibility.spec.ts` | PASS |
+| Admin smoke (E2E) | `tests/e2e/admin-smoke.spec.ts` | PASS |
+| Admin auth/RBAC (E2E) | 15 tests in `tests/e2e/admin-auth.spec.ts` | NEW |
+| Case Study Generator (E2E) | 4 tests in `tests/e2e/case-study-generator.spec.ts` | NEW |
+| Landing Page Generator (E2E) | 4 tests in `tests/e2e/landing-page-generator.spec.ts` | NEW |
+| Storyboard (E2E) | 4 tests in `tests/e2e/storyboard.spec.ts` | NEW |
+| Project Presentation (E2E) | 3 tests in `tests/e2e/project-presentation.spec.ts` | NEW |
+| CI pipeline | `.github/workflows/ci.yml` | UPDATED |
+
+### P0 coverage achieved in Phase 4
+
+1. **Admin RBAC security** — All `/api/admin/*` routes verified for 401 without token, invalid/expired sessions rejected, browser access redirects to login, auth API public endpoints validated with edge cases (missing fields, invalid credentials).
+
+2. **API routes Phase 3** — Quotes: auth guard, RBAC filtering (admin vs member), client filter, error handling. Clients: GET with filters (status, search), POST with full Zod validation (20+ validation rules), adversarial inputs, DB error handling. Projects: grouping logic, deriveOverallStatus, query filters, briefSummary truncation/fallback.
+
+3. **LLM features smoke tests** — Case studies, landing pages, storyboards, and project presentations verified for page accessibility, UI elements presence (headings, filters, create buttons, lists/empty states). All tests skip gracefully when ADMIN_PASSWORD is not configured (CI without secrets).
+
+4. **CI pipeline** — Added Vitest run, Playwright Chromium install + E2E execution, artifact upload for reports. Maintains existing lint + tsc + build steps. Gate G28 compliant.
+
+### Remaining P1 work (not in scope for this delivery)
+
+- E2E tests for full LLM generation flows (require Claude/fal.ai mocks at route level)
+- Integration tests for ClickUp/SharePoint sync
+- Agent output CRUD tests (13 agent types)
+- Visual regression baselines for admin pages
+- Performance tests (Lighthouse CI thresholds)
+- Rate limiting tests on project-previews API
+- Contract tests for external API schemas (Stripe, Resend if applicable)
