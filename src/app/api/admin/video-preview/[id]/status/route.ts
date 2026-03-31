@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { videoPreviews } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { UUID_REGEX } from "@/lib/rate-limit";
+import { getUserFromSession } from "@/lib/auth";
 
 // ─── GET /api/admin/video-preview/[id]/status ────────────────────────────────
 // Polling endpoint for frontend to check video generation progress.
@@ -13,6 +14,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Auth guard
+    const session = await getUserFromSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     if (!UUID_REGEX.test(id)) {

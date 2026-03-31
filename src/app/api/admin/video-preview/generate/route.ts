@@ -15,6 +15,7 @@ import {
   getBestAvailableProvider,
 } from "@/lib/video-generation";
 import type { VideoProvider } from "@/lib/video-generation";
+import { getUserFromSession } from "@/lib/auth";
 
 // ─── Input validation ───────────────────────────────────────────────────────
 
@@ -39,6 +40,12 @@ const generateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth guard
+    const session = await getUserFromSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Rate limit: 3 generations per minute
     if (!checkRateLimit("video-preview-generate", 3, 60_000)) {
       return NextResponse.json(
