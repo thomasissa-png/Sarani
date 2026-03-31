@@ -89,6 +89,9 @@ Pour une tâche ciblée : invoquer directement l'agent concerné.
 
 | Type de demande | Agent principal | Agents secondaires |
 |---|---|---|
+| Gestion projet client / emails | client-manager | creative-strategy, fullstack |
+| Briefs / revues d'assets | client-manager | qa, design |
+| Devis / pitches | client-manager | creative-strategy, product-manager |
 | Nouveau projet complet | orchestrator | tous |
 | Stratégie / positionnement | creative-strategy | product-manager |
 | Code / développement | fullstack | qa, infrastructure, ia |
@@ -124,6 +127,7 @@ Pour une tâche ciblée : invoquer directement l'agent concerné.
 - `@infrastructure` : configuration Replit, performance, CI/CD, monitoring post-launch
 - `@creative-strategy` : positionnement, personas, plateforme de marque
 - `@product-manager` : specs, roadmap, backlog
+- `@client-manager` : gestion projets clients, emails, briefs, revues d'assets, devis, présentations, pitches
 - `@data-analyst` : KPIs, tracking, analytics
 - `@growth` : acquisition, funnel, PLG
 - `@social` : stratégie et contenu réseaux sociaux
@@ -152,6 +156,7 @@ docs/
 ├── legal/             ← @legal : legal-audit.md, cgu-draft.md, privacy-policy.md, rgpd-checklist.md
 ├── infra/             ← @infrastructure : infrastructure.md, performance-audit.md, security-checklist.md
 ├── ia/                ← @ia : ai-architecture.md, model-selection.md, prompt-library.md
+├── pm/                ← @client-manager : email-drafts, briefs, asset-reviews, project-reports
 ├── qa/                ← @qa : qa-strategy.md, TESTING.md
 ├── reviews/           ← @reviewer : cross-review-report.md, consistency-audit.md
 │                        @elon : elon-audit.md, strategic-review.md
