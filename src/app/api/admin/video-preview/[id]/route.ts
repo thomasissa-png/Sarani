@@ -68,6 +68,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Auth guard
+    const patchSession = await getUserFromSession();
+    if (!patchSession) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     if (!UUID_REGEX.test(id)) {

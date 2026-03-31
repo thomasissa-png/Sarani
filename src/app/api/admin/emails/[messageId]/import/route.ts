@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import {
   getEmailById,
   getEmailAttachments,
@@ -168,6 +169,14 @@ export async function POST(
   const session = await getUserFromSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit: 10 requests per minute (2 parallel LLM calls per request)
+  if (!checkRateLimit("email-import", 10, 60_000)) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
   }
 
   if (!isEmailConfigured()) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,14 @@ export async function POST(request: NextRequest) {
   const session = await getUserFromSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limit: 15 requests per minute (1 Haiku call per request)
+  if (!checkRateLimit("brief-check", 15, 60_000)) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": "60" } }
+    );
   }
 
   const body = await request.json();

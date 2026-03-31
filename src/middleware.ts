@@ -31,6 +31,10 @@ export async function middleware(request: NextRequest) {
     "/api/admin/storyboards",
     "/api/admin/project-previews",
     "/api/admin/video-preview",
+    "/api/admin/emails",
+    "/api/admin/inbox",
+    "/api/admin/arya",
+    "/api/admin/brief-check",
   ];
   if (isWriteMethod && adminOnlyPaths.some((p) => pathname.startsWith(p))) {
     if (auth.role !== "admin") {

@@ -26,13 +26,23 @@ type EmailCategory =
   | "client_brief"
   | "client_followup"
   | "noise"
-  | "new_client_potential";
+  | "new_client_potential"
+  | "new_client_prospect";
+
+type RouteTo =
+  | "PROTO-EMAIL-INTAKE"
+  | "PROTO-CLIENT-RETURN"
+  | "PROTO-PITCH"
+  | "PROTO-CLIENT-REPLY"
+  | "archive";
 
 interface ClassificationResult {
   category: EmailCategory;
   confidence: number;
   reasoning: string;
   suggestedAction: string;
+  language: string;
+  routeTo: RouteTo;
 }
 
 // ─── Classification prompt (shared with classify/route.ts) ────────────────
