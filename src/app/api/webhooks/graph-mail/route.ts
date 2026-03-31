@@ -120,6 +120,78 @@ function protocolFromCategory(category: EmailCategory): string | null {
   }
 }
 
+// ─── Thread aggregation helpers ──────────────────────────────────────────
+
+interface SummaryPayload {
+  from: string;
+  subject: string;
+  classification: ClassificationResult;
+  bodyPreview: string;
+  conversationId?: string;
+  emailChain?: Array<{
+    messageId: string;
+    subject: string;
+    bodyPreview: string;
+    receivedAt: string;
+  }>;
+  emailCount?: number;
+}
+
+/**
+ * Find an existing PENDING inbox_item that belongs to the same email thread.
+ * Match by conversationId first, then fall back to same sender within 30 minutes.
+ */
+async function findExistingThreadItem(
+  conversationId: string | undefined,
+  senderEmail: string
+): Promise<{ id: string; summary: string | null; sourceId: string | null } | null> {
+  // Strategy 1: match by conversationId stored in summary JSON
+  if (conversationId) {
+    const candidates = await db
+      .select({
+        id: inboxItems.id,
+        summary: inboxItems.summary,
+        sourceId: inboxItems.sourceId,
+      })
+      .from(inboxItems)
+      .where(
+        and(
+          eq(inboxItems.status, "pending"),
+          eq(inboxItems.type, "email_classified"),
+          sql`${inboxItems.summary}::text LIKE ${`%"conversationId":"${conversationId}"%`}`
+        )
+      )
+      .orderBy(desc(inboxItems.createdAt))
+      .limit(1);
+
+    if (candidates.length > 0) {
+      return candidates[0];
+    }
+  }
+
+  // Strategy 2: same sender within the last 30 minutes
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+  const candidates = await db
+    .select({
+      id: inboxItems.id,
+      summary: inboxItems.summary,
+      sourceId: inboxItems.sourceId,
+    })
+    .from(inboxItems)
+    .where(
+      and(
+        eq(inboxItems.status, "pending"),
+        eq(inboxItems.type, "email_classified"),
+        gte(inboxItems.createdAt, thirtyMinutesAgo),
+        sql`${inboxItems.summary}::text LIKE ${`%"from":"${senderEmail}"%`}`
+      )
+    )
+    .orderBy(desc(inboxItems.createdAt))
+    .limit(1);
+
+  return candidates.length > 0 ? candidates[0] : null;
+}
+
 // ─── Background processing ────────────────────────────────────────────────
 
 async function processEmailNotification(messageId: string): Promise<void> {
@@ -141,6 +213,7 @@ async function processEmailNotification(messageId: string): Promise<void> {
     const from = email.from.emailAddress.address;
     const subject = email.subject;
     const bodyPreview = stripHtml(email.body.content).slice(0, 2000);
+    const conversationId = email.conversationId;
 
     let classification: ClassificationResult;
 
@@ -166,30 +239,97 @@ async function processEmailNotification(messageId: string): Promise<void> {
       classification = llmResult.data;
     }
 
-    // Create inbox_item (skip for noise unless low confidence)
+    // Create or update inbox_item (skip for noise unless low confidence)
     let inboxItemId: string | null = null;
     if (classification.category !== "noise" || classification.confidence < 0.8) {
-      const protocol = protocolFromCategory(classification.category);
-      const [inserted] = await db
-        .insert(inboxItems)
-        .values({
-          type: "email_classified",
-          status: "pending",
-          title: `[${classification.category}] ${subject}`,
-          summary: JSON.stringify({
-            from,
-            subject,
-            classification,
-            bodyPreview: bodyPreview.slice(0, 500),
-          }),
-          sourceId: messageId,
-          sourceType: "email",
-          protocol,
-          priority: priorityFromCategory(classification.category),
-        })
-        .returning({ id: inboxItems.id });
+      // Check for existing pending item in the same thread
+      const existingItem = await findExistingThreadItem(conversationId, from);
 
-      inboxItemId = inserted.id;
+      if (existingItem) {
+        // Aggregate into existing inbox_item
+        let existingPayload: SummaryPayload;
+        try {
+          existingPayload = JSON.parse(existingItem.summary ?? "{}") as SummaryPayload;
+        } catch {
+          existingPayload = {} as SummaryPayload;
+        }
+
+        // Build email chain — append current email
+        const existingChain = existingPayload.emailChain ?? [];
+        // If this is the first aggregation, add the original email to the chain
+        if (existingChain.length === 0 && existingItem.sourceId) {
+          existingChain.push({
+            messageId: existingItem.sourceId,
+            subject: existingPayload.subject ?? "",
+            bodyPreview: existingPayload.bodyPreview ?? "",
+            receivedAt: new Date().toISOString(),
+          });
+        }
+        existingChain.push({
+          messageId,
+          subject,
+          bodyPreview: bodyPreview.slice(0, 500),
+          receivedAt: new Date().toISOString(),
+        });
+
+        const emailCount = (existingPayload.emailCount ?? 1) + 1;
+
+        const updatedPayload: SummaryPayload = {
+          ...existingPayload,
+          // Keep most recent email as the primary
+          subject,
+          bodyPreview: bodyPreview.slice(0, 500),
+          classification,
+          conversationId,
+          emailChain: existingChain,
+          emailCount,
+        };
+
+        await db
+          .update(inboxItems)
+          .set({
+            title: `[${classification.category}] Email chain (${emailCount} messages) from ${from}`,
+            summary: JSON.stringify(updatedPayload),
+            sourceId: messageId, // point to the latest email
+            updatedAt: new Date(),
+            // Escalate priority if needed
+            priority: priorityFromCategory(classification.category),
+          })
+          .where(eq(inboxItems.id, existingItem.id));
+
+        inboxItemId = existingItem.id;
+
+        console.log(
+          `[Graph Webhook] Aggregated email ${messageId} into existing inbox_item ${inboxItemId} (${emailCount} emails in chain)`
+        );
+      } else {
+        // Create new inbox_item
+        const protocol = protocolFromCategory(classification.category);
+        const summaryPayload: SummaryPayload = {
+          from,
+          subject,
+          classification,
+          bodyPreview: bodyPreview.slice(0, 500),
+          conversationId,
+          emailCount: 1,
+        };
+
+        const [inserted] = await db
+          .insert(inboxItems)
+          .values({
+            type: "email_classified",
+            status: "pending",
+            title: `[${classification.category}] ${subject}`,
+            summary: JSON.stringify(summaryPayload),
+            sourceId: messageId,
+            sourceType: "email",
+            protocol,
+            priority: priorityFromCategory(classification.category),
+          })
+          .returning({ id: inboxItems.id });
+
+        inboxItemId = inserted.id;
+      }
     }
 
     // Record as processed

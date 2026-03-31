@@ -798,6 +798,36 @@ export const aryaRules = pgTable(
   ]
 );
 
+// ─── Client Knowledge ─────────────────────────────────────────────────────
+// Structured, atomic knowledge about clients, divisions, and individual contacts.
+// Used by Arya to personalise all outputs (briefs, emails, reviews, quotes).
+
+export const clientKnowledge = pgTable(
+  "client_knowledge",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    division: varchar("division", { length: 255 }),
+    contactName: varchar("contact_name", { length: 255 }),
+    contactEmail: varchar("contact_email", { length: 255 }),
+    category: varchar("category", { length: 50 }).notNull(), // tone | preference | positive_feedback | improvement | guideline | workflow
+    knowledgeText: text("knowledge_text").notNull(),
+    source: text("source").notNull(),
+    confidence: varchar("confidence", { length: 20 }).notNull().default("observed"), // confirmed | observed | hypothesized
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_ck_client_id").on(table.clientId),
+    index("idx_ck_contact_email").on(table.contactEmail),
+    index("idx_ck_category").on(table.category),
+    index("idx_ck_client_division").on(table.clientId, table.division),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -854,3 +884,5 @@ export type AryaLearning = typeof aryaLearnings.$inferSelect;
 export type NewAryaLearning = typeof aryaLearnings.$inferInsert;
 export type AryaRule = typeof aryaRules.$inferSelect;
 export type NewAryaRule = typeof aryaRules.$inferInsert;
+export type ClientKnowledge = typeof clientKnowledge.$inferSelect;
+export type NewClientKnowledge = typeof clientKnowledge.$inferInsert;

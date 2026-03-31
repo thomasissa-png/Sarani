@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import {
@@ -10,8 +11,8 @@ import {
 } from "@/lib/integrations/email";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { db } from "@/lib/db";
-import { clients } from "@/lib/db/schema";
-import { like } from "drizzle-orm";
+import { clients, inboxItems } from "@/lib/db/schema";
+import { like, eq } from "drizzle-orm";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -90,6 +91,37 @@ Rules:
 - Each section must have content (even if just "Not specified" or "To be confirmed").
 - Use the emoji headers exactly as shown above.
 - Return valid JSON only.`;
+
+// ─── Aggregation Prompt ────────────────────────────────────────────────────
+
+const AGGREGATION_SYSTEM_PROMPT = `You are Sarani's Project Manager. You have an existing project brief and a follow-up email from the same client that adds or modifies information.
+
+Your job: UPDATE the existing brief by integrating the new information from the follow-up email.
+
+Rules:
+- If the client contradicts something from the original brief, use the MORE RECENT version (the follow-up email).
+- If the client adds new information, integrate it into the appropriate section.
+- If the client asks a question or gives feedback, add it to the "Others" section.
+- Preserve the 6-section structure exactly.
+- Never remove information from the original brief unless explicitly contradicted.
+- Return the COMPLETE updated brief, not just the changes.
+
+Return JSON:
+{
+  "project_name": "concise title max 60 chars (update if the follow-up changes the scope)",
+  "project_type": "design"|"video"|"translation"|"other",
+  "brief_markdown": "the UPDATED brief in Markdown using the 6-section template",
+  "deadline": "ISO date or null (update if follow-up mentions a new deadline)",
+  "missing_info": ["list of STILL missing critical info after integrating the follow-up"]
+}
+
+Rules: Return valid JSON only. Never invent data not present in either the original brief or the follow-up email.`;
+
+// ─── Body Schema ───────────────────────────────────────────────────────────
+
+const ImportBodySchema = z.object({
+  existingBriefId: z.string().uuid().optional(),
+}).optional();
 
 const REPLY_SYSTEM_PROMPT = `You are a project manager at Sarani, an international creative agency (35 experts, 5 continents, 24/7 delivery).
 You are writing a reply to a client email that just came in with a project request.
@@ -195,6 +227,23 @@ export async function POST(
     );
   }
 
+  // Parse optional body for aggregation mode
+  let existingBriefId: string | undefined;
+  try {
+    const rawBody = await _request.json().catch(() => null);
+    if (rawBody) {
+      const parsed = ImportBodySchema.parse(rawBody);
+      existingBriefId = parsed?.existingBriefId;
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: error.issues },
+        { status: 400 }
+      );
+    }
+  }
+
   try {
     // 1. Fetch the full email and attachments in parallel
     const [email, attachments] = await Promise.all([
@@ -209,25 +258,53 @@ export async function POST(
     // 2. Match client by sender domain
     const clientMatch = await matchClientByDomain(fromEmail);
 
-    // 3. Extract brief + generate client reply in parallel using Claude Haiku
+    // 3. Extract brief (or aggregate with existing) + generate reply
     const userMessage = `EMAIL:
 Subject: ${email.subject}
 From: ${fromName} <${fromEmail}>
 Body: ${bodyText}`;
 
+    // Aggregation mode: load existing brief and merge with new email
+    let existingBriefMarkdown: string | null = null;
+    if (existingBriefId) {
+      const [existingItem] = await db
+        .select({ summary: inboxItems.summary })
+        .from(inboxItems)
+        .where(eq(inboxItems.id, existingBriefId))
+        .limit(1);
+
+      if (existingItem?.summary) {
+        try {
+          const payload = JSON.parse(existingItem.summary) as Record<string, unknown>;
+          // The brief might be in arya_payload.brief.brief_markdown or directly in summary
+          const brief = payload.brief as Record<string, unknown> | undefined;
+          existingBriefMarkdown = (brief?.brief_markdown as string) ?? null;
+        } catch {
+          // If parsing fails, try to use summary as-is
+          existingBriefMarkdown = existingItem.summary;
+        }
+      }
+    }
+
+    const isAggregation = existingBriefId && existingBriefMarkdown;
+
+    const briefPromptMessage = isAggregation
+      ? `EXISTING BRIEF:\n${existingBriefMarkdown}\n\nFOLLOW-UP EMAIL:\n${userMessage}`
+      : userMessage;
+
     const [briefResult, replyResult] = await Promise.allSettled([
       callClaudeJSON<BriefExtraction>({
-        systemPrompt: EXTRACTION_SYSTEM_PROMPT,
-        userMessage,
+        systemPrompt: isAggregation
+          ? AGGREGATION_SYSTEM_PROMPT
+          : EXTRACTION_SYSTEM_PROMPT,
+        userMessage: briefPromptMessage,
         model: "claude-haiku-4-5-20251001",
         maxTokens: 1024,
-        timeout: 10_000,
+        timeout: isAggregation ? 15_000 : 10_000, // slightly more time for aggregation
       }),
-      // Generate reply — uses brief extraction context for missing_info
-      // We call it in parallel and it independently detects missing info
       callClaudeJSON<ClientReply>({
         systemPrompt: REPLY_SYSTEM_PROMPT,
-        userMessage: `${userMessage}\n\nClient name: ${clientMatch?.name ?? "Unknown"}\nPM name: Thomas`,
+        userMessage: `${userMessage}\n\nClient name: ${clientMatch?.name ?? "Unknown"}\nPM name: Thomas${isAggregation ? "\n\nNote: This is a follow-up email. The client already sent a previous brief. Acknowledge the additional information." : ""}`,
         model: "claude-haiku-4-5-20251001",
         maxTokens: 512,
         timeout: 10_000,
@@ -243,8 +320,6 @@ Body: ${bodyText}`;
     let clientReply: ClientReply | null = null;
     if (replyResult.status === "fulfilled") {
       clientReply = replyResult.value.data;
-      // If the reply has missing_info from the brief, we can enhance it
-      // But since they run in parallel, the reply prompt independently detects gaps
     }
 
     // 4. Mark email as read (fire-and-forget, non-blocking)
@@ -270,6 +345,7 @@ Body: ${bodyText}`;
         size: a.size,
       })),
       clientReply,
+      ...(isAggregation ? { aggregated: true, existingBriefId } : {}),
     };
 
     return NextResponse.json(response);
