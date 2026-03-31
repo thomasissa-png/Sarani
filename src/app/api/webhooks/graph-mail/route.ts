@@ -114,7 +114,8 @@ function protocolFromCategory(category: EmailCategory): string | null {
   switch (category) {
     case "client_brief": return "PROTO-EMAIL-INTAKE";
     case "client_followup": return "PROTO-CLIENT-RETURN";
-    case "new_client_potential": return "PROTO-EMAIL-INTAKE";
+    case "new_client_potential": return "PROTO-CLIENT-REPLY";
+    case "new_client_prospect": return "PROTO-PITCH";
     case "noise": return null;
   }
 }
