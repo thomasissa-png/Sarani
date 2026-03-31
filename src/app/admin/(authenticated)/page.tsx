@@ -385,6 +385,18 @@ function InboxCard({
 
   const { text: timeText, isUrgent } = formatRelativeTime(item.createdAt);
 
+  // Extract email count from summary payload (set by webhook thread aggregation)
+  const emailCount = (() => {
+    if (!item.summary) return 1;
+    try {
+      const parsed = JSON.parse(item.summary) as Record<string, unknown>;
+      const count = parsed.emailCount;
+      return typeof count === "number" && count > 0 ? count : 1;
+    } catch {
+      return 1;
+    }
+  })();
+
   // Auto-focus textarea when editing opens
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -397,7 +409,7 @@ function InboxCard({
       <div className="flex flex-col sm:flex-row sm:items-start gap-4">
         {/* Left: content */}
         <div className="flex-1 min-w-0 space-y-2">
-          {/* Top row: badge + time */}
+          {/* Top row: badge + time + email count */}
           <div className="flex items-center gap-2 flex-wrap">
             <span
               className={cn(
@@ -411,6 +423,11 @@ function InboxCard({
             {item.priority === "high" && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-flame/20 text-brand-flame">
                 High
+              </span>
+            )}
+            {emailCount > 1 && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-cerulean/15 text-brand-cerulean">
+                {emailCount} emails
               </span>
             )}
             <span
