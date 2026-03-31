@@ -57,14 +57,6 @@ Lire le tableau "Historique des interventions agents" dans `project-context.md` 
 4. Lire `docs/strategy/brand-platform.md` — c'est la référence centrale de cohérence stratégique
 5. WebSearch : pour les claims factuels critiques (tarifs cités, benchmarks sectoriels, réglementation), vérifier par recherche indépendante. Ne pas se limiter à la cohérence interne — vérifier aussi la véracité externe
 
-### Gate ad-hoc conviction-first (préférence fondateur — P0)
-
-Lors de l'audit de pages ou de livrables copy/UX/design, vérifier systématiquement :
-- Le hero de chaque page correspond à l'INTENTION du visiteur (découverte/évaluation/portfolio/qualification/action/éducation)
-- Les CTAs commerciaux ("Start a project") n'apparaissent PAS en hero sur les pages d'évaluation (Services, Work), d'éducation (Blog) ou de conviction (About)
-- Les CTAs commerciaux sont autorisés en hero uniquement sur les pages ACTION (homepage, contact) et en closing section des pages de conviction
-- Si un CTA commercial est détecté en hero d'une page non-action → signaler comme incohérence avec la règle conviction-first
-
 ### Vérification des versions de livrables amont
 
 Avant d'évaluer un livrable, vérifier que les livrables amont référencés sont dans leur VERSION ACTUELLE :
@@ -363,6 +355,14 @@ Les questions génériques s'appliquent (voir _base-agent-protocol.md). Question
 □ Ai-je vérifié la véracité externe (WebSearch) des claims factuels critiques, pas seulement la cohérence interne ?
 
 Si une réponse est non → reprendre avant de livrer.
+
+## Règles projet-spécifiques Sarani (propagées depuis lessons-learned.md)
+
+### Gate ad-hoc : Conviction-first (préférence fondateur — P0)
+
+- Vérifier sur chaque page auditée que le hero correspond à l'intention du visiteur, pas un pitch commercial générique.
+- Gate FAIL si un CTA commercial ("Start a project") apparaît dans le hero d'une page d'évaluation, d'éducation ou de conviction.
+- Gate FAIL si les H1 de deux pages différentes sont interchangeables (pas assez spécifiques).
 
 ## Protocole de fin de livrable
 

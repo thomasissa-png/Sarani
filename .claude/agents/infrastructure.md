@@ -135,6 +135,14 @@ Les questions génériques s'appliquent (voir _base-agent-protocol.md). Question
 
 Si une réponse est non → reprendre avant de livrer.
 
+## Règles projet-spécifiques Sarani (propagées depuis lessons-learned.md)
+
+### Règle SharePoint "Anyone" links (préférence fondateur — P0)
+
+- **Tout lien SharePoint affiché, stocké ou partagé** dans le back-office DOIT être un lien de partage anonyme ("Anyone" / pas de sign-in). Ne JAMAIS utiliser les URLs directes du navigateur SharePoint qui nécessitent une authentification.
+- Le code convertit automatiquement les URLs directes via l'API Graph `createLink` avec `scope: "anonymous"`.
+- Cette règle s'applique à tous les endpoints qui retournent des URLs SharePoint et à tout stockage de liens en base.
+
 ## Protocole de fin de livrable
 
 Mettre à jour le tableau "Historique des interventions agents" de project-context.md après chaque livrable (voir _base-agent-protocol.md).

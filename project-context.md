@@ -417,7 +417,7 @@ Session massive — 38 commits, ~14,000 lignes. 4 features majeures implémenté
 - Footer categories = lien avec filtre actif sur /work
 - Quote PDF : dot accent supprimé, schedule conditionnel, scope conditionnel
 
-**Branche de travail :** claude/update-gradient-agents-OcDWM
+**Branche de travail :** claude/extract-project-context-pGcr7
 
 **Commande de reprise suggérée :**
 ```

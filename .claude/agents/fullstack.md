@@ -145,24 +145,6 @@ Avant de coder une page, lire dans cet ordre de priorité :
 3. **Animations spécifiées** — chaque composant interactif a un trigger, une animation et un timing. Implémenter avec Framer Motion ou CSS transitions selon la complexité. **Pattern par défaut** si pas de spec : `fade-up + translateY(20px→0), 400ms ease-out` sur scroll-in-view, avec `stagger 100ms` entre enfants.
 4. **Direction artistique** — les radius, ombres, espacements, styles d'images doivent être cohérents avec la DA choisie dans `docs/design/page-compositions.md`. Ne pas mélanger les styles (pas de card ultra-arrondie dans un design minimaliste angular).
 
-### Règle hero homepage dots animés (préférence fondateur — P1)
-
-- **Le hero homepage utilise UNIQUEMENT les dots animés** du logo Sarani (Flame/Cerulean/Lemon) côté droit, en 3 couches (primaire/secondaire/ambient avec blur bokeh). Ne JAMAIS remplacer par une grille d'images, un carrousel, ou un visuel statique.
-- **Thomas a rejeté le grid** ("cata") — les dots sont la signature créative de Sarani. Cette décision est verrouillée.
-
-### Règle SharePoint "Anyone" links (préférence fondateur — P0)
-
-- **Tout lien SharePoint affiché, stocké ou partagé** dans le back-office DOIT être un lien de partage anonyme ("Anyone" / pas de sign-in). Ne JAMAIS utiliser les URLs directes du navigateur.
-- **Conversion** : utiliser `getPublicSharingLink()` de `src/lib/integrations/sharepoint.ts` qui convertit via Graph API `createLink` avec `scope: "anonymous"`. Fallback sur l'URL directe si la conversion échoue.
-- **Détection** : les liens déjà partagés contiennent `/:f:/`, `/:r:/`, `/s/` ou `guestaccess` — ne pas les reconvertir.
-
-### Règle Purpose of Work des quotes (insistance fondateur — P0 x5)
-
-- Le Purpose of Work d'un devis est un texte commercial qui **montre la compréhension du projet client** — pas un titre répété, pas un tiret, pas un résumé technique.
-- **Priorité 1** : utiliser le brief ClickUp (section après `---`) pour extraire 1-2 phrases significatives montrant la compréhension.
-- **Fallback** : construire à partir de category/type/project name avec une formulation professionnelle.
-- **Toujours 2 phrases** : (1) compréhension du besoin, (2) livrables concrets + engagement Sarani.
-
 ### Patterns techniques obligatoires (learnings cross-projets)
 
 - **Foundation first pour features IA** : l'ordre est strict — schema DB → API routes → UI basique (avec mocks) → intégration LLM → polish. La fondation doit être solide avant d'ajouter la couche probabiliste. Ne JAMAIS coder l'intégration LLM avant que la DB et les API soient validées.
@@ -292,6 +274,26 @@ Les questions génériques s'appliquent (voir _base-agent-protocol.md). Question
 □ Le code produit est-il testable (inputs/outputs clairs, pas de mock excessif nécessaire) ?
 
 Si une réponse est non → reprendre avant de livrer.
+
+## Règles projet-spécifiques Sarani (propagées depuis lessons-learned.md)
+
+### Règle SharePoint "Anyone" links (préférence fondateur — P0)
+
+- **Tout lien SharePoint affiché, stocké ou partagé** dans le back-office DOIT être un lien de partage anonyme ("Anyone" / pas de sign-in). Ne JAMAIS utiliser les URLs directes du navigateur.
+- Convertir via l'API Graph `createLink` avec `scope: "anonymous"` type `"view"`.
+- Si la conversion échoue, afficher l'URL directe avec un warning, mais ne jamais la stocker comme lien de partage.
+
+### Règle Purpose of Work des quotes (insistance fondateur — P0 x5)
+
+- Le Purpose of Work d'un devis est un texte commercial qui **montre la compréhension du projet client** — pas un titre répété, pas un tiret, pas un résumé technique.
+- **Priorité 1** : utiliser le brief ClickUp (section après `---`) pour extraire 1-2 phrases significatives montrant la compréhension.
+- **Priorité 2** : si pas de brief, construire une phrase intelligente à partir de la catégorie + type + nom du projet.
+- **Toujours** : 2 phrases minimum, montrant compréhension puis livrables.
+
+### Règle Hero dots homepage (préférence fondateur — P1)
+
+- Le hero homepage utilise UNIQUEMENT les dots animés du logo Sarani côté droit (Flame/Cerulean/Lemon).
+- Ne JAMAIS remplacer par une grille d'images, un carrousel, ou un visuel statique. Les dots sont la signature créative.
 
 ## Protocole de fin de livrable
 

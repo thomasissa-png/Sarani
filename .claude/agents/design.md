@@ -56,24 +56,12 @@ Champs critiques pour cet agent : Ton de marque, 3 mots qui définissent la marq
 9. Lire `docs/qa/qa-strategy.md` s'il existe — anticiper les contraintes de tests de régression visuelle (snapshots, tokens à surveiller) pour calibrer le design system en conséquence
 10. **Benchmark des meilleurs outputs du secteur** : rechercher via WebSearch 2-3 design systems et interfaces de référence dans le secteur du projet. Analyser ce qui fait leur qualité : palette, typographie, spacing, composants, micro-interactions, dark mode, accessibilité. L'objectif n'est pas de copier mais de comprendre le standard visuel du marché pour le dépasser. Documenter les références dans le handoff
 
-### Règle conviction-first (préférence fondateur — P0)
-
-- **Chaque page suit le principe "conviction-first, not conversion-first"** : le hero visuel de chaque page doit refléter l'intention du visiteur. Pas de CTA commercial en hero sur les pages d'évaluation (Services, Work), d'éducation (Blog) ou de conviction (About). CTAs commerciaux autorisés en hero uniquement sur les pages ACTION (homepage, contact).
-- **Design des CTAs** : les CTAs primaires apparaissent en fin de parcours conviction sur les pages non-action. Le design doit guider visuellement le visiteur à travers le contenu AVANT de proposer une action.
-
-### Règle CTA texte blanc sur Flame (préférence fondateur — P1)
-
-- **Le texte des CTAs primaires (fond Flame #da5126) est BLANC (#ffffff)**, pas noir. Thomas a tranché explicitement — le noir ne ressort pas assez.
-- **Conformité WCAG AA** : white on Flame = 3.94:1, conforme pour large text (bold 16px+ ≥ 3:1). Tous les CTAs Sarani sont en bold 16px+ → conforme.
-- **Ne JAMAIS revenir au noir** même si un audit WCAG le recommande. Cette décision est verrouillée.
-
 ### Patterns design obligatoires (learnings cross-projets)
 
 - **Modals mobile = pattern bottom sheet** : sur mobile, les modals DOIVENT utiliser le pattern bottom sheet (`items-end` mobile, `items-center` desktop, `100dvh`, `safe-area-inset-bottom`). Le pattern `items-center + overflow-y-auto` est cassé sur iOS Safari. Testé et confirmé sur 3 projets.
 - **Exports héritent du design system** : les PDF, emails, et documents générés DOIVENT utiliser les design tokens (couleurs, typos, spacing). Un export qui ne ressemble pas au site = échec de brand consistency.
 - **Labels texte > icônes seules** : dans les back-offices et dashboards, les actions DOIVENT avoir des labels texte lisibles, pas juste des icônes. Les icônes seules sont incompréhensibles pour les utilisateurs non-techniques.
 - **Colonnes monétaires alignées à droite** : dans tout tableau avec des montants, les colonnes numériques/monétaires sont alignées à droite. Standard comptable non négociable.
-- **Hero homepage = dots animés UNIQUEMENT** : le hero homepage utilise les dots animés du logo Sarani (Flame/Cerulean/Lemon) côté droit, en 3 couches (primaire/secondaire/ambient avec blur bokeh). Ne JAMAIS remplacer par une grille d'images, un carrousel, ou un visuel statique. Thomas a rejeté explicitement le grid ("cata"). Les dots sont la signature créative de Sarani.
 
 ## Fondations structurelles (obligatoire)
 
@@ -232,6 +220,25 @@ Pour chaque composant, documenter :
 - **Do/Don't** : 1 exemple correct, 1 exemple incorrect, avec explication
 - **Responsive** : comportement par breakpoint si différent
 - **Accessibilité** : rôle ARIA, keyboard interaction, focus management
+
+## Règles projet-spécifiques Sarani (propagées depuis lessons-learned.md)
+
+### Conviction-first, not conversion-first (préférence fondateur — P0)
+
+- Chaque page doit suivre le principe "conviction-first" — le hero correspond à l'INTENTION du visiteur, pas un pitch commercial générique.
+- Les CTAs commerciaux ("Start a project") uniquement sur les pages ACTION (homepage hero, contact) ou en conclusion d'une page de conviction.
+- Sur les pages d'évaluation (Services, Work), d'éducation (Blog) ou de conviction (About), les CTAs sont déplacés en fin de parcours.
+
+### CTA texte blanc sur Flame (préférence fondateur — P1)
+
+- Le texte des CTAs primaires sur fond Flame est BLANC, pas noir. Thomas a tranché explicitement.
+- La conformité WCAG AA est assurée car tous les CTAs sont en large text (bold 16px+, ratio 3.94:1 > 3:1).
+- Ne PAS revenir au noir même si un audit WCAG le recommande.
+
+### Hero dots homepage (préférence fondateur — P1)
+
+- Le hero homepage utilise UNIQUEMENT les dots animés du logo Sarani (Flame/Cerulean/Lemon), en 3 couches (primaire/secondaire/ambient avec blur bokeh).
+- Ne JAMAIS remplacer par une grille d'images, un carrousel, ou un visuel statique.
 
 ## Livrables types
 
