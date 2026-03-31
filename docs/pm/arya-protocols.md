@@ -4,6 +4,18 @@
 
 > Arya travaille en binôme avec une PM humaine. Chaque protocole a des gates de validation ⏸️ où la PM humaine valide avant de continuer.
 
+### Gestion des erreurs API (transversal)
+
+Si un appel API échoue (timeout, erreur serveur, rate limit), Arya :
+1. Log l'erreur avec le contexte (endpoint, paramètres, code d'erreur)
+2. Signale à la PM avec une explication claire ("L'appel à ClickUp a échoué — timeout après 30s")
+3. Propose une alternative manuelle ("Tu peux créer la tâche directement dans ClickUp en attendant")
+4. Ne retente PAS en boucle sans supervision
+
+### Règle anti-hallucination (transversal)
+
+**Chaque chiffre de performance cité** (%, montant, volume, résultat) DOIT être sourcé depuis le tracker Excel client, un document client valide, ou project-context.md. Si aucune donnée factuelle n'est disponible → marquer `[DONNÉE À CONFIRMER PAR THOMAS]`. Ne JAMAIS inventer de métrique.
+
 ---
 
 ## Vue d'ensemble
@@ -159,7 +171,7 @@ Arya fait le travail. La PM humaine valide. Le symbole ⏸️ marque les points 
 ## PROTO-AI-TEAM — Brief faisable par IA → Livrables complets
 
 **Trigger** : Brief identifié comme faisable par l'équipe IA interne
-**Endpoint** : POST /api/admin/teams + POST /api/admin/teams/[id]/execute
+**Endpoint** : POST /api/admin/teams + POST /api/admin/teams/[id]/steps/[stepId]/execute (step par step)
 
 ### Triage IA vs Humain
 
@@ -176,19 +188,22 @@ Arya fait le travail. La PM humaine valide. Le symbole ⏸️ marque les points 
 
 1. **Sélectionner le template d'équipe** → basé sur le type de brief (social pack, SEO batch, traduction, etc.)
 2. **Créer l'équipe IA** → POST /api/admin/teams avec les agents nécessaires (ex: @copywriter + @seo + @design)
-3. **Lancer l'exécution séquentielle** → POST /api/admin/teams/[id]/execute
-   - Chaque agent produit son livrable dans l'ordre des dépendances
-   - Entre chaque agent : review automatique via quality gates
-4. **Quality gates par type** → référence `src/lib/teams/quality-gates.ts`
-   - Social posts : ton de marque, longueur, hashtags, CTA présent
-   - SEO : keyword density, meta title/description, structure H1-H3
-   - Traduction : fidélité au source, localisation culturelle, terminologie client
-   - Bannières : dimensions, poids fichier, texte lisible, brand compliance
-5. **Itération si < 10/10** → relance de l'agent avec feedback des gates (max 3 tours)
+3. **Lancer l'exécution step par step** → POST /api/admin/teams/[id]/steps/[stepId]/execute pour chaque step
+   - Chaque agent produit son livrable dans l'ordre des dépendances (step 1 avant step 2, etc.)
+   - Entre chaque step : review automatique via quality gates
+4. **Quality gates par type** → référence `src/lib/teams/quality-gates.ts`, fonction `buildGatesPrompt(templateType)`
+   - `social_media` : SM-1 à SM-7 (hook <150 chars, CTA explicite, format plateforme, 0 jargon, hashtags calibrés, ton brief, 0 placeholder)
+   - `seo_content` : SEO-1 à SEO-7 (keyword H1/meta/intro, meta title 50-60 chars, structure Hn, longueur ±10%, liens internes/externes, intro <100 mots, 0 contenu générique)
+   - `translation` : TR-1 à TR-5 (0 artefact littéral, adaptation culturelle, termes cohérents, format préservé, brand voice)
+   - `brand_identity` : DS-1 à DS-6 (brief créatif complet, hiérarchie visuelle, CTA lisible, brand guidelines, déclinaisons cohérentes, texte lisible)
+   - `video_production` : VD-1 à VD-7 (hook 3s, durée conforme, structure HOOK/BODY/CTA, direction visuelle, CTA unique, oral, sous-titres séparés)
+   - `ad_campaign` : AD-1 à AD-5 (headline ≤30 chars, value prop, CTA verbe, variantes A/B, alignement LP)
+   - Verdict : **ALL GATES PASS** → continuer / **REVISION NEEDED** → itérer
+5. **Itération si gates FAIL** → relance de l'agent avec feedback des gates (max 3 tours)
    - Tour 1 : correction ciblée sur les gates FAIL
    - Tour 2 : correction + review croisée par un second agent
-   - Tour 3 : si toujours < 10/10 → escalade à @moi
-6. **Package final** → ⏸️ VALIDATION PM — "Voici le package complet (X livrables, score 10/10). Valider pour livraison client ?"
+   - Tour 3 : si toujours FAIL → escalade à @moi
+6. **Package final** → ⏸️ VALIDATION PM — "Voici le package complet (ALL GATES PASS). Valider pour livraison client ?"
 7. **Livraison** → upload SharePoint + mise à jour ClickUp + draft email client (PROTO-CLIENT-REPLY)
 
 **Output** : Package de livrables complet à 10/10 dans le dossier SharePoint du projet
@@ -198,7 +213,7 @@ Arya fait le travail. La PM humaine valide. Le symbole ⏸️ marque les points 
 ## PROTO-PITCH — Pitch et présentations client
 
 **Trigger** : Pitch ou présentation demandée (nouveau client, upsell, appel d'offres)
-**Endpoint** : POST /api/admin/presentations/generate
+**Endpoint** : POST /api/admin/agents/presentation/generate
 
 ### Étapes
 
@@ -216,7 +231,7 @@ Arya fait le travail. La PM humaine valide. Le symbole ⏸️ marque les points 
 3. **Collaboration @creative-strategy** → enrichir le positionnement et les angles de différenciation
    - @creative-strategy apporte : analyse concurrentielle rapide, angles de conviction, tone of voice adapté au prospect
 
-4. **Générer le deck** → POST /api/admin/presentations/generate
+4. **Générer le deck** → POST /api/admin/agents/presentation/generate
    - ⏸️ VALIDATION PM — "Voici le deck de pitch (X slides). Ajustements ?"
 
 5. **Préparer l'envoi** → PROTO-CLIENT-REPLY avec le deck en pièce jointe ou lien de présentation
