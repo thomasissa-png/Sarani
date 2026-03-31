@@ -3,7 +3,7 @@ import { getEmailById, stripHtml, isEmailConfigured } from "@/lib/integrations/e
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { db } from "@/lib/db";
 import { inboxItems, processedEmails } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, desc, sql } from "drizzle-orm";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
