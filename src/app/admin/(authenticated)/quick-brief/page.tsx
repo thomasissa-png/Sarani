@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   CLIENT_MAPPINGS,
   getMappingBySpaceName,
@@ -94,7 +95,15 @@ import { PROJECT_TYPES, BRIEF_TEMPLATES } from "@/lib/brief-templates";
 
 // ─── Page Component ─────────────────────────────────────────────────────────
 
-export default function ProjectBriefPage() {
+export default function ProjectBriefPageWrapper() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-neutral-400">Loading...</div>}>
+      <ProjectBriefPage />
+    </Suspense>
+  );
+}
+
+function ProjectBriefPage() {
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [spaces, setSpaces] = useState<ClickUpSpace[]>([]);
   const [divisions, setDivisions] = useState<ClickUpList[]>([]);
@@ -132,6 +141,12 @@ export default function ProjectBriefPage() {
   const [clientReply, setClientReply] = useState<{ subject: string; body: string } | null>(null);
   const [replyCopied, setReplyCopied] = useState(false);
   const emailFetchedRef = useRef(false);
+  const inboxImportTriggeredRef = useRef(false);
+
+  // Search params — support pre-fill from inbox approval
+  const searchParams = useSearchParams();
+  const fromInboxMessageId = searchParams.get("fromInbox");
+  const [inboxImportBanner, setInboxImportBanner] = useState<string | null>(null);
 
   // Fetch clients + spaces
   useEffect(() => {
@@ -243,6 +258,20 @@ export default function ProjectBriefPage() {
       setImportingEmailId(null);
     }
   }, []);
+
+  // ─── Auto-import from inbox approval ────────────────────────────────────
+  useEffect(() => {
+    if (!fromInboxMessageId || inboxImportTriggeredRef.current) return;
+    inboxImportTriggeredRef.current = true;
+    setInboxImportBanner("Importing email from inbox...");
+    handleEmailImport(fromInboxMessageId)
+      .then(() => {
+        setInboxImportBanner("Pre-filled from inbox approval — review and create project");
+      })
+      .catch(() => {
+        setInboxImportBanner(null);
+      });
+  }, [fromInboxMessageId, handleEmailImport]);
 
   // ─── AI Brief Check ─────────────────────────────────────────────────────
   const handleAICheck = useCallback(async () => {
@@ -422,6 +451,27 @@ export default function ProjectBriefPage() {
             </div>
           )}
         </div>
+
+      {/* Inbox approval auto-import banner */}
+      {inboxImportBanner && !importedFromSubject && (
+        <div className="bg-brand-cerulean/10 border border-brand-cerulean/30 rounded-xl px-4 py-3 flex items-start gap-3">
+          <svg className="w-5 h-5 text-brand-cerulean shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+          </svg>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-brand-cerulean-dark">
+              {inboxImportBanner}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setInboxImportBanner(null)}
+            className="text-brand-cerulean/60 hover:text-brand-cerulean ml-auto shrink-0"
+            aria-label="Dismiss"
+          >&times;</button>
+        </div>
+      )}
 
       {/* Imported email banner */}
       {importedFromSubject && (

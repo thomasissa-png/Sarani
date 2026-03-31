@@ -42,6 +42,7 @@ const CORE_NAV: NavItem[] = [
   { label: "Inbox", href: "/admin", icon: "mail" },
   { label: "Projects", href: "/admin/tracker", icon: "activity" },
   { label: "Clients", href: "/admin/clients", icon: "users" },
+  { label: "Asset Review", href: "/admin/asset-review", icon: "folder" },
   { label: "Arya", href: "/admin/arya", icon: "zap" },
 ];
 
