@@ -21,6 +21,8 @@ const PatchInboxItemSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["pending", "in_progress", "done", "dismissed"]),
   pmId: z.string().optional(),
+  // Approval/dismissal metadata — set automatically based on status
+  approvedBy: z.string().optional(),
 });
 
 // ─── GET — List inbox items ───────────────────────────────────────────────
@@ -97,8 +99,9 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const processedAt =
-      body.status === "done" || body.status === "dismissed" ? new Date() : null;
+    const now = new Date();
+    const isTerminal = body.status === "done" || body.status === "dismissed";
+    const processedAt = isTerminal ? now : null;
 
     const [updated] = await db
       .update(inboxItems)
@@ -106,7 +109,7 @@ export async function PATCH(request: NextRequest) {
         status: body.status,
         pmId: body.pmId,
         processedAt,
-        updatedAt: new Date(),
+        updatedAt: now,
       })
       .where(eq(inboxItems.id, body.id))
       .returning();
@@ -115,7 +118,42 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Inbox item not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ item: updated });
+    // ─── Approval chain logging ─────────────────────────────────────
+    // When an item is approved (done) or dismissed, log the action
+    // with protocol-specific context for future v2 automation.
+
+    const approvalMeta: Record<string, unknown> = {};
+
+    if (body.status === "done") {
+      approvalMeta.approvedAt = now.toISOString();
+      approvalMeta.approvedBy = body.approvedBy ?? body.pmId ?? session.userId;
+
+      // Protocol-specific logging for v2 chaining
+      if (updated.protocol === "PROTO-EMAIL-INTAKE") {
+        // TODO v2: trigger POST /api/admin/integrations/create-project
+        // with the structured brief from this inbox item
+        console.log(
+          `[Inbox API] Approved EMAIL-INTAKE item ${updated.id} — v2: chain to create-project`
+        );
+      } else if (updated.protocol === "PROTO-CLIENT-REPLY") {
+        // TODO v2: trigger POST /api/admin/emails/draft to create
+        // the Outlook draft from the approved content
+        console.log(
+          `[Inbox API] Approved CLIENT-REPLY item ${updated.id} — v2: chain to draft Outlook`
+        );
+      } else if (updated.protocol === "PROTO-QUOTE") {
+        // TODO v2: trigger POST /api/admin/quotes/generate
+        // to produce the PDF from the approved quote data
+        console.log(
+          `[Inbox API] Approved QUOTE item ${updated.id} — v2: chain to quotes/generate`
+        );
+      }
+    } else if (body.status === "dismissed") {
+      approvalMeta.dismissedAt = now.toISOString();
+      approvalMeta.dismissedBy = body.approvedBy ?? body.pmId ?? session.userId;
+    }
+
+    return NextResponse.json({ item: updated, ...approvalMeta });
   } catch (error) {
     console.error("[Inbox API] PATCH error:", error);
     return NextResponse.json({ error: "Failed to update inbox item" }, { status: 500 });
