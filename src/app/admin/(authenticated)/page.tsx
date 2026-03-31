@@ -3,7 +3,7 @@
 // SSR: false — Client Component for interactive inbox with filters and actions.
 // This replaces the old SSR dashboard. The inbox is the PM's primary workspace.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -31,6 +31,12 @@ interface InboxItem {
   processedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  arya_payload?: Record<string, unknown> | null;
+}
+
+interface ToastState {
+  message: string;
+  type: "success" | "error";
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -41,23 +47,23 @@ const TYPE_CONFIG: Record<
 > = {
   email_classified: {
     label: "Email",
-    color: "text-blue-700",
-    bgColor: "bg-blue-100",
+    color: "text-brand-cerulean",
+    bgColor: "bg-brand-cerulean/10",
   },
   ai_team_complete: {
     label: "AI Deliverable",
-    color: "text-orange-700",
-    bgColor: "bg-orange-100",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/10",
   },
   qa_gates_pass: {
     label: "QA Pass",
-    color: "text-green-700",
-    bgColor: "bg-green-100",
+    color: "text-success",
+    bgColor: "bg-success/10",
   },
   followup_alert: {
     label: "Follow-up",
-    color: "text-red-700",
-    bgColor: "bg-red-100",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/20",
   },
 };
 
@@ -99,16 +105,47 @@ function formatRelativeTime(dateStr: string): { text: string; isUrgent: boolean 
   };
 }
 
+// ─── Toast Component ───────────────────────────────────────────────────────
+
+function Toast({ toast, onDismiss }: { toast: ToastState; onDismiss: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 3000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
+  return (
+    <div
+      className={cn(
+        "fixed bottom-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 text-white text-sm font-medium transition-opacity",
+        toast.type === "success" ? "bg-success" : "bg-brand-flame"
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      {toast.message}
+    </div>
+  );
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function InboxPage() {
   const [items, setItems] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  const showToast = useCallback((message: string, type: "success" | "error") => {
+    setToast({ message, type });
+  }, []);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const params = new URLSearchParams();
       params.set("status", "pending");
@@ -117,9 +154,14 @@ export default function InboxPage() {
       if (res.ok) {
         const data = await res.json();
         setItems(data.items ?? []);
+      } else {
+        const errMsg = `Failed to load inbox (${res.status})`;
+        console.error("[Inbox] fetch error:", res.status, res.statusText);
+        setFetchError(errMsg);
       }
-    } catch {
-      // Silently fail — will show empty state
+    } catch (error) {
+      console.error("[Inbox] fetch error:", error);
+      setFetchError("Unable to reach server — check your connection");
     } finally {
       setLoading(false);
     }
@@ -144,11 +186,56 @@ export default function InboxPage() {
         body: JSON.stringify({ id, status }),
       });
       if (res.ok) {
-        // Optimistic removal
         setItems((prev) => prev.filter((item) => item.id !== id));
+        showToast(
+          status === "done" ? "Item approved — chain triggered" : "Item dismissed",
+          "success"
+        );
+        if (editingId === id) setEditingId(null);
+      } else {
+        console.error("[Inbox] action error:", res.status, res.statusText);
+        showToast("Action failed — please retry", "error");
       }
-    } catch {
-      // Silently fail
+    } catch (error) {
+      console.error("[Inbox] action error:", error);
+      showToast("Action failed — please retry", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEdit = (item: InboxItem) => {
+    if (editingId === item.id) {
+      setEditingId(null);
+      return;
+    }
+    setEditingId(item.id);
+    setEditContent(
+      item.arya_payload
+        ? JSON.stringify(item.arya_payload, null, 2)
+        : item.summary ?? ""
+    );
+  };
+
+  const handleSaveAndApprove = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/inbox", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: "done", pm_action: editContent }),
+      });
+      if (res.ok) {
+        setItems((prev) => prev.filter((item) => item.id !== id));
+        setEditingId(null);
+        showToast("Saved & approved — chain triggered", "success");
+      } else {
+        console.error("[Inbox] save error:", res.status, res.statusText);
+        showToast("Save failed — please retry", "error");
+      }
+    } catch (error) {
+      console.error("[Inbox] save error:", error);
+      showToast("Save failed — please retry", "error");
     } finally {
       setActionLoading(null);
     }
@@ -183,6 +270,19 @@ export default function InboxPage() {
         </p>
       </div>
 
+      {/* Fetch error banner */}
+      {fetchError && (
+        <div className="bg-brand-flame/10 border border-brand-flame/30 rounded-lg px-4 py-3 text-sm text-brand-flame" role="alert">
+          {fetchError}
+          <button
+            onClick={fetchItems}
+            className="ml-3 underline font-medium hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {FILTER_TABS.map((tab) => {
@@ -199,7 +299,7 @@ export default function InboxPage() {
               key={tab.key}
               onClick={() => setActiveFilter(tab.key)}
               className={cn(
-                "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                "px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors",
                 isActive
                   ? "bg-brand-black text-white"
                   : "bg-white text-neutral-600 hover:bg-neutral-300 border border-neutral-300"
@@ -235,12 +335,20 @@ export default function InboxPage() {
               key={item.id}
               item={item}
               isActioning={actionLoading === item.id}
+              isEditing={editingId === item.id}
+              editContent={editingId === item.id ? editContent : ""}
               onApprove={() => handleAction(item.id, "done")}
               onDismiss={() => handleAction(item.id, "dismissed")}
+              onEdit={() => handleEdit(item)}
+              onEditContentChange={setEditContent}
+              onSaveAndApprove={() => handleSaveAndApprove(item.id)}
             />
           ))}
         </div>
       )}
+
+      {/* Toast */}
+      {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}
     </div>
   );
 }
@@ -250,14 +358,25 @@ export default function InboxPage() {
 function InboxCard({
   item,
   isActioning,
+  isEditing,
+  editContent,
   onApprove,
   onDismiss,
+  onEdit,
+  onEditContentChange,
+  onSaveAndApprove,
 }: {
   item: InboxItem;
   isActioning: boolean;
+  isEditing: boolean;
+  editContent: string;
   onApprove: () => void;
   onDismiss: () => void;
+  onEdit: () => void;
+  onEditContentChange: (value: string) => void;
+  onSaveAndApprove: () => void;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typeConfig = TYPE_CONFIG[item.type] ?? {
     label: item.type,
     color: "text-neutral-700",
@@ -265,6 +384,13 @@ function InboxCard({
   };
 
   const { text: timeText, isUrgent } = formatRelativeTime(item.createdAt);
+
+  // Auto-focus textarea when editing opens
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditing]);
 
   return (
     <div className="bg-white rounded-xl border border-neutral-300 p-5 hover:shadow-sm transition-shadow">
@@ -283,17 +409,17 @@ function InboxCard({
               {typeConfig.label}
             </span>
             {item.priority === "high" && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-flame/20 text-brand-flame">
                 High
               </span>
             )}
             <span
               className={cn(
                 "text-xs",
-                isUrgent ? "text-red-600 font-semibold" : "text-neutral-400"
+                isUrgent ? "text-brand-flame font-semibold" : "text-neutral-400"
               )}
             >
-              {isUrgent ? `Urgent \u2014 ${timeText}` : timeText}
+              {isUrgent ? `Urgent — ${timeText}` : timeText}
             </span>
           </div>
 
@@ -321,28 +447,68 @@ function InboxCard({
           <button
             onClick={onApprove}
             disabled={isActioning}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
             aria-label={`Approve: ${item.title ?? "item"}`}
           >
             Approve
           </button>
           <button
+            onClick={onEdit}
             disabled={isActioning}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
+            className={cn(
+              "px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors disabled:opacity-50",
+              isEditing
+                ? "bg-brand-cerulean-dark text-white"
+                : "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+            )}
             aria-label={`Edit: ${item.title ?? "item"}`}
+            aria-expanded={isEditing}
           >
             Edit
           </button>
           <button
             onClick={onDismiss}
             disabled={isActioning}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
+            className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
             aria-label={`Dismiss: ${item.title ?? "item"}`}
           >
             Dismiss
           </button>
         </div>
       </div>
+
+      {/* Inline editor */}
+      {isEditing && (
+        <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
+          <label htmlFor={`edit-${item.id}`} className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+            Payload / Content
+          </label>
+          <textarea
+            ref={textareaRef}
+            id={`edit-${item.id}`}
+            value={editContent}
+            onChange={(e) => onEditContentChange(e.target.value)}
+            rows={8}
+            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-mono text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y"
+            aria-label="Edit payload content"
+          />
+          <div className="flex items-center gap-2 justify-end">
+            <button
+              onClick={onEdit}
+              className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onSaveAndApprove}
+              disabled={isActioning}
+              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {isActioning ? "Saving..." : "Save & Approve"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

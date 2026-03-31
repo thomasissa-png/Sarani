@@ -45,10 +45,10 @@ const AGENTS = [
 
 const CATEGORY_COLORS: Record<string, string> = {
   ton: "bg-purple-100 text-purple-700",
-  contenu: "bg-blue-100 text-blue-700",
+  contenu: "bg-brand-cerulean/10 text-brand-cerulean",
   structure: "bg-amber-100 text-amber-700",
-  pricing: "bg-green-100 text-green-700",
-  missing_info: "bg-red-100 text-red-700",
+  pricing: "bg-success/10 text-success",
+  missing_info: "bg-brand-flame/20 text-brand-flame",
 };
 
 function formatRelativeTime(dateStr: string): string {
