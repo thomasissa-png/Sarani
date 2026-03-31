@@ -47,6 +47,7 @@ export async function middleware(request: NextRequest) {
     "/api/admin/brief-check",
     "/api/admin/assets",
     "/api/admin/graph-subscriptions",
+    "/api/admin/team",
     "/api/admin/teams",
   ];
   if (isWriteMethod && adminOnlyPaths.some((p) => pathname.startsWith(p))) {
