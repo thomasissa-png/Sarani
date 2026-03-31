@@ -23,6 +23,7 @@ export interface EmailMessage {
   receivedDateTime: string;
   bodyPreview: string;
   hasAttachments: boolean;
+  conversationId: string; // Microsoft Graph conversationId — groups email threads
 }
 
 export interface EmailMessageFull extends EmailMessage {
@@ -30,6 +31,7 @@ export interface EmailMessageFull extends EmailMessage {
     contentType: string;
     content: string;
   };
+  conversationId: string; // Microsoft Graph conversationId — groups email threads
 }
 
 export interface EmailAttachment {
@@ -53,7 +55,7 @@ export async function getRecentEmails(
     "$filter=isRead eq false",
     "$orderby=receivedDateTime desc",
     `$top=${limit}`,
-    "$select=id,subject,from,receivedDateTime,bodyPreview,hasAttachments",
+    "$select=id,subject,from,receivedDateTime,bodyPreview,hasAttachments,conversationId",
   ].join("&");
 
   const data = await graphFetch<{ value: EmailMessage[] }>(
@@ -69,8 +71,9 @@ export async function getRecentEmails(
 export async function getEmailById(
   messageId: string
 ): Promise<EmailMessageFull> {
+  const select = "id,subject,from,receivedDateTime,bodyPreview,hasAttachments,body,conversationId";
   return graphFetch<EmailMessageFull>(
-    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}`
+    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages/${encodeURIComponent(messageId)}?$select=${select}`
   );
 }
 
