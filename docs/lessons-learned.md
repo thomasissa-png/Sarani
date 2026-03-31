@@ -1,5 +1,11 @@
 # Lessons Learned — Sarani
 
+## Session 10 — 2026-03-31
+
+| Session | Date | Catégorie | Sévérité | Description | Correction appliquée | Recommandation framework | Cible propagation | Fichiers impactés | Statut correction | Statut propagation |
+|---|---|---|---|---|---|---|---|---|---|---|
+| S10 | 2026-03-31 | insistance | P0 | [INSISTANCE FONDATEUR] Ne JAMAIS faire le travail d'un agent spécialisé à sa place. Si un agent est bloqué (permissions, timeout, erreur), le RELANCER avec les bonnes conditions — pas prendre le relais manuellement. Thomas l'a signalé quand l'orchestrateur a voulu écrire le fichier client-manager.md au lieu de relancer @agent-factory. | Relancé @agent-factory au lieu de créer le fichier manuellement | **RÈGLE ABSOLUE (renforcement règle n°4 CLAUDE.md) : si un agent est bloqué, le relancer avec les bonnes conditions. Ne JAMAIS produire un livrable à la place d'un agent spécialisé, même si "c'est plus rapide".** Les seules exceptions restent : éditions techniques mineures, réponses utilisateur, opérations git, modifications project-context.md/CLAUDE.md. | règle-globale | CLAUDE.md (règle n°4 déjà présente — renforcement), docs/lessons-learned.md | fait | n/a |
+
 ## Session 9 — 2026-03-28
 
 | Session | Date | Catégorie | Sévérité | Description | Correction appliquée | Recommandation framework | Cible propagation | Fichiers impactés | Statut correction | Statut propagation |
