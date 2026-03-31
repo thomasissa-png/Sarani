@@ -509,7 +509,7 @@ async function runAutoReviewLoop(params: {
 
   // Create an inbox_item for PM review
   await db.insert(inboxItems).values({
-    type: "qa_gates_pass", // reusing type for QA-related items
+    type: "followup_alert", // escalation: auto-review failed, needs human intervention
     status: "pending",
     title: `Auto-review failed after ${MAX_AUTO_REVIEW_ROUNDS} rounds — needs human review`,
     summary: JSON.stringify({

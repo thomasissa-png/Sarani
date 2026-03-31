@@ -9,6 +9,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow cron routes (authenticated by x-cron-secret in route handler, not cookie)
+  if (pathname.startsWith("/api/admin/cron")) {
+    return NextResponse.next();
+  }
+
+  // Allow webhook routes (authenticated by clientState secret in route handler)
+  if (pathname.startsWith("/api/webhooks")) {
+    return NextResponse.next();
+  }
+
   // Protect all /admin and /api/admin routes
   const cookieHeader = request.headers.get("cookie");
   const auth = await isAuthenticatedFromCookie(cookieHeader);
@@ -35,6 +45,9 @@ export async function middleware(request: NextRequest) {
     "/api/admin/inbox",
     "/api/admin/arya",
     "/api/admin/brief-check",
+    "/api/admin/assets",
+    "/api/admin/graph-subscriptions",
+    "/api/admin/teams",
   ];
   if (isWriteMethod && adminOnlyPaths.some((p) => pathname.startsWith(p))) {
     if (auth.role !== "admin") {
