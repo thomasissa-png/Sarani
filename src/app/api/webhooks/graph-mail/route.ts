@@ -47,26 +47,42 @@ interface ClassificationResult {
 
 // ─── Classification prompt (shared with classify/route.ts) ────────────────
 
-const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier. Sarani is an international creative agency. Classify the following email into exactly ONE category.
+const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following email into exactly ONE category AND detect its language.
 
 Categories:
-- "client_brief": email containing a project brief, request for work, or new deliverable request from an existing or known client
-- "client_followup": follow-up, question, feedback, revision request, or status update about an ongoing project
-- "noise": newsletters, automated notifications, marketing emails, system alerts, subscription confirmations
-- "new_client_potential": first contact from someone who could become a client — inquiry, introduction, request for information or pricing
+- "client_brief": email containing a project brief, request for work, or new deliverable request from an EXISTING or KNOWN client. The sender has worked with Sarani before, the brief is clear and specific (deliverables, timeline, brand mentioned).
+- "client_followup": follow-up, question, feedback, revision request, or status update about an ONGOING project.
+- "noise": newsletters, automated notifications, marketing emails, system alerts, subscription confirmations, out-of-office replies.
+- "new_client_potential": first contact from someone who could become a client — casual inquiry, introduction, "just reaching out". No specific project request yet.
+- "new_client_prospect": first contact from a prospect who WANTS something specific — requests a quote, a pitch, a proposal, asks for pricing, describes a project they need help with. They are ready to buy, not just browsing.
+
+Key distinction — client_brief vs new_client_prospect:
+- client_brief = KNOWN client + CLEAR brief (specific deliverables, deadline, brand context).
+- new_client_prospect = UNKNOWN sender + WANTS a quote/pitch/proposal.
+- If unsure: does the sender reference past Sarani projects or use internal vocabulary (SharePoint links, ClickUp refs)? → client_brief. Otherwise → new_client_prospect.
+
+Routing rules:
+- client_brief → "PROTO-EMAIL-INTAKE"
+- client_followup → "PROTO-CLIENT-RETURN"
+- noise → "archive"
+- new_client_potential → "PROTO-CLIENT-REPLY"
+- new_client_prospect → "PROTO-PITCH"
 
 Return JSON:
 {
-  "category": "client_brief"|"client_followup"|"noise"|"new_client_potential",
+  "category": "<one of the 5 categories>",
   "confidence": 0.0 to 1.0,
   "reasoning": "one sentence explaining why this category",
-  "suggestedAction": "one sentence — what should the PM do next"
+  "suggestedAction": "one sentence — what should the PM do next",
+  "language": "<ISO 639-1 code of the email's language>",
+  "routeTo": "<protocol name from routing rules>"
 }
 
 Rules:
 - Return valid JSON only, no markdown.
 - If unsure between two categories, pick the one that requires human attention (prefer false positive over missed client email).
-- Confidence below 0.6 means you are uncertain — flag it in reasoning.`;
+- Confidence below 0.6 means you are uncertain — flag it in reasoning.
+- Language detection: identify the PRIMARY language of the email body. If mixed, use the dominant language. Default to "en" only if truly ambiguous.`;
 
 // ─── Noise detection ──────────────────────────────────────────────────────
 
@@ -86,6 +102,7 @@ function priorityFromCategory(category: EmailCategory): "high" | "medium" | "low
   switch (category) {
     case "client_brief": return "high";
     case "new_client_potential": return "high";
+    case "new_client_prospect": return "high";
     case "client_followup": return "medium";
     case "noise": return "low";
   }
@@ -133,6 +150,8 @@ async function processEmailNotification(messageId: string): Promise<void> {
         confidence: 0.95,
         reasoning: `Sender address "${from}" matches automated/notification pattern.`,
         suggestedAction: "Archive or ignore — automated sender detected.",
+        language: "en",
+        routeTo: "archive",
       };
     } else {
       // Classify with Claude Haiku
