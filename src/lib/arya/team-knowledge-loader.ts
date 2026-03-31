@@ -115,5 +115,14 @@ export async function buildTeamKnowledgePrompt(
     lines.push("");
   }
 
-  return lines.join("\n");
+  // Token budget cap: ~3000 tokens max
+  const MAX_PROMPT_CHARS = 12_000;
+  const result = lines.join("\n");
+  if (result.length > MAX_PROMPT_CHARS) {
+    const truncated = result.slice(0, MAX_PROMPT_CHARS);
+    const lastNewline = truncated.lastIndexOf("\n");
+    return truncated.slice(0, lastNewline) + "\n\n[Additional team knowledge entries omitted]\n--- END TEAM KNOWLEDGE ---";
+  }
+
+  return result;
 }

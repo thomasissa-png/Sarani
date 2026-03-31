@@ -246,10 +246,22 @@ export async function buildClientKnowledgePrompt(
     lines.push(
       "PRIORITY RULE: Contact-level knowledge overrides division-level, which overrides client-level. If a contact prefers casual tone but the client default is formal, use casual for this contact."
     );
+    lines.push(
+      "CROSS-SYSTEM PRIORITY: Client knowledge > Arya rules > Team knowledge. If a client preference contradicts an Arya rule, follow the client preference."
+    );
     lines.push("");
     lines.push("--- END CLIENT KNOWLEDGE ---");
 
-    return lines.join("\n");
+    // Token budget cap: estimate ~4 chars per token, truncate if over budget
+    const MAX_PROMPT_CHARS = 12_000; // ~3000 tokens
+    const result = lines.join("\n");
+    if (result.length > MAX_PROMPT_CHARS) {
+      const truncated = result.slice(0, MAX_PROMPT_CHARS);
+      const lastNewline = truncated.lastIndexOf("\n");
+      return truncated.slice(0, lastNewline) + "\n\n[Additional knowledge entries omitted — use category filter for specific context]\n--- END CLIENT KNOWLEDGE ---";
+    }
+
+    return result;
   } catch (error) {
     console.error("[Knowledge Loader] buildClientKnowledgePrompt failed:", error);
     return "";

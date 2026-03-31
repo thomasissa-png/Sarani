@@ -45,10 +45,22 @@ export async function buildAryaRulesPrompt(): Promise<string> {
     (rule) => `- [${rule.category}] ${rule.ruleText}`
   );
 
-  return [
+  const result = [
     "",
     "ARYA LEARNED RULES (from PM corrections):",
     ...lines,
     "",
+    "CROSS-SYSTEM PRIORITY: Client knowledge > Arya rules > Team knowledge.",
+    "",
   ].join("\n");
+
+  // Token budget cap: ~1500 tokens max for rules
+  const MAX_RULES_CHARS = 6_000;
+  if (result.length > MAX_RULES_CHARS) {
+    const truncated = result.slice(0, MAX_RULES_CHARS);
+    const lastNewline = truncated.lastIndexOf("\n");
+    return truncated.slice(0, lastNewline) + "\n\n[Additional rules omitted — oldest rules truncated first]\n";
+  }
+
+  return result;
 }
