@@ -1,5 +1,7 @@
 import { SARANI_BASE_CONTEXT } from "@/lib/ai/prompts/base";
 import type { AgentType } from "./templates";
+import type { TemplateType } from "./quality-gates";
+import { buildGatesPrompt } from "./quality-gates";
 
 /**
  * Agent role descriptions for use in team step prompts.
@@ -83,8 +85,15 @@ DELIVERABLE FORMAT:
 /**
  * Build the complete system prompt for a team step execution.
  */
-function buildSystemPrompt(agentType: AgentType): string {
+function buildSystemPrompt(
+  agentType: AgentType,
+  templateType?: TemplateType
+): string {
   const rolePrompt = AGENT_ROLE_PROMPTS[agentType];
+
+  const isQaAgent = agentType === "qa";
+  const gatesBlock =
+    isQaAgent && templateType ? `\n\n${buildGatesPrompt(templateType)}` : "";
 
   return `${SARANI_BASE_CONTEXT}
 
@@ -96,7 +105,7 @@ TEAM CONTEXT RULES:
 3. If PREVIOUS STEP OUTPUTS are provided, use them as input and build upon them. Do not contradict or ignore upstream work.
 4. Output in markdown format (not JSON) — this is a team deliverable, not a structured API response.
 5. Be thorough and complete. This is a professional deliverable for a client of Sarani.
-6. If any critical information is missing from the brief, explicitly flag it at the top of your output under a "## Missing Information" section.`;
+6. If any critical information is missing from the brief, explicitly flag it at the top of your output under a "## Missing Information" section.${gatesBlock}`;
 }
 
 /**
@@ -160,10 +169,11 @@ export function buildStepPrompt(
   brief: string,
   stepLabel: string,
   previousOutputs: Array<{ label: string; agentType: string; output: string }>,
-  rerunComment?: string
+  rerunComment?: string,
+  templateType?: TemplateType
 ): { systemPrompt: string; userMessage: string } {
   return {
-    systemPrompt: buildSystemPrompt(agentType as AgentType),
+    systemPrompt: buildSystemPrompt(agentType as AgentType, templateType),
     userMessage: buildUserMessage(brief, stepLabel, previousOutputs, rerunComment),
   };
 }
