@@ -68,8 +68,10 @@ function formatRelativeTime(dateStr: string): string {
 
 export default function AryaSupervisionPage() {
   const [learnings, setLearnings] = useState<AryaLearning[]>([]);
+  const [learningsTotal, setLearningsTotal] = useState<number>(0);
   const [stats, setStats] = useState<InboxStats>({ pending: 0, processedToday: 0 });
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -87,6 +89,7 @@ export default function AryaSupervisionPage() {
         if (learningsRes.ok) {
           const data = await learningsRes.json();
           setLearnings(data.learnings ?? []);
+          setLearningsTotal(data.count ?? data.learnings?.length ?? 0);
         }
 
         let pending = 0;
@@ -102,8 +105,11 @@ export default function AryaSupervisionPage() {
         }
 
         setStats({ pending, processedToday: processed });
-      } catch {
-        // Silently fail
+      } catch (error) {
+        console.error("[Arya Supervision] fetch error:", error);
+        if (mounted) {
+          setFetchError("Unable to load supervision data — check your connection");
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -123,6 +129,13 @@ export default function AryaSupervisionPage() {
         </p>
       </div>
 
+      {/* Fetch error banner */}
+      {fetchError && (
+        <div className="bg-brand-flame/10 border border-brand-flame/30 rounded-lg px-4 py-3 text-sm text-brand-flame" role="alert">
+          {fetchError}
+        </div>
+      )}
+
       {/* Stats cards */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -137,7 +150,7 @@ export default function AryaSupervisionPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard label="Inbox Pending" value={stats.pending} accent={stats.pending > 0} />
           <StatCard label="Processed (recent)" value={stats.processedToday} />
-          <StatCard label="Total Learnings" value={learnings.length} />
+          <StatCard label="Total Learnings" value={learningsTotal} />
         </div>
       )}
 
