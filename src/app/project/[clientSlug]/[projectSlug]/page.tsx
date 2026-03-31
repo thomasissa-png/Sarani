@@ -236,7 +236,7 @@ async function fetchBatches(
   } catch (err) {
     console.error(
       "[share-page] SharePoint error:",
-      err instanceof SharePointApiError ? `${err.message} (status: ${(err as Record<string,unknown>).statusCode})` : err
+      err instanceof SharePointApiError ? `${err.message} (status: ${err.statusCode})` : err
     );
     // Return empty batches instead of error — show the brief without assets
     return { batches: [] };
