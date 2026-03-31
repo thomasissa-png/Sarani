@@ -378,50 +378,65 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-03-28 ~16:30 UTC (session 8)
+**Date et heure de clôture :** 2026-03-31 ~22:00 UTC (session 10)
 
-**Résumé de la session (session 8) :**
-Session massive — 38 commits, ~14,000 lignes. 4 features majeures implémentées (3g LLM Case Study Generator, 3h LLM Landing Page Generator, 3f Storyboard Flux.1 Pro, 3i Project Presentation Link). 6 audits complets exécutés (QA sécurité 22 issues, @design site 7.4/10, @ux site 7.1/10, @seo 6.5/10, @design outputs, @ux back-office 6.6/10) + 2 audits persona (Sophie 4.9→8.5/10, Marc 5.9→7.5/10). 40+ corrections appliquées (sécurité P0/P1, WCAG, SEO canonicals/sitemap/breadcrumbs, mobile cards, dashboard actions, polling, sidebar badges). Back-office enrichi : vue projet centralisée, launch agent depuis tracker, rapport mensuel client PDF. Front-office : About restructuré conviction-first, Services/Blog ajustés, hero dots premium, footer categories filtres, case study gallery SharePoint + testimonials, LP renderer refondu. Quote PDF : 7 corrections visuelles, legal footer, next step, references. Framework : 4 learnings P0/P1 documentés.
+**Résumé de la session (session 10) :**
+Session massive — ~30 commits, ~8000+ lignes. Création complète de l'agent @client-manager (Arya) avec 7 protocoles opérationnels, quality gates par type de projet, et back-office redesigné en inbox de validation. 3 phases livrées : (1) framework update + Video AI providers, (2) Arya agent + protocoles + capabilities email/classification/brief, (3) back-office inbox UI + auto-review loop + crons + client knowledge base + email chain aggregation. QA extensive après chaque phase. Audit UX par Arya elle-même : 6.5/10 — solide pour emails/devis, gaps sur asset review et workflow bout-en-bout.
 
 **Travaux terminés cette session :**
-- [x] Phase 3g : Case Study Generator LLM complet (scoring + scan ClickUp + génération Claude + publish website + gallery SharePoint)
-- [x] Phase 3h : Landing Page Generator LLM complet (Claude Sonnet + renderer refondu gallery/pricing/team/hero image)
-- [x] Phase 3f : Storyboard fal.ai Flux.1 Pro (images parallèles + share page rebuild + approve/request changes)
-- [x] Phase 3i : Project Presentation Link complet (specs + DB + API + page publique + tracker integration)
-- [x] Sécurité QA : 4 P0 + 7 P1 corrigés (rate limiting, UUID, prompt injection, RBAC, transactions, Zod)
-- [x] SEO : canonicals 9 pages, blog sitemap, BreadcrumbList 8 pages, OG images 7 pages, robots.txt
-- [x] Design : WCAG contrastes, hero dots premium 3 couches, CTA texte blanc, design system light-first officiel
-- [x] UX site : proof cards cliquables, attribution optional, footer categories filtres, About conviction-first
-- [x] UX back-office : mobile cards 4 pages, dashboard actions, polling generating 3 pages, sidebar badges, label unifié
-- [x] Features back-office : vue projet centralisée, launch agent dropdown tracker, client monthly report PDF
-- [x] Sophie persona : outputs 4.9→8.5/10 (powered-by, storyboard approve, lightbox, testimonials, images, LP refonte)
-- [x] Marc persona : outputs 5.9→7.5/10 (legal footer PDF, references, next step, garantie, payment terms)
-- [x] Quote PDF : 7 fixes visuels (dot supprimé, schedule conditionnel, scope conditionnel, accent line, cool gray, legal footer visible, page numbers)
-- [x] docs/infra/client-mapping-guide.md : guide lisible du mapping ClickUp/SharePoint/Excel
+- [x] Framework Gradient Agents mis à jour (21 agents + CLAUDE.md fusionné)
+- [x] 4 learnings P0/P1 S8+S9 propagés dans 7 agents + CLAUDE.md
+- [x] Phase 4 QA : 44 nouveaux tests (RBAC, API, LLM smoke) + CI pipeline complète (80 tests total)
+- [x] Phase 3f Video AI : 3 providers (Veo 3.1, Runway Gen-4, Kling 3.0) + migration + API + UI
+- [x] Agent @client-manager (Arya) créé : 311 lignes, escalade @moi, gate pricing, 10 compétences
+- [x] 7 protocoles opérationnels (EMAIL-INTAKE, CLIENT-REPLY, ASSET-REVIEW, QUOTE, PROJECT-FOLLOWUP, AI-TEAM, PITCH)
+- [x] Quality gates par type de projet (7 grilles PASS/FAIL : social, video, design, SEO, ad, translation, custom)
+- [x] Email capabilities : sendEmail, createDraft (brouillons Outlook), classify Haiku (5 catégories + langue + routeTo)
+- [x] Brief template 6 sections Sarani avec emojis + brief-check enrichi par type (design/trad/vidéo/social)
+- [x] PROTO-CLIENT-RETURN : matching email→projet via conversationId + fallback Levenshtein
+- [x] Classification enrichie : new_client_prospect + détection langue + routeTo protocole
+- [x] Activation automatique : webhook Graph Mail + cron poll-emails + cron project-scan + cron renew-subscriptions
+- [x] Inbox items : table DB + API CRUD + webhook/cron alimentent automatiquement
+- [x] Learning journal : arya_learnings + arya_rules tables, capture corrections PM, promotion en règles
+- [x] Back-office Phase 2 : Inbox UI (page principale), sidebar 5 items, page Arya supervision
+- [x] UX fixes : Edit handler inline, toast feedback, tokens Sarani, touch targets 44px, error handling
+- [x] Client Knowledge Base : table + API CRUD + prompt injection + knowledge-loader utility
+- [x] Email chain aggregation : détection threads par conversationId, fusion briefs, badge "X emails"
+- [x] Phase 3 auto-review loop : QA gates FAIL → relance automatique (max 3 tours) → escalade inbox
+- [x] Asset review endpoint : comparaison SharePoint files vs expected deliverables
+- [x] Sécurité : middleware cron bypass, RBAC adminOnlyPaths complet, auth guards, rate limits
+- [x] Fix TS pré-existant : SharePointApiError cast (0 erreurs TS)
 
 **Travaux en cours / à confirmer :**
-- **Video AI integration** (3f suite) : storyboard images OK, mais la génération vidéo réelle (Veo 3.1/Runway/Kling) pas encore connectée. Les routes API existent, les specs et le prompt library sont prêts — manque l'intégration provider vidéo.
-- **Email import** : fix session 7 pushé, Thomas doit tester.
-- **Learnings non propagés** : 4 learnings P0/P1 session 8 doivent être propagés dans CLAUDE.md + agents en ouverture de la prochaine session (gate bloquante). PROPAGATION P0 EN ATTENTE : conviction-first → CLAUDE.md, ux.md, copywriter.md, design.md, reviewer.md ; H1 uniques → copywriter.md, seo.md ; CTA blanc → design-system.md, design.md ; dots hero → design.md, fullstack.md.
+- **Audit Arya 6.5/10** — 3 gaps critiques identifiés par Arya elle-même :
+  1. Pas de pont inbox → quick-brief (le "Approve" ne lance pas la création de projet automatiquement)
+  2. Asset review incomplet (endpoint basique existe, pas de page UI dédiée avec thumbnails)
+  3. Pas de recherche globale dans le back-office
+- **Email history scan** : Thomas veut qu'Arya scanne l'historique des emails (Graph API) pour bootstrapper la knowledge base client. Techniquement faisable mais pas encore implémenté.
+- **Fire-and-forget vidéo** : le pattern `void processVideoGeneration()` ne fonctionne pas sur Replit autoscale. Besoin d'une queue job ou d'un cron de traitement.
 
-**Prochaines actions recommandées :**
-1. **PROPAGATION LEARNINGS** (GATE BLOQUANTE) : propager les 4 learnings P0/P1 session 8 dans les fichiers agents listés ci-dessus. ~15 min, 8 fichiers.
-2. **@fullstack + @ia — Intégration vidéo AI** (PRIORITÉ 1) : connecter Veo 3.1 / Runway Gen-4 / Kling 3.0 pour la génération vidéo depuis les storyboards. Prompt library prête (docs/ia/video-prompt-library.md). Architecture multi-provider prête dans les specs.
-3. **Phase 4 QA complète** (PRIORITÉ 2) : E2E Playwright sur les 7 features (case study gen, LP gen, storyboard, project presentation, vue projet, launch agent, client report). Lighthouse CI. Couverture tests sur les nouvelles routes LLM.
-4. **@pm — Spec workflow "brief to delivery" end-to-end** (PRIORITÉ 3) : le gap structurel identifié par l'auto-audit PM — les specs couvrent des features isolées, pas le workflow quotidien de Thomas.
+**Prochaines actions recommandées (par Arya + @elon) :**
+1. **Pont inbox → quick-brief** (PRIORITÉ 1) : quand la PM approve un item email_brief, ouvrir automatiquement le Quick Brief pré-rempli ou lancer la création de projet. C'est la frustration #1 d'Arya.
+2. **Page asset review UI** (PRIORITÉ 2) : page dédiée avec thumbnails SharePoint, comparaison brief vs livrés, validation/rejet par asset. C'est l'activité quotidienne la plus chronophage des PMs.
+3. **Recherche globale** (PRIORITÉ 3) : champ de recherche dans le header qui cherche dans projets, clients et inbox items.
+4. **Email history scan** (PRIORITÉ 4) : scan paginé de l'historique email pour bootstrapper la knowledge base client automatiquement.
+5. **Vue Kanban projets** (PRIORITÉ 5) : alternative visuelle au Tracker pour le standup quotidien.
 
 **Décisions de Thomas cette session :**
-- CTA texte BLANC sur Flame (pas noir — ne ressort pas assez)
-- Hero homepage = dots animés UNIQUEMENT (grid d'images rejeté — "cata")
-- About page = conviction-first, pas de CTAs en hero
-- Services H1 unique "8 disciplines. One team. No waiting." (pas doublon homepage)
-- Blog footer = éducation, pas conversion ("Want to see this in practice?")
-- Footer categories = lien avec filtre actif sur /work
-- Quote PDF : dot accent supprimé, schedule conditionnel, scope conditionnel
+- Arya (@client-manager) = cœur du back-office, remplace l'ancien @pm
+- Arya travaille en binôme avec les PMs humaines (prépare, la PM valide)
+- Brouillons d'emails (pas d'envoi direct) — la PM a toujours le dernier mot
+- Escalade vers @moi quand Arya ne sait pas
+- Arya n'est pas soumise — elle prend du recul comme une vraie chef de projet
+- Journal de learning (corrections PM → Arya apprend)
+- Client Knowledge Base par société/division/individu
+- Emails successifs d'un même client → agrégation automatique
+- Tout ce qu'Arya enregistre doit être pertinent pour l'équipe
+- Arya doit utiliser activement sa knowledge base à chaque interaction
 
 **Branche de travail :** claude/extract-project-context-pGcr7
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 8 complète — 38 commits, ~14,000 lignes. Branche : claude/update-gradient-agents-OcDWM. GATE BLOQUANTE : 4 learnings P0/P1 non propagés (conviction-first, H1 uniques, CTA blanc, dots hero) → propager dans CLAUDE.md + 6 fichiers agents AVANT tout travail. Prochaines priorités : (1) intégration vidéo AI (Veo/Runway/Kling), (2) Phase 4 QA E2E Playwright, (3) spec workflow brief-to-delivery. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 10 complète — ~30 commits, ~8000 lignes. Branche : claude/extract-project-context-pGcr7. Arya (@client-manager) créée et opérationnelle. Audit Arya 6.5/10 — 3 gaps critiques : (1) pont inbox→brief, (2) page asset review UI, (3) recherche globale. Prochaines priorités : implémenter les 3 gaps + email history scan pour bootstrapper la knowledge base. Ne lance aucun agent avant mon feu vert.
 ```
