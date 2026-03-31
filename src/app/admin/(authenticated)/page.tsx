@@ -186,12 +186,90 @@ export default function InboxPage() {
         body: JSON.stringify({ id, status }),
       });
       if (res.ok) {
+        const data = await res.json();
+        const updatedItem = data.item as InboxItem | undefined;
         setItems((prev) => prev.filter((item) => item.id !== id));
+        if (editingId === id) setEditingId(null);
+
+        // Protocol-specific redirects on approve
+        if (status === "done" && updatedItem) {
+          if (updatedItem.protocol === "PROTO-EMAIL-INTAKE" && updatedItem.sourceId) {
+            // Redirect to Quick Brief with the email messageId for auto-import
+            showToast("Approved — redirecting to Quick Brief...", "success");
+            window.location.href = `/admin/quick-brief?fromInbox=${encodeURIComponent(updatedItem.sourceId)}`;
+            return;
+          }
+
+          if (updatedItem.protocol === "PROTO-CLIENT-REPLY" && updatedItem.summary) {
+            // Create Outlook draft from the approved reply content
+            try {
+              const summaryData = JSON.parse(updatedItem.summary) as Record<string, unknown>;
+              const senderEmail = (summaryData.from as string) ?? "";
+              const emailSubject = (summaryData.subject as string) ?? "";
+              // The PM's edited content (pm_action) or the AI-suggested reply
+              const replyBody = (updatedItem.arya_payload as Record<string, unknown>)?.suggestedReply as string
+                ?? (summaryData.suggestedReply as string)
+                ?? "";
+
+              if (senderEmail && replyBody) {
+                const draftRes = await fetch("/api/admin/emails/draft", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    to: senderEmail,
+                    subject: emailSubject.startsWith("Re:") ? emailSubject : `Re: ${emailSubject}`,
+                    body: replyBody,
+                    replyToMessageId: updatedItem.sourceId ?? undefined,
+                  }),
+                });
+                if (draftRes.ok) {
+                  const draftData = await draftRes.json();
+                  const webLink = draftData.webLink as string | undefined;
+                  showToast(
+                    webLink
+                      ? "Draft created in Outlook — open to review and send"
+                      : "Draft created in Outlook",
+                    "success"
+                  );
+                  if (webLink) {
+                    window.open(webLink, "_blank", "noopener,noreferrer");
+                  }
+                  return;
+                }
+                console.error("[Inbox] draft creation failed:", draftRes.status);
+              }
+            } catch (draftError) {
+              console.error("[Inbox] draft creation error:", draftError);
+            }
+            // Fallback toast if draft creation failed
+            showToast("Item approved — could not create draft automatically", "success");
+            return;
+          }
+
+          if (updatedItem.protocol === "PROTO-QUOTE") {
+            // Redirect to Quotes page with inbox data for pre-fill
+            // Extract client/project info from summary for query params
+            let quoteParams = `fromInbox=${encodeURIComponent(updatedItem.id)}`;
+            try {
+              const summaryData = JSON.parse(updatedItem.summary ?? "{}") as Record<string, unknown>;
+              const clientName = summaryData.clientName as string | undefined;
+              const projectName = summaryData.projectName as string | undefined;
+              if (clientName) quoteParams += `&client=${encodeURIComponent(clientName)}`;
+              if (projectName) quoteParams += `&project=${encodeURIComponent(projectName)}`;
+            } catch {
+              // Non-critical — redirect without extra params
+            }
+            showToast("Approved — redirecting to Quotes...", "success");
+            window.location.href = `/admin/quotes?${quoteParams}`;
+            return;
+          }
+        }
+
+        // Default toast for non-protocol actions
         showToast(
           status === "done" ? "Item approved — chain triggered" : "Item dismissed",
           "success"
         );
-        if (editingId === id) setEditingId(null);
       } else {
         console.error("[Inbox] action error:", res.status, res.statusText);
         showToast("Action failed — please retry", "error");
@@ -226,8 +304,33 @@ export default function InboxPage() {
         body: JSON.stringify({ id, status: "done", pm_action: editContent }),
       });
       if (res.ok) {
+        const data = await res.json();
+        const updatedItem = data.item as InboxItem | undefined;
         setItems((prev) => prev.filter((item) => item.id !== id));
         setEditingId(null);
+
+        // Protocol-specific redirects (same logic as handleAction)
+        if (updatedItem) {
+          if (updatedItem.protocol === "PROTO-EMAIL-INTAKE" && updatedItem.sourceId) {
+            showToast("Saved & approved — redirecting to Quick Brief...", "success");
+            window.location.href = `/admin/quick-brief?fromInbox=${encodeURIComponent(updatedItem.sourceId)}`;
+            return;
+          }
+          if (updatedItem.protocol === "PROTO-QUOTE") {
+            let quoteParams = `fromInbox=${encodeURIComponent(updatedItem.id)}`;
+            try {
+              const summaryData = JSON.parse(updatedItem.summary ?? "{}") as Record<string, unknown>;
+              const clientName = summaryData.clientName as string | undefined;
+              const projectName = summaryData.projectName as string | undefined;
+              if (clientName) quoteParams += `&client=${encodeURIComponent(clientName)}`;
+              if (projectName) quoteParams += `&project=${encodeURIComponent(projectName)}`;
+            } catch { /* non-critical */ }
+            showToast("Saved & approved — redirecting to Quotes...", "success");
+            window.location.href = `/admin/quotes?${quoteParams}`;
+            return;
+          }
+        }
+
         showToast("Saved & approved — chain triggered", "success");
       } else {
         console.error("[Inbox] save error:", res.status, res.statusText);
