@@ -378,7 +378,7 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-03-31 ~22:00 UTC (session 10)
+**Date et heure de clôture :** 2026-04-01 ~01:00 UTC (session 10 — extended)
 
 **Résumé de la session (session 10) :**
 Session massive — ~30 commits, ~8000+ lignes. Création complète de l'agent @client-manager (Arya) avec 7 protocoles opérationnels, quality gates par type de projet, et back-office redesigné en inbox de validation. 3 phases livrées : (1) framework update + Video AI providers, (2) Arya agent + protocoles + capabilities email/classification/brief, (3) back-office inbox UI + auto-review loop + crons + client knowledge base + email chain aggregation. QA extensive après chaque phase. Audit UX par Arya elle-même : 6.5/10 — solide pour emails/devis, gaps sur asset review et workflow bout-en-bout.
