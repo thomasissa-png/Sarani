@@ -622,6 +622,44 @@ export const projectPreviews = pgTable(
   ]
 );
 
+// ─── Video Previews ───────────────────────────────────────────────────────
+
+export interface VideoPreviewScene {
+  sceneId: string;
+  prompt: string;
+  videoUrl: string | null;
+  status: "pending" | "generating" | "ready" | "failed";
+  duration: number;
+  error: string | null;
+}
+
+export const videoPreviews = pgTable(
+  "video_previews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyboardId: uuid("storyboard_id").references(() => storyboards.id, {
+      onDelete: "set null",
+    }),
+    projectName: varchar("project_name", { length: 500 }).notNull(),
+    clientName: varchar("client_name", { length: 255 }),
+    provider: varchar("provider", { length: 50 }).notNull(), // 'veo' | 'runway' | 'kling'
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    // pending | generating | ready | failed | assembled
+    scenes: jsonb("scenes").$type<VideoPreviewScene[]>().notNull().default([]),
+    assembledUrl: text("assembled_url"),
+    shareToken: uuid("share_token").unique(),
+    shareExpiresAt: timestamp("share_expires_at"),
+    costEstimateCents: integer("cost_estimate_cents"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_video_previews_storyboard").on(table.storyboardId),
+    index("idx_video_previews_share").on(table.shareToken),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -664,3 +702,5 @@ export type StoryboardApproval = typeof storyboardApprovals.$inferSelect;
 export type NewStoryboardApproval = typeof storyboardApprovals.$inferInsert;
 export type ProjectPreview = typeof projectPreviews.$inferSelect;
 export type NewProjectPreview = typeof projectPreviews.$inferInsert;
+export type VideoPreview = typeof videoPreviews.$inferSelect;
+export type NewVideoPreview = typeof videoPreviews.$inferInsert;

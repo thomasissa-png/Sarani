@@ -25,6 +25,31 @@ type SceneInput = {
   mood: string;
 };
 
+type VideoPreviewScene = {
+  sceneId: string;
+  prompt: string;
+  videoUrl: string | null;
+  status: "pending" | "generating" | "ready" | "failed";
+  duration: number;
+  error: string | null;
+};
+
+type VideoPreviewStatus = {
+  id: string;
+  status: string;
+  provider: string;
+  scenes: VideoPreviewScene[];
+  summary: {
+    total: number;
+    ready: number;
+    failed: number;
+    pending: number;
+  };
+  costEstimateCents: number | null;
+  assembledUrl: string | null;
+  updatedAt: string;
+};
+
 const STATUSES = [
   "all",
   "draft",
@@ -105,6 +130,11 @@ export default function StoryboardsPage() {
 
   // Action loading (track which storyboard IDs are being updated)
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
+
+  // Video preview state
+  const [videoGenerating, setVideoGenerating] = useState<Set<string>>(new Set());
+  const [videoPreviewMap, setVideoPreviewMap] = useState<Record<string, VideoPreviewStatus>>({});
+  const [videoPreviewIds, setVideoPreviewIds] = useState<Record<string, string>>({}); // storyboardId -> videoPreviewId
 
   // ─── Fetch storyboards ─────────────────────────────────────────────────
 
@@ -243,6 +273,79 @@ export default function StoryboardsPage() {
     },
     [fetchStoryboards]
   );
+
+  // ─── Video preview generation ──────────────────────────────────────
+
+  const handleGenerateVideo = useCallback(
+    async (storyboardId: string) => {
+      setVideoGenerating((prev) => new Set(prev).add(storyboardId));
+      setError(null);
+      try {
+        const res = await fetch("/api/admin/video-preview/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            storyboardId,
+            provider: "veo", // default to primary provider
+            aspectRatio: "16:9",
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || `Video generation failed (${res.status})`);
+        }
+        const data = await res.json();
+        setVideoPreviewIds((prev) => ({
+          ...prev,
+          [storyboardId]: data.videoPreviewId,
+        }));
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to start video generation"
+        );
+        setVideoGenerating((prev) => {
+          const next = new Set(prev);
+          next.delete(storyboardId);
+          return next;
+        });
+      }
+    },
+    []
+  );
+
+  // Poll video preview status
+  useEffect(() => {
+    const activeEntries = Object.entries(videoPreviewIds).filter(
+      ([sbId]) => videoGenerating.has(sbId)
+    );
+    if (activeEntries.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const [storyboardId, previewId] of activeEntries) {
+        try {
+          const res = await fetch(
+            `/api/admin/video-preview/${previewId}/status`
+          );
+          if (!res.ok) continue;
+          const data: VideoPreviewStatus = await res.json();
+          setVideoPreviewMap((prev) => ({ ...prev, [storyboardId]: data }));
+
+          // Stop polling if done
+          if (data.status === "ready" || data.status === "failed" || data.status === "assembled") {
+            setVideoGenerating((prev) => {
+              const next = new Set(prev);
+              next.delete(storyboardId);
+              return next;
+            });
+          }
+        } catch {
+          // Non-blocking poll error
+        }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [videoPreviewIds, videoGenerating]);
 
   // ─── Scene form helpers ──────────────────────────────────────────────
 
@@ -568,6 +671,21 @@ export default function StoryboardsPage() {
                     Share
                   </button>
                 )}
+                {(sb.status === "ready" || sb.status === "approved" || sb.status === "shared") && (
+                  <button
+                    onClick={() => handleGenerateVideo(sb.id)}
+                    disabled={videoGenerating.has(sb.id)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 border border-purple-300 text-purple-700 text-xs font-medium rounded-md hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Generate AI video preview from storyboard"
+                  >
+                    {videoGenerating.has(sb.id) ? (
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                    ) : (
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                    )}
+                    {videoGenerating.has(sb.id) ? "Generating..." : "Video"}
+                  </button>
+                )}
                 <a
                   href={`/api/admin/storyboards/${sb.id}`}
                   target="_blank"
@@ -577,6 +695,10 @@ export default function StoryboardsPage() {
                   View
                 </a>
               </div>
+              {/* Video preview status (mobile) */}
+              {videoPreviewMap[sb.id] && (
+                <VideoPreviewPanel preview={videoPreviewMap[sb.id]} />
+              )}
               <p className="text-xs text-neutral-400">{formatDate(sb.createdAt)}</p>
             </div>
           ))}
@@ -683,6 +805,39 @@ export default function StoryboardsPage() {
                             Share
                           </button>
                         )}
+                        {(sb.status === "ready" || sb.status === "approved" || sb.status === "shared") && (
+                          <button
+                            onClick={() => handleGenerateVideo(sb.id)}
+                            disabled={videoGenerating.has(sb.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 border border-purple-300 text-purple-700 text-xs font-medium rounded-md hover:bg-purple-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Generate AI video preview from storyboard"
+                          >
+                            {videoGenerating.has(sb.id) ? (
+                              <svg
+                                className="w-3 h-3 animate-spin"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              >
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-3 h-3"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                              </svg>
+                            )}
+                            {videoGenerating.has(sb.id) ? "Generating..." : "Video"}
+                          </button>
+                        )}
                         <a
                           href={`/api/admin/storyboards/${sb.id}`}
                           target="_blank"
@@ -693,6 +848,10 @@ export default function StoryboardsPage() {
                           View
                         </a>
                       </div>
+                      {/* Inline video preview status */}
+                      {videoPreviewMap[sb.id] && (
+                        <VideoPreviewPanel preview={videoPreviewMap[sb.id]} />
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -708,6 +867,130 @@ export default function StoryboardsPage() {
           Showing {storyboards.length} storyboard
           {storyboards.length !== 1 ? "s" : ""}
         </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Video Preview Panel ────────────────────────────────────────────────────
+
+function VideoPreviewPanel({ preview }: { preview: VideoPreviewStatus }) {
+  const isGenerating = preview.status === "generating";
+  const isReady = preview.status === "ready" || preview.status === "assembled";
+  const isFailed = preview.status === "failed";
+
+  const costDisplay =
+    preview.costEstimateCents != null
+      ? `$${(preview.costEstimateCents / 100).toFixed(2)}`
+      : "--";
+
+  return (
+    <div className="mt-2 p-3 rounded-lg border border-purple-200 bg-purple-50/50 space-y-2">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-purple-800">
+            Video Preview
+          </span>
+          <span
+            className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+              isGenerating
+                ? "bg-yellow-100 text-yellow-700"
+                : isReady
+                  ? "bg-emerald-100 text-emerald-700"
+                  : isFailed
+                    ? "bg-red-100 text-red-700"
+                    : "bg-neutral-200 text-neutral-600"
+            }`}
+          >
+            {preview.status.charAt(0).toUpperCase() + preview.status.slice(1)}
+          </span>
+        </div>
+        <span className="text-xs text-neutral-500">
+          {preview.provider.toUpperCase()} &middot; Est. {costDisplay}
+        </span>
+      </div>
+
+      {/* Progress */}
+      {isGenerating && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <svg
+              className="w-3 h-3 animate-spin text-purple-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            <span className="text-xs text-purple-700">
+              Generating {preview.summary.ready}/{preview.summary.total} scenes...
+            </span>
+          </div>
+          <div className="w-full bg-purple-200 rounded-full h-1.5">
+            <div
+              className="bg-purple-600 h-1.5 rounded-full transition-all duration-500"
+              style={{
+                width: `${preview.summary.total > 0 ? (preview.summary.ready / preview.summary.total) * 100 : 0}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Scene results */}
+      {(isReady || isFailed) && preview.scenes.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-xs text-neutral-600">
+            {preview.summary.ready} ready, {preview.summary.failed} failed of{" "}
+            {preview.summary.total} scenes
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {preview.scenes.map((scene, i) => (
+              <div
+                key={scene.sceneId || i}
+                className="relative rounded-md overflow-hidden border border-neutral-200 bg-neutral-100"
+              >
+                {scene.status === "ready" && scene.videoUrl ? (
+                  <video
+                    src={scene.videoUrl}
+                    controls
+                    className="w-full aspect-video object-cover"
+                    preload="metadata"
+                  >
+                    <track kind="captions" />
+                  </video>
+                ) : scene.status === "failed" ? (
+                  <div className="flex items-center justify-center aspect-video bg-red-50">
+                    <span className="text-xs text-red-600 px-2 text-center">
+                      Failed{scene.error ? `: ${scene.error.slice(0, 50)}` : ""}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center aspect-video">
+                    <svg
+                      className="w-4 h-4 animate-spin text-neutral-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1.5 py-0.5">
+                  <span className="text-[10px] text-white font-medium">
+                    Scene {i + 1} &middot; {scene.duration}s
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );
