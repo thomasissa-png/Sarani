@@ -340,20 +340,24 @@ export default function InboxPage() {
   // ─── Due Today banner (Fix 5) ──────────────────────────────────────────
   const [dueTodayTasks, setDueTodayTasks] = useState<Array<{ id: string; name: string; url: string }>>([]);
 
-  useEffect(() => {
-    async function fetchDueToday() {
-      try {
-        const res = await fetch("/api/admin/clickup/due-today");
-        if (res.ok) {
-          const data = await res.json() as { tasks: Array<{ id: string; name: string; url: string }> };
-          setDueTodayTasks(data.tasks ?? []);
-        }
-      } catch {
-        // Non-critical — banner simply stays hidden
+  const fetchDueToday = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/clickup/due-today");
+      if (res.ok) {
+        const data = await res.json() as { tasks: Array<{ id: string; name: string; url: string }> };
+        setDueTodayTasks(data.tasks ?? []);
       }
+    } catch {
+      // Non-critical — banner simply stays hidden
     }
-    fetchDueToday();
   }, []);
+
+  // Fetch on mount + refresh every 30s alongside inbox items
+  useEffect(() => {
+    fetchDueToday();
+    const interval = setInterval(fetchDueToday, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchDueToday]);
 
   const handleNotNoise = useCallback(
     async (id: string) => {

@@ -134,11 +134,48 @@ function extractTextContent(content: string, messageType: string): string {
   }
 }
 
+/**
+ * Resolve a Lark open_id to a display name via the Lark API.
+ * Returns the open_id as fallback if the API is not configured or fails.
+ */
+async function resolveLarkSenderName(openId: string): Promise<string> {
+  const appId = process.env.LARK_APP_ID;
+  const appSecret = process.env.LARK_APP_SECRET;
+  if (!appId || !appSecret || !openId) return openId;
+
+  try {
+    // Get tenant access token
+    const tokenRes = await fetch("https://open.larksuite.com/open-apis/auth/v3/tenant_access_token/internal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ app_id: appId, app_secret: appSecret }),
+      signal: AbortSignal.timeout(3_000),
+    });
+    if (!tokenRes.ok) return openId;
+    const tokenData = (await tokenRes.json()) as { tenant_access_token?: string };
+    if (!tokenData.tenant_access_token) return openId;
+
+    // Get user info
+    const userRes = await fetch(`https://open.larksuite.com/open-apis/contact/v3/users/${openId}?user_id_type=open_id`, {
+      headers: { Authorization: `Bearer ${tokenData.tenant_access_token}` },
+      signal: AbortSignal.timeout(3_000),
+    });
+    if (!userRes.ok) return openId;
+    const userData = (await userRes.json()) as { data?: { user?: { name?: string } } };
+    return userData.data?.user?.name ?? openId;
+  } catch {
+    // Graceful degradation — return raw ID
+    return openId;
+  }
+}
+
 // ─── Background processing ─────────────────────────────────────────────────
 
 async function processLarkMessage(event: LarkEvent, isDM: boolean = false): Promise<void> {
   const message = event.event.message;
   const sender = event.event.sender;
+  const senderId = sender.sender_id.open_id ?? sender.sender_id.user_id ?? "unknown";
+  const senderName = await resolveLarkSenderName(senderId);
   const textContent: string = extractTextContent(message.content, message.message_type);
 
   try {
@@ -147,7 +184,7 @@ async function processLarkMessage(event: LarkEvent, isDM: boolean = false): Prom
       systemPrompt: LARK_CLASSIFICATION_PROMPT,
       userMessage: `Chat ID: ${message.chat_id}\nSender: ${sender.sender_id.open_id ?? sender.sender_id.user_id ?? "unknown"}\nMessage type: ${message.message_type}\nContent: ${textContent}`,
       model: "claude-haiku-4-5-20251001",
-      maxTokens: 256,
+      maxTokens: 512,
       timeout: 10_000,
     });
 
@@ -173,7 +210,7 @@ async function processLarkMessage(event: LarkEvent, isDM: boolean = false): Prom
         summary: JSON.stringify({
           messageId: message.message_id,
           chatId: message.chat_id,
-          senderId: sender.sender_id.open_id ?? sender.sender_id.user_id,
+          senderId: senderName,
           messageType: message.message_type,
           content: textContent.slice(0, 2000),
           classification: {

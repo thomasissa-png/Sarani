@@ -427,7 +427,7 @@ export function EmailCard({
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
               aria-label="Open the related project in ClickUp"
             >
-              {isActioning ? "Opening..." : "Add ClickUp Comment"}
+              {isActioning ? "Opening..." : "Open Project"}
             </button>
             <button
               onClick={onDraftReply ?? onApprove}

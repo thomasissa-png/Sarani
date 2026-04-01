@@ -365,31 +365,40 @@ export async function searchTaskByName(
   if (!apiKey || !teamId) return null;
 
   try {
-    const searchUrl = `https://api.clickup.com/api/v2/team/${teamId}/task?page=0&include_closed=false&custom_task_ids=false&subtasks=false`;
-    const res = await fetch(searchUrl, {
-      method: "GET",
-      headers: { Authorization: apiKey, "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(5_000),
-    });
+    const queryLower = query.toLowerCase();
+    const maxPages = 5; // Cap to avoid excessive API calls
 
-    if (!res.ok) {
-      console.warn(`[ClickUp Search] API returned ${res.status}`);
-      return null;
+    for (let page = 0; page < maxPages; page++) {
+      const searchUrl = `https://api.clickup.com/api/v2/team/${teamId}/task?page=${page}&include_closed=false&custom_task_ids=false&subtasks=false`;
+      const res = await fetch(searchUrl, {
+        method: "GET",
+        headers: { Authorization: apiKey, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(5_000),
+      });
+
+      if (!res.ok) {
+        console.warn(`[ClickUp Search] API returned ${res.status} on page ${page}`);
+        return null;
+      }
+
+      const data = (await res.json()) as {
+        tasks: Array<{ id: string; name: string; url: string }>;
+      };
+
+      // No more tasks — stop pagination
+      if (data.tasks.length === 0) break;
+
+      const match = data.tasks.find((task) => {
+        const nameLower = task.name.toLowerCase();
+        return nameLower.includes(queryLower) || queryLower.includes(nameLower);
+      });
+
+      if (match) {
+        return { taskId: match.id, taskUrl: match.url, taskName: match.name };
+      }
     }
 
-    const data = (await res.json()) as {
-      tasks: Array<{ id: string; name: string; url: string }>;
-    };
-
-    const queryLower = query.toLowerCase();
-    const match = data.tasks.find((task) => {
-      const nameLower = task.name.toLowerCase();
-      return nameLower.includes(queryLower) || queryLower.includes(nameLower);
-    });
-
-    return match
-      ? { taskId: match.id, taskUrl: match.url, taskName: match.name }
-      : null;
+    return null;
   } catch (error) {
     console.warn("[ClickUp Search] Error:", error);
     return null;

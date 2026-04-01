@@ -60,8 +60,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Exclude followup_alert from inbox display (Fix 5)
-    // They stay in DB but are hidden — replaced by DueTodayBanner
-    if (!filters.includeNoise && filters.type !== "followup_alert") {
+    // Independent from includeNoise — followup_alert is always hidden unless explicitly requested
+    if (filters.type !== "followup_alert") {
       conditions.push(ne(inboxItems.type, "followup_alert"));
     }
 
