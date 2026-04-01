@@ -74,7 +74,6 @@ Rules:
 - Never invent data. If a field cannot be extracted, write "To be confirmed — [what to ask]".
 - Keep the emoji section headers exactly as written.
 - Return ONLY the JSON object, no explanation.
-
 - deadline: string — extracted deadline with timezone (e.g., "Tomorrow 6pm CET"). If none mentioned: "To be confirmed"
 - dimensions: string — all dimensions/formats mentioned (e.g., "1200x628, 1080x1080, 1920x1080"). If none: "To be confirmed"
 - quantity: string — total deliverable count with calculation (e.g., "50 banners x 3 sizes x 2 languages = 300 files"). If none: "To be confirmed"
