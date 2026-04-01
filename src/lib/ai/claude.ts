@@ -109,10 +109,24 @@ export async function callClaudeJSON<T = unknown>(
   let jsonString = result.content.trim();
 
   // Strip markdown code fences (```json ... ``` or ``` ... ```)
-  if (jsonString.startsWith("```")) {
+  // Handle cases where Claude adds text before/after the fences
+  const fenceMatch = jsonString.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (fenceMatch) {
+    jsonString = fenceMatch[1].trim();
+  } else if (jsonString.startsWith("```")) {
     jsonString = jsonString
       .replace(/^```(?:json)?\s*\n?/, "")
       .replace(/\n?```\s*$/, "");
+  }
+
+  // If the string still doesn't look like JSON, try to extract it
+  if (!jsonString.startsWith("{") && !jsonString.startsWith("[")) {
+    const jsonStart = jsonString.indexOf("{");
+    const jsonArrayStart = jsonString.indexOf("[");
+    const start = jsonStart >= 0 && (jsonArrayStart < 0 || jsonStart < jsonArrayStart) ? jsonStart : jsonArrayStart;
+    if (start >= 0) {
+      jsonString = jsonString.slice(start);
+    }
   }
 
   try {
