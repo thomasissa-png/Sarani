@@ -163,7 +163,7 @@ export const EXCEL_SHEET_NAME_CANDIDATES = ["Sheet1", "Feuil1", "Feuille1"] as c
 // Find IDs via ClickUp API: GET /team/{team_id}/member
 
 export const CLICKUP_PM_MAPPING: Record<string, number> = {
-  "thomas@sarani.studio": 62498950,
+  "admin@sarani.studio": 62498950, // TODO: update with real ClickUp user ID from GET /team/{team_id}/member
   // Add more PMs as needed
 };
 

@@ -41,22 +41,22 @@ Fields:
 - brief_introduction: string — 1-2 sentence summary of the project goal
 - brief_body: string — full brief extracted and reformatted using this exact structure:
 
-\u{1F31F} Introduction / Goal:
+🌟 Introduction / Goal:
 [extracted from email]
 
-\u{2708}\u{FE0F} Brief:
-[extracted from email \u{2014} paste relevant content verbatim if unclear]
+✈️ Brief:
+[extracted from email — paste relevant content verbatim if unclear]
 
-\u{1F69A} Deliverables:
+🚚 Deliverables:
 [extracted or "To be confirmed"]
 
-\u{1F4CD} Source Files:
+📍 Source Files:
 [extracted or "To be provided by client"]
 
-\u{1F4AC} Branding / Inspirations:
+💬 Branding / Inspirations:
 [extracted or "See brand guidelines on SharePoint"]
 
-\u{27A1}\u{FE0F} Others:
+➡️ Others:
 [extracted or "N/A"]
 
 Rules:

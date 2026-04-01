@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { inboxItems } from "@/lib/db/schema";
+import { inboxItems, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
   getListsForSpace,
@@ -149,7 +149,18 @@ export async function POST(request: NextRequest) {
   // Non-blocking: warning on failure.
 
   try {
-    const pmEmail = session.email;
+    // Resolve PM email from session userId
+    let pmEmail: string | undefined;
+    if (session.userId === "legacy-admin") {
+      pmEmail = "admin@sarani.studio";
+    } else {
+      const [userRow] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, session.userId))
+        .limit(1);
+      pmEmail = userRow?.email;
+    }
     const clickupUserId = pmEmail ? CLICKUP_PM_MAPPING[pmEmail] : undefined;
     if (clickupUserId) {
       const taskDetails = await getTask(clickupTask.id);

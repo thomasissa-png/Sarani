@@ -536,6 +536,21 @@ export default function InboxPage() {
             window.location.href = `/admin/quotes?${quoteParams}`;
             return;
           }
+
+          if (updatedItem.protocol === "PROTO-REVIEW-INTAKE") {
+            // Redirect to Asset Review page with clickup task ID for auto-loading brief
+            try {
+              const summaryData = JSON.parse(updatedItem.summary ?? "{}") as Record<string, unknown>;
+              const clickupTaskId = (summaryData.clickupTaskId as string) ?? updatedItem.projectId ?? "";
+              if (clickupTaskId) {
+                showToast("Opening Asset Review...", "success");
+                window.location.href = `/admin/asset-review?clickupTaskId=${encodeURIComponent(clickupTaskId)}`;
+                return;
+              }
+            } catch { /* fallback below */ }
+            showToast("Done — open Asset Review manually", "success");
+            return;
+          }
         }
 
         // Default toast for non-protocol actions
@@ -597,6 +612,17 @@ export default function InboxPage() {
             showToast("Saved & approved — redirecting to Quotes...", "success");
             window.location.href = `/admin/quotes?${quoteParams}`;
             return;
+          }
+          if (updatedItem.protocol === "PROTO-REVIEW-INTAKE") {
+            try {
+              const summaryData = JSON.parse(updatedItem.summary ?? "{}") as Record<string, unknown>;
+              const clickupTaskId = (summaryData.clickupTaskId as string) ?? updatedItem.projectId ?? "";
+              if (clickupTaskId) {
+                showToast("Saved — opening Asset Review...", "success");
+                window.location.href = `/admin/asset-review?clickupTaskId=${encodeURIComponent(clickupTaskId)}`;
+                return;
+              }
+            } catch { /* non-critical */ }
           }
         }
 
