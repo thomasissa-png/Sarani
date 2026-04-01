@@ -684,7 +684,12 @@ export default function InboxPage() {
                       </h3>
                       {item.summary && (
                         <p className="text-xs text-neutral-400 line-clamp-1">
-                          {item.summary}
+                          {(() => {
+                            try {
+                              const p = JSON.parse(item.summary) as Record<string, unknown>;
+                              return [p.from, p.subject, p.reason, p.taskName].filter(Boolean).join(" — ") || item.summary.slice(0, 100);
+                            } catch { return item.summary.slice(0, 100); }
+                          })()}
                         </p>
                       )}
                     </div>
@@ -852,10 +857,31 @@ function InboxCard({
             {item.title ?? "Untitled item"}
           </h3>
 
-          {/* Summary */}
+          {/* Summary — parse JSON for human-readable display */}
           {item.summary && (
             <p className="text-sm text-neutral-500 line-clamp-2">
-              {item.summary}
+              {(() => {
+                try {
+                  const parsed = JSON.parse(item.summary) as Record<string, unknown>;
+                  // Extract human-readable fields from common summary shapes
+                  const parts: string[] = [];
+                  if (parsed.from) parts.push(`From: ${String(parsed.from)}`);
+                  if (parsed.subject) parts.push(String(parsed.subject));
+                  if (parsed.reason) parts.push(String(parsed.reason));
+                  if (parsed.taskName) parts.push(String(parsed.taskName));
+                  if (parsed.projectName) parts.push(String(parsed.projectName));
+                  if (parsed.clientName) parts.push(String(parsed.clientName));
+                  if (parsed.level) parts.push(`Priority: ${String(parsed.level)}`);
+                  if (parsed.bodyPreview) parts.push(String(parsed.bodyPreview).slice(0, 120));
+                  if (parts.length > 0) return parts.join(" — ");
+                  // Fallback: show first meaningful string value
+                  const firstValue = Object.values(parsed).find((v) => typeof v === "string" && v.length > 3);
+                  if (firstValue) return String(firstValue).slice(0, 200);
+                } catch {
+                  // Not JSON — display as-is
+                }
+                return item.summary.slice(0, 200);
+              })()}
             </p>
           )}
 
