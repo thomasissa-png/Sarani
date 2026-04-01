@@ -128,11 +128,11 @@ export function ProjectActionModal({
   };
 
   // Extract ClickUp URL from summary if available (for open_project)
-  const tryOpenClickUp = () => {
-    // Try to find a ClickUp URL in the parsed summary
-    const clickupUrl = (payload as unknown as Record<string, unknown>)?.clickupUrl as string | undefined;
-    const taskId = (payload as unknown as Record<string, unknown>)?.taskId as string | undefined;
+  const clickupUrl = (payload as unknown as Record<string, unknown>)?.clickupUrl as string | undefined;
+  const taskId = (payload as unknown as Record<string, unknown>)?.taskId as string | undefined;
+  const hasClickUpLink = Boolean(clickupUrl || taskId);
 
+  const tryOpenClickUp = () => {
     if (clickupUrl) {
       window.open(clickupUrl, "_blank", "noopener,noreferrer");
       showToast("Opened project in ClickUp", "success");
@@ -142,10 +142,8 @@ export function ProjectActionModal({
       showToast("Opened project in ClickUp", "success");
       handleMarkDone();
     } else {
-      // No URL found — open ClickUp search as fallback
-      window.open("https://app.clickup.com", "_blank", "noopener,noreferrer");
-      showToast("No project link found — opened ClickUp for manual search", "success");
-      handleMarkDone();
+      // No URL found — do NOT silently open ClickUp home
+      showToast("Project not found in ClickUp. Use manual search.", "error");
     }
   };
 
@@ -275,19 +273,41 @@ export function ProjectActionModal({
         {/* Actions */}
         <div className="px-5 py-4 border-t border-neutral-200 shrink-0 space-y-3">
           {variant === "open_project" && (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={tryOpenClickUp}
-                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors"
-              >
-                Open in ClickUp
-              </button>
-              <button
-                onClick={handleDraftReply}
-                className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors"
-              >
-                Draft Reply
-              </button>
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={tryOpenClickUp}
+                  disabled={!hasClickUpLink}
+                  className={cn(
+                    "flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold transition-colors",
+                    hasClickUpLink
+                      ? "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+                      : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                  )}
+                  title={hasClickUpLink ? "Open project in ClickUp" : "Project not found in ClickUp"}
+                >
+                  Open in ClickUp
+                </button>
+                <button
+                  onClick={handleDraftReply}
+                  className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors"
+                >
+                  Draft Reply
+                </button>
+              </div>
+              {!hasClickUpLink && (
+                <p className="text-xs text-neutral-400">
+                  Project not found in ClickUp —{" "}
+                  <a
+                    href="https://app.clickup.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-cerulean hover:underline"
+                  >
+                    search manually
+                  </a>
+                </p>
+              )}
             </div>
           )}
 

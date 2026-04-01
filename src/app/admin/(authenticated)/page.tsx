@@ -117,24 +117,100 @@ const TYPE_CONFIG: Record<
 };
 
 const PROTOCOL_LABELS: Record<string, string> = {
-  "PROTO-CLIENT-RETURN": "Client follow-up",
-  "PROTO-EMAIL-INTAKE": "New project",
-  "PROTO-CLIENT-REPLY": "Client reply",
+  // New protocols
+  "PROTO-ENQUIRY": "Enquiry",
+  "PROTO-EMAIL-INTAKE": "New Project",
+  "PROTO-CLIENT-RETURN": "Project Feedback",
+  "archive": "Other",
+  // Legacy protocols (backward compat)
+  "PROTO-CLIENT-REPLY": "Enquiry",
   "PROTO-REVIEW-PIPELINE": "Review pipeline",
   "PROTO-PROJECT-FOLLOWUP": "Follow-up alert",
-  "PROTO-PITCH": "New prospect",
+  "PROTO-PITCH": "Enquiry",
 };
 
-type FilterTab = "all" | "urgent" | "email_classified" | "ai_team_complete" | "qa_gates_pass" | "followup_alert";
+type FilterTab =
+  | "all"
+  | "new_project"
+  | "project_feedback"
+  | "enquiry"
+  | "project_reviews"
+  | "other"
+  | "done";
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "urgent", label: "Urgent" },
-  { key: "email_classified", label: "Emails" },
-  { key: "ai_team_complete", label: "AI Deliverables" },
-  { key: "qa_gates_pass", label: "QA" },
-  { key: "followup_alert", label: "Follow-ups" },
+  { key: "new_project", label: "New Projects" },
+  { key: "project_feedback", label: "Project Feedback" },
+  { key: "enquiry", label: "Enquiries" },
+  { key: "project_reviews", label: "Project Reviews" },
+  { key: "other", label: "Others" },
+  { key: "done", label: "Managed" },
 ];
+
+// ─── Filter logic ──────────────────────────────────────────────────────────
+
+const FILTER_PROTOCOL_MAP: Record<string, string> = {
+  new_project: "PROTO-EMAIL-INTAKE",
+  project_feedback: "PROTO-CLIENT-RETURN",
+  enquiry: "PROTO-ENQUIRY",
+  other: "archive",
+};
+
+// Legacy protocol mappings so old items show in correct tabs
+const LEGACY_PROTOCOL_TO_FILTER: Record<string, string> = {
+  "PROTO-PITCH": "PROTO-ENQUIRY",
+  "PROTO-CLIENT-REPLY": "PROTO-ENQUIRY",
+};
+
+function filterItems(items: InboxItem[], filter: FilterTab): InboxItem[] {
+  if (filter === "all") {
+    return items.filter((i) => i.status !== "done" && i.status !== "dismissed");
+  }
+  if (filter === "done") {
+    return items.filter((i) => i.status === "done" || i.status === "dismissed");
+  }
+  if (filter === "project_reviews") {
+    return items.filter(
+      (i) =>
+        ["review_human", "review_ai_ready", "review_escalated"].includes(i.type) &&
+        i.status !== "done" &&
+        i.status !== "dismissed"
+    );
+  }
+  const targetProtocol = FILTER_PROTOCOL_MAP[filter];
+  if (!targetProtocol) return items;
+  return items.filter((i) => {
+    if (i.status === "done" || i.status === "dismissed") return false;
+    // Direct match
+    if (i.protocol === targetProtocol) return true;
+    // Legacy protocol match
+    const mapped = i.protocol ? LEGACY_PROTOCOL_TO_FILTER[i.protocol] : null;
+    return mapped === targetProtocol;
+  });
+}
+
+// ─── Action badge for Managed tab (Fix 6) ──────────────────────────────────
+
+function getActionBadge(item: InboxItem): string {
+  if (item.status === "dismissed") return "Archived";
+  // status === "done"
+  if (item.type === "review_human" || item.type === "review_ai_ready" || item.type === "review_escalated") {
+    return "Review done";
+  }
+  switch (item.protocol) {
+    case "PROTO-EMAIL-INTAKE":
+      return "Brief created";
+    case "PROTO-ENQUIRY":
+    case "PROTO-CLIENT-REPLY":
+    case "PROTO-PITCH":
+      return "Replied";
+    case "PROTO-CLIENT-RETURN":
+      return "Feedback added";
+    default:
+      return "Done";
+  }
+}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -230,15 +306,14 @@ export default function InboxPage() {
     setLoading(true);
     setFetchError(null);
     try {
-      // Fetch all non-noise items, then filter client-side to actionable statuses
+      // Fetch all non-noise items including done/dismissed for Managed tab
       const res = await fetch("/api/admin/inbox?limit=100");
       if (res.ok) {
         const data = await res.json();
         const allItems = (data.items ?? []) as InboxItem[];
-        const actionable = allItems.filter(
-          (i) => i.status === "pending" || i.status === "pending_review"
-        );
-        setItems(actionable);
+        // Exclude followup_alert from display (Fix 5) — they stay in DB but are hidden
+        const filtered = allItems.filter((i) => i.type !== "followup_alert");
+        setItems(filtered);
       } else {
         const errMsg = `Failed to load inbox (${res.status})`;
         console.error("[Inbox] fetch error:", res.status, res.statusText);
@@ -261,6 +336,24 @@ export default function InboxPage() {
     const interval = setInterval(fetchItems, 30_000);
     return () => clearInterval(interval);
   }, [fetchItems]);
+
+  // ─── Due Today banner (Fix 5) ──────────────────────────────────────────
+  const [dueTodayTasks, setDueTodayTasks] = useState<Array<{ id: string; name: string; url: string }>>([]);
+
+  useEffect(() => {
+    async function fetchDueToday() {
+      try {
+        const res = await fetch("/api/admin/clickup/due-today");
+        if (res.ok) {
+          const data = await res.json() as { tasks: Array<{ id: string; name: string; url: string }> };
+          setDueTodayTasks(data.tasks ?? []);
+        }
+      } catch {
+        // Non-critical — banner simply stays hidden
+      }
+    }
+    fetchDueToday();
+  }, []);
 
   const handleNotNoise = useCallback(
     async (id: string) => {
@@ -311,6 +404,27 @@ export default function InboxPage() {
     },
     [showToast, fetchItems]
   );
+
+  const handleRestore = async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/inbox", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: "pending" }),
+      });
+      if (res.ok) {
+        showToast("Restored to inbox", "success");
+        await fetchItems();
+      } else {
+        showToast("Restore failed — please retry", "error");
+      }
+    } catch {
+      showToast("Restore failed — please retry", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const handleAction = async (id: string, status: "done" | "dismissed") => {
     setActionLoading(id);
@@ -489,20 +603,20 @@ export default function InboxPage() {
     }
   };
 
-  // Filter items
-  const filteredItems = items.filter((item) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "urgent") {
-      const diffMs = Date.now() - new Date(item.createdAt).getTime();
-      return diffMs > 24 * 3_600_000;
+  // Filter items using new filter logic
+  const filteredItems = filterItems(items, activeFilter).sort((a, b) => {
+    // Managed tab: sort by processedAt DESC
+    if (activeFilter === "done") {
+      const aDate = a.processedAt ? new Date(a.processedAt).getTime() : 0;
+      const bDate = b.processedAt ? new Date(b.processedAt).getTime() : 0;
+      return bDate - aDate;
     }
-    return item.type === activeFilter;
+    // Default: createdAt DESC (already sorted by API, but ensure)
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
-  const urgentCount = items.filter((item) => {
-    const diffMs = Date.now() - new Date(item.createdAt).getTime();
-    return diffMs > 24 * 3_600_000;
-  }).length;
+  // Counts for each tab
+  const isManagedTab = activeFilter === "done";
 
   return (
     <div className="space-y-6">
@@ -512,9 +626,14 @@ export default function InboxPage() {
         <p className="text-neutral-500 text-sm mt-1">
           {loading
             ? "Loading..."
-            : items.length === 0
-              ? "No items waiting"
-              : `${items.length} item${items.length !== 1 ? "s" : ""} waiting`}
+            : (() => {
+                const pendingCount = items.filter(
+                  (i) => i.status !== "done" && i.status !== "dismissed"
+                ).length;
+                return pendingCount === 0
+                  ? "No items waiting"
+                  : `${pendingCount} item${pendingCount !== 1 ? "s" : ""} waiting`;
+              })()}
         </p>
       </div>
 
@@ -531,16 +650,31 @@ export default function InboxPage() {
         </div>
       )}
 
+      {/* Due Today Banner (Fix 5) */}
+      {dueTodayTasks.length > 0 && (
+        <div className="bg-brand-lemon/10 border border-brand-lemon/30 rounded-lg px-4 py-3 text-sm text-brand-black">
+          <span className="font-semibold">{dueTodayTasks.length} project{dueTodayTasks.length !== 1 ? "s" : ""} due today:</span>{" "}
+          {dueTodayTasks.map((task, i) => (
+            <span key={task.id}>
+              {i > 0 && ", "}
+              <a
+                href={task.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-cerulean hover:underline"
+              >
+                {task.name}
+              </a>
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {FILTER_TABS.map((tab) => {
           const isActive = activeFilter === tab.key;
-          const count =
-            tab.key === "all"
-              ? items.length
-              : tab.key === "urgent"
-                ? urgentCount
-                : items.filter((i) => i.type === tab.key).length;
+          const count = filterItems(items, tab.key).length;
 
           return (
             <button
@@ -575,7 +709,7 @@ export default function InboxPage() {
       {loading ? (
         <SkeletonList />
       ) : filteredItems.length === 0 ? (
-        <EmptyState />
+        <EmptyState filter={activeFilter} />
       ) : (
         <div className="space-y-3">
           {filteredItems.map((item) => {
@@ -690,6 +824,10 @@ export default function InboxPage() {
                     onDraftReply={() => setActiveModal({ type: "draft_reply", item, payload: emailPayload })}
                     onPreparePitch={() => setActiveModal({ type: "prepare_pitch", item, payload: emailPayload })}
                     showToast={showToast}
+                    isManagedView={isManagedTab}
+                    actionBadge={isManagedTab ? getActionBadge(item) : undefined}
+                    processedAt={item.processedAt}
+                    onRestore={isManagedTab ? () => handleRestore(item.id) : undefined}
                   />
                 );
               }
@@ -722,13 +860,16 @@ export default function InboxPage() {
                 key={item.id}
                 item={item}
                 isActioning={actionLoading === item.id}
-                isEditing={editingId === item.id}
+                isEditing={!isManagedTab && editingId === item.id}
                 editContent={editingId === item.id ? editContent : ""}
                 onApprove={() => handleAction(item.id, "done")}
                 onDismiss={() => handleAction(item.id, "dismissed")}
                 onEdit={() => handleEdit(item)}
                 onEditContentChange={setEditContent}
                 onSaveAndApprove={() => handleSaveAndApprove(item.id)}
+                isManagedView={isManagedTab}
+                actionBadge={isManagedTab ? getActionBadge(item) : undefined}
+                onRestore={isManagedTab ? () => handleRestore(item.id) : undefined}
               />
             );
           })}
@@ -940,6 +1081,9 @@ function InboxCard({
   onEdit,
   onEditContentChange,
   onSaveAndApprove,
+  isManagedView,
+  actionBadge,
+  onRestore,
 }: {
   item: InboxItem;
   isActioning: boolean;
@@ -950,6 +1094,9 @@ function InboxCard({
   onEdit: () => void;
   onEditContentChange: (value: string) => void;
   onSaveAndApprove: () => void;
+  isManagedView?: boolean;
+  actionBadge?: string;
+  onRestore?: () => void;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typeConfig = TYPE_CONFIG[item.type] ?? {
@@ -999,7 +1146,12 @@ function InboxCard({
             >
               {typeConfig.label}
             </span>
-            {item.priority === "high" && (
+            {isManagedView && actionBadge && (
+              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
+                {actionBadge}
+              </span>
+            )}
+            {!isManagedView && item.priority === "high" && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-flame/20 text-brand-flame">
                 High
               </span>
@@ -1061,44 +1213,66 @@ function InboxCard({
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-2 shrink-0 sm:pt-1">
-          <button
-            onClick={onApprove}
-            disabled={isActioning}
-            className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-            aria-label={`${actionLabels.primary}: ${item.title ?? "item"}`}
-          >
-            {isActioning ? actionLabels.primaryLoading : actionLabels.primary}
-          </button>
-          <button
-            onClick={onEdit}
-            disabled={isActioning}
-            className={cn(
-              "px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors disabled:opacity-50",
-              isEditing
-                ? "bg-brand-cerulean-dark text-white"
-                : "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+        {isManagedView ? (
+          <div className="flex items-center gap-2 shrink-0 sm:pt-1">
+            <span className="text-xs text-neutral-400">
+              {item.processedAt
+                ? new Date(item.processedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                : "Date unknown"}
+            </span>
+            {onRestore && (
+              <button
+                onClick={onRestore}
+                disabled={isActioning}
+                className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
+                aria-label={`Restore to inbox: ${item.title ?? "item"}`}
+              >
+                {isActioning ? "Restoring..." : "Restore"}
+              </button>
             )}
-            aria-label={`Edit: ${item.title ?? "item"}`}
-            aria-expanded={isEditing}
-          >
-            Edit
-          </button>
-          <button
-            onClick={onDismiss}
-            disabled={isActioning}
-            className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
-            aria-label={`Archive: ${item.title ?? "item"}`}
-          >
-            Archive
-          </button>
-        </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 shrink-0 sm:pt-1">
+            <button
+              onClick={onApprove}
+              disabled={isActioning}
+              className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+              aria-label={`${actionLabels.primary}: ${item.title ?? "item"}`}
+            >
+              {isActioning ? actionLabels.primaryLoading : actionLabels.primary}
+            </button>
+            <button
+              onClick={onEdit}
+              disabled={isActioning}
+              className={cn(
+                "px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-colors disabled:opacity-50",
+                isEditing
+                  ? "bg-brand-cerulean-dark text-white"
+                  : "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+              )}
+              aria-label={`Edit: ${item.title ?? "item"}`}
+              aria-expanded={isEditing}
+            >
+              Edit
+            </button>
+            <button
+              onClick={onDismiss}
+              disabled={isActioning}
+              className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
+              aria-label={`Archive: ${item.title ?? "item"}`}
+            >
+              Archive
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Next step hint */}
-      <p className="text-xs text-neutral-500 mt-2 pl-1">
-        {actionLabels.nextStep}
-      </p>
+      {/* Next step hint — hidden in managed view */}
+      {!isManagedView && (
+        <p className="text-xs text-neutral-500 mt-2 pl-1">
+          {actionLabels.nextStep}
+        </p>
+      )}
 
       {/* Inline editor */}
       {isEditing && (
@@ -1139,7 +1313,10 @@ function InboxCard({
 
 // ─── Empty State ────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function EmptyState({ filter }: { filter: FilterTab }) {
+  const isManaged = filter === "done";
+  const isAll = filter === "all";
+
   return (
     <div className="bg-white rounded-xl border border-neutral-300 p-12 text-center">
       <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-success-light flex items-center justify-center">
@@ -1158,10 +1335,14 @@ function EmptyState() {
         </svg>
       </div>
       <h3 className="text-sm font-semibold text-brand-black mb-1">
-        No items waiting
+        {isAll ? "No items waiting" : isManaged ? "No managed items yet" : "No items in this category"}
       </h3>
       <p className="text-sm text-neutral-500">
-        Arya is handling everything. Check back later.
+        {isAll
+          ? "Arya is handling everything. Check back later."
+          : isManaged
+            ? "Items you process will appear here."
+            : "New items will appear when emails are classified."}
       </p>
     </div>
   );
