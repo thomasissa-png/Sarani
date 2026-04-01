@@ -4,7 +4,9 @@
 // Each job calls its own API route internally with the CRON_SECRET.
 
 const CRON_SECRET = process.env.CRON_SECRET;
-const BASE_URL = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || "";
+// Use localhost for internal calls (avoids round-trip through external network)
+const PORT = process.env.PORT || "3000";
+const INTERNAL_URL = `http://localhost:${PORT}`;
 
 // ─── Job definitions ────────────────────────────────────────────────────────
 
@@ -60,7 +62,7 @@ async function runJob(job: CronJob): Promise<void> {
   job.lastRun = now;
 
   try {
-    const url = `${BASE_URL}${job.path}`;
+    const url = `${INTERNAL_URL}${job.path}`;
     const response = await fetch(url, {
       method: "GET",
       headers: { "x-cron-secret": CRON_SECRET },
@@ -92,10 +94,6 @@ export function startCronScheduler(): void {
   if (started) return;
   if (!CRON_SECRET) {
     console.warn("[Cron] CRON_SECRET not set — internal cron disabled");
-    return;
-  }
-  if (!BASE_URL) {
-    console.warn("[Cron] APP_URL/BASE_URL not set — internal cron disabled");
     return;
   }
 

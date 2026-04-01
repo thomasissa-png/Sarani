@@ -343,6 +343,9 @@ export async function GET(request: NextRequest) {
           console.error(`[scan-knowledge] LLM error for ${domain}:`, llmError);
           llmErrors++;
         }
+
+        // Delay between LLM calls to avoid rate limiting
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       }
 
       // Mark all emails from this domain as scanned
