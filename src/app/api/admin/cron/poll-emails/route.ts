@@ -25,13 +25,7 @@ import {
   type EmailCategory,
 } from "@/lib/ai/prompts/classifier";
 import { getMappingBySpaceName } from "@/lib/integrations/config";
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-/** Filter out internal Sarani emails — they should not appear in the inbox */
-function isSaraniEmail(from: string): boolean {
-  return from.toLowerCase().endsWith("@sarani.studio");
-}
+import { isSaraniEmail, isSaraniOutgoingReply } from "@/lib/inbox/sarani-filter";
 
 // ─── Auth helper ────────────────────────────────────────────────────────────
 
@@ -85,15 +79,7 @@ export async function GET(request: NextRequest) {
         const bodyPreview = stripHtml(fullEmail.body.content).slice(0, 2000);
 
         // Skip internal Sarani emails — they should not appear in the inbox
-        // Check both the from field AND the body content for Sarani outgoing replies
-        // (email threads where a Sarani team member replied — the from is the client but
-        //  the body preview starts with the Sarani reply text before "De :" / "From:")
-        const bodyStart = bodyPreview.slice(0, 400).toLowerCase();
-        const hasSaraniInBody = bodyStart.includes("@sarani.studio");
-        const hasThreadMarker = bodyStart.includes("de :") || bodyStart.includes("from:") || bodyStart.includes("envoyé :");
-        const isSaraniOutgoingReply = hasSaraniInBody && hasThreadMarker;
-
-        if (isSaraniEmail(from) || isSaraniOutgoingReply) {
+        if (isSaraniEmail(from) || isSaraniOutgoingReply(bodyPreview)) {
           // Record as processed to avoid re-checking
           await db.insert(processedEmails).values({
             messageId: email.id,

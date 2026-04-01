@@ -373,7 +373,7 @@ export async function setCustomFieldValue(
  * Score how well a query matches a task name using word-level overlap.
  * Returns a value between 0 and 1 (proportion of query words matched).
  */
-function matchScore(query: string, taskName: string): number {
+export function matchScore(query: string, taskName: string): number {
   const queryWords = query.toLowerCase().split(/[\s\-\/,]+/).filter((w) => w.length > 2);
   const nameWords = taskName.toLowerCase().split(/[\s\-\/,]+/).filter((w) => w.length > 2);
   if (queryWords.length === 0) return 0;

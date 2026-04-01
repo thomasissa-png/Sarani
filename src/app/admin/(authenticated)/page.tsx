@@ -12,6 +12,7 @@ import { CreateBriefModal } from "@/components/inbox/CreateBriefModal";
 import { DraftReplyModal } from "@/components/inbox/DraftReplyModal";
 import { ProjectActionModal } from "@/components/inbox/ProjectActionModal";
 import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
+import { filterItems, type FilterTab } from "@/lib/inbox/filters";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -129,15 +130,6 @@ const PROTOCOL_LABELS: Record<string, string> = {
   "PROTO-PITCH": "Enquiry",
 };
 
-type FilterTab =
-  | "all"
-  | "new_project"
-  | "project_feedback"
-  | "enquiry"
-  | "project_reviews"
-  | "other"
-  | "done";
-
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: "all", label: "All" },
   { key: "new_project", label: "New Projects" },
@@ -148,56 +140,7 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: "done", label: "Managed" },
 ];
 
-// ─── Filter logic ──────────────────────────────────────────────────────────
-
-const FILTER_PROTOCOL_MAP: Record<string, string> = {
-  new_project: "PROTO-EMAIL-INTAKE",
-  project_feedback: "PROTO-CLIENT-RETURN",
-  enquiry: "PROTO-ENQUIRY",
-  other: "archive",
-};
-
-// Legacy protocol mappings so old items show in correct tabs
-const LEGACY_PROTOCOL_TO_FILTER: Record<string, string> = {
-  "PROTO-PITCH": "PROTO-ENQUIRY",
-  "PROTO-CLIENT-REPLY": "PROTO-ENQUIRY",
-  "PROTO-LARK-TRIAGE": "PROTO-ENQUIRY", // Old Lark items → show in Enquiries
-};
-
-function filterItems(items: InboxItem[], filter: FilterTab): InboxItem[] {
-  if (filter === "all") {
-    return items.filter((i) => i.status !== "done" && i.status !== "dismissed");
-  }
-  if (filter === "done") {
-    return items.filter((i) => i.status === "done" || i.status === "dismissed");
-  }
-  if (filter === "project_reviews") {
-    return items.filter(
-      (i) =>
-        ["review_human", "review_ai_ready", "review_escalated"].includes(i.type) &&
-        i.status !== "done" &&
-        i.status !== "dismissed"
-    );
-  }
-  const targetProtocol = FILTER_PROTOCOL_MAP[filter];
-  if (!targetProtocol) return items;
-  return items.filter((i) => {
-    if (i.status === "done" || i.status === "dismissed") return false;
-    // "Others" tab: items with null protocol that are not noise/followup_alert/review types
-    if (filter === "other") {
-      // Items with null/archive protocol that don't belong in other tabs
-      if (i.protocol === null || i.protocol === "archive") {
-        return !["noise", "followup_alert", "review_human", "review_ai_ready", "review_escalated"].includes(i.type);
-      }
-      return false;
-    }
-    // Direct match
-    if (i.protocol === targetProtocol) return true;
-    // Legacy protocol match
-    const mapped = i.protocol ? LEGACY_PROTOCOL_TO_FILTER[i.protocol] : null;
-    return mapped === targetProtocol;
-  });
-}
+// Filter logic imported from @/lib/inbox/filters
 
 // ─── Action badge for Managed tab (Fix 6) ──────────────────────────────────
 
