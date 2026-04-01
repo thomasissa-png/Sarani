@@ -51,34 +51,49 @@ type LarkEvent = z.infer<typeof larkEventSchema>;
 const LARK_CLASSIFICATION_PROMPT = `You are Sarani's internal message classifier. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following Lark (Feishu) message into exactly ONE category.
 
 Categories:
-- "internal_request": a team member requesting something — a task, a deliverable, a question needing action.
-- "status_update": a team member sharing progress, completion, or a status update on ongoing work.
-- "client_mention": a message mentioning a client, client feedback, or something that needs PM attention.
-- "noise": casual chat, greetings, emoji-only, memes, or off-topic messages.
+- "enquiry": Question about Sarani's services, request for quote/pricing, general question, first contact. No existing project involved. Can come from internal team relaying a client question.
+- "new_project": A brief for a NEW project — contains deliverables, timeline, brand info, or a clear project request. Sender may be internal team relaying a client brief.
+- "project_feedback": Feedback, revision request, follow-up, status question, or any message about an EXISTING ongoing project. References a specific past or ongoing project.
+- "other": Casual chat, greetings, emoji-only, memes, off-topic messages, system notifications, status updates with no actionable content.
 
 Return JSON:
 {
   "category": "<one of the 4 categories>",
   "confidence": 0.0 to 1.0,
   "reasoning": "one sentence explaining why this category",
-  "suggestedAction": "one sentence — what should the PM do next",
+  "suggestedAction": "one sentence analysis — what this message is about and what the PM should consider",
+  "draftReply": "Complete reply message ready to send back in the Lark chat. Format: greeting + 2-3 sentences addressing the content + closing. Match the sender's language.",
+  "clickupProjectHint": "Client name or project name extracted from the message, as it would appear in ClickUp task titles. Null if not identifiable.",
   "language": "<ISO 639-1 code>"
 }
 
 Rules:
 - Return valid JSON only, no markdown.
 - If unsure, pick the category that requires human attention.
-- Confidence below 0.6 means you are uncertain.`;
+- Confidence below 0.6 means you are uncertain.
+- draftReply must be a real reply, not an analysis. Write it as if the PM is responding directly.
+- clickupProjectHint should be null for enquiry and other categories.`;
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-type LarkCategory = "internal_request" | "status_update" | "client_mention" | "noise";
+type LarkCategory = "enquiry" | "new_project" | "project_feedback" | "other";
+
+type LarkRouteTo = "PROTO-ENQUIRY" | "PROTO-EMAIL-INTAKE" | "PROTO-CLIENT-RETURN" | "archive";
+
+const LARK_ROUTE_MAP: Record<LarkCategory, LarkRouteTo> = {
+  enquiry: "PROTO-ENQUIRY",
+  new_project: "PROTO-EMAIL-INTAKE",
+  project_feedback: "PROTO-CLIENT-RETURN",
+  other: "archive",
+};
 
 interface LarkClassificationResult {
   category: LarkCategory;
   confidence: number;
   reasoning: string;
   suggestedAction: string;
+  draftReply: string;
+  clickupProjectHint: string | null;
   language: string;
 }
 
@@ -96,13 +111,13 @@ function getAllowedChatIds(): Set<string> {
 
 function priorityFromCategory(category: LarkCategory): "high" | "medium" | "low" {
   switch (category) {
-    case "internal_request":
+    case "new_project":
       return "high";
-    case "client_mention":
+    case "project_feedback":
       return "high";
-    case "status_update":
+    case "enquiry":
       return "medium";
-    case "noise":
+    case "other":
       return "low";
   }
 }
@@ -138,9 +153,11 @@ async function processLarkMessage(event: LarkEvent, isDM: boolean = false): Prom
 
     const classification: LarkClassificationResult = llmResult.data;
 
-    // Noise with high confidence gets stored as "noise" type + "dismissed" status
+    // "other" with high confidence gets stored as "noise" type + "dismissed" status
     const isHighConfidenceNoise: boolean =
-      classification.category === "noise" && classification.confidence >= 0.8;
+      classification.category === "other" && classification.confidence >= 0.8;
+
+    const routeTo: LarkRouteTo = LARK_ROUTE_MAP[classification.category];
 
     // Create inbox item
     const titlePrefix: string = isDM
@@ -159,11 +176,14 @@ async function processLarkMessage(event: LarkEvent, isDM: boolean = false): Prom
           senderId: sender.sender_id.open_id ?? sender.sender_id.user_id,
           messageType: message.message_type,
           content: textContent.slice(0, 2000),
-          classification,
+          classification: {
+            ...classification,
+            routeTo: routeTo,
+          },
         }),
         sourceId: message.message_id,
         sourceType: "lark",
-        protocol: isHighConfidenceNoise ? null : (classification.category === "noise" ? null : "PROTO-LARK-TRIAGE"),
+        protocol: isHighConfidenceNoise ? null : (routeTo === "archive" ? null : routeTo),
         priority: isHighConfidenceNoise ? "low" : priorityFromCategory(classification.category),
       })
       .returning({ id: inboxItems.id });
