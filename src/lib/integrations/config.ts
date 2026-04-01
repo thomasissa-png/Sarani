@@ -163,9 +163,54 @@ export const EXCEL_SHEET_NAME_CANDIDATES = ["Sheet1", "Feuil1", "Feuille1"] as c
 // Find IDs via ClickUp API: GET /team/{team_id}/member
 
 export const CLICKUP_PM_MAPPING: Record<string, number> = {
-  "admin@sarani.studio": 62498950, // TODO: update with real ClickUp user ID from GET /team/{team_id}/member
-  // Add more PMs as needed
+  "thomas@sarani.studio": 38103140, // Emmanuel Gomez = Thomas Issa
 };
+
+/** All ClickUp team members — used for assignee dropdown in briefs and feedback */
+export interface ClickUpTeamMember {
+  readonly name: string;
+  readonly id: number;
+}
+
+export const CLICKUP_TEAM_MEMBERS: readonly ClickUpTeamMember[] = [
+  { name: "Thomas Issa", id: 38103140 },
+  { name: "Lauriane Celton", id: 290479583 },
+  { name: "Andrew S.", id: 242627931 },
+  { name: "Camilla Palermo", id: 49467956 },
+  { name: "Claire Boutreux", id: 266547441 },
+  { name: "Hiruni", id: 95230414 },
+  { name: "Claudia Salgueiro", id: 89382349 },
+  { name: "Affan Hakim", id: 60852951 },
+  { name: "JC", id: 89363031 },
+  { name: "Mahée Ahouansou", id: 89360336 },
+  { name: "Branko Rosic", id: 89354959 },
+  { name: "Cristina Ramos", id: 38467924 },
+  { name: "Ameena Gorton", id: 89353227 },
+  { name: "Gabrielle Belledent", id: 80499023 },
+  { name: "Anissa Baroudi", id: 78188831 },
+  { name: "Clara Jaeger", id: 89331511 },
+  { name: "AnneLaure G.", id: 89316728 },
+  { name: "Prudence Ip", id: 182471913 },
+  { name: "Milan Pantović", id: 182468711 },
+  { name: "Marie Foster", id: 88228411 },
+  { name: "Carla Pavetti", id: 89273119 },
+  { name: "Claire Boussuge", id: 89271372 },
+  { name: "Abdelrahman Garhi", id: 4663471 },
+  { name: "Aurélie Touchard", id: 96738712 },
+  { name: "Amjad Jameel", id: 89225560 },
+  { name: "Pablo Ojeda", id: 89176064 },
+  { name: "Alessia Faustini", id: 89176061 },
+  { name: "Chloé Mwenge", id: 10948297 },
+  { name: "Genaro Splendore", id: 56576185 },
+  { name: "Jason Angeles", id: 56575760 },
+  { name: "Luis Caballero", id: 56575759 },
+  { name: "Silvia Franzi", id: 56575757 },
+  { name: "Laura Martinez", id: 56575756 },
+  { name: "Fanny Place", id: 56575754 },
+  { name: "Carole Eid", id: 56575753 },
+  { name: "Ara dela Fuente", id: 38103175 },
+  { name: "Binary Data", id: 94804152 },
+];
 
 // ─── Cache TTL Configuration (seconds) ──────────────────────────────────────
 

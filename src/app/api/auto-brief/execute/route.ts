@@ -45,6 +45,7 @@ const ExecuteAutoBriefSchema = z.object({
   clickupSpaceId: z.string().min(1, "ClickUp space is required"),
   addToTracker: z.boolean().optional().default(true),
   createSharepointFolder: z.boolean().optional().default(true),
+  assigneeId: z.number().optional(),
   // Optional: stored taskId from a previous partial execution (retry-safe)
   previousTaskId: z.string().optional(),
 });
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
         name: body.projectName,
         status: "Open",
         due_date: new Date(body.startDate).getTime(),
+        assignees: body.assigneeId ? [body.assigneeId] : undefined,
       });
 
       await logSync({

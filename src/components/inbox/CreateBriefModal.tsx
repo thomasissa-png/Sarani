@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { EmailPayload } from "./EmailCard";
+import { CLICKUP_TEAM_MEMBERS } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -107,6 +108,7 @@ export function CreateBriefModal({
   const [projectType, setProjectType] = useState<ProjectType>("other");
   const [addToTracker, setAddToTracker] = useState(!!matchedClient);
   const [createSharepointFolder, setCreateSharepointFolder] = useState(!!matchedClient);
+  const [assigneeId, setAssigneeId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Focus trap + Escape
@@ -181,6 +183,7 @@ export function CreateBriefModal({
           clickupSpaceId: selectedSpaceId,
           addToTracker,
           createSharepointFolder,
+          assigneeId: assigneeId ? Number(assigneeId) : undefined,
         }),
       });
 
@@ -479,6 +482,29 @@ export function CreateBriefModal({
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Assign to */}
+            <div>
+              <label
+                htmlFor="brief-assignee"
+                className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5"
+              >
+                Assign to
+              </label>
+              <select
+                id="brief-assignee"
+                value={assigneeId}
+                onChange={(e) => setAssigneeId(e.target.value)}
+                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 min-h-[44px] text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
+              >
+                <option value="">— Unassigned —</option>
+                {CLICKUP_TEAM_MEMBERS.map((m) => (
+                  <option key={m.id} value={String(m.id)}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
