@@ -287,7 +287,7 @@ function GlobalSearch() {
           className="w-56 lg:w-72 h-8 pl-8 pr-8 rounded-lg border border-neutral-300 bg-neutral-200/60 text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-brand-cerulean focus:bg-white transition-all"
         />
         {/* Keyboard shortcut hint */}
-        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-neutral-400 bg-neutral-100 border border-neutral-200 rounded">
+        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-medium text-neutral-400 bg-neutral-100 border border-neutral-200 rounded">
           <span className="text-[9px]">&#8984;</span>K
         </kbd>
       </div>
@@ -300,7 +300,7 @@ function GlobalSearch() {
         >
           {loading ? (
             <div className="px-4 py-6 text-center">
-              <div className="animate-spin w-5 h-5 mx-auto border-2 border-brand-cerulean border-t-transparent rounded-full" />
+              <div className="motion-safe:animate-spin w-5 h-5 mx-auto border-2 border-brand-cerulean border-t-transparent rounded-full" />
               <p className="text-xs text-neutral-400 mt-2">Searching...</p>
             </div>
           ) : error ? (
@@ -323,7 +323,7 @@ function GlobalSearch() {
 
                 return (
                   <div key={cat}>
-                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                    <p className="px-3 pt-2 pb-1 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                       {CATEGORY_LABELS[cat]}
                     </p>
                     {items.map((item, idx) => {
@@ -342,7 +342,7 @@ function GlobalSearch() {
                           onClick={() => handleSelect(item.href)}
                           onMouseEnter={() => setActiveIndex(itemFlatIndex)}
                           className={cn(
-                            "w-full text-left px-3 py-2 transition-colors flex items-center gap-2",
+                            "w-full text-left px-3 py-2 transition-colors flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-cerulean focus-visible:ring-inset",
                             isActive ? "bg-neutral-100" : "hover:bg-neutral-100",
                           )}
                         >
@@ -514,8 +514,13 @@ function MobileSearchButton() {
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="px-4 py-8 text-center">
-            <div className="animate-spin w-5 h-5 mx-auto border-2 border-brand-cerulean border-t-transparent rounded-full" />
+            <div className="motion-safe:animate-spin w-5 h-5 mx-auto border-2 border-brand-cerulean border-t-transparent rounded-full" />
             <p className="text-xs text-neutral-400 mt-2">Searching...</p>
+          </div>
+        ) : error ? (
+          <div className="px-4 py-8 text-center">
+            <p className="text-sm text-error">Search failed</p>
+            <p className="text-xs text-neutral-500 mt-1">Try again in a moment</p>
           </div>
         ) : query.trim() && totalCount === 0 ? (
           <div className="px-4 py-8 text-center">
@@ -527,7 +532,7 @@ function MobileSearchButton() {
             if (!items?.length) return null;
             return (
               <div key={cat}>
-                <p className="px-4 pt-3 pb-1 text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">
+                <p className="px-4 pt-3 pb-1 text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                   {CATEGORY_LABELS[cat]}
                 </p>
                 {items.map((item) => (

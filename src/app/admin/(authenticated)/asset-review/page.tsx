@@ -344,7 +344,7 @@ function AssetReviewContent() {
               >
                 {loadingBrief ? (
                   <>
-                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <svg className="w-3.5 h-3.5 motion-safe:animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -373,7 +373,7 @@ function AssetReviewContent() {
         >
           {status === "scanning" ? (
             <>
-              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg className="w-4 h-4 motion-safe:animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
@@ -405,7 +405,7 @@ function AssetReviewContent() {
       {/* Loading skeleton */}
       {status === "scanning" && (
         <div className="bg-white rounded-xl border border-neutral-300 p-6 space-y-4">
-          <div className="animate-pulse space-y-3">
+          <div className="motion-safe:animate-pulse space-y-3">
             <div className="h-5 w-48 bg-neutral-200 rounded" />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
@@ -557,7 +557,7 @@ function AssetReviewContent() {
                 </>
               ) : updatingClickUp ? (
                 <>
-                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <svg className="w-4 h-4 motion-safe:animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
