@@ -343,7 +343,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "Failed to review assets", details: message },
+      { error: "Failed to review assets. Please try again." },
       { status: 500 }
     );
   }

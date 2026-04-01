@@ -152,6 +152,7 @@ function AssetReviewContent() {
   const [updatingClickUp, setUpdatingClickUp] = useState(false);
   const [clickUpUpdated, setClickUpUpdated] = useState(false);
   const [loadingBrief, setLoadingBrief] = useState(false);
+  const [briefLoaded, setBriefLoaded] = useState(false);
   const autoLoadedRef = useRef(false);
 
   const canScan = projectPath.trim().length > 0 && status !== "scanning";
@@ -169,6 +170,8 @@ function AssetReviewContent() {
       const data = await res.json();
       if (data.brief) {
         setBriefSummary(data.brief);
+        setBriefLoaded(true);
+        setTimeout(() => setBriefLoaded(false), 3000);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load brief from ClickUp";
@@ -303,7 +306,7 @@ function AssetReviewContent() {
             placeholder='e.g. "02. Sony/Banners Q2" or a ClickUp space name'
             className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-brand-cerulean transition-colors"
           />
-          <p className="text-xs text-neutral-400 mt-1">
+          <p className="text-xs text-neutral-500 mt-1">
             Path relative to the customers folder, or a ClickUp space name
           </p>
         </div>
@@ -336,7 +339,7 @@ function AssetReviewContent() {
                 onClick={() => loadBriefFromClickUp(clickupTaskId)}
                 disabled={!clickupTaskId.trim() || loadingBrief}
                 className={cn(
-                  "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+                  "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 min-h-[44px] text-xs font-semibold transition-colors",
                   clickupTaskId.trim() && !loadingBrief
                     ? "bg-brand-cerulean/10 text-brand-cerulean hover:bg-brand-cerulean/20"
                     : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
@@ -354,9 +357,15 @@ function AssetReviewContent() {
                   "Load from ClickUp"
                 )}
               </button>
+              {briefLoaded && (
+                <span className="inline-flex items-center gap-1 text-xs text-success font-medium">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                  Brief loaded
+                </span>
+              )}
             </div>
           </div>
-          <p className="text-xs text-neutral-400 mt-1">
+          <p className="text-xs text-neutral-500 mt-1">
             Include file names, formats, and dimensions to match against SharePoint files. Or load from a ClickUp task.
           </p>
         </div>
@@ -446,7 +455,7 @@ function AssetReviewContent() {
 
           {/* Folder path */}
           {result.folderPath && (
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-neutral-500">
               Scanned: <code className="bg-neutral-200 px-1.5 py-0.5 rounded text-neutral-600">{result.folderPath}</code>
             </p>
           )}
@@ -584,7 +593,7 @@ function AssetReviewContent() {
             </svg>
           </div>
           <p className="text-sm font-medium text-brand-black">No scan results yet</p>
-          <p className="text-xs text-neutral-400 mt-1">
+          <p className="text-xs text-neutral-500 mt-1">
             Enter a SharePoint project path and click &ldquo;Scan Assets&rdquo; to compare files against the brief
           </p>
         </div>

@@ -284,10 +284,11 @@ function GlobalSearch() {
           aria-expanded={showDropdown}
           aria-haspopup="listbox"
           aria-autocomplete="list"
+          aria-controls="global-search-listbox"
           className="w-56 lg:w-72 h-8 pl-8 pr-8 rounded-lg border border-neutral-300 bg-neutral-200/60 text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-brand-cerulean focus:bg-white transition-all"
         />
         {/* Keyboard shortcut hint */}
-        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-medium text-neutral-400 bg-neutral-100 border border-neutral-200 rounded">
+        <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-medium text-neutral-400 bg-neutral-100 border border-neutral-200 rounded">
           <span className="text-[9px]">&#8984;</span>K
         </kbd>
       </div>
@@ -297,6 +298,7 @@ function GlobalSearch() {
         <div
           className="absolute top-full left-0 mt-1 w-80 bg-white border border-neutral-200 rounded-lg shadow-lg overflow-hidden z-50"
           role="listbox"
+          id="global-search-listbox"
         >
           {loading ? (
             <div className="px-4 py-6 text-center">
@@ -392,6 +394,7 @@ function MobileSearchButton() {
   const [grouped, setGrouped] = useState<Record<string, SearchResultItem[]>>({});
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -405,6 +408,7 @@ function MobileSearchButton() {
 
   const search = useCallback((q: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    setError(false);
     if (abortRef.current) abortRef.current.abort();
 
     if (!q.trim()) {
@@ -425,7 +429,10 @@ function MobileSearchButton() {
           `/api/admin/search?q=${encodeURIComponent(q.trim())}`,
           { signal: controller.signal },
         );
-        if (!res.ok) return;
+        if (!res.ok) {
+          setError(true);
+          return;
+        }
 
         const data: SearchApiResponse = await res.json();
         const groups: Record<string, SearchResultItem[]> = {};
@@ -443,6 +450,7 @@ function MobileSearchButton() {
         setTotalCount(count);
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(true);
       } finally {
         setLoading(false);
       }
