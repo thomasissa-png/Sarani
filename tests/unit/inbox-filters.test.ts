@@ -19,6 +19,16 @@ function makeItem(overrides: Partial<InboxItemFilterable> & { id: string }): Inb
     type: "email_classified",
     status: "pending",
     protocol: null,
+    processedAt: null,
+    createdAt: new Date().toISOString(),
+    summary: null,
+    sourceId: null,
+    sourceType: null,
+    title: null,
+    priority: null,
+    pmId: null,
+    projectId: null,
+    updatedAt: new Date().toISOString(),
     ...overrides,
   };
 }

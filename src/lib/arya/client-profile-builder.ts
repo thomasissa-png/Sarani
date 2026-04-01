@@ -79,10 +79,10 @@ export async function buildClientProfileBlock(
     // Resolve client name
     let clientName = options.clientName;
     if (!clientName && options.senderEmail) {
-      clientName = resolveClientFromEmail(options.senderEmail);
+      clientName = resolveClientFromEmail(options.senderEmail) ?? undefined;
     }
     if (!clientName && options.emailDomain) {
-      clientName = resolveClientFromEmail(`user@${options.emailDomain}`);
+      clientName = resolveClientFromEmail(`user@${options.emailDomain}`) ?? undefined;
     }
 
     if (!clientName) return "";
