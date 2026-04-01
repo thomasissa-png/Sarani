@@ -7,7 +7,14 @@ type AdminUser = {
   name: string;
   email: string;
   role: "admin" | "user";
+  clickupUserId: number | null;
   createdAt: string;
+};
+
+type ClickUpMember = {
+  id: number;
+  username: string;
+  email: string;
 };
 
 type NewUserForm = {
@@ -39,6 +46,13 @@ export default function UsersPage() {
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
   const [roleLoading, setRoleLoading] = useState(false);
 
+  // ClickUp mapping
+  const [clickupMembers, setClickupMembers] = useState<ClickUpMember[]>([]);
+  const [clickupLoading, setClickupLoading] = useState(false);
+  const [mappingUserId, setMappingUserId] = useState<string | null>(null);
+  const [mappingLoading, setMappingLoading] = useState(false);
+  const [autoDetectLoading, setAutoDetectLoading] = useState<string | null>(null);
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -61,6 +75,22 @@ export default function UsersPage() {
       setLoading(false);
     }
   }, []);
+
+  const fetchClickUpMembers = useCallback(async () => {
+    if (clickupMembers.length > 0) return; // already loaded
+    setClickupLoading(true);
+    try {
+      const res = await fetch("/api/admin/clickup/members");
+      if (res.ok) {
+        const data = await res.json();
+        setClickupMembers(data.members ?? []);
+      }
+    } catch {
+      // silently fail — ClickUp members are optional
+    } finally {
+      setClickupLoading(false);
+    }
+  }, [clickupMembers.length]);
 
   useEffect(() => {
     fetchUsers();
@@ -141,6 +171,67 @@ export default function UsersPage() {
       setError("Failed to update role");
     } finally {
       setRoleLoading(false);
+    }
+  }
+
+  async function handleSetClickUpId(userId: string, clickupUserId: number | null) {
+    setMappingLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clickupUserId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Failed to update mapping" }));
+        setError(data.error || "Failed to update mapping");
+        return;
+      }
+      setMappingUserId(null);
+      fetchUsers();
+    } catch {
+      setError("Failed to update mapping");
+    } finally {
+      setMappingLoading(false);
+    }
+  }
+
+  async function handleAutoDetect(user: AdminUser) {
+    setAutoDetectLoading(user.id);
+    try {
+      // Fetch ClickUp members if not already loaded
+      let members = clickupMembers;
+      if (members.length === 0) {
+        const res = await fetch("/api/admin/clickup/members");
+        if (res.ok) {
+          const data = await res.json();
+          members = data.members ?? [];
+          setClickupMembers(members);
+        }
+      }
+      // Try matching by name (fuzzy) or email
+      const nameLower = user.name.toLowerCase().trim();
+      const emailLower = user.email.toLowerCase().trim();
+      const match = members.find((m) => {
+        const uLower = m.username.toLowerCase().trim();
+        const eLower = m.email.toLowerCase().trim();
+        // Email exact match
+        if (eLower && emailLower && eLower === emailLower) return true;
+        // Name exact match
+        if (uLower === nameLower) return true;
+        // Contains match
+        if (uLower.includes(nameLower) || nameLower.includes(uLower)) return true;
+        return false;
+      });
+      if (match) {
+        await handleSetClickUpId(user.id, match.id);
+      } else {
+        setError(`No ClickUp match found for "${user.name}". Try manual mapping.`);
+      }
+    } catch {
+      setError("Auto-detect failed");
+    } finally {
+      setAutoDetectLoading(null);
     }
   }
 
@@ -304,6 +395,9 @@ export default function UsersPage() {
                     Role
                   </th>
                   <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                    ClickUp
+                  </th>
+                  <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                     Created
                   </th>
                   <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
@@ -344,6 +438,74 @@ export default function UsersPage() {
                         >
                           <RoleBadge role={user.role} />
                         </button>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {mappingUserId === user.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "") {
+                                handleSetClickUpId(user.id, null);
+                              } else {
+                                handleSetClickUpId(user.id, Number(val));
+                              }
+                            }}
+                            disabled={mappingLoading}
+                            autoFocus
+                            defaultValue={user.clickupUserId ? String(user.clickupUserId) : ""}
+                            className="text-xs px-2 py-1 rounded-lg border border-neutral-300 bg-white max-w-[160px] focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
+                          >
+                            <option value="">— None —</option>
+                            {clickupMembers.map((m) => (
+                              <option key={m.id} value={String(m.id)}>
+                                {m.username || m.email} ({m.id})
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => setMappingUserId(null)}
+                            className="text-xs text-neutral-400 hover:text-neutral-600"
+                            aria-label="Cancel mapping"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      ) : user.clickupUserId ? (
+                        <button
+                          onClick={() => {
+                            fetchClickUpMembers();
+                            setMappingUserId(user.id);
+                          }}
+                          className="inline-flex items-center gap-1.5 cursor-pointer"
+                          title="Click to change ClickUp mapping"
+                        >
+                          <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-700">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                            {user.clickupUserId}
+                          </span>
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleAutoDetect(user)}
+                            disabled={autoDetectLoading === user.id}
+                            className="text-xs px-2 py-1 rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100 disabled:opacity-50 transition-colors"
+                            title="Auto-detect ClickUp user by name"
+                          >
+                            {autoDetectLoading === user.id ? "..." : "Auto"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              fetchClickUpMembers();
+                              setMappingUserId(user.id);
+                            }}
+                            className="text-xs text-brand-cerulean hover:text-brand-cerulean-dark font-medium transition-colors"
+                          >
+                            Map
+                          </button>
+                        </div>
                       )}
                     </td>
                     <td className="px-5 py-3.5 text-sm text-neutral-500">

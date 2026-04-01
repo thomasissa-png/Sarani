@@ -29,7 +29,15 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, role, password } = body;
+    const { name, role, password, clickupUserId } = body;
+
+    // Validate clickupUserId if provided
+    if (clickupUserId !== undefined && clickupUserId !== null && typeof clickupUserId !== "number") {
+      return NextResponse.json(
+        { error: "clickupUserId must be a number or null" },
+        { status: 400 }
+      );
+    }
 
     // Validate role if provided
     if (role !== undefined && !["admin", "user"].includes(role)) {
@@ -77,6 +85,7 @@ export async function PATCH(
     if (name !== undefined) updates.name = name;
     if (role !== undefined) updates.role = role;
     if (password !== undefined) updates.passwordHash = await hashPassword(password);
+    if (clickupUserId !== undefined) updates.clickupUserId = clickupUserId;
 
     const [updated] = await db
       .update(users)
@@ -87,6 +96,7 @@ export async function PATCH(
         email: users.email,
         name: users.name,
         role: users.role,
+        clickupUserId: users.clickupUserId,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       });

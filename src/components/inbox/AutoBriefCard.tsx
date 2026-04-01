@@ -4,9 +4,11 @@
 // Inline form for reviewing and executing auto-extracted briefs.
 // Displayed in the inbox when an item has type "auto_brief_ready".
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { CLICKUP_TEAM_MEMBERS } from "@/lib/integrations/config";
+
+type Assignee = { name: string; clickupUserId: number };
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -64,7 +66,26 @@ export function AutoBriefCard({
   const [addToTracker, setAddToTracker] = useState(payload.clientResolved && !!payload.excelTrackerFilename);
   const [createSharepointFolder, setCreateSharepointFolder] = useState(payload.clientResolved && !!payload.sharepointCustomerFolder);
   const [assigneeId, setAssigneeId] = useState<string>("");
+  const [dbAssignees, setDbAssignees] = useState<Assignee[]>([]);
   const [creating, setCreating] = useState(false);
+
+  // Fetch assignees from DB (users with ClickUp mapping), fallback to hardcoded
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/users/assignees")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.assignees?.length > 0) {
+          setDbAssignees(data.assignees);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const assigneeOptions: Array<{ name: string; id: number }> = dbAssignees.length > 0
+    ? dbAssignees.map((a) => ({ name: a.name, id: a.clickupUserId }))
+    : CLICKUP_TEAM_MEMBERS.map((m) => ({ name: m.name, id: m.id }));
   const [dismissing, setDismissing] = useState(false);
 
   const clientResolved = payload.clientResolved && !!selectedSpaceId;
@@ -369,7 +390,7 @@ export function AutoBriefCard({
             className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 min-h-[44px] text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
           >
             <option value="">— Unassigned —</option>
-            {CLICKUP_TEAM_MEMBERS.map((m) => (
+            {assigneeOptions.map((m) => (
               <option key={m.id} value={String(m.id)}>
                 {m.name}
               </option>

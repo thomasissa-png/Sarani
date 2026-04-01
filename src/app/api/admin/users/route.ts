@@ -5,6 +5,41 @@ import { users } from "@/lib/db/schema";
 import { isAuthenticatedFromCookie, hashPassword } from "@/lib/auth";
 import { CLICKUP_TEAM_MEMBERS } from "@/lib/integrations/config";
 
+// ─── Auto-match ClickUp user by name or email ──────────────────────────────
+// Uses the hardcoded CLICKUP_TEAM_MEMBERS as a fallback matching source.
+// Matching strategy: exact email > fuzzy name (lowercase contains).
+
+function autoMatchClickUp(name: string, _email: string): number | null {
+  const nameLower = name.toLowerCase().trim();
+
+  // Note: _email param reserved for future use when ClickUp API members
+  // are fetched with emails. Currently CLICKUP_TEAM_MEMBERS has names only.
+
+  // Try fuzzy name match against CLICKUP_TEAM_MEMBERS
+  for (const member of CLICKUP_TEAM_MEMBERS) {
+    const memberLower = member.name.toLowerCase().trim();
+    // Exact name match
+    if (memberLower === nameLower) return member.id;
+    // Contains match (either direction)
+    if (memberLower.includes(nameLower) || nameLower.includes(memberLower)) {
+      return member.id;
+    }
+    // First + last name match (handle "Thomas I." matching "Thomas Issa")
+    const nameParts = nameLower.split(/\s+/);
+    const memberParts = memberLower.split(/\s+/);
+    if (
+      nameParts.length >= 2 &&
+      memberParts.length >= 2 &&
+      nameParts[0] === memberParts[0] &&
+      (memberParts[1].startsWith(nameParts[1]) || nameParts[1].startsWith(memberParts[1]))
+    ) {
+      return member.id;
+    }
+  }
+
+  return null;
+}
+
 async function requireAdmin(request: NextRequest): Promise<
   | { authorized: true }
   | { authorized: false; response: NextResponse }
