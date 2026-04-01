@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { EmailPayload } from "./EmailCard";
+import { AryaRecommendsBanner } from "./AryaRecommendsBanner";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -218,6 +219,19 @@ export function DraftReplyModal({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          {/* Arya Recommends banner */}
+          <AryaRecommendsBanner
+            lines={[
+              ...(payload.classification.category
+                ? [{ label: "Category", value: payload.classification.category.replace(/_/g, " ") }]
+                : []),
+              ...(payload.classification.language
+                ? [{ label: "Language", value: payload.classification.language.toUpperCase() }]
+                : []),
+              { label: "Tone", value: "Sarani warm" },
+            ]}
+          />
+
           {/* Original email (readonly) */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">

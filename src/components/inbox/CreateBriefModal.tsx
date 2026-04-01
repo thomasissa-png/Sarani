@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { EmailPayload } from "./EmailCard";
 import { CLICKUP_TEAM_MEMBERS } from "@/lib/integrations/config";
+import { AryaRecommendsBanner } from "./AryaRecommendsBanner";
 
 type Assignee = { name: string; clickupUserId: number };
 
@@ -358,6 +359,18 @@ export function CreateBriefModal({
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          {/* Arya Recommends banner */}
+          <AryaRecommendsBanner
+            lines={[
+              ...(matchedClient ? [{ label: "Client", value: matchedClient.spaceName }] : []),
+              ...(entity ? [{ label: "Entity", value: entity }] : []),
+              { label: "Type", value: PROJECT_TYPES.find((pt) => pt.value === projectType)?.label ?? projectType },
+              ...(assigneeId ? [{ label: "Assignee", value: assigneeOptions.find((a) => String(a.id) === assigneeId)?.name ?? "" }] : []),
+              ...(payload.classification.confidence >= 0.8 ? [{ label: "Confidence", value: `${Math.round(payload.classification.confidence * 100)}%` }] : []),
+              ...(payload.classification.suggestedAction ? [{ label: "Action", value: payload.classification.suggestedAction }] : []),
+            ]}
+          />
+
           {/* Email context (readonly) */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">

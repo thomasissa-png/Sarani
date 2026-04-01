@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import type { EmailPayload } from "./EmailCard";
+import { AryaRecommendsBanner } from "./AryaRecommendsBanner";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -384,6 +385,35 @@ export function ProjectActionModal({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+          {/* Arya Recommends banner */}
+          <AryaRecommendsBanner
+            lines={
+              variant === "create_feedback"
+                ? [
+                    ...(payload.classification.clickupProjectHint
+                      ? [{ label: "Project", value: payload.classification.clickupProjectHint }]
+                      : []),
+                    ...(clickupSearchResult?.taskName
+                      ? [{ label: "ClickUp task", value: clickupSearchResult.taskName }]
+                      : []),
+                    { label: "Action", value: "Post feedback to ClickUp" },
+                  ]
+                : variant === "open_project"
+                  ? [
+                      ...(clickupSearchResult?.taskName
+                        ? [{ label: "Project", value: clickupSearchResult.taskName }]
+                        : payload.classification.clickupProjectHint
+                          ? [{ label: "Project", value: payload.classification.clickupProjectHint }]
+                          : []),
+                      { label: "Action", value: "Open in ClickUp" },
+                    ]
+                  : [
+                      { label: "Prospect", value: payload.from },
+                      { label: "Action", value: "Draft welcome reply" },
+                    ]
+            }
+          />
+
           {/* Email context */}
           <div className="space-y-3">
             <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
