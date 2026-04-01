@@ -53,7 +53,7 @@ const jobs: CronJob[] = [
 
 async function runJob(job: CronJob): Promise<void> {
   if (job.running) return; // prevent overlap
-  if (!CRON_SECRET || !BASE_URL) return;
+  if (!CRON_SECRET || !INTERNAL_URL) return;
 
   const now = Date.now();
   if (now - job.lastRun < job.intervalMs) return; // not yet time
