@@ -155,9 +155,30 @@ function ConfidenceDot({ confidence }: { confidence: number }) {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
+// ─── Next Step Hints ─────────────────────────────────────────────────────────
+
+function getNextStepHint(category: string, routeTo: string): string {
+  if (routeTo === "PROTO-EMAIL-INTAKE" || category === "client_brief") {
+    return "Next: Review and create project brief";
+  }
+  if (routeTo === "PROTO-CLIENT-RETURN" || category === "client_followup") {
+    return "Next: Check project status and reply to client";
+  }
+  if (routeTo === "PROTO-PITCH" || category === "new_client_prospect" || category === "new_client") {
+    return "Next: Prepare pitch deck and proposal";
+  }
+  if (routeTo === "PROTO-CLIENT-REPLY") {
+    return "Next: Review AI draft, edit if needed, then send";
+  }
+  return "Next: Read and decide on action";
+}
+
+// ─── Component ──────────────────────────────────────────────────────────────
+
 export function EmailCard({
   itemId,
   sourceId,
+  sourceType,
   payload,
   createdAt,
   isActioning,
@@ -171,11 +192,18 @@ export function EmailCard({
   const { text: timeText, isUrgent } = formatRelativeTime(createdAt);
   const { routeTo, suggestedAction, confidence } = classification;
 
-  // Determine which action buttons to show based on routeTo
-  const showCreateBrief =
+  const isLark = sourceType === "lark";
+
+  // Determine which action buttons to show based on routeTo + category
+  const isClientBrief =
     routeTo === "PROTO-EMAIL-INTAKE" || classification.category === "client_brief";
-  const showViewProject = routeTo === "PROTO-CLIENT-RETURN";
-  const showDraftReply = routeTo === "PROTO-CLIENT-REPLY";
+  const isClientFollowup =
+    routeTo === "PROTO-CLIENT-RETURN" || classification.category === "client_followup";
+  const isNewProspect =
+    routeTo === "PROTO-PITCH" || classification.category === "new_client_prospect" || classification.category === "new_client";
+  const isDraftReply = routeTo === "PROTO-CLIENT-REPLY";
+
+  const nextStepHint = getNextStepHint(classification.category, routeTo);
 
   const handleCreateBrief = () => {
     if (sourceId) {
@@ -185,33 +213,59 @@ export function EmailCard({
     }
   };
 
+  // Source icon: email or Lark
+  const sourceIcon = isLark ? (
+    <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+      <svg
+        className="w-4.5 h-4.5 text-indigo-600"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    </div>
+  ) : (
+    <div className="w-9 h-9 rounded-full bg-brand-cerulean/10 flex items-center justify-center shrink-0">
+      <svg
+        className="w-4.5 h-4.5 text-brand-cerulean"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <rect width="20" height="16" x="2" y="4" rx="2" />
+        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      </svg>
+    </div>
+  );
+
   return (
     <div className="bg-white rounded-xl border border-neutral-300 p-5 hover:shadow-sm transition-shadow">
       {/* Header row: sender + time + confidence */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          {/* Email icon */}
-          <div className="w-9 h-9 rounded-full bg-brand-cerulean/10 flex items-center justify-center shrink-0">
-            <svg
-              className="w-4.5 h-4.5 text-brand-cerulean"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <rect width="20" height="16" x="2" y="4" rx="2" />
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-            </svg>
-          </div>
+          {sourceIcon}
 
           {/* Sender info */}
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-brand-black truncate">
-              {senderName}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold text-brand-black truncate">
+                {senderName}
+              </p>
+              {isLark && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-600 shrink-0">
+                  Lark
+                </span>
+              )}
+            </div>
             <p className="text-xs text-neutral-400 truncate">{from}</p>
           </div>
         </div>
@@ -271,70 +325,84 @@ export function EmailCard({
 
       {/* Actions */}
       <div className="flex items-center gap-2 flex-wrap pt-3 border-t border-neutral-200">
-        {/* Contextual primary actions */}
-        {showCreateBrief && (
+        {/* === Client Brief: primary = "Create Project Brief" === */}
+        {isClientBrief && (
           <button
             onClick={handleCreateBrief}
             disabled={isActioning}
-            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
-            aria-label="Create brief from this email"
+            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
+            aria-label="Create project brief from this email"
           >
-            Create Brief
+            {isActioning ? "Redirecting..." : "Create Project Brief \u2192"}
           </button>
         )}
 
-        {showViewProject && (
+        {/* === Client Follow-up: primary = "Open Project", secondary = "Draft Reply" === */}
+        {isClientFollowup && (
           <>
             <button
               onClick={onApprove}
               disabled={isActioning}
-              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
-              aria-label="View related project"
+              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
+              aria-label="Open the related project"
             >
-              View Project
+              {isActioning ? "Opening..." : "Open Project"}
             </button>
             <button
               onClick={onApprove}
               disabled={isActioning}
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-              aria-label="Reply to this email"
+              aria-label="Draft a reply to this client"
             >
-              Reply
+              Draft Reply
             </button>
           </>
         )}
 
-        {showDraftReply && (
+        {/* === New Prospect: primary = "Prepare Pitch" === */}
+        {isNewProspect && (
           <button
             onClick={onApprove}
             disabled={isActioning}
-            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-            aria-label="Draft a reply to this email"
+            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-flame text-white hover:bg-brand-flame/90 transition-colors disabled:opacity-50"
+            aria-label="Prepare pitch for this prospect"
           >
-            Draft Reply
+            {isActioning ? "Processing..." : "Prepare Pitch"}
           </button>
         )}
 
-        {/* If no contextual action matched, show a generic Approve */}
-        {!showCreateBrief && !showViewProject && !showDraftReply && (
+        {/* === Draft Reply (AI-suggested reply ready): primary = "Draft Reply" === */}
+        {isDraftReply && !isClientFollowup && (
           <button
             onClick={onApprove}
             disabled={isActioning}
-            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-            aria-label={`Approve email: ${subject}`}
+            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+            aria-label="Send the AI-drafted reply to Outlook"
           >
-            Approve
+            {isActioning ? "Creating draft..." : "Draft Reply"}
           </button>
         )}
 
-        {/* Common actions — always visible */}
+        {/* === Default: no specific protocol matched === */}
+        {!isClientBrief && !isClientFollowup && !isNewProspect && !isDraftReply && (
+          <button
+            onClick={onApprove}
+            disabled={isActioning}
+            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-700 text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+            aria-label={`Mark email as read: ${subject}`}
+          >
+            {isActioning ? "Processing..." : "Mark as Read"}
+          </button>
+        )}
+
+        {/* Common actions: Archive + Not relevant */}
         <button
           onClick={onDismiss}
           disabled={isActioning}
           className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
-          aria-label={`Dismiss email: ${subject}`}
+          aria-label={`Archive email: ${subject}`}
         >
-          Dismiss
+          Archive
         </button>
         <button
           onClick={onMarkNoise}
@@ -345,6 +413,11 @@ export function EmailCard({
           Not relevant
         </button>
       </div>
+
+      {/* Next step hint */}
+      <p className="text-xs text-neutral-500 mt-2 pl-1">
+        {nextStepHint}
+      </p>
     </div>
   );
 }
@@ -352,37 +425,65 @@ export function EmailCard({
 // ─── Safe parser ────────────────────────────────────────────────────────────
 
 /**
- * Safely parse the summary JSON of an email_classified inbox item.
+ * Safely parse the summary JSON of an email_classified or lark_message inbox item.
  * Returns null if the summary is missing or malformed.
+ * Handles both email format (from/subject/bodyPreview/classification) and
+ * Lark format (senderId/content/classification).
  */
 export function parseEmailPayload(summary: string | null): EmailPayload | null {
   if (!summary) return null;
   try {
     const data = JSON.parse(summary) as Record<string, unknown>;
-    // Validate required fields exist
+
+    // Standard email format
     if (
-      typeof data.from !== "string" ||
-      typeof data.subject !== "string" ||
-      typeof data.bodyPreview !== "string" ||
-      !data.classification ||
-      typeof data.classification !== "object"
+      typeof data.from === "string" &&
+      typeof data.subject === "string" &&
+      typeof data.bodyPreview === "string" &&
+      data.classification &&
+      typeof data.classification === "object"
     ) {
-      return null;
+      const cls = data.classification as Record<string, unknown>;
+      return {
+        from: data.from as string,
+        subject: data.subject as string,
+        bodyPreview: data.bodyPreview as string,
+        classification: {
+          category: (cls.category as string) ?? "unknown",
+          confidence: typeof cls.confidence === "number" ? cls.confidence : 0,
+          reasoning: (cls.reasoning as string) ?? "",
+          suggestedAction: (cls.suggestedAction as string) ?? "",
+          language: (cls.language as string) ?? "en",
+          routeTo: (cls.routeTo as string) ?? "",
+        },
+      };
     }
-    const cls = data.classification as Record<string, unknown>;
-    return {
-      from: data.from as string,
-      subject: data.subject as string,
-      bodyPreview: data.bodyPreview as string,
-      classification: {
-        category: (cls.category as string) ?? "unknown",
-        confidence: typeof cls.confidence === "number" ? cls.confidence : 0,
-        reasoning: (cls.reasoning as string) ?? "",
-        suggestedAction: (cls.suggestedAction as string) ?? "",
-        language: (cls.language as string) ?? "en",
-        routeTo: (cls.routeTo as string) ?? "",
-      },
-    };
+
+    // Lark message format: adapt to EmailPayload shape
+    if (
+      typeof data.content === "string" &&
+      data.classification &&
+      typeof data.classification === "object"
+    ) {
+      const cls = data.classification as Record<string, unknown>;
+      const senderId = (data.senderId as string) ?? "Unknown sender";
+      const content = data.content as string;
+      return {
+        from: senderId,
+        subject: content.slice(0, 120) || "Lark message",
+        bodyPreview: content,
+        classification: {
+          category: (cls.category as string) ?? "unknown",
+          confidence: typeof cls.confidence === "number" ? cls.confidence : 0,
+          reasoning: (cls.reasoning as string) ?? "",
+          suggestedAction: (cls.suggestedAction as string) ?? (cls.suggested_action as string) ?? "",
+          language: (cls.language as string) ?? "en",
+          routeTo: (cls.routeTo as string) ?? "",
+        },
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }

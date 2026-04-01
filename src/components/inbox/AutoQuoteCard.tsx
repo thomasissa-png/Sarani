@@ -504,15 +504,20 @@ export function AutoQuoteCard({
             </div>
           </div>
 
+          {/* Next step hint */}
+          <p className="text-xs text-neutral-500 pl-1">
+            Next: Review pricing, then generate PDF and send
+          </p>
+
           {/* Actions */}
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-200">
             <button
               onClick={handleDismiss}
               disabled={dismissing || finalizing}
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
-              aria-label="Dismiss this auto-quote"
+              aria-label="Archive this auto-quote"
             >
-              {dismissing ? "Dismissing..." : "Dismiss"}
+              {dismissing ? "Archiving..." : "Archive"}
             </button>
             <button
               onClick={() => setShowConfirm(true)}

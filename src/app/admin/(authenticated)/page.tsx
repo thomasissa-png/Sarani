@@ -19,7 +19,11 @@ type InboxItemType =
   | "followup_alert"
   | "noise"
   | "auto_brief_ready"
-  | "auto_quote_ready";
+  | "auto_quote_ready"
+  | "lark_message"
+  | "review_human"
+  | "review_ai_ready"
+  | "review_escalated";
 
 type InboxItemStatus = "pending" | "pending_review" | "in_progress" | "done" | "dismissed";
 
@@ -86,6 +90,26 @@ const TYPE_CONFIG: Record<
     label: "Auto Quote",
     color: "text-brand-flame",
     bgColor: "bg-brand-flame/10",
+  },
+  lark_message: {
+    label: "Lark",
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-100",
+  },
+  review_human: {
+    label: "Asset Review",
+    color: "text-brand-cerulean",
+    bgColor: "bg-brand-cerulean/10",
+  },
+  review_ai_ready: {
+    label: "AI Review",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/10",
+  },
+  review_escalated: {
+    label: "Escalated",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/20",
   },
 };
 
@@ -335,7 +359,7 @@ export default function InboxPage() {
 
         // Default toast for non-protocol actions
         showToast(
-          status === "done" ? "Item approved — chain triggered" : "Item dismissed",
+          status === "done" ? "Done — action completed" : "Archived",
           "success"
         );
       } else {
@@ -552,8 +576,8 @@ export default function InboxPage() {
               }
             }
 
-            // Render EmailCard for email_classified items
-            if (item.type === "email_classified" && item.summary) {
+            // Render EmailCard for email_classified and lark_message items
+            if ((item.type === "email_classified" || item.type === "lark_message") && item.summary) {
               const emailPayload = parseEmailPayload(item.summary);
               if (emailPayload) {
                 return (
@@ -561,6 +585,7 @@ export default function InboxPage() {
                     key={item.id}
                     itemId={item.id}
                     sourceId={item.sourceId}
+                    sourceType={item.sourceType}
                     payload={emailPayload}
                     createdAt={item.createdAt}
                     isActioning={actionLoading === item.id}
@@ -687,6 +712,55 @@ export default function InboxPage() {
 
 // ─── Inbox Card ─────────────────────────────────────────────────────────────
 
+// ─── Contextual Action Labels ──────────────────────────────────────────────
+
+function getContextualActionLabel(type: InboxItemType): { primary: string; primaryLoading: string; nextStep: string } {
+  switch (type) {
+    case "followup_alert":
+      return {
+        primary: "Mark Resolved",
+        primaryLoading: "Resolving...",
+        nextStep: "Next: Check project status in ClickUp",
+      };
+    case "ai_team_complete":
+      return {
+        primary: "Review Deliverables",
+        primaryLoading: "Opening...",
+        nextStep: "Next: Review AI output quality, then approve or request changes",
+      };
+    case "review_human":
+      return {
+        primary: "Start Asset Review \u2192",
+        primaryLoading: "Opening...",
+        nextStep: "Next: Review client assets and provide feedback",
+      };
+    case "review_ai_ready":
+      return {
+        primary: "Validate AI Work \u2192",
+        primaryLoading: "Opening...",
+        nextStep: "Next: Check AI-generated deliverables match the brief",
+      };
+    case "review_escalated":
+      return {
+        primary: "Review Escalation",
+        primaryLoading: "Opening...",
+        nextStep: "Next: Investigate the escalated issue and take action",
+      };
+    case "qa_gates_pass":
+      return {
+        primary: "Acknowledge",
+        primaryLoading: "Processing...",
+        nextStep: "Next: QA passed \u2014 project ready for delivery",
+      };
+    default:
+      return {
+        primary: "Mark as Read",
+        primaryLoading: "Processing...",
+        nextStep: "Next: Read and decide on action",
+      };
+  }
+}
+
 function InboxCard({
   item,
   isActioning,
@@ -716,6 +790,7 @@ function InboxCard({
   };
 
   const { text: timeText, isUrgent } = formatRelativeTime(item.createdAt);
+  const actionLabels = getContextualActionLabel(item.type);
 
   // Extract email count from summary payload (set by webhook thread aggregation)
   const emailCount = (() => {
@@ -768,7 +843,7 @@ function InboxCard({
                 isUrgent ? "text-brand-flame font-semibold" : "text-neutral-400"
               )}
             >
-              {isUrgent ? `Urgent — ${timeText}` : timeText}
+              {isUrgent ? `Urgent \u2014 ${timeText}` : timeText}
             </span>
           </div>
 
@@ -796,10 +871,10 @@ function InboxCard({
           <button
             onClick={onApprove}
             disabled={isActioning}
-            className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
-            aria-label={`Approve: ${item.title ?? "item"}`}
+            className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+            aria-label={`${actionLabels.primary}: ${item.title ?? "item"}`}
           >
-            Approve
+            {isActioning ? actionLabels.primaryLoading : actionLabels.primary}
           </button>
           <button
             onClick={onEdit}
@@ -819,12 +894,17 @@ function InboxCard({
             onClick={onDismiss}
             disabled={isActioning}
             className="px-3 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
-            aria-label={`Dismiss: ${item.title ?? "item"}`}
+            aria-label={`Archive: ${item.title ?? "item"}`}
           >
-            Dismiss
+            Archive
           </button>
         </div>
       </div>
+
+      {/* Next step hint */}
+      <p className="text-xs text-neutral-500 mt-2 pl-1">
+        {actionLabels.nextStep}
+      </p>
 
       {/* Inline editor */}
       {isEditing && (
@@ -851,9 +931,9 @@ function InboxCard({
             <button
               onClick={onSaveAndApprove}
               disabled={isActioning}
-              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
             >
-              {isActioning ? "Saving..." : "Save & Approve"}
+              {isActioning ? "Saving..." : `Save & ${actionLabels.primary}`}
             </button>
           </div>
         </div>

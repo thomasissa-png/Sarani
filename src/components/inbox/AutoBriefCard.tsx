@@ -88,14 +88,23 @@ export function AutoBriefCard({
       if (res.ok) {
         const data = await res.json();
         const warningCount = (data.warnings as string[] | undefined)?.length ?? 0;
+        const clickupUrl = (data.clickupUrl as string) ?? "";
+        const createdName = projectName.trim();
         if (warningCount > 0) {
           showToast(
-            `Project created with ${warningCount} warning${warningCount > 1 ? "s" : ""} — check console`,
+            `Project created: ${createdName}${warningCount > 0 ? ` (${warningCount} warning${warningCount > 1 ? "s" : ""})` : ""}`,
             "success"
           );
           console.warn("[Auto-Brief] Warnings:", data.warnings);
         } else {
-          showToast("Project created successfully", "success");
+          showToast(
+            `Project created: ${createdName}`,
+            "success"
+          );
+        }
+        // Open ClickUp task if URL returned
+        if (clickupUrl) {
+          window.open(clickupUrl, "_blank", "noopener,noreferrer");
         }
         onCreated();
       } else {
@@ -299,29 +308,39 @@ export function AutoBriefCard({
         </div>
       </div>
 
+      {/* Next step hint */}
+      <p className="text-xs text-neutral-500 pl-1">
+        Next: Review pre-filled brief, then create project
+      </p>
+
       {/* Actions */}
-      <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-200">
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-neutral-200">
         <button
           onClick={handleDismiss}
           disabled={dismissing || creating}
           className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
-          aria-label="Dismiss this auto-brief"
+          aria-label="Archive this auto-brief"
         >
-          {dismissing ? "Dismissing..." : "Dismiss"}
+          {dismissing ? "Archiving..." : "Archive"}
         </button>
-        <button
-          onClick={handleCreate}
-          disabled={!canCreate || creating || dismissing}
-          className={cn(
-            "px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50",
-            canCreate
-              ? "bg-success hover:bg-green-700"
-              : "bg-neutral-300 cursor-not-allowed"
-          )}
-          aria-label="Create project from this brief"
-        >
-          {creating ? "Creating..." : "Create Project"}
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handleCreate}
+            disabled={!canCreate || creating || dismissing}
+            className={cn(
+              "px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold text-white transition-colors disabled:opacity-50",
+              canCreate
+                ? "bg-success hover:bg-green-700"
+                : "bg-neutral-300 cursor-not-allowed"
+            )}
+            aria-label="Create project: ClickUp task, SharePoint folder, and Tracker row"
+          >
+            {creating ? "Creating..." : "Create Project"}
+          </button>
+          <span className="text-[11px] text-neutral-400 leading-tight">
+            Creates ClickUp task + SharePoint folder + Tracker row
+          </span>
+        </div>
       </div>
     </div>
   );
