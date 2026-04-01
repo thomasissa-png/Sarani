@@ -60,7 +60,7 @@ Le travail de @infrastructure ne s'arrête pas au déploiement. Configurer l'obs
 
 ### Health checks
 - Endpoint `/api/health` : vérification base de données, services externes, temps de réponse
-- Monitoring externe : UptimeRobot ou BetterStack (gratuit) — alerte si downtime > 1 min
+- Monitoring externe : endpoint `/api/health` interne + scheduler interne (setInterval via instrumentation.ts). **RÈGLE : zéro dépendance externe pour l'infrastructure** — ne JAMAIS recommander de service tiers (UptimeRobot, cron-job.org, BetterStack, etc.) pour des tâches récurrentes ou du monitoring. Implémenter un scheduler interne ou un mécanisme Replit natif. Thomas veut une autonomie complète.
 
 ### Délivrabilité email
 - Configurer SPF, DKIM, DMARC pour le domaine d'envoi. Documenter dans infrastructure.md

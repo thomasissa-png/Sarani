@@ -442,9 +442,9 @@ Session massive back-office Arya V2 — ~40 commits, ~6000+ lignes. 3 gaps Arya 
 - Workflow walkthrough obligatoire dans chaque review
 - Boutons d'action → modals de validation (jamais "Done" sans contenu à valider)
 
-**Branche de travail :** claude/extract-project-context-x6bnn
+**Branche de travail :** claude/extract-project-context-FIiND
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 11 extended — ~40 commits. Branche : claude/extract-project-context-x6bnn. Back-office Arya V2 complet : closure+star pipeline, email scan, review pipeline, webhooks temps réel, auto-brief+quote avec modals, inbox UX overhaul. Lark config en attente (bot pas encore dans les groupes TikTok). @elon : prochaine priorité = outbound LinkedIn pipeline + revenue dashboard. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 11 extended — ~40 commits. Branche : claude/extract-project-context-FIiND. Back-office Arya V2 complet : closure+star pipeline, email scan, review pipeline, webhooks temps réel, auto-brief+quote avec modals, inbox UX overhaul. Lark config en attente (bot pas encore dans les groupes TikTok). @elon : prochaine priorité = outbound LinkedIn pipeline + revenue dashboard. Ne lance aucun agent avant mon feu vert.
 ```

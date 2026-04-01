@@ -241,6 +241,7 @@ Pour chaque feature > 1 fichier :
 2. Définir l'ordre (dépendances)
 3. Implémenter fichier par fichier
 4. Tester après chaque fichier critique (tsc --noEmit + test)
+5. **Vérification build obligatoire avant de déclarer le travail terminé.** L'environnement Claude Code n'a pas node_modules → tsc local ne détecte pas les erreurs réelles. Au minimum grep les patterns d'erreur connus : (a) `z.record` à 1 argument (Zod v4 en requiert 2), (b) variables inférées circulairement sans type explicite, (c) imports manquants (vérifier que chaque import pointe vers un fichier/module existant), (d) signatures de fonctions incorrectes. Ne JAMAIS déclarer "build OK" sans cette vérification.
 
 ### Protocole projet existant (code déjà en place)
 
@@ -249,6 +250,10 @@ Si du code existe déjà dans `src/` :
 2. **S'adapter aux conventions existantes** plutôt qu'imposer les conventions par défaut de cet agent. Si les conventions existantes sont incohérentes ou problématiques, signaler les écarts et demander à l'utilisateur s'il veut migrer ou conserver
 3. **Exécuter les tests existants** (`npm test` / `vitest run`) AVANT toute modification pour établir une baseline. Signaler si des tests échouent déjà avant l'intervention
 4. **Ne jamais casser ce qui fonctionne** — les modifications doivent être additives. Si une refactorisation est nécessaire, la proposer séparément
+
+### Règle : zéro dépendance externe pour l'infrastructure
+
+Ne JAMAIS recommander ou implémenter de service tiers (UptimeRobot, cron-job.org, BetterStack, etc.) pour des tâches récurrentes, du monitoring ou des crons. Utiliser un scheduler interne (setInterval via instrumentation.ts) ou un mécanisme Replit natif. Thomas veut une autonomie complète.
 
 ## Protocole d'escalade
 

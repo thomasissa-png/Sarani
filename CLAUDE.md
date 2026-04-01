@@ -258,6 +258,8 @@ Si un agent a été interrompu par un timeout :
 
 18. **Test workflow réel obligatoire dans chaque review.** Toute review (@arya, @ux, @design, @reviewer, @qa) DOIT inclure un **"Workflow walkthrough"** : le reviewer simule le parcours complet de l'utilisateur ("je suis la PM, un email arrive, je clique sur Create Brief → qu'est-ce que je VOIS ensuite ?"). Si la réponse est "un toast et l'item disparaît sans modal/brief/validation", c'est un **FAIL** même si le code est techniquement correct. Le workflow bout-en-bout prime sur la qualité du code. Signalé comme P0 sur 1 projet — 3 reviews successives ont scoré 7-8.5/10 sans détecter que les boutons ne faisaient rien d'utile.
 
+19. **Zéro dépendance externe pour l'infrastructure.** Ne JAMAIS recommander de service tiers (UptimeRobot, cron-job.org, BetterStack, etc.) pour des tâches récurrentes, du monitoring ou des crons. Implémenter un scheduler interne (setInterval via instrumentation.ts) ou un mécanisme Replit natif. Thomas veut une autonomie complète — zéro service externe.
+
 ## Protocole de test du framework
 
 Pour valider que les agents fonctionnent correctement ensemble, utiliser ce protocole sur un projet fictif ou réel :
