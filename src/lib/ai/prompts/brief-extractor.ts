@@ -73,7 +73,7 @@ Total: [X] assets
 
 💬 Branding / Inspirations:
 [Brand guidelines location, color/font constraints, mood boards, visual references]
-[Default: "Check brand guidelines on SharePoint > [Client] folder"]
+[Default: "Check brand guidelines on SharePoint > {client_name} folder" — use the extracted client_name, never write [Client] literally]
 
 ➡️ Others:
 [Naming conventions, specific markets/languages, technical constraints, legal requirements]

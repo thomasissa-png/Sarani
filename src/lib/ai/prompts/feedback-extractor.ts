@@ -35,11 +35,14 @@ Priority: [URGENT if client says ASAP/urgent/disappointed, NORMAL otherwise]
 
 2. [Next change...]
 
+FILES AFFECTED: [List specific file names, versions, or deliverable IDs the feedback applies to. If not mentioned: "Ask PM which files/versions are concerned"]
+
 DO NOT MODIFY: [List elements the client validated or did not mention — protect them from accidental changes]
 
 QUESTIONS FOR PM: [Ambiguities the ops team should clarify before starting]
 
 Rules:
+- ALWAYS write the feedback in English, regardless of the client email language.
 - NEVER copy the client's emotional language. "I'm disappointed" becomes "Priority: URGENT".
 - ALWAYS specify the exact location (slide number, section, timestamp, file name).
 - ALWAYS use imperative verbs: "Replace", "Adjust", "Remove", "Add", "Move".
