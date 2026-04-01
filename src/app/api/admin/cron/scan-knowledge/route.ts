@@ -137,23 +137,37 @@ async function teamKnowledgeExists(
 }
 
 async function isEmailAlreadyScanned(messageId: string): Promise<boolean> {
+  // Check if this email has been scanned for KNOWLEDGE specifically
+  // (poll-emails marks emails as processed for classification — that doesn't mean
+  //  knowledge has been extracted. We check for resultCategory = 'knowledge_scanned')
   const existing = await db
-    .select({ id: processedEmails.id })
+    .select({ id: processedEmails.id, resultCategory: processedEmails.resultCategory })
     .from(processedEmails)
     .where(eq(processedEmails.messageId, messageId))
     .limit(1);
-  return existing.length > 0;
+  if (existing.length === 0) return false;
+  return existing[0].resultCategory === "knowledge_scanned";
 }
 
 async function markEmailScanned(messageId: string): Promise<void> {
   try {
-    await db.insert(processedEmails).values({
-      messageId,
-      processedAt: new Date(),
-      resultCategory: "knowledge_scanned",
-    }).onConflictDoNothing();
+    // Update existing record (from poll-emails) to mark knowledge as scanned
+    const updated = await db
+      .update(processedEmails)
+      .set({ resultCategory: "knowledge_scanned" })
+      .where(eq(processedEmails.messageId, messageId))
+      .returning({ id: processedEmails.id });
+
+    // If no existing record (edge case), insert a new one
+    if (updated.length === 0) {
+      await db.insert(processedEmails).values({
+        messageId,
+        processedAt: new Date(),
+        resultCategory: "knowledge_scanned",
+      }).onConflictDoNothing();
+    }
   } catch {
-    // Ignore duplicate key errors
+    // Ignore errors — non-critical
   }
 }
 
