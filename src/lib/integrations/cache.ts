@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { syncCache, syncLogs } from "@/lib/db/schema";
 import { eq, and, lt } from "drizzle-orm";
 
-type CacheSource = "clickup" | "sharepoint" | "evoliz";
+type CacheSource = "clickup" | "sharepoint" | "evoliz" | "arya";
 
 /**
  * Read from cache if the entry exists and is not expired.
