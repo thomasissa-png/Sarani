@@ -29,7 +29,9 @@ type InboxItemType =
   | "lark_message"
   | "review_human"
   | "review_ai_ready"
-  | "review_escalated";
+  | "review_escalated"
+  | "daily_digest"
+  | "deadline_alert";
 
 type InboxItemStatus = "pending" | "pending_review" | "in_progress" | "done" | "dismissed";
 
