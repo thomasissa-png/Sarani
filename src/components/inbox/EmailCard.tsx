@@ -34,6 +34,10 @@ interface EmailCardProps {
   onApprove: () => void;
   onDismiss: () => void;
   onMarkNoise: () => void;
+  onCreateBrief?: () => void;
+  onOpenProject?: () => void;
+  onDraftReply?: () => void;
+  onPreparePitch?: () => void;
   showToast: (message: string, type: "success" | "error") => void;
 }
 
@@ -185,6 +189,10 @@ export function EmailCard({
   onApprove,
   onDismiss,
   onMarkNoise,
+  onCreateBrief,
+  onOpenProject,
+  onDraftReply,
+  onPreparePitch,
 }: EmailCardProps) {
   const { from, subject, classification, bodyPreview } = payload;
   const senderName = extractSenderName(from);
@@ -206,7 +214,9 @@ export function EmailCard({
   const nextStepHint = getNextStepHint(classification.category, routeTo);
 
   const handleCreateBrief = () => {
-    if (sourceId) {
+    if (onCreateBrief) {
+      onCreateBrief();
+    } else if (sourceId) {
       window.location.href = `/admin/quick-brief?fromInbox=${encodeURIComponent(sourceId)}`;
     } else {
       onApprove();
@@ -341,7 +351,7 @@ export function EmailCard({
         {isClientFollowup && (
           <>
             <button
-              onClick={onApprove}
+              onClick={onOpenProject ?? onApprove}
               disabled={isActioning}
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
               aria-label="Open the related project"
@@ -349,7 +359,7 @@ export function EmailCard({
               {isActioning ? "Opening..." : "Open Project"}
             </button>
             <button
-              onClick={onApprove}
+              onClick={onDraftReply ?? onApprove}
               disabled={isActioning}
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
               aria-label="Draft a reply to this client"
@@ -362,7 +372,7 @@ export function EmailCard({
         {/* === New Prospect: primary = "Prepare Pitch" === */}
         {isNewProspect && (
           <button
-            onClick={onApprove}
+            onClick={onPreparePitch ?? onApprove}
             disabled={isActioning}
             className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-flame text-white hover:bg-brand-flame/90 transition-colors disabled:opacity-50"
             aria-label="Prepare pitch for this prospect"
@@ -374,7 +384,7 @@ export function EmailCard({
         {/* === Draft Reply (AI-suggested reply ready): primary = "Draft Reply" === */}
         {isDraftReply && !isClientFollowup && (
           <button
-            onClick={onApprove}
+            onClick={onDraftReply ?? onApprove}
             disabled={isActioning}
             className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
             aria-label="Send the AI-drafted reply to Outlook"

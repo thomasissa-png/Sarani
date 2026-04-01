@@ -7,7 +7,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { AutoBriefCard, type AutoBriefPayload } from "@/components/inbox/AutoBriefCard";
 import { AutoQuoteCard, type AutoQuotePayload } from "@/components/inbox/AutoQuoteCard";
-import { EmailCard, parseEmailPayload } from "@/components/inbox/EmailCard";
+import { EmailCard, parseEmailPayload, type EmailPayload } from "@/components/inbox/EmailCard";
+import { CreateBriefModal } from "@/components/inbox/CreateBriefModal";
+import { DraftReplyModal } from "@/components/inbox/DraftReplyModal";
+import { ProjectActionModal } from "@/components/inbox/ProjectActionModal";
 import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -196,6 +199,13 @@ export default function InboxPage() {
   const [noiseItems, setNoiseItems] = useState<InboxItem[]>([]);
   const [noiseOpen, setNoiseOpen] = useState(false);
   const [noiseLoading, setNoiseLoading] = useState(false);
+
+  // Modal state for email actions
+  const [activeModal, setActiveModal] = useState<{
+    type: "create_brief" | "open_project" | "draft_reply" | "prepare_pitch";
+    item: InboxItem;
+    payload: EmailPayload;
+  } | null>(null);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -675,6 +685,10 @@ export default function InboxPage() {
                     onApprove={() => handleAction(item.id, "done")}
                     onDismiss={() => handleAction(item.id, "dismissed")}
                     onMarkNoise={() => handleMarkAsNoise(item.id)}
+                    onCreateBrief={() => setActiveModal({ type: "create_brief", item, payload: emailPayload })}
+                    onOpenProject={() => setActiveModal({ type: "open_project", item, payload: emailPayload })}
+                    onDraftReply={() => setActiveModal({ type: "draft_reply", item, payload: emailPayload })}
+                    onPreparePitch={() => setActiveModal({ type: "prepare_pitch", item, payload: emailPayload })}
                     showToast={showToast}
                   />
                 );
@@ -817,6 +831,50 @@ export default function InboxPage() {
 
       {/* Toast */}
       {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}
+
+      {/* Action Modals */}
+      {activeModal?.type === "create_brief" && (
+        <CreateBriefModal
+          itemId={activeModal.item.id}
+          sourceId={activeModal.item.sourceId}
+          payload={activeModal.payload}
+          clients={CLIENT_MAPPINGS.map((m) => ({
+            spaceName: m.clickupSpaceName,
+            spaceId: m.clickupSpaceId,
+          }))}
+          onClose={() => setActiveModal(null)}
+          onCreated={fetchItems}
+          showToast={showToast}
+        />
+      )}
+
+      {activeModal?.type === "draft_reply" && (
+        <DraftReplyModal
+          itemId={activeModal.item.id}
+          sourceId={activeModal.item.sourceId}
+          payload={activeModal.payload}
+          onClose={() => setActiveModal(null)}
+          onDrafted={fetchItems}
+          showToast={showToast}
+        />
+      )}
+
+      {(activeModal?.type === "open_project" || activeModal?.type === "prepare_pitch") && (
+        <ProjectActionModal
+          variant={activeModal.type}
+          itemId={activeModal.item.id}
+          sourceId={activeModal.item.sourceId}
+          payload={activeModal.payload}
+          onClose={() => setActiveModal(null)}
+          onActionComplete={fetchItems}
+          onOpenDraftReply={() => {
+            const currentItem = activeModal.item;
+            const currentPayload = activeModal.payload;
+            setActiveModal({ type: "draft_reply", item: currentItem, payload: currentPayload });
+          }}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 }
