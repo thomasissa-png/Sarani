@@ -161,6 +161,7 @@ const FILTER_PROTOCOL_MAP: Record<string, string> = {
 const LEGACY_PROTOCOL_TO_FILTER: Record<string, string> = {
   "PROTO-PITCH": "PROTO-ENQUIRY",
   "PROTO-CLIENT-REPLY": "PROTO-ENQUIRY",
+  "PROTO-LARK-TRIAGE": "PROTO-ENQUIRY", // Old Lark items → show in Enquiries
 };
 
 function filterItems(items: InboxItem[], filter: FilterTab): InboxItem[] {
@@ -182,6 +183,15 @@ function filterItems(items: InboxItem[], filter: FilterTab): InboxItem[] {
   if (!targetProtocol) return items;
   return items.filter((i) => {
     if (i.status === "done" || i.status === "dismissed") return false;
+    // "Others" tab: items with null protocol that are not noise/followup_alert/review types
+    if (filter === "other") {
+      if (i.protocol === null || i.protocol === "archive") {
+        // Exclude noise (already hidden) and review types (they have their own tab)
+        return !["noise", "followup_alert", "review_human", "review_ai_ready", "review_escalated"].includes(i.type);
+      }
+      // Also include items with legacy protocol "PROTO-LARK-TRIAGE" (old Lark items)
+      return i.protocol === "PROTO-LARK-TRIAGE";
+    }
     // Direct match
     if (i.protocol === targetProtocol) return true;
     // Legacy protocol match
