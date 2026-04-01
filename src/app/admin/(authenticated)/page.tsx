@@ -302,8 +302,13 @@ export default function InboxPage() {
     }
   }, []);
 
+  const isInitialLoad = useRef(true);
+
   const fetchItems = useCallback(async () => {
-    setLoading(true);
+    // Only show loading skeleton on initial load, not on 30s polling refresh
+    if (isInitialLoad.current) {
+      setLoading(true);
+    }
     setFetchError(null);
     try {
       // Fetch all non-noise items including done/dismissed for Managed tab
@@ -324,6 +329,7 @@ export default function InboxPage() {
       setFetchError("Unable to reach server — check your connection");
     } finally {
       setLoading(false);
+      isInitialLoad.current = false;
     }
   }, []);
 
@@ -654,23 +660,46 @@ export default function InboxPage() {
         </div>
       )}
 
-      {/* Due Today Banner (Fix 5) */}
+      {/* Due Today Banner (Fix 5) — compact: show max 3 + "and X more" */}
       {dueTodayTasks.length > 0 && (
         <div className="bg-brand-lemon/10 border border-brand-lemon/30 rounded-lg px-4 py-3 text-sm text-brand-black">
-          <span className="font-semibold">{dueTodayTasks.length} project{dueTodayTasks.length !== 1 ? "s" : ""} due today:</span>{" "}
-          {dueTodayTasks.map((task, i) => (
-            <span key={task.id}>
-              {i > 0 && ", "}
-              <a
-                href={task.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-brand-cerulean hover:underline"
-              >
-                {task.name}
-              </a>
+          <span className="font-semibold">{dueTodayTasks.length} project{dueTodayTasks.length !== 1 ? "s" : ""} due today</span>
+          {dueTodayTasks.length <= 3 ? (
+            <span>
+              :{" "}
+              {dueTodayTasks.map((task, i) => (
+                <span key={task.id}>
+                  {i > 0 && ", "}
+                  <a
+                    href={task.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-cerulean hover:underline"
+                  >
+                    {task.name}
+                  </a>
+                </span>
+              ))}
             </span>
-          ))}
+          ) : (
+            <span>
+              {" — "}
+              {dueTodayTasks.slice(0, 3).map((task, i) => (
+                <span key={task.id}>
+                  {i > 0 && ", "}
+                  <a
+                    href={task.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-cerulean hover:underline"
+                  >
+                    {task.name}
+                  </a>
+                </span>
+              ))}
+              <span className="text-neutral-500"> and {dueTodayTasks.length - 3} more</span>
+            </span>
+          )}
         </div>
       )}
 
