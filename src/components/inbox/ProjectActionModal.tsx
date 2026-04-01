@@ -130,8 +130,8 @@ export function ProjectActionModal({
   // Extract ClickUp URL from summary if available (for open_project)
   const tryOpenClickUp = () => {
     // Try to find a ClickUp URL in the parsed summary
-    const clickupUrl = (payload as Record<string, unknown>)?.clickupUrl as string | undefined;
-    const taskId = (payload as Record<string, unknown>)?.taskId as string | undefined;
+    const clickupUrl = (payload as unknown as Record<string, unknown>)?.clickupUrl as string | undefined;
+    const taskId = (payload as unknown as Record<string, unknown>)?.taskId as string | undefined;
 
     if (clickupUrl) {
       window.open(clickupUrl, "_blank", "noopener,noreferrer");
