@@ -4,23 +4,12 @@ import { getUserFromSession } from "@/lib/auth";
 import { getEmailById, stripHtml, isEmailConfigured } from "@/lib/integrations/email";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { checkRateLimit } from "@/lib/rate-limit";
-
-// ─── Types ─────────────────────────────────────────────────────────────────
-
-type EmailCategory = "enquiry" | "new_project" | "project_feedback" | "other";
-
-type RouteTo = "PROTO-ENQUIRY" | "PROTO-EMAIL-INTAKE" | "PROTO-CLIENT-RETURN" | "archive";
-
-interface ClassificationResult {
-  category: EmailCategory;
-  confidence: number;
-  reasoning: string;
-  suggestedAction: string;
-  draftReply: string;
-  clickupProjectHint: string | null;
-  language: string;  // ISO 639-1 code ("en", "fr", "de", etc.)
-  routeTo: RouteTo;  // Protocol target for routing
-}
+import {
+  CLASSIFICATION_SYSTEM_PROMPT,
+  ClassificationResultSchema,
+  isNoiseByEmail,
+  type ClassificationResult,
+} from "@/lib/ai/prompts/classifier";
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -35,73 +24,6 @@ const ClassifyByContentSchema = z.object({
 });
 
 const ClassifySchema = z.union([ClassifyByIdSchema, ClassifyByContentSchema]);
-
-const ClassificationResultSchema = z.object({
-  category: z.enum(["enquiry", "new_project", "project_feedback", "other"]),
-  confidence: z.number().min(0).max(1),
-  reasoning: z.string(),
-  suggestedAction: z.string(),
-  draftReply: z.string(),
-  clickupProjectHint: z.string().nullable(),
-  language: z.string().min(2).max(5),
-  routeTo: z.enum(["PROTO-ENQUIRY", "PROTO-EMAIL-INTAKE", "PROTO-CLIENT-RETURN", "archive"]),
-});
-
-// ─── Pre-LLM noise filters ────────────────────────────────────────────────
-
-const NOISE_SENDERS = [
-  "noreply",
-  "no-reply",
-  "no_reply",
-  "newsletter",
-  "notification",
-  "mailer-daemon",
-  "postmaster",
-  "donotreply",
-  "do-not-reply",
-  "do_not_reply",
-];
-
-function isNoiseByEmail(from: string): boolean {
-  const lower = from.toLowerCase();
-  return NOISE_SENDERS.some((pattern) => lower.includes(pattern));
-}
-
-// ─── Claude prompt ─────────────────────────────────────────────────────────
-
-const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier and reply assistant. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following email into exactly ONE category, detect its language, and draft a professional reply.
-
-Categories:
-- "enquiry": Question about Sarani's services, request for quote/pricing, general question, first contact (casual or specific). No existing project involved.
-- "new_project": A brief for a NEW project from an existing OR new client — contains deliverables, timeline, brand info, or a clear project request. Sender may or may not have worked with Sarani before.
-- "project_feedback": Feedback, revision request, follow-up, status question, or any message about an EXISTING ongoing project. The sender references a specific past or ongoing project.
-- "other": Newsletters, automated notifications, system alerts, out-of-office, marketing emails.
-
-Routing:
-- enquiry → "PROTO-ENQUIRY"
-- new_project → "PROTO-EMAIL-INTAKE"
-- project_feedback → "PROTO-CLIENT-RETURN"
-- other → "archive"
-
-Return JSON:
-{
-  "category": "<one of the 4 categories>",
-  "confidence": 0.0 to 1.0,
-  "reasoning": "one sentence explaining why this category",
-  "suggestedAction": "one sentence — internal analysis for the PM on what to do next",
-  "draftReply": "Complete email reply ready to send. Greeting: 'Hi [FirstName],' or formal equivalent matching the sender's language. Body: 2-3 sentences directly addressing the email content. Closing: 'Best regards,\\nThe Sarani Team'. Language: MUST match the sender's email language.",
-  "clickupProjectHint": "Client name or project name extracted from the email, as it would appear in ClickUp task titles. Null if not identifiable.",
-  "language": "<ISO 639-1 code of the email's language>",
-  "routeTo": "<protocol name from routing rules>"
-}
-
-Rules:
-- Return valid JSON only, no markdown.
-- If unsure between two categories, pick the one that requires human attention (prefer false positive over missed client email).
-- Confidence below 0.6 means you are uncertain — flag it in reasoning.
-- Language detection: identify the PRIMARY language of the email body. If mixed, use the dominant language. Default to "en" only if truly ambiguous.
-- draftReply MUST be a real email reply the PM can send as-is. Never include analysis phrases like "I suggest", "This email is about", "You should".
-- clickupProjectHint: extract the client or project name only if the email references a specific ongoing project. Return null for enquiries, new projects, and other.`;
 
 // ─── POST handler ──────────────────────────────────────────────────────────
 

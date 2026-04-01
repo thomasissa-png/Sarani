@@ -3,6 +3,10 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { inboxItems } from "@/lib/db/schema";
 import { callClaudeJSON } from "@/lib/ai/claude";
+import {
+  type EmailCategory,
+  type RouteTo,
+} from "@/lib/ai/prompts/classifier";
 
 // ─── Zod schemas ───────────────────────────────────────────────────────────
 
@@ -46,7 +50,7 @@ const larkEventSchema = z.object({
 
 type LarkEvent = z.infer<typeof larkEventSchema>;
 
-// ─── Classification prompt ─────────────────────────────────────────────────
+// ─── Classification prompt (Lark-specific context) ────────────────────────
 
 const LARK_CLASSIFICATION_PROMPT = `You are Sarani's internal message classifier. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following Lark (Feishu) message into exactly ONE category.
 
@@ -62,7 +66,7 @@ Return JSON:
   "confidence": 0.0 to 1.0,
   "reasoning": "one sentence explaining why this category",
   "suggestedAction": "one sentence analysis — what this message is about and what the PM should consider",
-  "draftReply": "Complete reply message ready to send back in the Lark chat. Format: greeting + 2-3 sentences addressing the content + closing. Match the sender's language.",
+  "draftReply": "Complete reply message ready to send back in the Lark chat (see tone rules below).",
   "clickupProjectHint": "Client name or project name extracted from the message, as it would appear in ClickUp task titles. Null if not identifiable.",
   "language": "<ISO 639-1 code>"
 }
@@ -71,16 +75,18 @@ Rules:
 - Return valid JSON only, no markdown.
 - If unsure, pick the category that requires human attention.
 - Confidence below 0.6 means you are uncertain.
-- draftReply must be a real reply, not an analysis. Write it as if the PM is responding directly.
-- clickupProjectHint should be null for enquiry and other categories.`;
+- clickupProjectHint should be null for enquiry and other categories.
 
-// ─── Types ─────────────────────────────────────────────────────────────────
+Sarani tone rules for draftReply:
+- Dynamic, warm, available — NOT corporate. Use short sentences, action verbs.
+- Use the sender's first name if identifiable.
+- End with "[PM_NAME]" as placeholder signature, not "The Sarani Team".
+- NEVER commit to specific deadlines, turnaround times, or deliverables unless explicitly confirmed.
+- NEVER promise free work, discounts, or special conditions.`;
 
-type LarkCategory = "enquiry" | "new_project" | "project_feedback" | "other";
+// ─── Types (reuse shared EmailCategory/RouteTo from classifier) ───────────
 
-type LarkRouteTo = "PROTO-ENQUIRY" | "PROTO-EMAIL-INTAKE" | "PROTO-CLIENT-RETURN" | "archive";
-
-const LARK_ROUTE_MAP: Record<LarkCategory, LarkRouteTo> = {
+const LARK_ROUTE_MAP: Record<EmailCategory, RouteTo> = {
   enquiry: "PROTO-ENQUIRY",
   new_project: "PROTO-EMAIL-INTAKE",
   project_feedback: "PROTO-CLIENT-RETURN",
@@ -88,7 +94,7 @@ const LARK_ROUTE_MAP: Record<LarkCategory, LarkRouteTo> = {
 };
 
 interface LarkClassificationResult {
-  category: LarkCategory;
+  category: EmailCategory;
   confidence: number;
   reasoning: string;
   suggestedAction: string;
@@ -109,7 +115,7 @@ function getAllowedChatIds(): Set<string> {
   );
 }
 
-function priorityFromCategory(category: LarkCategory): "high" | "medium" | "low" {
+function priorityFromCategory(category: EmailCategory): "high" | "medium" | "low" {
   switch (category) {
     case "new_project":
       return "high";
@@ -194,7 +200,7 @@ async function processLarkMessage(event: LarkEvent, isDM: boolean = false): Prom
     const isHighConfidenceNoise: boolean =
       classification.category === "other" && classification.confidence >= 0.8;
 
-    const routeTo: LarkRouteTo = LARK_ROUTE_MAP[classification.category];
+    const routeTo: RouteTo = LARK_ROUTE_MAP[classification.category];
 
     // Create inbox item
     const titlePrefix: string = isDM

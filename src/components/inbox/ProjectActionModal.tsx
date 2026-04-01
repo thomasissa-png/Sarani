@@ -57,9 +57,8 @@ export function ProjectActionModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isPostingFeedback, setIsPostingFeedback] = useState(false);
-  const [feedbackComment, setFeedbackComment] = useState(
-    payload.classification.draftReply || payload.classification.suggestedAction || ""
-  );
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [isExtractingFeedback, setIsExtractingFeedback] = useState(false);
 
   const config = VARIANT_CONFIG[variant];
 
@@ -110,6 +109,48 @@ export function ProjectActionModal({
         // Graceful degradation — button stays disabled
       })
       .finally(() => setIsSearchingClickUp(false));
+  }, [variant, payload]);
+
+  // Feedback extraction: call LLM to transform email into ops feedback
+  useEffect(() => {
+    if (variant !== "create_feedback") return;
+
+    setIsExtractingFeedback(true);
+    setFeedbackComment("Arya is preparing the feedback...");
+
+    const clientName =
+      payload.classification.clickupProjectHint ||
+      payload.from?.split("@")[0] ||
+      "Unknown";
+
+    fetch("/api/admin/feedback/extract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject: payload.subject || "",
+        body: payload.bodyPreview || "",
+        from: payload.from || "",
+        clientName,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.feedbackComment) {
+          setFeedbackComment(data.feedbackComment);
+        } else {
+          // Fallback: use raw email body so PM can edit manually
+          setFeedbackComment(
+            payload.bodyPreview || payload.classification.suggestedAction || ""
+          );
+        }
+      })
+      .catch(() => {
+        // Fallback on error: use raw email body
+        setFeedbackComment(
+          payload.bodyPreview || payload.classification.suggestedAction || ""
+        );
+      })
+      .finally(() => setIsExtractingFeedback(false));
   }, [variant, payload]);
 
   // Focus trap + Escape
@@ -371,8 +412,12 @@ export function ProjectActionModal({
                 id="feedback-comment"
                 value={feedbackComment}
                 onChange={(e) => setFeedbackComment(e.target.value)}
-                rows={6}
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-brand-black focus:border-brand-cerulean focus:ring-1 focus:ring-brand-cerulean outline-none resize-y"
+                rows={10}
+                disabled={isExtractingFeedback}
+                className={cn(
+                  "w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-brand-black focus:border-brand-cerulean focus:ring-1 focus:ring-brand-cerulean outline-none resize-y",
+                  isExtractingFeedback && "opacity-60 italic"
+                )}
                 placeholder="Write the feedback comment to post on the ClickUp task..."
               />
               {clickupSearchResult?.taskName && (

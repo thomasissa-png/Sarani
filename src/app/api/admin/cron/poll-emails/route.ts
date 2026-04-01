@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { db } from "@/lib/db";
 import { processedEmails, inboxItems } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -16,111 +15,22 @@ import {
   buildBriefExtractionUserMessage,
   type BriefExtractionResult,
 } from "@/lib/ai/prompts/brief-extractor";
+import {
+  CLASSIFICATION_SYSTEM_PROMPT,
+  ClassificationResultSchema,
+  isNoiseByEmail,
+  priorityFromCategory,
+  protocolFromCategory,
+  type ClassificationResult,
+  type EmailCategory,
+} from "@/lib/ai/prompts/classifier";
 import { getMappingBySpaceName } from "@/lib/integrations/config";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-type EmailCategory = "enquiry" | "new_project" | "project_feedback" | "other";
-
-type RouteTo = "PROTO-ENQUIRY" | "PROTO-EMAIL-INTAKE" | "PROTO-CLIENT-RETURN" | "archive";
-
-interface ClassificationResult {
-  category: EmailCategory;
-  confidence: number;
-  reasoning: string;
-  suggestedAction: string;
-  draftReply: string;
-  clickupProjectHint: string | null;
-  language: string;
-  routeTo: RouteTo;
-}
-
-// ─── Validation ─────────────────────────────────────────────────────────────
-
-const ClassificationResultSchema = z.object({
-  category: z.enum(["enquiry", "new_project", "project_feedback", "other"]),
-  confidence: z.number().min(0).max(1),
-  reasoning: z.string(),
-  suggestedAction: z.string(),
-  draftReply: z.string(),
-  clickupProjectHint: z.string().nullable(),
-  language: z.string().min(2).max(5),
-  routeTo: z.enum(["PROTO-ENQUIRY", "PROTO-EMAIL-INTAKE", "PROTO-CLIENT-RETURN", "archive"]),
-});
-
-// ─── Classification prompt (same as graph-mail webhook) ─────────────────────
-
-const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following email into exactly ONE category AND detect its language.
-
-Categories:
-- "enquiry": Question about Sarani's services, request for quote/pricing, general question, first contact (casual or specific). No existing project involved.
-- "new_project": A brief for a NEW project from an existing OR new client — contains deliverables, timeline, brand info, or a clear project request. Sender may or may not have worked with Sarani before.
-- "project_feedback": Feedback, revision request, follow-up, status question, or any message about an EXISTING ongoing project. The sender references a specific past or ongoing project.
-- "other": Newsletters, automated notifications, system alerts, out-of-office, marketing emails.
-
-Routing rules:
-- enquiry → "PROTO-ENQUIRY"
-- new_project → "PROTO-EMAIL-INTAKE"
-- project_feedback → "PROTO-CLIENT-RETURN"
-- other → "archive"
-
-Return JSON:
-{
-  "category": "<one of the 4 categories>",
-  "confidence": 0.0 to 1.0,
-  "reasoning": "one sentence explaining why this category",
-  "suggestedAction": "one sentence analysis — what this email is about and what the PM should consider",
-  "draftReply": "Complete email reply ready to send. Format: Greeting ('Hi [FirstName],' or formal equivalent in sender's language) + Body (2-3 sentences directly addressing the email content) + Closing ('Best regards,\\nThe Sarani Team'). Match the sender's email language.",
-  "clickupProjectHint": "Client name or project name extracted from the email, as it would appear in ClickUp task titles. null if not identifiable.",
-  "language": "<ISO 639-1 code of the email's language>",
-  "routeTo": "<protocol name from routing rules>"
-}
-
-Rules:
-- Return valid JSON only, no markdown.
-- If unsure between two categories, pick the one that requires human attention (prefer false positive over missed client email).
-- Confidence below 0.6 means you are uncertain — flag it in reasoning.
-- Language detection: identify the PRIMARY language of the email body. If mixed, use the dominant language. Default to "en" only if truly ambiguous.
-- draftReply must be a real reply ready to send, not an analysis. Write it as if the PM is responding to the client.
-- clickupProjectHint should be null for enquiry and other categories.`;
-
-// ─── Noise detection ────────────────────────────────────────────────────────
-
-const NOISE_SENDERS = [
-  "noreply", "no-reply", "no_reply", "newsletter", "notification",
-  "mailer-daemon", "postmaster", "donotreply", "do-not-reply", "do_not_reply",
-];
-
-function isNoiseByEmail(from: string): boolean {
-  const lower = from.toLowerCase();
-  return NOISE_SENDERS.some((pattern) => lower.includes(pattern));
-}
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 /** Filter out internal Sarani emails — they should not appear in the inbox */
 function isSaraniEmail(from: string): boolean {
   return from.toLowerCase().endsWith("@sarani.studio");
-}
-
-// ─── Priority mapping ───────────────────────────────────────────────────────
-
-function priorityFromCategory(category: EmailCategory): "high" | "medium" | "low" {
-  switch (category) {
-    case "new_project": return "high";
-    case "project_feedback": return "high";
-    case "enquiry": return "medium";
-    case "other": return "low";
-  }
-}
-
-// ─── Protocol mapping ───────────────────────────────────────────────────────
-
-function protocolFromCategory(category: EmailCategory): string | null {
-  switch (category) {
-    case "new_project": return "PROTO-EMAIL-INTAKE";
-    case "project_feedback": return "PROTO-CLIENT-RETURN";
-    case "enquiry": return "PROTO-ENQUIRY";
-    case "other": return null;
-  }
 }
 
 // ─── Auth helper ────────────────────────────────────────────────────────────
