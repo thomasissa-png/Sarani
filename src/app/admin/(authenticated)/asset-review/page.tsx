@@ -2,8 +2,10 @@
 
 // Client Component — Asset Review page for comparing SharePoint files against briefs.
 // Renders: project path input, brief summary, scan button, results grid with match/missing/unexpected/anomaly statuses.
+// Supports URL params: ?projectPath=xxx&clickupTaskId=xxx for auto-loading from tracker.
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -13,6 +15,14 @@ interface FileMatch {
   expected: string;
   status: "match" | "format_mismatch";
   details?: string;
+  thumbnailUrl?: string;
+  mimeType?: string;
+}
+
+interface FileInfo {
+  name: string;
+  thumbnailUrl?: string;
+  mimeType?: string;
 }
 
 interface AssetReviewReport {
@@ -20,7 +30,7 @@ interface AssetReviewReport {
   expectedFiles: number;
   matches: FileMatch[];
   missing: string[];
-  unexpected: string[];
+  unexpected: FileInfo[];
   anomalies: string[];
 }
 
@@ -124,15 +134,70 @@ function AnomalyIcon() {
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function AssetReviewPage() {
+  return (
+    <Suspense fallback={null}>
+      <AssetReviewContent />
+    </Suspense>
+  );
+}
+
+function AssetReviewContent() {
+  const searchParams = useSearchParams();
   const [projectPath, setProjectPath] = useState("");
   const [briefSummary, setBriefSummary] = useState("");
+  const [clickupTaskId, setClickupTaskId] = useState("");
   const [status, setStatus] = useState<ReviewStatus>("idle");
   const [result, setResult] = useState<ReviewResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [updatingClickUp, setUpdatingClickUp] = useState(false);
   const [clickUpUpdated, setClickUpUpdated] = useState(false);
+  const [loadingBrief, setLoadingBrief] = useState(false);
+  const autoLoadedRef = useRef(false);
 
   const canScan = projectPath.trim().length > 0 && status !== "scanning";
+
+  // ─── Load brief from ClickUp task ────────────────────────────────────────
+  const loadBriefFromClickUp = useCallback(async (taskId: string) => {
+    if (!taskId.trim()) return;
+    setLoadingBrief(true);
+    try {
+      const res = await fetch(`/api/admin/assets/review/brief?taskId=${encodeURIComponent(taskId.trim())}`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Failed to load brief (${res.status})`);
+      }
+      const data = await res.json();
+      if (data.brief) {
+        setBriefSummary(data.brief);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to load brief from ClickUp";
+      setErrorMessage(message);
+    } finally {
+      setLoadingBrief(false);
+    }
+  }, []);
+
+  // ─── Auto-load from URL params ───────────────────────────────────────────
+  const shouldAutoScanRef = useRef(false);
+
+  useEffect(() => {
+    if (autoLoadedRef.current) return;
+    const paramPath = searchParams.get("projectPath");
+    const paramTaskId = searchParams.get("clickupTaskId");
+
+    if (!paramPath && !paramTaskId) return;
+    autoLoadedRef.current = true;
+
+    if (paramPath) {
+      setProjectPath(paramPath);
+      shouldAutoScanRef.current = true;
+    }
+    if (paramTaskId) {
+      setClickupTaskId(paramTaskId);
+      loadBriefFromClickUp(paramTaskId);
+    }
+  }, [searchParams, loadBriefFromClickUp]);
 
   const handleScan = useCallback(async () => {
     if (!canScan) return;
@@ -172,6 +237,14 @@ export default function AssetReviewPage() {
       setStatus("error");
     }
   }, [canScan, projectPath, briefSummary]);
+
+  // Auto-scan when path is populated from URL params
+  useEffect(() => {
+    if (shouldAutoScanRef.current && projectPath.trim().length > 0 && status === "idle") {
+      shouldAutoScanRef.current = false;
+      handleScan();
+    }
+  }, [projectPath, status, handleScan]);
 
   const handleApproveClickUp = useCallback(async () => {
     if (!result) return;
@@ -240,16 +313,51 @@ export default function AssetReviewPage() {
             Brief Summary
             <span className="text-neutral-400 font-normal ml-1">(optional)</span>
           </label>
-          <textarea
-            id="brief-summary"
-            value={briefSummary}
-            onChange={(e) => setBriefSummary(e.target.value)}
-            placeholder={"List expected deliverables, one per line:\n- Banner 728x90 PNG\n- Hero_image 1920x1080 JPG\n- Logo SVG"}
-            rows={5}
-            className="w-full rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-brand-cerulean transition-colors resize-y"
-          />
+          <div className="flex items-start gap-2">
+            <textarea
+              id="brief-summary"
+              value={briefSummary}
+              onChange={(e) => setBriefSummary(e.target.value)}
+              placeholder={"List expected deliverables, one per line:\n- Banner 728x90 PNG\n- Hero_image 1920x1080 JPG\n- Logo SVG"}
+              rows={5}
+              className="flex-1 rounded-lg border border-neutral-300 px-3 py-2.5 text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-brand-cerulean transition-colors resize-y"
+            />
+            <div className="flex flex-col gap-2 shrink-0">
+              <input
+                type="text"
+                value={clickupTaskId}
+                onChange={(e) => setClickupTaskId(e.target.value)}
+                placeholder="ClickUp Task ID"
+                aria-label="ClickUp Task ID"
+                className="w-40 rounded-lg border border-neutral-300 px-3 py-2 text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-brand-cerulean transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => loadBriefFromClickUp(clickupTaskId)}
+                disabled={!clickupTaskId.trim() || loadingBrief}
+                className={cn(
+                  "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors",
+                  clickupTaskId.trim() && !loadingBrief
+                    ? "bg-brand-cerulean/10 text-brand-cerulean hover:bg-brand-cerulean/20"
+                    : "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                )}
+              >
+                {loadingBrief ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Loading...
+                  </>
+                ) : (
+                  "Load from ClickUp"
+                )}
+              </button>
+            </div>
+          </div>
           <p className="text-xs text-neutral-400 mt-1">
-            Include file names, formats, and dimensions to match against SharePoint files
+            Include file names, formats, and dimensions to match against SharePoint files. Or load from a ClickUp task.
           </p>
         </div>
 
@@ -349,6 +457,7 @@ export default function AssetReviewPage() {
               <div className="space-y-2">
                 {report.matches.map((match, i) => (
                   <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-success-light/50 rounded-lg">
+                    <FileThumbnail thumbnailUrl={match.thumbnailUrl} mimeType={match.mimeType} name={match.file} />
                     <MatchIcon />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-brand-black truncate">{match.file}</p>
@@ -383,10 +492,11 @@ export default function AssetReviewPage() {
           {report.unexpected.length > 0 && (
             <ResultSection title="Unexpected Files" count={report.unexpected.length} variant="warning">
               <div className="space-y-2">
-                {report.unexpected.map((name, i) => (
+                {report.unexpected.map((file, i) => (
                   <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-warning-light/50 rounded-lg">
+                    <FileThumbnail thumbnailUrl={file.thumbnailUrl} mimeType={file.mimeType} name={file.name} />
                     <UnexpectedIcon />
-                    <p className="text-sm font-medium text-brand-black">{name}</p>
+                    <p className="text-sm font-medium text-brand-black">{file.name}</p>
                   </div>
                 ))}
               </div>
@@ -479,6 +589,50 @@ export default function AssetReviewPage() {
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Thumbnail Component ───────────────────────────────────────────────────
+
+const FILE_TYPE_ICONS: Record<string, string> = {
+  image: "M21 12l-2.5-3-3.5 4.5-2.5-3L8 16h12z M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z",
+  pdf: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6",
+  video: "M23 7l-7 5 7 5V7z M16 3H5a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V5a2 2 0 00-2-2z",
+  default: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8",
+};
+
+function getFileTypeCategory(mimeType?: string): string {
+  if (!mimeType) return "default";
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType === "application/pdf") return "pdf";
+  if (mimeType.startsWith("video/")) return "video";
+  return "default";
+}
+
+function FileThumbnail({ thumbnailUrl, mimeType, name }: { thumbnailUrl?: string; mimeType?: string; name: string }) {
+  if (thumbnailUrl) {
+    return (
+      <div className="w-10 h-10 rounded-md overflow-hidden bg-neutral-100 shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={thumbnailUrl}
+          alt={`Preview of ${name}`}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  const category = getFileTypeCategory(mimeType);
+  const iconPath = FILE_TYPE_ICONS[category] ?? FILE_TYPE_ICONS.default;
+
+  return (
+    <div className="w-10 h-10 rounded-md bg-neutral-100 flex items-center justify-center shrink-0">
+      <svg className="w-5 h-5 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d={iconPath} />
+      </svg>
     </div>
   );
 }

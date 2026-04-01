@@ -30,12 +30,6 @@ const AssetReviewInputSchema = z.object({
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-interface ThumbnailInfo {
-  small?: string;  // ~96px
-  medium?: string; // ~176px
-  large?: string;  // ~800px
-}
-
 interface DriveItemWithThumbnails extends DriveItem {
   thumbnails?: Array<{
     small?: { url: string };
