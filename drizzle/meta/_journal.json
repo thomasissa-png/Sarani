@@ -120,6 +120,13 @@
       "when": 1774426800000,
       "tag": "0016_team_knowledge",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1774426900000,
+      "tag": "0017_project_closures",
+      "breakpoints": true
     }
   ]
 }

@@ -854,6 +854,71 @@ export const teamKnowledge = pgTable(
   ]
 );
 
+// ─── Project Closures ─────────────────────────────────────────────────────
+// Tracks project closure events with star scoring.
+
+export const projectClosures = pgTable(
+  "project_closures",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clickupTaskId: text("clickup_task_id").notNull(),
+    clientId: uuid("client_id").references(() => clients.id, {
+      onDelete: "set null",
+    }),
+    projectName: text("project_name").notNull(),
+    status: varchar("status", { length: 30 })
+      .notNull()
+      .default("pending_closure"), // pending_closure | closed | star_pipeline
+    closureReason: varchar("closure_reason", { length: 30 }).notNull(), // client_approved | timeout_14d | manual
+    starScore: integer("star_score"), // 0-100, null until computed
+    starDetails: jsonb("star_details").$type<{
+      clientTier: number;
+      measurableImpact: number;
+      creativeAmbition: number;
+      storytelling: number;
+      portfolioGap: number;
+    }>(),
+    starStatus: varchar("star_status", { length: 30 }), // STAR | STRONG_STORY_WEAK_ASSETS | NOTEWORTHY | STANDARD
+    closedAt: timestamp("closed_at"),
+    closedBy: text("closed_by"), // user ID
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_closures_status").on(table.status),
+    index("idx_closures_clickup").on(table.clickupTaskId),
+    index("idx_closures_client").on(table.clientId),
+    index("idx_closures_star_status").on(table.starStatus),
+  ]
+);
+
+// ─── Star Pipeline Items ──────────────────────────────────────────────────
+// Tracks individual pipeline outputs generated after star scoring.
+
+export const starPipelineItems = pgTable(
+  "star_pipeline_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    closureId: uuid("closure_id")
+      .notNull()
+      .references(() => projectClosures.id, { onDelete: "cascade" }),
+    outputType: varchar("output_type", { length: 30 }).notNull(), // case_study | linkedin_post | presentation_slide | seo_signal
+    status: varchar("status", { length: 20 })
+      .notNull()
+      .default("pending"), // pending | generating | review | published | skipped
+    content: text("content"), // generated content (markdown or JSON string)
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at"),
+    reviewedBy: text("reviewed_by"), // user ID
+  },
+  (table) => [
+    index("idx_pipeline_closure").on(table.closureId),
+    index("idx_pipeline_output_type").on(table.outputType),
+    index("idx_pipeline_status").on(table.status),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -914,3 +979,7 @@ export type ClientKnowledge = typeof clientKnowledge.$inferSelect;
 export type NewClientKnowledge = typeof clientKnowledge.$inferInsert;
 export type TeamKnowledge = typeof teamKnowledge.$inferSelect;
 export type NewTeamKnowledge = typeof teamKnowledge.$inferInsert;
+export type ProjectClosure = typeof projectClosures.$inferSelect;
+export type NewProjectClosure = typeof projectClosures.$inferInsert;
+export type StarPipelineItem = typeof starPipelineItems.$inferSelect;
+export type NewStarPipelineItem = typeof starPipelineItems.$inferInsert;
