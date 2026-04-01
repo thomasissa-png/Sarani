@@ -673,6 +673,16 @@ export default function InboxPage() {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  // Pagination: show 20 items at a time, "Show more" loads 20 more
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  // Reset visible count when filter changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeFilter]);
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const hasMore = filteredItems.length > visibleCount;
+
   // Counts for each tab
   const isManagedTab = activeFilter === "done";
 
@@ -830,7 +840,7 @@ export default function InboxPage() {
         <EmptyState filter={activeFilter} />
       ) : (
         <div className="space-y-3">
-          {filteredItems.map((item) => {
+          {visibleItems.map((item) => {
             // Render AutoBriefCard for auto_brief_ready items
             if (item.type === "auto_brief_ready" && item.summary) {
               let payload: AutoBriefPayload | null = null;
@@ -996,6 +1006,19 @@ export default function InboxPage() {
               />
             );
           })}
+        </div>
+      )}
+
+      {/* Show more button */}
+      {!loading && hasMore && (
+        <div className="flex justify-center pt-2">
+          <button
+            onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+            className="px-6 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
+            aria-label={`Show more items (${filteredItems.length - visibleCount} remaining)`}
+          >
+            Show more ({filteredItems.length - visibleCount} remaining)
+          </button>
         </div>
       )}
 
