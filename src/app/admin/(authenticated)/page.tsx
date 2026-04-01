@@ -119,6 +119,16 @@ const TYPE_CONFIG: Record<
     color: "text-brand-flame",
     bgColor: "bg-brand-flame/20",
   },
+  daily_digest: {
+    label: "Daily Digest",
+    color: "text-brand-lemon",
+    bgColor: "bg-brand-lemon/10",
+  },
+  deadline_alert: {
+    label: "Deadline Alert",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/20",
+  },
 };
 
 const PROTOCOL_LABELS: Record<string, string> = {
