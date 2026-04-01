@@ -326,7 +326,19 @@ export default function InboxPage() {
         const data = await res.json();
         const allItems = (data.items ?? []) as InboxItem[];
         // Exclude followup_alert from display (Fix 5) — they stay in DB but are hidden
-        const filtered = allItems.filter((i) => i.type !== "followup_alert");
+        // Exclude internal @sarani.studio emails (retroactive filter for items already in DB)
+        const filtered = allItems.filter((i) => {
+          if (i.type === "followup_alert") return false;
+          // Filter out emails from @sarani.studio (internal)
+          if (i.type === "email_classified" && i.summary) {
+            try {
+              const parsed = typeof i.summary === "string" ? JSON.parse(i.summary) : i.summary;
+              const from = (parsed.from as string) ?? "";
+              if (from.toLowerCase().endsWith("@sarani.studio")) return false;
+            } catch { /* keep item if parse fails */ }
+          }
+          return true;
+        });
         setItems(filtered);
       } else {
         const errMsg = `Failed to load inbox (${res.status})`;
