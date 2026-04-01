@@ -1,129 +1,179 @@
 # Guide de configuration du bot Lark — Sarani Arya Bot
 
-Guide destiné à Thomas. Durée estimée : 20-30 minutes.
+Guide pour Thomas. Durée : ~15 minutes. Suit chaque étape dans l'ordre.
 
 ---
 
-## Étape 1 — Créer l'application Lark
+## Étape 1 — Créer l'application
 
-1. Ouvre le navigateur et va sur **https://open.larksuite.com/app**
-2. Connecte-toi avec ton compte Lark (le compte admin de Sarani)
-3. Tu arrives sur un tableau de bord. En haut à droite, clique sur le bouton **"Create Custom App"**
-4. Un formulaire s'affiche avec deux champs :
-   - **App Name** : tape `Sarani Arya Bot`
-   - **App Description** : tape `Internal bot for project intake and client communication monitoring`
-5. Clique sur **"Create"**
-6. Tu arrives sur la page de configuration de ton app. Laisse cet onglet ouvert — tu y reviendras souvent dans la suite.
-
----
-
-## Étape 2 — Configurer les permissions
-
-1. Dans le menu de gauche, clique sur **"Permissions & Scopes"**
-2. Tu vois un champ de recherche. Ajoute une par une les permissions suivantes en les cherchant et en cliquant **"Add"** à côté de chacune :
-   - `im:message` — lire et envoyer des messages
-   - `im:message.group_at_msg` — recevoir les messages de groupe
-   - `im:chat` — accéder aux informations des conversations
-   - `im:chat.group:readonly` — lire les informations des groupes
-3. Une fois les 4 permissions ajoutées, elles apparaissent dans la liste avec le statut **"Added"**
-
-> Ce sont les seules permissions nécessaires. N'en ajoute pas d'autres — moins de permissions = moins de risques.
+1. Va sur **https://open.larksuite.com** dans ton navigateur
+2. Connecte-toi avec ton compte Lark admin Sarani
+3. Tu arrives sur le **Developer Backend** — un tableau de bord avec tes apps
+4. Clique sur le gros bouton **"Create Custom App"** (en haut ou au centre de la page)
+5. Un formulaire apparaît avec 3 champs :
+   - **App Name** → tape : `Sarani Arya Bot`
+   - **Description** → tape : `Internal bot — monitors project messages`
+   - **App Icon** → tu peux ignorer (optionnel)
+6. Clique **"Create"** en bas du formulaire
+7. Tu es maintenant sur la page de configuration de ton app. **Le menu de gauche** a plusieurs sections — on va les parcourir une par une.
 
 ---
 
-## Étape 3 — Activer le bot
+## Étape 2 — Ajouter la capacité Bot
 
-1. Dans le menu de gauche, clique sur **"Bot"**
-2. Tu vois un bouton **"Enable Bot"** (ou un toggle à activer). Clique dessus.
-3. Un formulaire te demande un **Bot Name** : laisse `Sarani Arya Bot` (pré-rempli)
-4. Tu peux ignorer les champs "Webhook URL for bot" pour l'instant
-5. Clique **"Save"**
-6. Le statut passe à **"Bot Enabled"** — c'est bon.
+**Avant** d'ajouter les permissions, il faut activer le bot.
 
-> Le bot écoute seulement les messages — il ne répond pas automatiquement. Pas besoin de configurer de réponses.
+1. Dans le **menu de gauche**, cherche **"Add Features"** ou **"Add App Capabilities"**
+   - C'est dans la section du haut du menu, souvent sous "Credentials & Basic Info"
+   - Sur certaines versions, ça s'appelle **"Features"** tout court
+2. Tu vois une liste de capacités (Bot, Web App, Gadget, etc.)
+3. Clique sur **"Bot"** → puis **"Add"** ou **"Enable"**
+4. Un petit formulaire peut s'afficher :
+   - **Bot Name** : laisse `Sarani Arya Bot`
+   - **Bot Description** : `Monitors messages for project intake`
+   - Ignore les autres champs (Webhook URL, etc.)
+5. Clique **"Save"** ou **"Confirm"**
+6. Tu devrais voir un check vert ✓ à côté de "Bot" — le bot est activé
 
 ---
 
-## Étape 4 — Configurer le webhook (Event Subscription)
+## Étape 3 — Configurer les permissions
 
-1. Dans le menu de gauche, clique sur **"Event Subscriptions"**
-2. Dans le champ **"Request URL"**, colle cette adresse exacte :
+1. Dans le **menu de gauche**, clique sur **"Permissions & Scopes"**
+   - Si tu ne vois pas ce nom exact, cherche **"Permission Management"** ou une icône de cadenas/bouclier
+2. Tu arrives sur une page avec un **champ de recherche** en haut et une liste de permissions
+3. Dans le champ de recherche, tape : `im:message`
+4. Un résultat apparaît → clique sur le bouton **"Add"** (ou le "+" à droite)
+5. Répète pour chaque permission ci-dessous (tape dans la recherche, puis "Add") :
+
+| Permission à chercher | Ce qu'elle fait |
+|---|---|
+| `im:message` | Lire les messages |
+| `im:message.group_at_msg` | Recevoir les messages de groupe |
+| `im:chat` | Accéder aux conversations |
+| `im:chat:readonly` | Lire les infos des groupes |
+
+6. Vérifie que les 4 sont listées avec le statut **"Added"** ou **"Granted"**
+7. Certaines permissions nécessitent une **approbation admin**. Si tu vois un bouton **"Request approval"** ou **"Batch activate"** en haut → clique dessus et approuve
+
+---
+
+## Étape 4 — Configurer les événements (webhook)
+
+C'est ici que tu dis à Lark "quand un message arrive, préviens mon serveur".
+
+1. Dans le **menu de gauche**, cherche **"Event Subscriptions"** ou **"Events & Callbacks"**
+   - C'est souvent sous la section **"Features"** ou juste en dessous dans le menu
+2. Tu vois une page avec deux options de mode :
+   - **Long Connection (WebSocket)** — NE PAS choisir celui-là
+   - **HTTP Callback / Webhook** — **CHOISIS celui-là**
+3. Un champ **"Request URL"** apparaît. Colle cette adresse :
    ```
-   https://sarani-arya-backend.replit.app/api/webhooks/lark
+   https://TON-APP.replit.app/api/webhooks/lark
    ```
-   (remplace `sarani-arya-backend` par l'URL réelle de ton Replit si elle est différente)
-3. **Encryption Strategy** : laisse sur **"None"** (pas de chiffrement — plus simple)
-4. Un **Verification Token** s'affiche automatiquement (c'est une longue suite de lettres et chiffres). **Copie-le et note-le quelque part** — c'est ta valeur `LARK_VERIFICATION_TOKEN`
-5. Clique sur **"Add Event"**
-6. Dans la liste qui s'affiche, cherche `im.message.receive_v1` et clique **"Add"**
-7. Clique **"Save"** pour enregistrer
+   ⚠️ Remplace `TON-APP` par le vrai nom de ton Replit (ex: `sarani-site.replit.app`)
+
+4. **Verification Token** : sur cette même page, tu vois un token affiché (une longue chaîne de caractères).
+   → **Copie-le** et garde-le — c'est ta variable `LARK_VERIFICATION_TOKEN`
+
+5. **Encryption Key** : laisse vide (ou "None") — on n'en a pas besoin
+
+6. Plus bas sur la page, il y a un bouton **"Add Event"**
+7. Clique dessus → une fenêtre/popup s'ouvre avec un champ de recherche
+8. Tape : `im.message.receive_v1`
+9. Le résultat apparaît → clique **"Add"** ou **"Confirm"**
+10. Clique **"Save"** en bas de la page
+
+> ⚠️ Lark va tester l'URL immédiatement. Si ton serveur Replit n'est pas encore démarré, ça affichera une erreur — c'est normal. On reviendra valider après la configuration Replit.
 
 ---
 
 ## Étape 5 — Récupérer les credentials
 
-1. Dans le menu de gauche, clique sur **"Credentials & Basic Info"**
+1. Dans le **menu de gauche**, clique sur **"Credentials & Basic Info"**
+   - C'est toujours le premier item du menu
 2. Tu vois deux valeurs sur cette page :
-   - **App ID** : une suite de caractères commençant par `cli_` → c'est ta valeur `LARK_APP_ID`
-   - **App Secret** : clique sur **"Show"** pour l'afficher → c'est ta valeur `LARK_APP_SECRET`
-3. Note tes 3 valeurs quelque part (ex : dans un fichier texte temporaire) :
+   - **App ID** : commence par `cli_` → c'est ta variable `LARK_APP_ID`
+   - **App Secret** : caché par défaut. Clique sur **"Show"** ou l'icône œil 👁 → c'est ta variable `LARK_APP_SECRET`
+3. Récap — tu as maintenant 3 valeurs :
    ```
-   LARK_APP_ID=cli_xxxxxxxxxx
-   LARK_APP_SECRET=xxxxxxxxxxxxxxxxxx
-   LARK_VERIFICATION_TOKEN=xxxxxxxxxxxxxxxxxx  (récupéré à l'étape 4)
+   LARK_APP_ID = cli_xxxxxxxxxx        (étape 5)
+   LARK_APP_SECRET = xxxxxxxxxxxxxxxxx  (étape 5)
+   LARK_VERIFICATION_TOKEN = xxxxxxxxx  (étape 4)
    ```
 
 ---
 
-## Étape 6 — Ajouter le bot aux groupes TikTok dans Lark
+## Étape 6 — Publier l'app
 
-1. Ouvre **Lark Messenger** (l'appli ou le navigateur)
-2. Va dans le groupe TikTok où tu veux que le bot écoute
-3. Clique sur le nom du groupe en haut pour ouvrir les **Settings du groupe**
-4. Cherche la section **"Bots"** ou **"Add App/Bot"**
-5. Clique sur **"Add Bot"**, cherche `Sarani Arya Bot`, et ajoute-le
-6. Pour récupérer le **chat_id** du groupe (nécessaire pour la config) :
-   - Envoie un message de test dans le groupe
-   - Va sur **https://sarani-arya-backend.replit.app/api/admin/setup-webhooks** (POST depuis Postman ou curl) — le chat_id apparaîtra dans les logs Replit
-   - Ou demande à l'équipe tech de le récupérer via les logs au premier message reçu
-7. Répète l'opération pour chaque groupe TikTok à monitorer
-8. Note tous les chat_ids sous cette forme : `["oc_xxxx","oc_yyyy"]`
+L'app ne fonctionne pas tant qu'elle n'est pas publiée dans ton workspace.
+
+1. Dans le **menu de gauche**, cherche **"Version Management & Release"** ou **"Publish"**
+2. Clique sur **"Create Version"** ou **"Create a new version"**
+3. Remplis :
+   - **Version Number** : `1.0.0`
+   - **Update Description** : `Initial release`
+   - Vérifie que **"All employees"** est sélectionné comme scope (ou au minimum les utilisateurs concernés)
+4. Clique **"Submit for review"** ou **"Publish"**
+5. Si tu es admin du workspace, l'approbation est automatique
+6. Attends quelques secondes — le statut passe à **"Published"** ou **"Approved"**
 
 ---
 
-## Étape 7 — Configurer les variables d'environnement dans Replit
+## Étape 7 — Ajouter le bot aux groupes TikTok
 
-1. Dans Replit, ouvre le projet backend Sarani
-2. Dans le menu de gauche, clique sur l'icône **"Secrets"** (cadenas)
-3. Ajoute ces 4 variables une par une :
+1. Ouvre **Lark Messenger** (l'appli desktop, mobile, ou web)
+2. Va dans le **groupe TikTok** où tu veux que le bot écoute
+3. Clique sur le **nom du groupe** en haut (barre de titre) → ça ouvre les paramètres du groupe
+4. Cherche la section **"Bots"** ou **"Apps"** dans les paramètres
+5. Clique **"Add Bot"** ou **"Add App"**
+6. Cherche `Sarani Arya Bot` dans la liste
+7. Clique **"Add"** → le bot apparaît dans la liste des membres du groupe
+8. **Répète** pour chaque groupe TikTok à surveiller
 
-| Nom de la variable | Valeur |
+**Pour récupérer les chat_ids :**
+- Quand le bot est ajouté et que le serveur tourne, envoie un message test dans le groupe
+- Regarde les logs Replit (onglet Console) — le chat_id s'affiche dans les logs (`chat_id: "oc_xxxx"`)
+- Note chaque chat_id
+
+---
+
+## Étape 8 — Configurer Replit
+
+1. Dans **Replit**, ouvre ton projet Sarani
+2. Dans le panneau de gauche, clique sur **"Secrets"** (icône cadenas 🔒)
+   - Ou va dans **Tools → Secrets**
+3. Ajoute ces 4 variables (clique "New Secret" pour chaque) :
+
+| Key | Value |
 |---|---|
-| `LARK_APP_ID` | l'App ID récupéré à l'étape 5 |
-| `LARK_APP_SECRET` | l'App Secret récupéré à l'étape 5 |
-| `LARK_VERIFICATION_TOKEN` | le token récupéré à l'étape 4 |
-| `LARK_CHAT_IDS` | les chat_ids au format `["oc_xxxx","oc_yyyy"]` |
+| `LARK_APP_ID` | `cli_xxxxxxxxxx` (étape 5) |
+| `LARK_APP_SECRET` | `xxxxxxxxxxxxxxxxx` (étape 5) |
+| `LARK_VERIFICATION_TOKEN` | `xxxxxxxxx` (étape 4) |
+| `LARK_CHAT_IDS` | `oc_xxxx,oc_yyyy` (étape 7, séparés par des virgules) |
 
-4. Redémarre le serveur Replit (bouton **"Run"**)
-
----
-
-## Étape 8 — Tester que tout fonctionne
-
-1. Dans Postman (ou un outil similaire), envoie une requête :
-   ```
-   POST https://sarani-arya-backend.replit.app/api/admin/setup-webhooks
-   ```
-   (avec un header `Authorization: Bearer [ton token admin]`)
-
-2. Envoie un message test dans l'un des groupes TikTok Lark
-
-3. Va dans le back-office Sarani → section **"Inbox"** ou **"Messages"**
-
-4. Le message doit apparaître dans la liste avec le nom du groupe et le texte du message
-
-> Si le message n'apparaît pas : vérifie que le bot a bien été ajouté au groupe (étape 6) et que les 4 variables Replit sont correctement renseignées (étape 7).
+4. **Redémarre** le serveur Replit (Stop → Run)
 
 ---
 
-**En cas de problème** : consulte les logs Replit (onglet "Console") — les erreurs de webhook s'affichent en temps réel.
+## Étape 9 — Tester
+
+1. Va dans ton navigateur et tape :
+   ```
+   https://TON-APP.replit.app/admin
+   ```
+2. Connecte-toi au back-office
+3. Envoie un **message test** dans l'un des groupes TikTok sur Lark (ex: "Test message for Arya")
+4. Reviens dans le back-office → **Inbox**
+5. Le message devrait apparaître dans les secondes qui suivent
+
+**Si ça ne marche pas :**
+- Vérifie les logs Replit (Console) — les erreurs s'affichent en temps réel
+- Vérifie que l'app est publiée (étape 6)
+- Vérifie que le bot est dans le groupe (étape 7)
+- Vérifie que les 4 Secrets Replit sont corrects (pas d'espace en trop)
+- Retourne dans la console Lark → Event Subscriptions → re-sauvegarde l'URL webhook
+
+---
+
+**C'est terminé.** Arya écoute maintenant les messages Lark en temps réel. Chaque message dans les groupes TikTok sera classifié et apparaîtra dans ton inbox.
