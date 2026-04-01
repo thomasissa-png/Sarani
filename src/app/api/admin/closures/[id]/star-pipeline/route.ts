@@ -57,7 +57,7 @@ const updatePipelineSchema = z.object({
   itemId: z.string().uuid("Pipeline item ID must be a valid UUID"),
   status: z.enum(["review", "published", "skipped"]),
   content: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 // ─── GET /api/admin/closures/[id]/star-pipeline ───────────────────────────────
