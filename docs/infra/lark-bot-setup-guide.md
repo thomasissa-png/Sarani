@@ -150,7 +150,8 @@ L'app ne fonctionne pas tant qu'elle n'est pas publiée dans ton workspace.
 | `LARK_APP_ID` | `cli_xxxxxxxxxx` (étape 5) |
 | `LARK_APP_SECRET` | `xxxxxxxxxxxxxxxxx` (étape 5) |
 | `LARK_VERIFICATION_TOKEN` | `xxxxxxxxx` (étape 4) |
-| `LARK_CHAT_IDS` | `oc_xxxx,oc_yyyy` (étape 7, séparés par des virgules) |
+
+> **Note :** `LARK_CHAT_IDS` est **optionnel**. Si tu ne le mets pas, le bot écoute automatiquement **tous les groupes où il est ajouté**. Tu n'as rien à configurer — il suffit d'ajouter le bot à un groupe (étape 7) et c'est tout. Si un jour tu veux restreindre à certains groupes seulement, tu pourras ajouter `LARK_CHAT_IDS` avec les IDs séparés par des virgules.
 
 4. **Redémarre** le serveur Replit (Stop → Run)
 
