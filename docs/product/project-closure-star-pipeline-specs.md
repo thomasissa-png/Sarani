@@ -339,3 +339,137 @@ The signal is appended to a queue file `docs/seo/star-signal-queue.md`. @seo rea
 
 **No PM validation required** for the signal itself — it's informational. The PM validates the resulting SEO article when @seo produces it.
 
+---
+
+## 4. Arya LinkedIn Feeder — Continuous Intelligence Layer
+
+### Concept
+
+Arya interacts with clients every day: reading briefs, reviewing deliverables, exchanging feedback, closing projects. She accumulates operational intelligence that @social and @creative-strategy cannot access on their own. The LinkedIn Feeder formalises Arya as a data source for the content team — not a content creator in this context, but a signal provider.
+
+The Feeder has three moments:
+1. **Per-project signals** — captured at project closure (integrated into PROTO-PROJECT-CLOSURE Step 3)
+2. **Weekly digest** — a structured brief sent every Friday to @social and @creative-strategy
+3. **Hot signal** — immediate notification when an exceptional moment occurs mid-project
+
+### 4.1 — Signal Types Arya Captures
+
+Arya captures these signals from existing workflows (no additional data entry required from PM):
+
+| Signal Type | Source | When Captured | Example |
+|---|---|---|---|
+| **Measurable result** | Client email, ClickUp task data | On closure | "Client confirmed 94M views", "Delivered 350 presentations in 21 days" |
+| **Client verbatim** | Email content (classified as `client_approval`) | On client validation email | "How did you deliver this so fast?" |
+| **Production insight** | Brief complexity, delivery time vs deadline | On PROTO-ASSET-REVIEW | "Brief received Monday 9pm, delivered Tuesday 7am across 3 time zones" |
+| **Sector trend** | Brief topic, client industry, request type | On PROTO-EMAIL-INTAKE | "3rd client this month asking for AI-generated script + human polish" |
+| **Unexpected challenge** | PM learnings (closure questions) | On PROTO-PROJECT-CLOSURE | "Client changed direction 4 times — delivered anyway with same deadline" |
+| **Volume milestone** | ClickUp aggregates by client | Weekly scan | "TikTok: 500th video delivered this year" |
+
+**Privacy rule:** Arya captures signals only from project data already in the system. She does NOT use the full email body for signal extraction without PM consent. Client names in signals are used only if the project has no NDA flag.
+
+### 4.2 — Per-Project Signal Capture (PROTO-PROJECT-CLOSURE addition)
+
+After Step 3 of PROTO-PROJECT-CLOSURE, before the final PM validation:
+
+**Trigger:** POST /api/admin/projects/[id]/linkedin-signals
+
+Arya analyses:
+- Project type, sector, client tier
+- Delivery timeline (brief date → delivery date → on time or early?)
+- Number of revision rounds (from ClickUp status history)
+- Final invoice amount
+- Assets delivered count (from SharePoint)
+- Client approval email — extract the most compelling sentence if present
+- PM learnings captured at closure
+
+**Output:** A `LinkedInSignal[]` array stored on the project record:
+
+```typescript
+interface LinkedInSignal {
+  type: "result" | "verbatim" | "process_insight" | "sector_trend" | "challenge_overcome" | "volume_milestone";
+  content: string;            // the signal in one sentence, factual
+  contentPillar: 1 | 2 | 3 | 4 | 5; // which LinkedIn pillar this maps to
+  strength: "high" | "medium" | "low"; // how compelling
+  usableWithNDA: boolean;     // can this signal be used if project is under NDA?
+  clientNameRequired: boolean; // does this signal only work if client name is mentioned?
+  suggestedHook: string;      // Arya's suggested opening line for a LinkedIn post
+  used: boolean;              // true once signal is published or included in a post
+}
+```
+
+### 4.3 — Weekly Content Brief (Friday Digest)
+
+Every Friday, Arya generates a structured content brief for @social.
+
+**Trigger:** Automated cron (Friday 9:00 AM Paris time)
+**Endpoint:** POST /api/admin/arya/linkedin-weekly-digest
+
+**Output saved to:** `docs/pm/linkedin-briefs/weekly-[YYYY-MM-DD].md`
+
+**Brief format:**
+
+```markdown
+## Arya Weekly LinkedIn Brief — Week of [date]
+
+### Strongest signals this week
+
+| Signal | Project | Pillar | Strength | Suggested Hook |
+|---|---|---|---|---|
+| [1-sentence signal] | [project / client or anonymised] | [1–5] | High | "[suggested first line]" |
+
+### Trends observed
+- [Trend 1: e.g. "2 enterprise clients asked for same-day delivery — demand pattern worth amplifying"]
+- [Trend 2: e.g. "First project in pharma sector — portfolio gap being filled"]
+
+### Proof points cleared for publication
+(Star projects, case study approved, no NDA)
+- [Project Name] — [headline metric] — [link to case study draft]
+
+### Suggested posts for next week (editorial calendar gaps)
+- [Slot] — Pillar [X] — Suggested angle: [angle based on this week's signals]
+
+### Signals for @creative-strategy
+- New client sectors this week: [list]
+- Recurring pain point in incoming briefs: [if >= 2 similar briefs]
+- Capability newly demonstrated: [if any]
+```
+
+**PM validation:** No approval required — informational. If PM wants to develop a signal into a post immediately, she triggers the LinkedIn Article pipeline (Section 3.2) directly.
+
+### 4.4 — Hot Signal (Immediate Notification)
+
+Arya triggers a hot signal when one of these conditions is met mid-project:
+
+| Condition | Trigger Moment |
+|---|---|
+| Client approval email contains a strong verbatim (sentiment positive + > 50 words) | On email classification |
+| Project delivered > 50% ahead of deadline | On PROTO-ASSET-REVIEW completion |
+| Volume milestone crossed (e.g. 1,000th asset for a client) | On ClickUp data aggregation |
+| PM learnings capture an exceptional challenge overcome | On PROTO-PROJECT-CLOSURE learnings step |
+
+**Output (Arya notification):**
+
+```
+⚡ HOT SIGNAL — [Project Name]
+[Signal in 1 sentence — factual, no embellishment]
+Suggested LinkedIn hook: "[Arya's draft first line]"
+[ TRIGGER LINKEDIN DRAFT ] [ SAVE FOR WEEKLY BRIEF ] [ IGNORE ]
+```
+
+### 4.5 — Integration with @creative-strategy
+
+For signals of type `sector_trend` or `challenge_overcome`, Arya also adds the signal to the @creative-strategy queue. These signals may inform:
+- Positioning updates (new sector entry)
+- Thought leadership angles (recurring client pain points = market insight)
+- Service offering evolution signals
+
+Format: same as hot signal, routed to the @creative-strategy agent queue in the back-office.
+
+### 4.6 — Editorial Calendar Sync
+
+When @social selects a signal to develop into a post:
+1. @social generates post copy
+2. @social inserts the post into `docs/social/editorial-calendar.md` at the appropriate slot
+3. Status: "Ready" (replacing "Draft")
+4. The source signal is marked `used: true` in the project's `linkedin_signals` record — prevents the same signal from appearing in future weekly briefs
+
