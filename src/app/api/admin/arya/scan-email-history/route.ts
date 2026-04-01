@@ -73,19 +73,39 @@ function isSaraniDomain(domain: string): boolean {
 }
 
 /**
- * Find a client in the DB by matching email domain against primaryContactEmail.
- * Returns null if no match found.
+ * Find a client in the DB by matching email domain.
+ * Strategy 1: primaryContactEmail contains @domain
+ * Strategy 2: domain company part matches client name (e.g. tiktok.com → "TikTok")
  */
 async function findClientByDomain(
   domain: string
 ): Promise<{ id: string; name: string } | null> {
-  const matches = await db
+  // Strategy 1: match by primaryContactEmail
+  const escapedDomain = domain.replace(/%/g, "\\%").replace(/_/g, "\\_");
+  const byEmail = await db
     .select({ id: clients.id, name: clients.name })
     .from(clients)
-    .where(sql`${clients.primaryContactEmail} ILIKE ${"%" + "@" + domain}`)
+    .where(sql`${clients.primaryContactEmail} ILIKE ${"%" + "@" + escapedDomain}`)
     .limit(1);
+  if (byEmail.length > 0) return byEmail[0];
 
-  return matches[0] ?? null;
+  // Strategy 2: fuzzy match domain → client name
+  const domainParts = domain.split(".");
+  const companyPart = domainParts[0]?.toLowerCase() ?? "";
+  if (companyPart.length < 2) return null;
+
+  const allClients = await db
+    .select({ id: clients.id, name: clients.name })
+    .from(clients);
+
+  for (const client of allClients) {
+    const clientLower = client.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (clientLower.includes(companyPart) || companyPart.includes(clientLower)) {
+      return client;
+    }
+  }
+
+  return null;
 }
 
 /**

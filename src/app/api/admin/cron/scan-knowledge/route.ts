@@ -65,13 +65,37 @@ function isSaraniDomain(domain: string): boolean {
 async function findClientByDomain(
   domain: string
 ): Promise<{ id: string; name: string } | null> {
+  // Strategy 1: match by primaryContactEmail domain
   const escapedDomain = domain.replace(/%/g, "\\%").replace(/_/g, "\\_");
-  const matches = await db
+  const byEmail = await db
     .select({ id: clients.id, name: clients.name })
     .from(clients)
     .where(sql`${clients.primaryContactEmail} ILIKE ${"%" + "@" + escapedDomain}`)
     .limit(1);
-  return matches[0] ?? null;
+  if (byEmail.length > 0) return byEmail[0];
+
+  // Strategy 2: match domain against client name (e.g. tiktok.com → "TikTok")
+  // Extract the company part from the domain (before the TLD)
+  const domainParts = domain.split(".");
+  const companyPart = domainParts[0]?.toLowerCase() ?? "";
+  if (companyPart.length < 2) return null;
+
+  const allClients = await db
+    .select({ id: clients.id, name: clients.name })
+    .from(clients);
+
+  // Fuzzy match: domain company part matches client name
+  for (const client of allClients) {
+    const clientLower = client.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (
+      clientLower.includes(companyPart) ||
+      companyPart.includes(clientLower)
+    ) {
+      return client;
+    }
+  }
+
+  return null;
 }
 
 async function knowledgeExists(
