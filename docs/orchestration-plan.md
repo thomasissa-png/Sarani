@@ -31,7 +31,8 @@
 | 3h | Landing Page Generator | LLM INTEGRATED | @fullstack, @design, @ia | Phase 3d |
 | 3i | Project Presentation Link | COMPLETE | @fullstack, @product-manager | Phase 3d |
 | 3j | Arya (@client-manager) — Agent + Protocols + Capabilities | COMPLETE — agent 311 lignes, 10 protocoles, 12 AI templates, quality gates, inbox UI, asset review, search, knowledge bases | @agent-factory, @fullstack, @product-manager, @elon, @ia | Phase 3d |
-| 4 | QA & Pre-Launch | IN PROGRESS (~75%) — 80 unit tests, CI pipeline complete, security RBAC, rate limits, Zod. Manque : Lighthouse CI, visual regression, E2E LLM integration tests | @qa, @infrastructure, @legal | Phase 3e |
+| 3k | Arya V2 — Closure + Star + Knowledge + Reviews + Webhooks + Auto-Brief + Auto-Quote | IN PROGRESS (~85%) — DB, star score, closures page, email scan, review pipeline, webhooks ClickUp/Lark, auto-brief with modals, auto-quote with finalize. Manque : Lark bot activation (Thomas config), email scan full run, purpose-of-work pre-fill, save-draft on quotes | @fullstack, @product-manager, @elon, @qa | Phase 3j |
+| 4 | QA & Pre-Launch | IN PROGRESS (~75%) — 80 unit tests, CI pipeline complete, security RBAC, rate limits, Zod. Manque : Lighthouse CI, visual regression, E2E LLM integration tests | @qa, @infrastructure, @legal | Phase 3k |
 | 5 | Launch & Post-Launch | NOT STARTED | @orchestrator, @reviewer, @data-analyst, @growth, @social | Phase 4 |
 
 ---

@@ -201,6 +201,10 @@
 | @fullstack | 2026-03-26 | Logo BLK + auth fix + Phase 3 fondations (3 API clients, cache, schema DB, 4 routes API) + tracker unifié + quotes PDF + create-project + translation review + creative mood boards + deck HTML export + 4 itérations de corrections (sécurité, performance, WCAG, mobile) | Auth email/password : table users, PBKDF2, HMAC sessions, 2 rôles admin/user. Intégrations : ClickUp API v2 (12 Spaces, Lists, Tasks, Custom Fields), SharePoint Graph API (OAuth2, drives, Excel read/write, folder CRUD), Evoliz REST (invoices, graceful when unconfigured). Tracker : merge 3 sources + cache TTL + sorting + pagination + mobile cards. Quotes : SAR-YYYY-XXXX numbering + preview + pdf-lib. Create-project : ClickUp task + Excel row + SharePoint folder + advisory lock + duplicate detection + 409 handling + retry idempotency. Corrections : path traversal, admin role checks, parallel fetches, dynamic sheet/column detection, semantic tokens, aria-labels, mobile cards. | fetch natif sans SDK (zero deps). pdf-lib sans Puppeteer (Replit). Advisory lock via sync_cache (pragmatique vs vrai mutex DB). Cache-through pattern unifié (fetchWithCache). Token SharePoint en mémoire avec refresh proactif. 4 états UI obligatoires (Loading/Live/Stale/No data). |
 | @product-manager | 2026-03-26 | docs/product/phase3-integrations-specs.md (+ Addendum API exploration) | Specs complètes 6 intégrations Phase 3. Addendum avec données réelles : 12 ClickUp Spaces mappés, 9 trackers Excel identifiés, structure dossiers SharePoint documentée, statuts réels (Open/in progress/review/Closed), custom fields (Contact, Folder URL, PM, Priority). 7/12 OQ résolues par exploration API, 5/8 hypothèses validées/invalidées. | Exploration API live (pas d'hypothèses) pour construire le mapping ClickUp ↔ Excel ↔ SharePoint. H-01 invalidée (noms fichiers différents de l'hypothèse). H-04 invalidée (statuts réels différents). |
 | @agent-factory | 2026-03-26 | .claude/agents/pm.md (v2.0) | Création de l'agent @pm — Project Manager opérationnel senior, 7 ans d'expérience grande agence. Profil : exigeant, proactif, client-obsédé. Outils : Read, Write, Edit, Bash, Glob, Grep, WebSearch. Connaissance ClickUp (12 Spaces, statuts, custom fields), SharePoint (9 trackers, dossiers clients), Excel trackers. | PM opérationnel distinct du @product-manager (VP Product). Calibration sur le workspace Sarani réel (données API). model: claude-opus-4-6 (coordination complexe). |
+| @orchestrator | 2026-04-01 | Session 11 — pilotage complet back-office Arya | Pilotage autopilot : asset review enhanced, recherche globale, closure+star pipeline, email history scan, review pipeline, webhooks temps réel, auto-brief pipeline, auto-quote pipeline, inbox UX overhaul (modals de validation). 5 specs PM produites. ~40 commits, ~6000+ lignes. 5 learnings P0 propagés. | Mode autopilot complet avec reviews itératives (arya+ux+design+elon+qa) après chaque feature. |
+| @fullstack | 2026-04-01 | Asset review (thumbnails, auto-load, reject, SP link), recherche globale (Cmd+K, API, mobile), closures (DB, star score, API, page UI), PM star override, email scan (Graph API, Haiku extraction, cron scheduler), review pipeline (verify-deliverables, project-scan), webhooks (ClickUp HMAC, Lark challenge, setup-webhooks), auto-brief pipeline (LLM extraction, execute API, AutoBriefCard), auto-quote pipeline (extractor, finalize, AutoQuoteCard), inbox UX (EmailCard, modals CreateBrief/DraftReply/ProjectAction, JSON parse, contextual buttons) | Chaque feature développée + reviewée + itérée. Pattern abort-on-ClickUp-fail/warn-on-rest pour les transactions multi-API. Cron scheduler interne (setInterval) au lieu de crons externes. |
+| @product-manager | 2026-04-01 | docs/product/project-closure-star-pipeline-specs.md (1026L), docs/product/review-pipeline-specs.md (173L), docs/product/lark-integration-specs.md (218L), docs/product/realtime-architecture-specs.md (139L), docs/product/auto-brief-pipeline-specs.md (277L), docs/product/auto-quote-pipeline-specs.md (248L) | 6 specs produites. Star scoring 5 critères pondérés. Review pipeline dual flow humain/IA. Lark webhook + cron. Architecture temps réel webhooks everywhere. Auto-brief email→projet. Auto-quote brief→devis→PDF. | Specs scope réduit (200-300 lignes max) après timeout du premier PM agent sur les specs closure. Anti-timeout appliqué : ne lire que 2-3 fichiers, un seul Write. |
+| @elon | 2026-04-01 | Validation stratégique session 11 | VALIDATED 7/10. Star Pipeline = meilleure feature (9/10). Asset review + search = ops efficiency (6/10). Email knowledge = retention (7/10). Prochaine priorité : outbound pipeline LinkedIn + revenue dashboard + prospecting engine. | "To 3x revenue, you need visibility tools more than workflow tools. The workflow is already working at 3.5M." |
 | @infrastructure | 2026-03-26 | .replit (fix build command) | Fix déploiement Replit : mkdir -p .next/standalone/.next (dossier static manquant), NODE_OPTIONS max-old-space-size=1536 (OOM prevention), chemins de copie explicites. | Cause racine : bundles JS/CSS client non servis car le dossier static n'était jamais créé dans le standalone. Health check Replit échouait silencieusement. |
 | @fullstack | 2026-03-26 | src/lib/auth.ts (legacy session fix) | Fix 401 sur routes API intégrations : getUserFromSession() ne supportait pas les tokens legacy (sessions pré-email auth). Ajout du fallback verifyLegacyToken → treat as admin. | Le middleware avait déjà le fallback legacy, mais getUserFromSession() non — décalage causant 401 sur toutes les routes Phase 3 pour les sessions existantes. |
 | @reviewer | 2026-03-26 | docs/reviews/phase3-reviewer-audit.md | Audit workflow Phase 3 : 7/10. 2 blockers P0 (column letter bug >26 cols, role-based filtering manquant). 5 features manquantes vs specs (inline edit, webhook, sorting, revenue dashboard, pagination). | Audit post-corrections round 1. Blockers résolus dans les corrections round 2. |
@@ -387,46 +391,60 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-01 ~06:00 UTC (session 11)
+**Date et heure de clôture :** 2026-04-01 ~12:00 UTC (session 11 — extended)
 
 **Résumé de la session (session 11) :**
-Session orientée back-office ops + Arya capabilities. ~15 commits. Les 3 gaps Arya (S10) résolus + project closure/star pipeline + email history scan + PM star override. Reviews 5 agents (arya/ux/design/elon/qa) avec 2 batches d'itération 10/10. @elon : VALIDATED 7/10 — Star Pipeline = meilleure feature, prochaine session = outbound pipeline.
+Session massive back-office Arya V2 — ~40 commits, ~6000+ lignes. 3 gaps Arya S10 résolus + 6 nouvelles features majeures (closure+star pipeline, email scan knowledge, review pipeline, webhooks temps réel, auto-brief, auto-quote). 6 specs PM produites (2081 lignes total). Inbox UX overhauled : EmailCard, modals de validation, boutons contextuels, zéro JSON brut. 5 learnings P0 (dont 3 nouveaux : reviews complètes, workflow walkthrough, zéro invention). Cron scheduler interne (plus de dépendance externe). @elon : VALIDATED 7/10 — Star Pipeline 9/10.
 
 **Travaux terminés cette session :**
-- [x] Pont inbox → quick-brief (déjà implémenté en S10 — vérifié et confirmé)
-- [x] Asset review UI enhanced : thumbnails SharePoint (Graph $expand), auto-load URL params, ClickUp brief loader, "Return to Designer" button, confirmation modal quand assets manquants, SharePoint folder direct link
-- [x] Recherche globale back-office : API /api/admin/search (clients, projets, inbox), Cmd+K, keyboard nav, mobile overlay, WCAG AA (focus-visible, aria-controls, reduced-motion)
-- [x] Specs project closure + star pipeline + LinkedIn feeder (docs/product/project-closure-star-pipeline-specs.md — 1026 lignes)
-- [x] Project Closures : DB tables (project_closures, star_pipeline_items), migration Drizzle, star score calculator 5 critères pondérés (seuil 75), API CRUD, page UI closures avec score breakdown visuel
-- [x] PM Star Override : API PATCH confirm/reject/nominate, UI buttons, pipeline items auto-créés/supprimés
-- [x] Email History Scan : scan paginé Graph API (500 emails, 1 an), extraction LLM Haiku par batch de 20, upsert client_knowledge + team_knowledge, bouton dans page Arya
-- [x] Knowledge extractor prompt (src/lib/ai/prompts/knowledge-extractor.ts) : 4 scopes, 11 catégories, confiance high/medium
-- [x] Itération 10/10 batch 1 : QA error sanitization, rate-limit map pruning, mobile search error state, brief load success indicator, Cmd+K hint md:, aria-controls, min-h-44px touch target, neutral-400→500 contrast
-- [x] Itération 10/10 batch 2 : reject button, confirmation modal, SharePoint link, inbox deep links
-- [x] QA fixes P0 : missing `and` import (runtime crash), pipeline type mismatch, graphFetch response guard
-- [x] P0 learning : règle n°2 renforcée — ne jamais présenter des exemples fictifs comme réels
+- [x] Asset review enhanced (thumbnails, auto-load, reject, confirm modal, SP link)
+- [x] Recherche globale (Cmd+K, API, mobile, WCAG AA)
+- [x] Project closure + star pipeline (DB, star score 5 critères, API, page UI)
+- [x] PM star override (confirm/reject/nominate)
+- [x] Email history scan → knowledge base (Graph API paginé, Haiku extraction, cron 10min)
+- [x] Privacy name encoding (I-xxxx, D-xxxx, T-xxxx codes pour GitHub)
+- [x] Review pipeline (PROTO-REVIEW-INTAKE, verify-deliverables LLM 5 critères, 3 auto-rework tours)
+- [x] Webhooks temps réel (ClickUp HMAC, Lark challenge, setup-webhooks idempotent)
+- [x] Cron scheduler interne (instrumentation.ts, setInterval, localhost)
+- [x] Auto-brief pipeline (LLM extraction, execute API, AutoBriefCard avec modal CreateBrief)
+- [x] Auto-quote pipeline (extractor, finalize, AutoQuoteCard, confirmation modal)
+- [x] Inbox UX overhaul : EmailCard, modals (CreateBrief/DraftReply/ProjectAction), boutons contextuels, JSON parse, "Filtered out" section, protocol labels humains
+- [x] Lark integration (webhook, DM forwarding, setup guide)
+- [x] 6 specs PM : closure+star (1026L), review-pipeline (173L), lark (218L), realtime (139L), auto-brief (277L), auto-quote (248L)
+- [x] QA fixes : missing import, pipeline types, graphFetch guard, alert dedup, edit data loss, mark-noise endpoint
+- [x] 5 learnings P0 propagés dans CLAUDE.md (règles n°2, 16, 17, 18)
+- [x] Seed script mis à jour (migrations 0017-0019, CacheSource "arya", contact_email quotes)
 
 **Travaux en cours / à confirmer :**
-- **Fire-and-forget vidéo** : le pattern `void processVideoGeneration()` ne fonctionne pas sur Replit autoscale. Besoin d'une queue job ou d'un cron de traitement (reporté depuis S10).
-- **Case study detail page inline editing** : agent a timeout en améliorant la page de détail. La feature de base fonctionne (list + detail + generate + regenerate + publish). Le polish inline editing est nice-to-have.
+- **Lark bot activation** : app créée et publiée sur Lark, mais Thomas n'a pas encore réussi à ajouter le bot aux groupes TikTok (interface Lark ne montre que "Custom Bot"). Guide step-by-step fourni dans docs/infra/lark-bot-setup-guide.md.
+- **Email scan full run** : le cron scan-knowledge tourne automatiquement (10min) mais le premier scan avait un rate limit Haiku. Le delay 2s entre batches est ajouté.
+- **Outlook webhook** : subscription créée avec succès (expire 48h). Le cron renew-subscriptions renouvelle automatiquement.
+- **Inbox workflow "Prepare Pitch"** : le bouton existe mais pas de vrai pitch builder — juste email draft + create client profile. V2.
+- **AutoQuote purpose-of-work** : pas pré-rempli depuis le brief. V2.
+- **AutoQuote save-draft** : pas implémenté — si la PM ferme, les édits sont perdus. V2.
+- **Fire-and-forget vidéo** : toujours en attente (reporté depuis S10).
 
-**Prochaines actions recommandées (par @elon S11) :**
-1. **Outbound pipeline LinkedIn** (PRIORITÉ 1) : automatiser la publication LinkedIn depuis les star pipeline outputs. Le spec LinkedIn feeder existe (dans project-closure-star-pipeline-specs.md), pas encore implémenté. C'est le levier de croissance #1 selon @elon.
-2. **Revenue dashboard / PM capacity** (PRIORITÉ 2) : @elon flag : "zéro revenue intelligence dans le back-office". Ajouter un dashboard avec revenue par PM, capacité, pipeline visibility. C'est ce qui manque pour piloter la croissance 3.5M→10M.
-3. **Prospecting engine** (PRIORITÉ 3) : cibler les Sophie-persona dans les Fortune 500 avec les case studies star comme ammo. Proposal generator contextuel.
-4. **Vue Kanban projets** (PRIORITÉ 4) : alternative visuelle au Tracker pour le standup quotidien (reporté depuis S10).
-5. **Fire-and-forget vidéo** (PRIORITÉ 5) : queue job ou cron pour la génération vidéo async.
+**Prochaines actions recommandées :**
+1. **Outbound pipeline LinkedIn** (PRIORITÉ 1 — @elon) : automatiser la publication LinkedIn depuis les star pipeline outputs. Specs existent. C'est le levier de croissance #1 pour 3.5M→10M.
+2. **Revenue dashboard / PM capacity** (PRIORITÉ 2 — @elon) : zéro revenue intelligence dans le back-office. Dashboard revenue par PM, capacité, pipeline visibility.
+3. **Lark bot dans les groupes TikTok** (PRIORITÉ 3 — Thomas) : résoudre le problème d'ajout du bot. Peut nécessiter un admin Lark ou une autre approche.
+4. **Auto-brief template Sarani** (PRIORITÉ 4) : le brief dans le CreateBriefModal est du texte brut, pas le template 6 sections avec emojis Sarani (🌟✈️🚚📍💬➡️). Intégrer le template.
+5. **Pitch builder** (PRIORITÉ 5) : "Prepare Pitch" devrait ouvrir un vrai pitch workflow (case studies, pricing, deck) pas juste un email draft.
 
 **Décisions de Thomas cette session :**
-- Les PMs humaines doivent pouvoir valider/invalider si un projet est vraiment star (override du score Arya)
-- Les PMs doivent pouvoir proposer des projets star à Arya manuellement (nominate)
-- Quand un projet est clôturé et star : case study + article LinkedIn + slide présentation + signal SEO
-- Arya en charge de feeder LinkedIn Sarani (en collaboration avec @creative-strategy et @social)
-- Règle n°2 renforcée : ne jamais présenter des exemples fictifs comme réels, même "à titre d'illustration"
+- PM override du star score (confirm/reject/nominate)
+- Clôture auto → star pipeline (case study + LinkedIn + slide + SEO)
+- Arya feeder LinkedIn (@social/@creative-strategy)
+- Lark intégré pour les messages TikTok
+- Tout temps réel (webhooks), zéro cron externe
+- Zéro invention de données (même illustratives)
+- Reviews complètes de l'écran, pas seulement des features
+- Workflow walkthrough obligatoire dans chaque review
+- Boutons d'action → modals de validation (jamais "Done" sans contenu à valider)
 
 **Branche de travail :** claude/extract-project-context-x6bnn
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 11 complète — ~15 commits. Branche : claude/extract-project-context-x6bnn. 3 gaps Arya S10 résolus (asset review, recherche globale, pont inbox→brief). Nouvelles features : project closure + star pipeline + PM override + email history scan. @elon : VALIDATED 7/10, prochaine priorité = outbound pipeline LinkedIn + revenue dashboard. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 11 extended — ~40 commits. Branche : claude/extract-project-context-x6bnn. Back-office Arya V2 complet : closure+star pipeline, email scan, review pipeline, webhooks temps réel, auto-brief+quote avec modals, inbox UX overhaul. Lark config en attente (bot pas encore dans les groupes TikTok). @elon : prochaine priorité = outbound LinkedIn pipeline + revenue dashboard. Ne lance aucun agent avant mon feu vert.
 ```
