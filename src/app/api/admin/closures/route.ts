@@ -357,3 +357,140 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// ─── PATCH /api/admin/closures ──────────────────────────────────────────────
+// PM Star Override: validate/reject star status, or nominate a project as star.
+
+const patchSchema = z.object({
+  closureId: z.string().uuid("Closure ID must be a valid UUID"),
+  action: z.enum(["confirm_star", "reject_star", "nominate_star"]),
+  reason: z.string().min(1).max(500).optional(),
+});
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const authCheck = await requireAdmin(request);
+    if (!authCheck.authorized) return authCheck.response;
+
+    if (isRateLimited(getIp(request))) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const rawBody = await request.json();
+    const body = patchSchema.parse(rawBody);
+
+    // Fetch the closure
+    const [closure] = await db
+      .select()
+      .from(projectClosures)
+      .where(eq(projectClosures.id, body.closureId))
+      .limit(1);
+
+    if (!closure) {
+      return NextResponse.json({ error: "Closure not found" }, { status: 404 });
+    }
+
+    if (body.action === "confirm_star") {
+      // PM confirms Arya's star assessment — keep star status, mark as PM-validated
+      await db
+        .update(projectClosures)
+        .set({
+          starStatus: "STAR",
+          status: "star_pipeline",
+          closedBy: `pm_confirmed:${authCheck.userId}`,
+        })
+        .where(eq(projectClosures.id, body.closureId));
+
+      // Create pipeline items if they don't exist yet
+      const existingItems = await db
+        .select({ id: starPipelineItems.id })
+        .from(starPipelineItems)
+        .where(eq(starPipelineItems.closureId, body.closureId))
+        .limit(1);
+
+      if (existingItems.length === 0) {
+        const outputTypes = ["case_study", "linkedin_post", "presentation_slide", "seo_signal"] as const;
+        await db.insert(starPipelineItems).values(
+          outputTypes.map((type) => ({
+            closureId: body.closureId,
+            outputType: type,
+            status: "pending",
+          }))
+        );
+      }
+
+      return NextResponse.json({ success: true, action: "confirmed", starStatus: "STAR" });
+
+    } else if (body.action === "reject_star") {
+      // PM overrides — project is NOT star despite Arya's score
+      await db
+        .update(projectClosures)
+        .set({
+          starStatus: "STANDARD",
+          status: "closed",
+          closedBy: `pm_rejected:${authCheck.userId}`,
+        })
+        .where(eq(projectClosures.id, body.closureId));
+
+      // Remove pending pipeline items (keep published ones)
+      await db
+        .delete(starPipelineItems)
+        .where(
+          and(
+            eq(starPipelineItems.closureId, body.closureId),
+            eq(starPipelineItems.status, "pending")
+          )
+        );
+
+      return NextResponse.json({ success: true, action: "rejected", starStatus: "STANDARD" });
+
+    } else if (body.action === "nominate_star") {
+      // PM nominates a non-star project as star (manual override upward)
+      await db
+        .update(projectClosures)
+        .set({
+          starStatus: "STAR",
+          status: "star_pipeline",
+          closedBy: `pm_nominated:${authCheck.userId}`,
+        })
+        .where(eq(projectClosures.id, body.closureId));
+
+      // Create pipeline items
+      const existingItems = await db
+        .select({ id: starPipelineItems.id })
+        .from(starPipelineItems)
+        .where(eq(starPipelineItems.closureId, body.closureId))
+        .limit(1);
+
+      if (existingItems.length === 0) {
+        const outputTypes = ["case_study", "linkedin_post", "presentation_slide", "seo_signal"] as const;
+        await db.insert(starPipelineItems).values(
+          outputTypes.map((type) => ({
+            closureId: body.closureId,
+            outputType: type,
+            status: "pending",
+          }))
+        );
+      }
+
+      return NextResponse.json({ success: true, action: "nominated", starStatus: "STAR" });
+    }
+
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: error.issues },
+        { status: 400 }
+      );
+    }
+    console.error("Error updating closure:", error);
+    return NextResponse.json(
+      { error: "Failed to update closure" },
+      { status: 500 }
+    );
+  }
+}

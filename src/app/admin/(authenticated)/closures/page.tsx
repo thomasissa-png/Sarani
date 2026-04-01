@@ -501,6 +501,35 @@ export default function ClosuresPage() {
     [fetchClosures]
   );
 
+  // ─── PM Star Override ──────────────────────────────────────────────────────
+
+  const handleStarOverride = useCallback(
+    async (closureId: string, action: "confirm_star" | "reject_star" | "nominate_star") => {
+      const loadingKey = `override-${closureId}`;
+      setActionLoading((prev) => new Set(prev).add(loadingKey));
+      try {
+        const res = await fetch("/api/admin/closures", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ closureId, action }),
+        });
+        if (!res.ok) {
+          throw new Error(`Failed to update star status (${res.status})`);
+        }
+        await fetchClosures();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setActionLoading((prev) => {
+          const next = new Set(prev);
+          next.delete(loadingKey);
+          return next;
+        });
+      }
+    },
+    [fetchClosures]
+  );
+
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -750,6 +779,44 @@ export default function ClosuresPage() {
                         threshold or pipeline was skipped).
                       </p>
                     )}
+
+                    {/* PM Star Override */}
+                    <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center gap-2">
+                      <span className="text-xs text-neutral-500 mr-2">PM Override:</span>
+                      {closure.starStatus !== "STAR" && (
+                        <button
+                          type="button"
+                          onClick={() => handleStarOverride(closure.id, "nominate_star")}
+                          disabled={actionLoading.has(`override-${closure.id}`)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        >
+                          ★ Nominate as Star
+                        </button>
+                      )}
+                      {closure.starStatus === "STAR" && !closure.closedBy?.startsWith("pm_confirmed") && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleStarOverride(closure.id, "confirm_star")}
+                            disabled={actionLoading.has(`override-${closure.id}`)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-success bg-success-light border border-success/20 rounded-lg hover:bg-success-light/80 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-success"
+                          >
+                            Confirm Star
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStarOverride(closure.id, "reject_star")}
+                            disabled={actionLoading.has(`override-${closure.id}`)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-error bg-error-light border border-error/20 rounded-lg hover:bg-error-light/80 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-error"
+                          >
+                            Not a Star
+                          </button>
+                        </>
+                      )}
+                      {closure.closedBy?.startsWith("pm_confirmed") && (
+                        <span className="text-xs text-success font-medium">PM Confirmed ✓</span>
+                      )}
+                    </div>
 
                     {/* Metadata */}
                     <div className="mt-3 text-xs text-neutral-400">
