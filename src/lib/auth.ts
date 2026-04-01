@@ -121,6 +121,7 @@ export async function authenticateUser(
         email: "admin@sarani.studio",
         name: "Admin",
         role: "admin",
+        clickupUserId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
