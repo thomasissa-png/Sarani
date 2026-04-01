@@ -9,6 +9,7 @@ import {
   buildBriefExtractionUserMessage,
   type BriefExtractionResult,
 } from "@/lib/ai/prompts/brief-extractor";
+import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
 
 const RequestSchema = z.object({
   emailSubject: z.string(),
@@ -38,13 +39,18 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Load client profile (non-blocking — empty string if unavailable)
+    const clientProfile = await buildClientProfileBlock({
+      senderEmail: body.senderEmail,
+    });
+
     const llmResult = await callClaudeJSON<BriefExtractionResult>({
       systemPrompt: BRIEF_EXTRACTOR_SYSTEM_PROMPT,
       userMessage: buildBriefExtractionUserMessage({
         emailSubject: body.emailSubject,
         emailBody: body.emailBody,
         senderEmail: body.senderEmail,
-      }),
+      }) + clientProfile,
       model: "claude-haiku-4-5-20251001",
       maxTokens: 1024,
       timeout: 20_000,
