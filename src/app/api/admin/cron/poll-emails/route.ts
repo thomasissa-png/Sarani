@@ -10,6 +10,13 @@ import {
   isEmailConfigured,
 } from "@/lib/integrations/email";
 import { callClaudeJSON } from "@/lib/ai/claude";
+import {
+  BRIEF_EXTRACTOR_SYSTEM_PROMPT,
+  BriefExtractionResultSchema,
+  buildBriefExtractionUserMessage,
+  type BriefExtractionResult,
+} from "@/lib/ai/prompts/brief-extractor";
+import { getMappingBySpaceName } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -255,6 +262,97 @@ export async function GET(request: NextRequest) {
           resultCategory: classification.category,
           inboxItemId,
         });
+
+        // ─── Auto-Brief Pipeline (Step 1) ─────────────────────────────
+        // When email is classified as client_brief, extract structured brief
+        // via LLM and create an auto_brief_ready inbox item for PM review.
+        if (classification.category === "client_brief" && inboxItemId) {
+          try {
+            const llmBrief = await callClaudeJSON<BriefExtractionResult>({
+              systemPrompt: BRIEF_EXTRACTOR_SYSTEM_PROMPT,
+              userMessage: buildBriefExtractionUserMessage({
+                emailSubject: subject,
+                emailBody: bodyPreview,
+                senderEmail: from,
+              }),
+              model: "claude-haiku-4-5-20251001",
+              maxTokens: 1024,
+              timeout: 15_000,
+            });
+
+            const briefParsed = BriefExtractionResultSchema.safeParse(llmBrief.data);
+
+            let extractionError = false;
+            let briefData: BriefExtractionResult;
+
+            if (!briefParsed.success) {
+              console.error(
+                `[Auto-Brief] LLM returned invalid extraction for email ${email.id}:`,
+                briefParsed.error.flatten()
+              );
+              extractionError = true;
+              // Fallback: create item with empty brief so PM can fill manually
+              briefData = {
+                client_name: "",
+                project_title: subject || "Untitled",
+                contact_email: from,
+                project_type: "generic",
+                brief_introduction: "",
+                brief_body: "",
+              };
+            } else {
+              briefData = briefParsed.data;
+            }
+
+            // Resolve client against CLIENT_MAPPINGS
+            const clientMapping = getMappingBySpaceName(briefData.client_name);
+            const clientResolved = !!clientMapping;
+
+            // Generate project name: "[Client] - [Title]" (max 100 chars)
+            const rawProjectName = `${briefData.client_name} - ${briefData.project_title}`;
+            const projectName = rawProjectName.length > 100
+              ? rawProjectName.slice(0, 100).trim()
+              : rawProjectName;
+
+            const autoBriefPayload = {
+              sourceInboxItemId: inboxItemId,
+              projectName,
+              clientName: briefData.client_name,
+              contactEmail: briefData.contact_email || from,
+              startDate: new Date().toISOString().slice(0, 10),
+              briefBody: briefData.brief_body,
+              projectType: briefData.project_type,
+              clientResolved,
+              clickupSpaceId: clientMapping?.clickupSpaceId,
+              excelTrackerFilename: clientMapping?.excelTrackerFilename,
+              sharepointCustomerFolder: clientMapping?.sharepointCustomerFolder,
+              extractionError,
+            };
+
+            await db.insert(inboxItems).values({
+              type: "auto_brief_ready",
+              status: "pending_review",
+              title: `[Auto Brief] ${projectName}`,
+              summary: JSON.stringify(autoBriefPayload),
+              sourceId: email.id,
+              sourceType: "email",
+              protocol: "PROTO-EMAIL-INTAKE",
+              priority: "high",
+            });
+
+            console.log(
+              `[Auto-Brief] Created auto_brief_ready item for email ${email.id}` +
+              (clientResolved ? ` (client: ${clientMapping.clickupSpaceName})` : " (client unresolved)")
+            );
+          } catch (briefError) {
+            console.error(
+              `[Auto-Brief] Failed to extract brief from email ${email.id}:`,
+              briefError
+            );
+            // Non-blocking: the original email_classified item still exists
+            // PM can still process it manually via the standard flow
+          }
+        }
 
         processed++;
       } catch (emailError) {
