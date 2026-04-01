@@ -45,13 +45,21 @@ export async function GET() {
     }
 
     const data = await res.json() as {
-      tasks: Array<{ id: string; name: string; url: string; due_date: string | null }>;
+      tasks: Array<{
+        id: string;
+        name: string;
+        url: string;
+        due_date: string | null;
+        space?: { id: string; name?: string };
+        list?: { id: string; name?: string };
+      }>;
     };
 
     const tasks = data.tasks.map((t) => ({
       id: t.id,
       name: t.name,
       url: t.url,
+      client: t.space?.name ?? "Other",
     }));
 
     return NextResponse.json({ tasks });

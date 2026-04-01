@@ -353,13 +353,14 @@ export default function InboxPage() {
   }, [fetchItems]);
 
   // ─── Due Today banner (Fix 5) ──────────────────────────────────────────
-  const [dueTodayTasks, setDueTodayTasks] = useState<Array<{ id: string; name: string; url: string }>>([]);
+  const [dueTodayTasks, setDueTodayTasks] = useState<Array<{ id: string; name: string; url: string; client: string }>>([]);
+  const [dueTodayExpanded, setDueTodayExpanded] = useState(false);
 
   const fetchDueToday = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/clickup/due-today");
       if (res.ok) {
-        const data = await res.json() as { tasks: Array<{ id: string; name: string; url: string }> };
+        const data = await res.json() as { tasks: Array<{ id: string; name: string; url: string; client: string }> };
         setDueTodayTasks(data.tasks ?? []);
       }
     } catch {
@@ -695,45 +696,82 @@ export default function InboxPage() {
         </div>
       )}
 
-      {/* Due Today Banner (Fix 5) — compact: show max 3 + "and X more" */}
+      {/* Due Today Banner — compact with expandable grouped view */}
       {dueTodayTasks.length > 0 && (
-        <div className="bg-brand-lemon/10 border border-brand-lemon/30 rounded-lg px-4 py-3 text-sm text-brand-black">
-          <span className="font-semibold">{dueTodayTasks.length} project{dueTodayTasks.length !== 1 ? "s" : ""} due today</span>
-          {dueTodayTasks.length <= 3 ? (
+        <div className="bg-brand-lemon/10 border border-brand-lemon/30 rounded-lg text-sm text-brand-black">
+          <button
+            onClick={() => setDueTodayExpanded((prev) => !prev)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-brand-lemon/5 transition-colors rounded-lg"
+            aria-expanded={dueTodayExpanded}
+            aria-label={`${dueTodayTasks.length} projects due today — click to ${dueTodayExpanded ? "collapse" : "expand"}`}
+          >
             <span>
-              :{" "}
-              {dueTodayTasks.map((task, i) => (
-                <span key={task.id}>
-                  {i > 0 && ", "}
-                  <a
-                    href={task.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-cerulean hover:underline"
-                  >
-                    {task.name}
-                  </a>
+              <span className="font-semibold">{dueTodayTasks.length} project{dueTodayTasks.length !== 1 ? "s" : ""} due today</span>
+              {!dueTodayExpanded && dueTodayTasks.length <= 3 && (
+                <span className="text-neutral-500">
+                  {" — "}
+                  {dueTodayTasks.map((t) => t.name).join(", ")}
                 </span>
-              ))}
-            </span>
-          ) : (
-            <span>
-              {" — "}
-              {dueTodayTasks.slice(0, 3).map((task, i) => (
-                <span key={task.id}>
-                  {i > 0 && ", "}
-                  <a
-                    href={task.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-cerulean hover:underline"
-                  >
-                    {task.name}
-                  </a>
+              )}
+              {!dueTodayExpanded && dueTodayTasks.length > 3 && (
+                <span className="text-neutral-500">
+                  {" — "}
+                  {dueTodayTasks.slice(0, 3).map((t) => t.name).join(", ")}
+                  {` and ${dueTodayTasks.length - 3} more`}
                 </span>
-              ))}
-              <span className="text-neutral-500"> and {dueTodayTasks.length - 3} more</span>
+              )}
             </span>
+            <svg
+              className={cn(
+                "w-4 h-4 text-neutral-400 shrink-0 transition-transform duration-200",
+                dueTodayExpanded && "rotate-180"
+              )}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {dueTodayExpanded && (
+            <div className="px-4 pb-3 space-y-2 border-t border-brand-lemon/20 pt-2">
+              {(() => {
+                // Group tasks by client
+                const grouped: Record<string, typeof dueTodayTasks> = {};
+                for (const task of dueTodayTasks) {
+                  const client = task.client || "Other";
+                  if (!grouped[client]) grouped[client] = [];
+                  grouped[client].push(task);
+                }
+                const sortedClients = Object.keys(grouped).sort((a, b) => {
+                  if (a === "Other") return 1;
+                  if (b === "Other") return -1;
+                  return a.localeCompare(b);
+                });
+                return sortedClients.map((client) => (
+                  <div key={client}>
+                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1">{client} ({grouped[client].length})</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                      {grouped[client].map((task) => (
+                        <a
+                          key={task.id}
+                          href={task.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-brand-cerulean hover:underline"
+                        >
+                          {task.name}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
           )}
         </div>
       )}
