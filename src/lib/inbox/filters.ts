@@ -37,6 +37,14 @@ export interface InboxItemFilterable {
   protocol: string | null;
   processedAt?: string | Date | null;
   createdAt?: string | Date;
+  summary?: string | null;
+  sourceId?: string | null;
+  sourceType?: string | null;
+  title?: string | null;
+  priority?: string | null;
+  pmId?: string | null;
+  projectId?: string | null;
+  [key: string]: unknown;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────
