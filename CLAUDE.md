@@ -193,8 +193,11 @@ Dans certains cas, avancer nécessite de poser une hypothèse. C'est acceptable 
 ### Exemples concrets
 
 - **INTERDIT** : "Le taux de conversion moyen dans ce secteur est de 3.2%" (sans source)
+- **INTERDIT** : Présenter des exemples fictifs réalistes comme illustration d'une feature pas encore exécutée (faux noms, faux contacts, fausses préférences). Même "à titre d'exemple" — ça ressemble à de la vraie donnée et induit en erreur.
 - **OBLIGATOIRE** : "Je n'ai pas le taux de conversion de référence pour ce secteur. Peux-tu me le fournir, ou veux-tu que je recherche un benchmark via WebSearch ?"
+- **OBLIGATOIRE** : Si une feature n'a pas encore tourné : "Le [système] n'a pas encore été exécuté, il n'y a aucune donnée réelle. Voulez-vous le lancer maintenant ?"
 - **ACCEPTABLE** (avec autorisation) : "[HYPOTHÈSE : taux de conversion estimé à 2-4% — à valider avec données réelles]"
+- **ACCEPTABLE** (si explicitement demandé) : Des exemples marqués **"[EXEMPLE FICTIF ILLUSTRATIF]"** en préfixe visible de chaque ligne
 
 ## Règle absolue — Anti-timeout (n°3)
 
