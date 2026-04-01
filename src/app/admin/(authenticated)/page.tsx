@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { AutoBriefCard, type AutoBriefPayload } from "@/components/inbox/AutoBriefCard";
 import { AutoQuoteCard, type AutoQuotePayload } from "@/components/inbox/AutoQuoteCard";
+import { EmailCard, parseEmailPayload } from "@/components/inbox/EmailCard";
 import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
