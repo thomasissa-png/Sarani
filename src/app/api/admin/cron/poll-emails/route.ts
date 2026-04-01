@@ -224,18 +224,14 @@ export async function GET(request: NextRequest) {
         }
 
         // ClickUp search for project_feedback — resolve project hint to task URL
+        let clickupMatch: { taskId: string; taskUrl: string; taskName: string } | null = null;
         if (
           classification.category === "project_feedback" &&
           classification.clickupProjectHint
         ) {
           try {
             const { searchTaskByName } = await import("@/lib/integrations/clickup");
-            const match = await searchTaskByName(classification.clickupProjectHint);
-            if (match) {
-              (classification as Record<string, unknown>).taskId = match.taskId;
-              (classification as Record<string, unknown>).taskUrl = match.taskUrl;
-              (classification as Record<string, unknown>).taskName = match.taskName;
-            }
+            clickupMatch = await searchTaskByName(classification.clickupProjectHint);
           } catch {
             // Graceful degradation — classification still works without ClickUp link
           }
@@ -256,7 +252,10 @@ export async function GET(request: NextRequest) {
             summary: JSON.stringify({
               from,
               subject,
-              classification,
+              classification: {
+                ...classification,
+                ...(clickupMatch ? { taskId: clickupMatch.taskId, taskUrl: clickupMatch.taskUrl, taskName: clickupMatch.taskName } : {}),
+              },
               bodyPreview: bodyPreview.slice(0, 500),
             }),
             sourceId: email.id,
