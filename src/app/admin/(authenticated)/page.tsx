@@ -5,6 +5,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { AutoBriefCard, type AutoBriefPayload } from "@/components/inbox/AutoBriefCard";
+import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -13,9 +15,10 @@ type InboxItemType =
   | "ai_team_complete"
   | "qa_gates_pass"
   | "followup_alert"
-  | "noise";
+  | "noise"
+  | "auto_brief_ready";
 
-type InboxItemStatus = "pending" | "in_progress" | "done" | "dismissed";
+type InboxItemStatus = "pending" | "pending_review" | "in_progress" | "done" | "dismissed";
 
 interface InboxItem {
   id: string;
@@ -70,6 +73,11 @@ const TYPE_CONFIG: Record<
     label: "Noise",
     color: "text-neutral-400",
     bgColor: "bg-neutral-100",
+  },
+  auto_brief_ready: {
+    label: "Auto Brief",
+    color: "text-brand-cerulean",
+    bgColor: "bg-brand-cerulean/10",
   },
 };
 
@@ -171,13 +179,15 @@ export default function InboxPage() {
     setLoading(true);
     setFetchError(null);
     try {
-      const params = new URLSearchParams();
-      params.set("status", "pending");
-
-      const res = await fetch(`/api/admin/inbox?${params.toString()}`);
+      // Fetch all non-noise items, then filter client-side to actionable statuses
+      const res = await fetch("/api/admin/inbox?limit=100");
       if (res.ok) {
         const data = await res.json();
-        setItems(data.items ?? []);
+        const allItems = (data.items ?? []) as InboxItem[];
+        const actionable = allItems.filter(
+          (i) => i.status === "pending" || i.status === "pending_review"
+        );
+        setItems(actionable);
       } else {
         const errMsg = `Failed to load inbox (${res.status})`;
         console.error("[Inbox] fetch error:", res.status, res.statusText);
@@ -483,20 +493,49 @@ export default function InboxPage() {
         <EmptyState />
       ) : (
         <div className="space-y-3">
-          {filteredItems.map((item) => (
-            <InboxCard
-              key={item.id}
-              item={item}
-              isActioning={actionLoading === item.id}
-              isEditing={editingId === item.id}
-              editContent={editingId === item.id ? editContent : ""}
-              onApprove={() => handleAction(item.id, "done")}
-              onDismiss={() => handleAction(item.id, "dismissed")}
-              onEdit={() => handleEdit(item)}
-              onEditContentChange={setEditContent}
-              onSaveAndApprove={() => handleSaveAndApprove(item.id)}
-            />
-          ))}
+          {filteredItems.map((item) => {
+            // Render AutoBriefCard for auto_brief_ready items
+            if (item.type === "auto_brief_ready" && item.summary) {
+              let payload: AutoBriefPayload | null = null;
+              try {
+                payload = JSON.parse(item.summary) as AutoBriefPayload;
+              } catch {
+                // Malformed summary — fall through to standard card
+              }
+              if (payload) {
+                return (
+                  <AutoBriefCard
+                    key={item.id}
+                    itemId={item.id}
+                    payload={payload}
+                    clients={CLIENT_MAPPINGS.map((m) => ({
+                      spaceName: m.clickupSpaceName,
+                      spaceId: m.clickupSpaceId,
+                    }))}
+                    createdAt={item.createdAt}
+                    onCreated={fetchItems}
+                    onDismissed={fetchItems}
+                    showToast={showToast}
+                  />
+                );
+              }
+            }
+
+            return (
+              <InboxCard
+                key={item.id}
+                item={item}
+                isActioning={actionLoading === item.id}
+                isEditing={editingId === item.id}
+                editContent={editingId === item.id ? editContent : ""}
+                onApprove={() => handleAction(item.id, "done")}
+                onDismiss={() => handleAction(item.id, "dismissed")}
+                onEdit={() => handleEdit(item)}
+                onEditContentChange={setEditContent}
+                onSaveAndApprove={() => handleSaveAndApprove(item.id)}
+              />
+            );
+          })}
         </div>
       )}
 

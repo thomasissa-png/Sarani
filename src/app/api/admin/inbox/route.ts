@@ -8,9 +8,9 @@ import { eq, ne, desc, and, SQL } from "drizzle-orm";
 // ─── Validation schemas ───────────────────────────────────────────────────
 
 const InboxFiltersSchema = z.object({
-  status: z.enum(["pending", "in_progress", "done", "dismissed"]).optional(),
+  status: z.enum(["pending", "pending_review", "in_progress", "done", "dismissed"]).optional(),
   type: z
-    .enum(["email_classified", "ai_team_complete", "qa_gates_pass", "followup_alert", "noise"])
+    .enum(["email_classified", "ai_team_complete", "qa_gates_pass", "followup_alert", "noise", "auto_brief_ready"])
     .optional(),
   priority: z.enum(["high", "medium", "low"]).optional(),
   includeNoise: z
@@ -23,7 +23,7 @@ const InboxFiltersSchema = z.object({
 
 const PatchInboxItemSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["pending", "in_progress", "done", "dismissed"]),
+  status: z.enum(["pending", "pending_review", "in_progress", "done", "dismissed"]),
   pmId: z.string().optional(),
   // Approval/dismissal metadata — set automatically based on status
   approvedBy: z.string().optional(),
