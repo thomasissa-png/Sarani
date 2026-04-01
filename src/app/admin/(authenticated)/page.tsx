@@ -13,6 +13,7 @@ import { DraftReplyModal } from "@/components/inbox/DraftReplyModal";
 import { ProjectActionModal } from "@/components/inbox/ProjectActionModal";
 import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 import { filterItems, type FilterTab } from "@/lib/inbox/filters";
+import { SystemHealthBanner } from "@/components/inbox/SystemHealthBanner";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -656,6 +657,9 @@ export default function InboxPage() {
               })()}
         </p>
       </div>
+
+      {/* System health alert — polls /api/admin/health every 60s */}
+      <SystemHealthBanner />
 
       {/* Fetch error banner */}
       {fetchError && (
