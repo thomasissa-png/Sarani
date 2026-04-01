@@ -115,6 +115,28 @@ export function CreateBriefModal({
   const [assigneeId, setAssigneeId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExtractingBrief, setIsExtractingBrief] = useState(true);
+  const [entityOptions, setEntityOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [isLoadingEntities, setIsLoadingEntities] = useState(false);
+
+  // Fetch entities (folders + lists) when client changes
+  useEffect(() => {
+    if (!selectedSpaceId) {
+      setEntityOptions([]);
+      return;
+    }
+    let cancelled = false;
+    setIsLoadingEntities(true);
+    fetch(`/api/admin/clickup/entities?spaceId=${encodeURIComponent(selectedSpaceId)}`)
+      .then((res) => res.ok ? res.json() : { entities: [] })
+      .then((data) => {
+        if (!cancelled) {
+          setEntityOptions(data.entities ?? []);
+        }
+      })
+      .catch(() => { /* fallback: keep text input */ })
+      .finally(() => { if (!cancelled) setIsLoadingEntities(false); });
+    return () => { cancelled = true; };
+  }, [selectedSpaceId]);
 
   // LLM brief extraction on mount — Arya reformulates the email into a professional brief
   useEffect(() => {
@@ -440,22 +462,49 @@ export function CreateBriefModal({
               )}
             </div>
 
-            {/* Entity */}
+            {/* Entity / Subsidiary — dropdown from ClickUp folders+lists, with custom option */}
             <div>
               <label
                 htmlFor="brief-entity"
                 className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5"
               >
-                Entity / Subsidiary
+                Entity / Subsidiary {isLoadingEntities && <span className="text-brand-cerulean font-normal normal-case">(loading...)</span>}
               </label>
-              <input
-                id="brief-entity"
-                type="text"
-                value={entity}
-                onChange={(e) => setEntity(e.target.value)}
-                placeholder="e.g. Sony France, TikTok EMEA"
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 min-h-[44px] text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
-              />
+              {entityOptions.length > 0 ? (
+                <select
+                  id="brief-entity"
+                  value={entity}
+                  onChange={(e) => setEntity(e.target.value)}
+                  className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 min-h-[44px] text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
+                >
+                  <option value="">— Select entity —</option>
+                  {entityOptions.map((opt) => (
+                    <option key={opt.id} value={opt.name}>
+                      {opt.name}
+                    </option>
+                  ))}
+                  <option value="__custom__">Other (type manually)...</option>
+                </select>
+              ) : (
+                <input
+                  id="brief-entity"
+                  type="text"
+                  value={entity}
+                  onChange={(e) => setEntity(e.target.value)}
+                  placeholder={selectedSpaceId ? "e.g. Sony France, TikTok EMEA" : "Select client first"}
+                  className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 min-h-[44px] text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
+                />
+              )}
+              {entity === "__custom__" && (
+                <input
+                  type="text"
+                  value=""
+                  onChange={(e) => setEntity(e.target.value)}
+                  placeholder="Type entity name..."
+                  className="w-full mt-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-2.5 min-h-[44px] text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
+                  autoFocus
+                />
+              )}
             </div>
 
             {/* Tracker + SharePoint checkboxes with resolved paths */}

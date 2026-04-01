@@ -190,6 +190,22 @@ export async function getSpaces(): Promise<ClickUpSpace[]> {
 }
 
 /**
+ * Fetch Folders within a Space.
+ * Folders represent entities/subsidiaries (e.g., "Sony France", "Sony Music UK").
+ */
+export async function getFoldersForSpace(spaceId: string): Promise<Array<{ id: string; name: string }>> {
+  try {
+    const data = await clickupFetch<{ folders: Array<{ id: string; name: string }> }>(
+      `/space/${spaceId}/folder?archived=false`
+    );
+    return data.folders;
+  } catch {
+    // Some spaces may not have folders — return empty
+    return [];
+  }
+}
+
+/**
  * Fetch all folderless Lists for a given Space.
  * Lists represent divisions/regions within a client Space.
  */
