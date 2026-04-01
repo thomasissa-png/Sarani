@@ -204,7 +204,7 @@ export async function GET(request: NextRequest) {
       subtitle: [item.type?.replace(/_/g, " "), item.priority]
         .filter(Boolean)
         .join(" · "),
-      href: "/admin",  // Inbox is on the main admin page
+      href: `/admin?scrollTo=inbox-${item.id}`,
     }));
 
     const response: SearchResponse = {

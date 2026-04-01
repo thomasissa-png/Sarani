@@ -6,6 +6,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import {
   listDriveItems,
   graphFetch,
+  getDriveItemByPath,
   type DriveItem,
 } from "@/lib/integrations/sharepoint";
 import {
@@ -239,6 +240,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Resolve folder webUrl for direct SharePoint link
+    let folderWebUrl: string | null = null;
+    try {
+      const folderItem = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
+      folderWebUrl = folderItem.webUrl ?? null;
+    } catch {
+      // Non-critical — the folder link is a nice-to-have
+    }
+
     // List all files in the project folder
     const files = await listAllFiles(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
 
@@ -271,7 +281,7 @@ export async function POST(request: NextRequest) {
         })),
         anomalies,
       };
-      return NextResponse.json({ report, folderPath });
+      return NextResponse.json({ report, folderPath, folderWebUrl });
     }
 
     // Match files to expected deliverables
@@ -329,7 +339,7 @@ export async function POST(request: NextRequest) {
       anomalies,
     };
 
-    return NextResponse.json({ report, folderPath });
+    return NextResponse.json({ report, folderPath, folderWebUrl });
   } catch (error) {
     console.error("[Asset Review API] Error:", error);
 

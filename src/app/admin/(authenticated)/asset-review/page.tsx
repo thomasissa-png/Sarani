@@ -37,6 +37,7 @@ interface AssetReviewReport {
 interface ReviewResult {
   report: AssetReviewReport;
   folderPath: string;
+  folderWebUrl: string | null;
 }
 
 type ReviewStatus = "idle" | "scanning" | "done" | "error";
@@ -153,6 +154,9 @@ function AssetReviewContent() {
   const [clickUpUpdated, setClickUpUpdated] = useState(false);
   const [loadingBrief, setLoadingBrief] = useState(false);
   const [briefLoaded, setBriefLoaded] = useState(false);
+  const [returningToDesigner, setReturningToDesigner] = useState(false);
+  const [returnedToDesigner, setReturnedToDesigner] = useState(false);
+  const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const autoLoadedRef = useRef(false);
 
   const canScan = projectPath.trim().length > 0 && status !== "scanning";
@@ -281,6 +285,58 @@ function AssetReviewContent() {
   const report = result?.report;
   const hasResults = status === "done" && report;
   const allMatched = hasResults && report.missing.length === 0 && report.anomalies.length === 0;
+  const hasIssues = hasResults && (report.missing.length > 0 || report.anomalies.length > 0);
+
+  const handleReturnToDesigner = useCallback(async () => {
+    if (!result || !report) return;
+    setReturningToDesigner(true);
+
+    try {
+      // Build comment from missing files + anomalies
+      const lines: string[] = ["Asset Review — Returned to Designer\n"];
+      if (report.missing.length > 0) {
+        lines.push("Missing deliverables:");
+        report.missing.forEach((name: string) => lines.push(`  - ${name}`));
+      }
+      if (report.anomalies.length > 0) {
+        if (lines.length > 1) lines.push("");
+        lines.push("Anomalies:");
+        report.anomalies.forEach((desc: string) => lines.push(`  - ${desc}`));
+      }
+      const comment = lines.join("\n");
+
+      const res = await fetch("/api/admin/tracker/status", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: projectPath.trim(),
+          newStatus: "in progress",
+          comment,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to return task to designer");
+      }
+
+      setReturnedToDesigner(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to update ClickUp";
+      setErrorMessage(message);
+    } finally {
+      setReturningToDesigner(false);
+    }
+  }, [result, report, projectPath]);
+
+  // Wrap approve to show confirmation when missing deliverables
+  const handleApproveClick = useCallback(() => {
+    if (report && report.missing.length > 0) {
+      setShowApproveConfirm(true);
+    } else {
+      handleApproveClickUp();
+    }
+  }, [report, handleApproveClickUp]);
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -453,10 +509,27 @@ function AssetReviewContent() {
             />
           </div>
 
-          {/* Folder path */}
+          {/* Folder path + SharePoint link */}
           {result.folderPath && (
-            <p className="text-xs text-neutral-500">
-              Scanned: <code className="bg-neutral-200 px-1.5 py-0.5 rounded text-neutral-600">{result.folderPath}</code>
+            <p className="text-xs text-neutral-500 flex items-center gap-2 flex-wrap">
+              <span>
+                Scanned: <code className="bg-neutral-200 px-1.5 py-0.5 rounded text-neutral-600">{result.folderPath}</code>
+              </span>
+              {result.folderWebUrl && (
+                <a
+                  href={result.folderWebUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-brand-cerulean hover:text-brand-cerulean-dark font-medium transition-colors"
+                >
+                  Open in SharePoint
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              )}
             </p>
           )}
 
@@ -534,8 +607,8 @@ function AssetReviewContent() {
             </div>
           )}
 
-          {/* Approve button */}
-          <div className="bg-white rounded-xl border border-neutral-300 p-6 flex items-center justify-between">
+          {/* Action buttons */}
+          <div className="bg-white rounded-xl border border-neutral-300 p-6 flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-brand-black">
                 {allMatched ? "All deliverables match" : "Review complete"}
@@ -547,36 +620,115 @@ function AssetReviewContent() {
                 }
               </p>
             </div>
-            <button
-              onClick={handleApproveClickUp}
-              disabled={updatingClickUp || clickUpUpdated}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors",
-                clickUpUpdated
-                  ? "bg-success-light text-success cursor-default"
-                  : updatingClickUp
-                    ? "bg-neutral-200 text-neutral-400 cursor-wait"
-                    : "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Return to Designer — visible only when issues exist */}
+              {hasIssues && (
+                <button
+                  onClick={handleReturnToDesigner}
+                  disabled={returningToDesigner || returnedToDesigner || clickUpUpdated}
+                  className={cn(
+                    "inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors",
+                    returnedToDesigner
+                      ? "bg-error/10 text-error cursor-default"
+                      : returningToDesigner
+                        ? "bg-neutral-200 text-neutral-400 cursor-wait"
+                        : clickUpUpdated
+                          ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                          : "bg-error/10 text-error hover:bg-error/20"
+                  )}
+                >
+                  {returnedToDesigner ? (
+                    <>
+                      <MissingIcon />
+                      Returned to Designer
+                    </>
+                  ) : returningToDesigner ? (
+                    <>
+                      <svg className="w-4 h-4 motion-safe:animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Returning...
+                    </>
+                  ) : (
+                    "Return to Designer"
+                  )}
+                </button>
               )}
-            >
-              {clickUpUpdated ? (
-                <>
-                  <MatchIcon />
-                  ClickUp Updated
-                </>
-              ) : updatingClickUp ? (
-                <>
-                  <svg className="w-4 h-4 motion-safe:animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Updating...
-                </>
-              ) : (
-                "Approve & Update ClickUp"
-              )}
-            </button>
+
+              {/* Approve & Update ClickUp */}
+              <button
+                onClick={handleApproveClick}
+                disabled={updatingClickUp || clickUpUpdated || returnedToDesigner}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors",
+                  clickUpUpdated
+                    ? "bg-success-light text-success cursor-default"
+                    : updatingClickUp
+                      ? "bg-neutral-200 text-neutral-400 cursor-wait"
+                      : returnedToDesigner
+                        ? "bg-neutral-100 text-neutral-400 cursor-not-allowed"
+                        : "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+                )}
+              >
+                {clickUpUpdated ? (
+                  <>
+                    <MatchIcon />
+                    ClickUp Updated
+                  </>
+                ) : updatingClickUp ? (
+                  <>
+                    <svg className="w-4 h-4 motion-safe:animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Updating...
+                  </>
+                ) : (
+                  "Approve & Update ClickUp"
+                )}
+              </button>
+            </div>
           </div>
+
+          {/* Approve confirmation modal when assets are missing */}
+          {showApproveConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-labelledby="approve-confirm-title">
+              <div className="bg-white rounded-xl border border-neutral-300 p-6 max-w-md w-full mx-4 shadow-xl">
+                <h3 id="approve-confirm-title" className="text-base font-semibold text-brand-black">
+                  Approve with missing deliverables?
+                </h3>
+                <p className="text-sm text-neutral-600 mt-2">
+                  {report.missing.length} deliverable{report.missing.length > 1 ? "s are" : " is"} still missing. Are you sure you want to approve and move this project to Client Review?
+                </p>
+                <ul className="mt-3 space-y-1 max-h-32 overflow-y-auto">
+                  {report.missing.map((name: string, i: number) => (
+                    <li key={i} className="text-xs text-error flex items-center gap-1.5">
+                      <MissingIcon />
+                      <span className="truncate">{name}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-center justify-end gap-3 mt-5">
+                  <button
+                    onClick={() => setShowApproveConfirm(false)}
+                    className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowApproveConfirm(false);
+                      handleApproveClickUp();
+                    }}
+                    className="rounded-lg px-4 py-2 text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors"
+                  >
+                    Approve Anyway
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

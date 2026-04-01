@@ -280,6 +280,20 @@ export async function updateTaskStatus(
 }
 
 /**
+ * Post a comment on a task.
+ * Uses plain text format (comment_text).
+ */
+export async function addTaskComment(
+  taskId: string,
+  commentText: string
+): Promise<void> {
+  await clickupFetch<Record<string, unknown>>(`/task/${taskId}/comment`, {
+    method: "POST",
+    body: JSON.stringify({ comment_text: commentText }),
+  });
+}
+
+/**
  * Extract a custom field value from a task by field name.
  * Returns the raw value or null if the field is not found / has no value.
  */
