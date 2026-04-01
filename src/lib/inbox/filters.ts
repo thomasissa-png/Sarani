@@ -44,7 +44,8 @@ export interface InboxItemFilterable {
   priority?: string | null;
   pmId?: string | null;
   projectId?: string | null;
-  [key: string]: unknown;
+  updatedAt?: string | Date;
+}
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────
