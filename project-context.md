@@ -442,7 +442,7 @@ Session massive — ~30 commits, ~8000+ lignes. Création complète de l'agent @
 - Tout ce qu'Arya enregistre doit être pertinent pour l'équipe
 - Arya doit utiliser activement sa knowledge base à chaque interaction
 
-**Branche de travail :** claude/extract-project-context-pGcr7
+**Branche de travail :** claude/extract-project-context-x6bnn
 
 **Commande de reprise suggérée :**
 ```
