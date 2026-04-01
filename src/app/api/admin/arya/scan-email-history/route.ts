@@ -209,7 +209,7 @@ export async function POST(request: NextRequest) {
 
     while (nextLink && allEmails.length < maxEmails) {
       try {
-        const page = await graphFetch<GraphEmailResponse>(nextLink);
+        const page: GraphEmailResponse = await graphFetch<GraphEmailResponse>(nextLink);
         if (!page?.value || !Array.isArray(page.value)) break;
         allEmails.push(...page.value);
         nextLink = page["@odata.nextLink"] ?? null;
