@@ -55,6 +55,55 @@ export function ProjectActionModal({
 
   const config = VARIANT_CONFIG[variant];
 
+  // ClickUp search: resolve clickupProjectHint into a real URL
+  const [clickupSearchResult, setClickupSearchResult] = useState<{
+    taskId: string | null;
+    taskUrl: string | null;
+    taskName: string | null;
+  } | null>(null);
+  const [isSearchingClickUp, setIsSearchingClickUp] = useState(false);
+
+  useEffect(() => {
+    if (variant !== "open_project") return;
+
+    // Check if we already have a direct URL/taskId in the payload
+    const directUrl = (payload as unknown as Record<string, unknown>)?.clickupUrl as string | undefined;
+    const directTaskId = (payload as unknown as Record<string, unknown>)?.taskId as string | undefined;
+    if (directUrl || directTaskId) {
+      setClickupSearchResult({
+        taskId: directTaskId ?? null,
+        taskUrl: directUrl ?? (directTaskId ? `https://app.clickup.com/t/${directTaskId}` : null),
+        taskName: null,
+      });
+      return;
+    }
+
+    // Otherwise, use clickupProjectHint to search
+    const hint = payload.classification?.clickupProjectHint;
+    if (!hint) return;
+
+    setIsSearchingClickUp(true);
+    fetch("/api/admin/clickup/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: hint }),
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.taskId) {
+          setClickupSearchResult({
+            taskId: data.taskId,
+            taskUrl: data.taskUrl ?? `https://app.clickup.com/t/${data.taskId}`,
+            taskName: data.taskName ?? null,
+          });
+        }
+      })
+      .catch(() => {
+        // Graceful degradation — button stays disabled
+      })
+      .finally(() => setIsSearchingClickUp(false));
+  }, [variant, payload]);
+
   // Focus trap + Escape
   useEffect(() => {
     const firstButton = dialogRef.current?.querySelector<HTMLElement>(
@@ -127,22 +176,16 @@ export function ProjectActionModal({
     setTimeout(() => onOpenDraftReply(), 50);
   };
 
-  // Extract ClickUp URL from summary if available (for open_project)
-  const clickupUrl = (payload as unknown as Record<string, unknown>)?.clickupUrl as string | undefined;
-  const taskId = (payload as unknown as Record<string, unknown>)?.taskId as string | undefined;
-  const hasClickUpLink = Boolean(clickupUrl || taskId);
+  // ClickUp link: resolved from search or direct payload
+  const resolvedClickupUrl = clickupSearchResult?.taskUrl ?? null;
+  const hasClickUpLink = Boolean(resolvedClickupUrl);
 
   const tryOpenClickUp = () => {
-    if (clickupUrl) {
-      window.open(clickupUrl, "_blank", "noopener,noreferrer");
-      showToast("Opened project in ClickUp", "success");
-      handleMarkDone();
-    } else if (taskId) {
-      window.open(`https://app.clickup.com/t/${taskId}`, "_blank", "noopener,noreferrer");
+    if (resolvedClickupUrl) {
+      window.open(resolvedClickupUrl, "_blank", "noopener,noreferrer");
       showToast("Opened project in ClickUp", "success");
       handleMarkDone();
     } else {
-      // No URL found — do NOT silently open ClickUp home
       showToast("Project not found in ClickUp. Use manual search.", "error");
     }
   };
@@ -277,16 +320,22 @@ export function ProjectActionModal({
               <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={tryOpenClickUp}
-                  disabled={!hasClickUpLink}
+                  disabled={!hasClickUpLink || isSearchingClickUp}
                   className={cn(
                     "flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold transition-colors",
                     hasClickUpLink
                       ? "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
                       : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
                   )}
-                  title={hasClickUpLink ? "Open project in ClickUp" : "Project not found in ClickUp"}
+                  title={
+                    isSearchingClickUp
+                      ? "Searching for project in ClickUp..."
+                      : hasClickUpLink
+                        ? `Open ${clickupSearchResult?.taskName ?? "project"} in ClickUp`
+                        : "Project not found in ClickUp"
+                  }
                 >
-                  Open in ClickUp
+                  {isSearchingClickUp ? "Searching ClickUp..." : "Open in ClickUp"}
                 </button>
                 <button
                   onClick={handleDraftReply}
