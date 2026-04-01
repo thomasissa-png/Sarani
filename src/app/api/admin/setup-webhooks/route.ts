@@ -3,6 +3,7 @@ import { getUserFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { graphSubscriptions } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
+import { graphFetch } from "@/lib/integrations/sharepoint";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -37,9 +38,26 @@ interface ClickUpWebhookListResponse {
 
 // ─── Outlook Graph setup ───────────────────────────────────────────────────
 
+const EMAIL_ADDRESS = process.env.MICROSOFT_EMAIL_ADDRESS || "team@sarani.studio";
+const SUBSCRIPTION_DURATION_MINUTES = 48 * 60; // 2880 minutes = 48 hours
+
+interface GraphSubscription {
+  id: string;
+  resource: string;
+  changeType: string;
+  notificationUrl: string;
+  expirationDateTime: string;
+  clientState: string;
+}
+
 async function setupOutlookSubscription(
-  baseUrl: string
+  appUrl: string
 ): Promise<{ status: "active" | "created" | "error"; detail: string }> {
+  const webhookSecret = process.env.GRAPH_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    return { status: "error", detail: "GRAPH_WEBHOOK_SECRET not configured" };
+  }
+
   // Check if we have an active, non-expired subscription
   const existingSubs = await db
     .select()
@@ -57,26 +75,38 @@ async function setupOutlookSubscription(
     }
   }
 
-  // Create new subscription by calling our own graph-subscriptions endpoint
-  const response = await fetch(`${baseUrl}/api/admin/graph-subscriptions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({}),
+  // Create subscription directly via Graph API (no internal fetch)
+  const notificationUrl = `${appUrl}/api/webhooks/graph-mail`;
+  const expirationDateTime = new Date(
+    Date.now() + SUBSCRIPTION_DURATION_MINUTES * 60 * 1000
+  ).toISOString();
+  const resource = `/users/${encodeURIComponent(EMAIL_ADDRESS)}/mailFolders('Inbox')/messages`;
+
+  const subscription: GraphSubscription = await graphFetch<GraphSubscription>(
+    "/subscriptions",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        changeType: "created",
+        notificationUrl,
+        resource,
+        expirationDateTime,
+        clientState: webhookSecret,
+      }),
+    }
+  );
+
+  // Store in DB for renewal tracking
+  await db.insert(graphSubscriptions).values({
+    subscriptionId: subscription.id,
+    resource,
+    expirationDateTime: new Date(subscription.expirationDateTime),
+    clientState: webhookSecret,
   });
 
-  if (!response.ok) {
-    const errorBody: string = await response.text();
-    return {
-      status: "error",
-      detail: `Failed to create Graph subscription: ${response.status} ${errorBody}`,
-    };
-  }
-
-  const result: { subscriptionId: string; expirationDateTime: string } =
-    await response.json();
   return {
     status: "created",
-    detail: `Created subscription ${result.subscriptionId}, expires ${result.expirationDateTime}`,
+    detail: `Created subscription ${subscription.id}, expires ${subscription.expirationDateTime}, notificationUrl: ${notificationUrl}`,
   };
 }
 
