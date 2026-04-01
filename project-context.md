@@ -387,65 +387,46 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-01 ~01:00 UTC (session 10 — extended)
+**Date et heure de clôture :** 2026-04-01 ~06:00 UTC (session 11)
 
-**Résumé de la session (session 10) :**
-Session massive — ~30 commits, ~8000+ lignes. Création complète de l'agent @client-manager (Arya) avec 7 protocoles opérationnels, quality gates par type de projet, et back-office redesigné en inbox de validation. 3 phases livrées : (1) framework update + Video AI providers, (2) Arya agent + protocoles + capabilities email/classification/brief, (3) back-office inbox UI + auto-review loop + crons + client knowledge base + email chain aggregation. QA extensive après chaque phase. Audit UX par Arya elle-même : 6.5/10 — solide pour emails/devis, gaps sur asset review et workflow bout-en-bout.
+**Résumé de la session (session 11) :**
+Session orientée back-office ops + Arya capabilities. ~15 commits. Les 3 gaps Arya (S10) résolus + project closure/star pipeline + email history scan + PM star override. Reviews 5 agents (arya/ux/design/elon/qa) avec 2 batches d'itération 10/10. @elon : VALIDATED 7/10 — Star Pipeline = meilleure feature, prochaine session = outbound pipeline.
 
 **Travaux terminés cette session :**
-- [x] Framework Gradient Agents mis à jour (21 agents + CLAUDE.md fusionné)
-- [x] 4 learnings P0/P1 S8+S9 propagés dans 7 agents + CLAUDE.md
-- [x] Phase 4 QA : 44 nouveaux tests (RBAC, API, LLM smoke) + CI pipeline complète (80 tests total)
-- [x] Phase 3f Video AI : 3 providers (Veo 3.1, Runway Gen-4, Kling 3.0) + migration + API + UI
-- [x] Agent @client-manager (Arya) créé : 311 lignes, escalade @moi, gate pricing, 10 compétences
-- [x] 7 protocoles opérationnels (EMAIL-INTAKE, CLIENT-REPLY, ASSET-REVIEW, QUOTE, PROJECT-FOLLOWUP, AI-TEAM, PITCH)
-- [x] Quality gates par type de projet (7 grilles PASS/FAIL : social, video, design, SEO, ad, translation, custom)
-- [x] Email capabilities : sendEmail, createDraft (brouillons Outlook), classify Haiku (5 catégories + langue + routeTo)
-- [x] Brief template 6 sections Sarani avec emojis + brief-check enrichi par type (design/trad/vidéo/social)
-- [x] PROTO-CLIENT-RETURN : matching email→projet via conversationId + fallback Levenshtein
-- [x] Classification enrichie : new_client_prospect + détection langue + routeTo protocole
-- [x] Activation automatique : webhook Graph Mail + cron poll-emails + cron project-scan + cron renew-subscriptions
-- [x] Inbox items : table DB + API CRUD + webhook/cron alimentent automatiquement
-- [x] Learning journal : arya_learnings + arya_rules tables, capture corrections PM, promotion en règles
-- [x] Back-office Phase 2 : Inbox UI (page principale), sidebar 5 items, page Arya supervision
-- [x] UX fixes : Edit handler inline, toast feedback, tokens Sarani, touch targets 44px, error handling
-- [x] Client Knowledge Base : table + API CRUD + prompt injection + knowledge-loader utility
-- [x] Email chain aggregation : détection threads par conversationId, fusion briefs, badge "X emails"
-- [x] Phase 3 auto-review loop : QA gates FAIL → relance automatique (max 3 tours) → escalade inbox
-- [x] Asset review endpoint : comparaison SharePoint files vs expected deliverables
-- [x] Sécurité : middleware cron bypass, RBAC adminOnlyPaths complet, auth guards, rate limits
-- [x] Fix TS pré-existant : SharePointApiError cast (0 erreurs TS)
+- [x] Pont inbox → quick-brief (déjà implémenté en S10 — vérifié et confirmé)
+- [x] Asset review UI enhanced : thumbnails SharePoint (Graph $expand), auto-load URL params, ClickUp brief loader, "Return to Designer" button, confirmation modal quand assets manquants, SharePoint folder direct link
+- [x] Recherche globale back-office : API /api/admin/search (clients, projets, inbox), Cmd+K, keyboard nav, mobile overlay, WCAG AA (focus-visible, aria-controls, reduced-motion)
+- [x] Specs project closure + star pipeline + LinkedIn feeder (docs/product/project-closure-star-pipeline-specs.md — 1026 lignes)
+- [x] Project Closures : DB tables (project_closures, star_pipeline_items), migration Drizzle, star score calculator 5 critères pondérés (seuil 75), API CRUD, page UI closures avec score breakdown visuel
+- [x] PM Star Override : API PATCH confirm/reject/nominate, UI buttons, pipeline items auto-créés/supprimés
+- [x] Email History Scan : scan paginé Graph API (500 emails, 1 an), extraction LLM Haiku par batch de 20, upsert client_knowledge + team_knowledge, bouton dans page Arya
+- [x] Knowledge extractor prompt (src/lib/ai/prompts/knowledge-extractor.ts) : 4 scopes, 11 catégories, confiance high/medium
+- [x] Itération 10/10 batch 1 : QA error sanitization, rate-limit map pruning, mobile search error state, brief load success indicator, Cmd+K hint md:, aria-controls, min-h-44px touch target, neutral-400→500 contrast
+- [x] Itération 10/10 batch 2 : reject button, confirmation modal, SharePoint link, inbox deep links
+- [x] QA fixes P0 : missing `and` import (runtime crash), pipeline type mismatch, graphFetch response guard
+- [x] P0 learning : règle n°2 renforcée — ne jamais présenter des exemples fictifs comme réels
 
 **Travaux en cours / à confirmer :**
-- **Audit Arya 6.5/10** — 3 gaps critiques identifiés par Arya elle-même :
-  1. Pas de pont inbox → quick-brief (le "Approve" ne lance pas la création de projet automatiquement)
-  2. Asset review incomplet (endpoint basique existe, pas de page UI dédiée avec thumbnails)
-  3. Pas de recherche globale dans le back-office
-- **Email history scan** : Thomas veut qu'Arya scanne l'historique des emails (Graph API) pour bootstrapper la knowledge base client. Techniquement faisable mais pas encore implémenté.
-- **Fire-and-forget vidéo** : le pattern `void processVideoGeneration()` ne fonctionne pas sur Replit autoscale. Besoin d'une queue job ou d'un cron de traitement.
+- **Fire-and-forget vidéo** : le pattern `void processVideoGeneration()` ne fonctionne pas sur Replit autoscale. Besoin d'une queue job ou d'un cron de traitement (reporté depuis S10).
+- **Case study detail page inline editing** : agent a timeout en améliorant la page de détail. La feature de base fonctionne (list + detail + generate + regenerate + publish). Le polish inline editing est nice-to-have.
 
-**Prochaines actions recommandées (par Arya + @elon) :**
-1. **Pont inbox → quick-brief** (PRIORITÉ 1) : quand la PM approve un item email_brief, ouvrir automatiquement le Quick Brief pré-rempli ou lancer la création de projet. C'est la frustration #1 d'Arya.
-2. **Page asset review UI** (PRIORITÉ 2) : page dédiée avec thumbnails SharePoint, comparaison brief vs livrés, validation/rejet par asset. C'est l'activité quotidienne la plus chronophage des PMs.
-3. **Recherche globale** (PRIORITÉ 3) : champ de recherche dans le header qui cherche dans projets, clients et inbox items.
-4. **Email history scan** (PRIORITÉ 4) : scan paginé de l'historique email pour bootstrapper la knowledge base client automatiquement.
-5. **Vue Kanban projets** (PRIORITÉ 5) : alternative visuelle au Tracker pour le standup quotidien.
+**Prochaines actions recommandées (par @elon S11) :**
+1. **Outbound pipeline LinkedIn** (PRIORITÉ 1) : automatiser la publication LinkedIn depuis les star pipeline outputs. Le spec LinkedIn feeder existe (dans project-closure-star-pipeline-specs.md), pas encore implémenté. C'est le levier de croissance #1 selon @elon.
+2. **Revenue dashboard / PM capacity** (PRIORITÉ 2) : @elon flag : "zéro revenue intelligence dans le back-office". Ajouter un dashboard avec revenue par PM, capacité, pipeline visibility. C'est ce qui manque pour piloter la croissance 3.5M→10M.
+3. **Prospecting engine** (PRIORITÉ 3) : cibler les Sophie-persona dans les Fortune 500 avec les case studies star comme ammo. Proposal generator contextuel.
+4. **Vue Kanban projets** (PRIORITÉ 4) : alternative visuelle au Tracker pour le standup quotidien (reporté depuis S10).
+5. **Fire-and-forget vidéo** (PRIORITÉ 5) : queue job ou cron pour la génération vidéo async.
 
 **Décisions de Thomas cette session :**
-- Arya (@client-manager) = cœur du back-office, remplace l'ancien @pm
-- Arya travaille en binôme avec les PMs humaines (prépare, la PM valide)
-- Brouillons d'emails (pas d'envoi direct) — la PM a toujours le dernier mot
-- Escalade vers @moi quand Arya ne sait pas
-- Arya n'est pas soumise — elle prend du recul comme une vraie chef de projet
-- Journal de learning (corrections PM → Arya apprend)
-- Client Knowledge Base par société/division/individu
-- Emails successifs d'un même client → agrégation automatique
-- Tout ce qu'Arya enregistre doit être pertinent pour l'équipe
-- Arya doit utiliser activement sa knowledge base à chaque interaction
+- Les PMs humaines doivent pouvoir valider/invalider si un projet est vraiment star (override du score Arya)
+- Les PMs doivent pouvoir proposer des projets star à Arya manuellement (nominate)
+- Quand un projet est clôturé et star : case study + article LinkedIn + slide présentation + signal SEO
+- Arya en charge de feeder LinkedIn Sarani (en collaboration avec @creative-strategy et @social)
+- Règle n°2 renforcée : ne jamais présenter des exemples fictifs comme réels, même "à titre d'illustration"
 
 **Branche de travail :** claude/extract-project-context-x6bnn
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 10 complète — ~30 commits, ~8000 lignes. Branche : claude/extract-project-context-pGcr7. Arya (@client-manager) créée et opérationnelle. Audit Arya 6.5/10 — 3 gaps critiques : (1) pont inbox→brief, (2) page asset review UI, (3) recherche globale. Prochaines priorités : implémenter les 3 gaps + email history scan pour bootstrapper la knowledge base. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 11 complète — ~15 commits. Branche : claude/extract-project-context-x6bnn. 3 gaps Arya S10 résolus (asset review, recherche globale, pont inbox→brief). Nouvelles features : project closure + star pipeline + PM override + email history scan. @elon : VALIDATED 7/10, prochaine priorité = outbound pipeline LinkedIn + revenue dashboard. Ne lance aucun agent avant mon feu vert.
 ```
