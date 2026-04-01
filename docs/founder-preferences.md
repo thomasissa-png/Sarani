@@ -65,3 +65,13 @@
 - [S7] Les proposals commerciaux doivent être des liens web (pas PDF), pré-remplis avec les données Sarani (case studies, conditions unlimited revisions/D+1, références clients).
 - [S7] Thomas préfère les flux progressifs avec points de validation intermédiaires (brief → storyboard → vidéo) plutôt que les flux directs (brief → vidéo).
 - [S8] **Les images des livrables clients sont dans SharePoint** — toujours les utiliser (via API Graph) plutôt que demander à Thomas de fournir des assets. Les dossiers "Batch" contiennent les visuels de production réels.
+
+## Back-office et workflow PM
+
+- [S10] **Le back-office est une inbox de validation, pas un panneau de contrôle.** Arya prépare, la PM valide. 5 écrans max (Inbox, Projects, Clients, Arya, Settings), pas 20 pages d'outils.
+- [S10] **Emails = brouillons, pas d'envoi direct.** Arya crée des drafts Outlook. La PM a toujours le dernier mot — elle ouvre le brouillon et clique "Envoyer" elle-même.
+- [S10] **Arya n'est pas soumise.** Elle prend du recul, challenge les briefs flous, recommande des alternatives, et escalade à Thomas (@moi) quand elle ne sait pas. Comme une vraie chef de projet.
+- [S10] **Les connaissances Arya doivent être PERTINENTES et UTILISÉES.** Chaque entrée passe le test "est-ce que ça change la façon dont on traite le prochain projet ?" Et Arya charge activement ses connaissances à chaque interaction.
+- [S10] **Knowledge base par client/division/individu ET par membre d'équipe.** Arya connaît ses clients ET son équipe — style, forces, axes d'amélioration, préférences.
+- [S10] **L'audit par l'agent utilisateur est le meilleur test.** Arya qui audite son propre back-office détecte des gaps que @qa/@design/@ux ratent — perspective métier terrain.
+- [S10] **Les équipes IA doivent couvrir TOUTES les familles de projets** (vidéo, design, social, marketing, événementiel, traduction, présentation, juridique, email, publicité, identité, SEO). Thomas veut une review à 10/10 via gates spécifiques par type.
