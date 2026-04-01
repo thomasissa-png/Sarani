@@ -278,7 +278,7 @@ export default function InboxPage() {
 
   // Modal state for email actions
   const [activeModal, setActiveModal] = useState<{
-    type: "create_brief" | "open_project" | "draft_reply" | "prepare_pitch";
+    type: "create_brief" | "open_project" | "draft_reply" | "prepare_pitch" | "create_feedback";
     item: InboxItem;
     payload: EmailPayload;
   } | null>(null);
@@ -853,7 +853,12 @@ export default function InboxPage() {
                     onDismiss={() => handleAction(item.id, "dismissed")}
                     onMarkNoise={() => handleMarkAsNoise(item.id)}
                     onCreateBrief={() => setActiveModal({ type: "create_brief", item, payload: emailPayload })}
-                    onOpenProject={() => setActiveModal({ type: "open_project", item, payload: emailPayload })}
+                    onOpenProject={() => {
+                      const isFeedback = item.protocol === "PROTO-CLIENT-RETURN" ||
+                        emailPayload.classification?.category === "project_feedback" ||
+                        emailPayload.classification?.category === "client_followup";
+                      setActiveModal({ type: isFeedback ? "create_feedback" : "open_project", item, payload: emailPayload });
+                    }}
                     onDraftReply={() => setActiveModal({ type: "draft_reply", item, payload: emailPayload })}
                     onPreparePitch={() => setActiveModal({ type: "prepare_pitch", item, payload: emailPayload })}
                     showToast={showToast}
@@ -1033,7 +1038,7 @@ export default function InboxPage() {
         />
       )}
 
-      {(activeModal?.type === "open_project" || activeModal?.type === "prepare_pitch") && (
+      {(activeModal?.type === "open_project" || activeModal?.type === "prepare_pitch" || activeModal?.type === "create_feedback") && (
         <ProjectActionModal
           variant={activeModal.type}
           itemId={activeModal.item.id}

@@ -10,7 +10,7 @@ import type { EmailPayload } from "./EmailCard";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type ModalVariant = "open_project" | "prepare_pitch";
+type ModalVariant = "open_project" | "prepare_pitch" | "create_feedback";
 
 interface ProjectActionModalProps {
   variant: ModalVariant;
@@ -35,6 +35,10 @@ const VARIANT_CONFIG: Record<
     title: "New Prospect",
     accentColor: "bg-brand-flame",
   },
+  create_feedback: {
+    title: "Project Feedback",
+    accentColor: "bg-brand-cerulean",
+  },
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -52,6 +56,10 @@ export function ProjectActionModal({
   const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [isPostingFeedback, setIsPostingFeedback] = useState(false);
+  const [feedbackComment, setFeedbackComment] = useState(
+    payload.classification.draftReply || payload.classification.suggestedAction || ""
+  );
 
   const config = VARIANT_CONFIG[variant];
 
@@ -64,7 +72,7 @@ export function ProjectActionModal({
   const [isSearchingClickUp, setIsSearchingClickUp] = useState(false);
 
   useEffect(() => {
-    if (variant !== "open_project") return;
+    if (variant !== "open_project" && variant !== "create_feedback") return;
 
     // Check if we already have a direct URL/taskId in the payload
     const directUrl = (payload as unknown as Record<string, unknown>)?.clickupUrl as string | undefined;
@@ -204,6 +212,47 @@ export function ProjectActionModal({
     }
   };
 
+  const handlePostFeedback = async () => {
+    if (!feedbackComment.trim()) {
+      showToast("Feedback comment cannot be empty", "error");
+      return;
+    }
+    const taskId = clickupSearchResult?.taskId;
+    if (!taskId) {
+      showToast("No ClickUp project found — cannot post feedback", "error");
+      return;
+    }
+    setIsPostingFeedback(true);
+    try {
+      // Post comment to ClickUp task
+      const commentRes = await fetch("/api/admin/clickup/comment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, comment: feedbackComment }),
+      });
+      if (!commentRes.ok) {
+        showToast("Failed to post comment to ClickUp", "error");
+        return;
+      }
+      // Reopen the task (set status to "Open")
+      const reopenRes = await fetch("/api/admin/clickup/reopen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId }),
+      });
+      if (!reopenRes.ok) {
+        showToast("Comment posted but failed to reopen task", "error");
+      } else {
+        showToast("Feedback posted and project reopened in ClickUp", "success");
+      }
+      handleMarkDone();
+    } catch {
+      showToast("Network error — please retry", "error");
+    } finally {
+      setIsPostingFeedback(false);
+    }
+  };
+
   return (
     <div
       ref={overlayRef}
@@ -311,6 +360,34 @@ export function ProjectActionModal({
               </p>
             </div>
           )}
+
+          {/* Feedback comment editor (create_feedback variant) */}
+          {variant === "create_feedback" && (
+            <div className="space-y-2">
+              <label htmlFor="feedback-comment" className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                Feedback Comment for ClickUp
+              </label>
+              <textarea
+                id="feedback-comment"
+                value={feedbackComment}
+                onChange={(e) => setFeedbackComment(e.target.value)}
+                rows={6}
+                className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm text-brand-black focus:border-brand-cerulean focus:ring-1 focus:ring-brand-cerulean outline-none resize-y"
+                placeholder="Write the feedback comment to post on the ClickUp task..."
+              />
+              {clickupSearchResult?.taskName && (
+                <p className="text-xs text-neutral-400">
+                  Will be posted to: <span className="font-medium text-brand-cerulean">{clickupSearchResult.taskName}</span>
+                </p>
+              )}
+              {isSearchingClickUp && (
+                <p className="text-xs text-neutral-400">Searching for project in ClickUp...</p>
+              )}
+              {!isSearchingClickUp && !clickupSearchResult?.taskId && (
+                <p className="text-xs text-error">Project not found in ClickUp — feedback cannot be posted automatically</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -346,6 +423,46 @@ export function ProjectActionModal({
                 </button>
               </div>
               {!hasClickUpLink && (
+                <p className="text-xs text-neutral-400">
+                  Project not found in ClickUp —{" "}
+                  <a
+                    href="https://app.clickup.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-cerulean hover:underline"
+                  >
+                    search manually
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
+
+          {variant === "create_feedback" && (
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={handlePostFeedback}
+                  disabled={!hasClickUpLink || isSearchingClickUp || isPostingFeedback || !feedbackComment.trim()}
+                  className={cn(
+                    "flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold transition-colors",
+                    hasClickUpLink && feedbackComment.trim()
+                      ? "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+                      : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                  )}
+                  aria-label="Post feedback comment to ClickUp and reopen the task"
+                >
+                  {isPostingFeedback ? "Posting..." : isSearchingClickUp ? "Searching ClickUp..." : "Post Feedback to ClickUp"}
+                </button>
+                <button
+                  onClick={handleDraftReply}
+                  aria-label="Draft a reply to this client"
+                  className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors"
+                >
+                  Draft Reply
+                </button>
+              </div>
+              {!hasClickUpLink && !isSearchingClickUp && (
                 <p className="text-xs text-neutral-400">
                   Project not found in ClickUp —{" "}
                   <a
