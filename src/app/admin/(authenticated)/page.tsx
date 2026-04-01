@@ -552,6 +552,27 @@ export default function InboxPage() {
               }
             }
 
+            // Render EmailCard for email_classified items
+            if (item.type === "email_classified" && item.summary) {
+              const emailPayload = parseEmailPayload(item.summary);
+              if (emailPayload) {
+                return (
+                  <EmailCard
+                    key={item.id}
+                    itemId={item.id}
+                    sourceId={item.sourceId}
+                    payload={emailPayload}
+                    createdAt={item.createdAt}
+                    isActioning={actionLoading === item.id}
+                    onApprove={() => handleAction(item.id, "done")}
+                    onDismiss={() => handleAction(item.id, "dismissed")}
+                    onMarkNoise={() => handleAction(item.id, "dismissed")}
+                    showToast={showToast}
+                  />
+                );
+              }
+            }
+
             return (
               <InboxCard
                 key={item.id}
