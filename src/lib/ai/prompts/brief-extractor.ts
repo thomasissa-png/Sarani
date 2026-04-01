@@ -12,7 +12,7 @@ export const BriefExtractionResultSchema = z.object({
   entity: z.string(),
   project_title: z.string(),
   contact_email: z.string(),
-  project_type: z.enum(["generic", "design", "video", "translation", "social", "other"]),
+  project_type: z.enum(["design", "video", "translation", "social", "other", "generic"]),
   brief_introduction: z.string(),
   brief_body: z.string(),
   deadline: z.string(),           // "Tomorrow 6pm CET" or "To be confirmed"
@@ -38,13 +38,13 @@ Extract these JSON fields:
 - entity: string — specific entity/subsidiary ("Sony France", "TikTok EMEA"). If unclear, use general client name.
 - project_title: string — short title (5-10 words), from email subject
 - contact_email: string — sender's email address
-- project_type: "design" | "video" | "translation" | "social" | "other" | "generic"
+- project_type: "design" | "video" | "translation" | "social" | "other"
   - "translation": translation, localization, adaptation, multilingual, version FR/EN
   - "video": video editing, motion graphics, animation, TikTok content
   - "design": graphic design, banners, posters, deck, presentation, branding
   - "social": social media posts, stories, reels (NOT video editing)
-  - "other": copywriting, strategy, consulting
-  - "generic": only if absolutely no deliverable type can be inferred
+  - "other": copywriting, strategy, consulting, or no specific deliverable type identifiable
+  - "generic": DEPRECATED — use "other" instead. Kept for backward compatibility only.
 - brief_introduction: string — 1-2 sentence summary
 - brief_body: string — REFORMULATED brief in the exact Sarani 7-section format below. ALWAYS IN ENGLISH regardless of email language.
 

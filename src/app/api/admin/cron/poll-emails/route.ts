@@ -220,7 +220,7 @@ export async function GET(request: NextRequest) {
                 entity: "",
                 project_title: subject || "Untitled",
                 contact_email: from,
-                project_type: "generic",
+                project_type: "other",
                 brief_introduction: "",
                 brief_body: "",
                 deadline: "To be confirmed",
