@@ -3,16 +3,20 @@ import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { inboxItems } from "@/lib/db/schema";
-import { eq, desc, and, SQL } from "drizzle-orm";
+import { eq, ne, desc, and, SQL } from "drizzle-orm";
 
 // ─── Validation schemas ───────────────────────────────────────────────────
 
 const InboxFiltersSchema = z.object({
   status: z.enum(["pending", "in_progress", "done", "dismissed"]).optional(),
   type: z
-    .enum(["email_classified", "ai_team_complete", "qa_gates_pass", "followup_alert"])
+    .enum(["email_classified", "ai_team_complete", "qa_gates_pass", "followup_alert", "noise"])
     .optional(),
   priority: z.enum(["high", "medium", "low"]).optional(),
+  includeNoise: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => v === "true"),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0),
 });
@@ -49,6 +53,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const conditions: SQL[] = [];
+
+    // Exclude noise items by default unless explicitly requested
+    if (!filters.includeNoise && filters.type !== "noise") {
+      conditions.push(ne(inboxItems.type, "noise"));
+    }
+
     if (filters.status) {
       conditions.push(eq(inboxItems.status, filters.status));
     }

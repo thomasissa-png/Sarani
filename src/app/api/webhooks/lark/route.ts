@@ -121,7 +121,7 @@ function extractTextContent(content: string, messageType: string): string {
 
 // ─── Background processing ─────────────────────────────────────────────────
 
-async function processLarkMessage(event: LarkEvent): Promise<void> {
+async function processLarkMessage(event: LarkEvent, isDM: boolean = false): Promise<void> {
   const message = event.event.message;
   const sender = event.event.sender;
   const textContent: string = extractTextContent(message.content, message.message_type);
@@ -138,21 +138,21 @@ async function processLarkMessage(event: LarkEvent): Promise<void> {
 
     const classification: LarkClassificationResult = llmResult.data;
 
-    // Skip noise with high confidence
-    if (classification.category === "noise" && classification.confidence >= 0.8) {
-      console.log(
-        `[Lark Webhook] Skipping noise message ${message.message_id} (confidence: ${classification.confidence})`
-      );
-      return;
-    }
+    // Noise with high confidence gets stored as "noise" type + "dismissed" status
+    const isHighConfidenceNoise: boolean =
+      classification.category === "noise" && classification.confidence >= 0.8;
 
     // Create inbox item
+    const titlePrefix: string = isDM
+      ? `[Forwarded] [lark_${classification.category}]`
+      : `[lark_${classification.category}]`;
+
     const [inserted] = await db
       .insert(inboxItems)
       .values({
-        type: "lark_message",
-        status: "pending",
-        title: `[lark_${classification.category}] ${textContent.slice(0, 100)}`,
+        type: isHighConfidenceNoise ? "noise" : "lark_message",
+        status: isHighConfidenceNoise ? "dismissed" : "pending",
+        title: `${titlePrefix} ${textContent.slice(0, 100)}`,
         summary: JSON.stringify({
           messageId: message.message_id,
           chatId: message.chat_id,
@@ -163,8 +163,8 @@ async function processLarkMessage(event: LarkEvent): Promise<void> {
         }),
         sourceId: message.message_id,
         sourceType: "lark",
-        protocol: classification.category === "noise" ? null : "PROTO-LARK-TRIAGE",
-        priority: priorityFromCategory(classification.category),
+        protocol: isHighConfidenceNoise ? null : (classification.category === "noise" ? null : "PROTO-LARK-TRIAGE"),
+        priority: isHighConfidenceNoise ? "low" : priorityFromCategory(classification.category),
       })
       .returning({ id: inboxItems.id });
 
@@ -235,17 +235,22 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // Step 6: Filter by allowed chat IDs
-  const allowedChatIds: Set<string> = getAllowedChatIds();
-  if (allowedChatIds.size > 0 && !allowedChatIds.has(event.event.message.chat_id)) {
-    console.log(
-      `[Lark Webhook] Chat ${event.event.message.chat_id} not in allowed list, skipping`
-    );
-    return NextResponse.json({ ignored: true, reason: "chat_not_allowed" });
+  // Step 6: Filter by allowed chat IDs (bypass for p2p DMs — forwarded messages to bot)
+  const chatType: string = event.event.message.chat_type ?? "";
+  const isDirectMessage: boolean = chatType === "p2p";
+
+  if (!isDirectMessage) {
+    const allowedChatIds: Set<string> = getAllowedChatIds();
+    if (allowedChatIds.size > 0 && !allowedChatIds.has(event.event.message.chat_id)) {
+      console.log(
+        `[Lark Webhook] Chat ${event.event.message.chat_id} not in allowed list, skipping`
+      );
+      return NextResponse.json({ ignored: true, reason: "chat_not_allowed" });
+    }
   }
 
   // Step 7: Process (await before responding -- Replit autoscale constraint)
-  await processLarkMessage(event);
+  await processLarkMessage(event, isDirectMessage);
 
   return NextResponse.json({
     processed: true,

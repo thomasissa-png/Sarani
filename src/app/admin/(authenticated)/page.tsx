@@ -12,7 +12,8 @@ type InboxItemType =
   | "email_classified"
   | "ai_team_complete"
   | "qa_gates_pass"
-  | "followup_alert";
+  | "followup_alert"
+  | "noise";
 
 type InboxItemStatus = "pending" | "in_progress" | "done" | "dismissed";
 
@@ -64,6 +65,11 @@ const TYPE_CONFIG: Record<
     label: "Follow-up",
     color: "text-brand-flame",
     bgColor: "bg-brand-flame/20",
+  },
+  noise: {
+    label: "Noise",
+    color: "text-neutral-400",
+    bgColor: "bg-neutral-100",
   },
 };
 
@@ -138,9 +144,27 @@ export default function InboxPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [noiseItems, setNoiseItems] = useState<InboxItem[]>([]);
+  const [noiseOpen, setNoiseOpen] = useState(false);
+  const [noiseLoading, setNoiseLoading] = useState(false);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
     setToast({ message, type });
+  }, []);
+
+  const fetchNoiseItems = useCallback(async () => {
+    setNoiseLoading(true);
+    try {
+      const res = await fetch("/api/admin/inbox?type=noise&includeNoise=true");
+      if (res.ok) {
+        const data = await res.json();
+        setNoiseItems(data.items ?? []);
+      }
+    } catch (error) {
+      console.error("[Inbox] noise fetch error:", error);
+    } finally {
+      setNoiseLoading(false);
+    }
   }, []);
 
   const fetchItems = useCallback(async () => {
@@ -176,6 +200,32 @@ export default function InboxPage() {
     const interval = setInterval(fetchItems, 30_000);
     return () => clearInterval(interval);
   }, [fetchItems]);
+
+  const handleNotNoise = useCallback(
+    async (id: string) => {
+      setActionLoading(id);
+      try {
+        const res = await fetch("/api/admin/inbox/not-noise", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+        if (res.ok) {
+          setNoiseItems((prev) => prev.filter((item) => item.id !== id));
+          showToast("Moved to inbox — item is now pending", "success");
+          fetchItems();
+        } else {
+          showToast("Action failed — please retry", "error");
+        }
+      } catch (error) {
+        console.error("[Inbox] not-noise error:", error);
+        showToast("Action failed — please retry", "error");
+      } finally {
+        setActionLoading(null);
+      }
+    },
+    [showToast, fetchItems]
+  );
 
   const handleAction = async (id: string, status: "done" | "dismissed") => {
     setActionLoading(id);
@@ -449,6 +499,94 @@ export default function InboxPage() {
           ))}
         </div>
       )}
+
+      {/* Other (noise) section — collapsible */}
+      <div className="mt-8 border-t border-neutral-200 pt-6">
+        <button
+          onClick={() => {
+            const willOpen = !noiseOpen;
+            setNoiseOpen(willOpen);
+            if (willOpen && noiseItems.length === 0) {
+              fetchNoiseItems();
+            }
+          }}
+          className="flex items-center gap-2 text-sm font-medium text-neutral-400 hover:text-neutral-600 transition-colors min-h-[44px]"
+          aria-expanded={noiseOpen}
+          aria-controls="noise-section"
+        >
+          <svg
+            className={cn(
+              "w-4 h-4 transition-transform",
+              noiseOpen && "rotate-90"
+            )}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          Other
+          {noiseItems.length > 0 && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-400">
+              {noiseItems.length}
+            </span>
+          )}
+        </button>
+
+        {noiseOpen && (
+          <div id="noise-section" className="mt-4 space-y-3">
+            {noiseLoading ? (
+              <div className="text-sm text-neutral-400 py-4 text-center">
+                Loading...
+              </div>
+            ) : noiseItems.length === 0 ? (
+              <div className="text-sm text-neutral-400 py-4 text-center">
+                No noise items
+              </div>
+            ) : (
+              noiseItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-neutral-50 rounded-xl border border-neutral-200 p-4 opacity-70"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-400">
+                          Noise
+                        </span>
+                        <span className="text-xs text-neutral-400">
+                          {formatRelativeTime(item.createdAt).text}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-medium text-neutral-500 truncate">
+                        {item.title ?? "Untitled"}
+                      </h3>
+                      {item.summary && (
+                        <p className="text-xs text-neutral-400 line-clamp-1">
+                          {item.summary}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleNotNoise(item.id)}
+                      disabled={actionLoading === item.id}
+                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-white border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors disabled:opacity-50 shrink-0"
+                      aria-label={`Mark as not noise: ${item.title ?? "item"}`}
+                    >
+                      {actionLoading === item.id ? "Moving..." : "Not noise"}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Toast */}
       {toast && <Toast toast={toast} onDismiss={() => setToast(null)} />}

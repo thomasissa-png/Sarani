@@ -220,31 +220,34 @@ export async function GET(request: NextRequest) {
           classification = parsed.data;
         }
 
-        // Create inbox_item (skip for noise unless low confidence)
+        // Create inbox_item — noise with high confidence gets type "noise" + status "dismissed"
         let inboxItemId: string | null = null;
-        if (classification.category !== "noise" || classification.confidence < 0.8) {
-          const protocol = protocolFromCategory(classification.category);
-          const [inserted] = await db
-            .insert(inboxItems)
-            .values({
-              type: "email_classified",
-              status: "pending",
-              title: `[${classification.category}] ${subject}`,
-              summary: JSON.stringify({
-                from,
-                subject,
-                classification,
-                bodyPreview: bodyPreview.slice(0, 500),
-              }),
-              sourceId: email.id,
-              sourceType: "email",
-              protocol,
-              priority: priorityFromCategory(classification.category),
-            })
-            .returning({ id: inboxItems.id });
+        const isHighConfidenceNoise =
+          classification.category === "noise" && classification.confidence >= 0.8;
+        const protocol = protocolFromCategory(classification.category);
 
-          inboxItemId = inserted.id;
-        }
+        const [inserted] = await db
+          .insert(inboxItems)
+          .values({
+            type: isHighConfidenceNoise ? "noise" : "email_classified",
+            status: isHighConfidenceNoise ? "dismissed" : "pending",
+            title: `[${classification.category}] ${subject}`,
+            summary: JSON.stringify({
+              from,
+              subject,
+              classification,
+              bodyPreview: bodyPreview.slice(0, 500),
+            }),
+            sourceId: email.id,
+            sourceType: "email",
+            protocol,
+            priority: isHighConfidenceNoise
+              ? "low"
+              : priorityFromCategory(classification.category),
+          })
+          .returning({ id: inboxItems.id });
+
+        inboxItemId = inserted.id;
 
         // Record as processed
         await db.insert(processedEmails).values({
