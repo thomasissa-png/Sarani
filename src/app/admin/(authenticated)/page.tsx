@@ -269,6 +269,30 @@ export default function InboxPage() {
     [showToast, fetchItems]
   );
 
+  const handleMarkAsNoise = useCallback(
+    async (id: string) => {
+      setActionLoading(id);
+      try {
+        const res = await fetch("/api/admin/inbox/mark-noise", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id }),
+        });
+        if (res.ok) {
+          showToast("Marked as not relevant", "success");
+          await fetchItems();
+        } else {
+          showToast("Failed to mark as noise", "error");
+        }
+      } catch {
+        showToast("Action failed — please retry", "error");
+      } finally {
+        setActionLoading(null);
+      }
+    },
+    [showToast, fetchItems]
+  );
+
   const handleAction = async (id: string, status: "done" | "dismissed") => {
     setActionLoading(id);
     try {
@@ -338,6 +362,20 @@ export default function InboxPage() {
             return;
           }
 
+          if (updatedItem.protocol === "PROTO-CLIENT-RETURN" && updatedItem.summary) {
+            try {
+              const summaryData = JSON.parse(updatedItem.summary) as Record<string, unknown>;
+              const taskUrl = summaryData.clickupUrl as string | undefined;
+              if (taskUrl) {
+                showToast("Opening project in ClickUp...", "success");
+                window.open(taskUrl, "_blank", "noopener,noreferrer");
+                return;
+              }
+            } catch { /* fallback below */ }
+            showToast("Done — check ClickUp for project details", "success");
+            return;
+          }
+
           if (updatedItem.protocol === "PROTO-QUOTE") {
             // Redirect to Quotes page with inbox data for pre-fill
             // Extract client/project info from summary for query params
@@ -393,7 +431,7 @@ export default function InboxPage() {
       const res = await fetch("/api/admin/inbox", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status: "done", pm_action: editContent }),
+        body: JSON.stringify({ id, status: "done", summary: editContent }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -591,7 +629,7 @@ export default function InboxPage() {
                     isActioning={actionLoading === item.id}
                     onApprove={() => handleAction(item.id, "done")}
                     onDismiss={() => handleAction(item.id, "dismissed")}
-                    onMarkNoise={() => handleAction(item.id, "dismissed")}
+                    onMarkNoise={() => handleMarkAsNoise(item.id)}
                     showToast={showToast}
                   />
                 );

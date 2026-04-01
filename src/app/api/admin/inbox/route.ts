@@ -25,7 +25,7 @@ const PatchInboxItemSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["pending", "pending_review", "in_progress", "done", "dismissed"]),
   pmId: z.string().optional(),
-  // Approval/dismissal metadata — set automatically based on status
+  summary: z.string().optional(), // PM-edited content
   approvedBy: z.string().optional(),
 });
 
@@ -113,14 +113,19 @@ export async function PATCH(request: NextRequest) {
     const isTerminal = body.status === "done" || body.status === "dismissed";
     const processedAt = isTerminal ? now : null;
 
+    const updateData: Record<string, unknown> = {
+      status: body.status,
+      pmId: body.pmId,
+      processedAt,
+      updatedAt: now,
+    };
+    if (body.summary !== undefined) {
+      updateData.summary = body.summary;
+    }
+
     const [updated] = await db
       .update(inboxItems)
-      .set({
-        status: body.status,
-        pmId: body.pmId,
-        processedAt,
-        updatedAt: now,
-      })
+      .set(updateData)
       .where(eq(inboxItems.id, body.id))
       .returning();
 
