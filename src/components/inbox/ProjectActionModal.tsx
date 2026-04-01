@@ -129,10 +129,24 @@ export function ProjectActionModal({
 
   // Extract ClickUp URL from summary if available (for open_project)
   const tryOpenClickUp = () => {
-    // The summary JSON might contain a clickupUrl
-    showToast("Opening ClickUp -- check if a matching project exists", "success");
-    // For now, mark as done and let PM handle in ClickUp
-    handleMarkDone();
+    // Try to find a ClickUp URL in the parsed summary
+    const clickupUrl = emailData?.clickupUrl as string | undefined;
+    const taskId = emailData?.taskId as string | undefined;
+
+    if (clickupUrl) {
+      window.open(clickupUrl, "_blank", "noopener,noreferrer");
+      showToast("Opened project in ClickUp", "success");
+      handleMarkDone();
+    } else if (taskId) {
+      window.open(`https://app.clickup.com/t/${taskId}`, "_blank", "noopener,noreferrer");
+      showToast("Opened project in ClickUp", "success");
+      handleMarkDone();
+    } else {
+      // No URL found — open ClickUp search as fallback
+      window.open("https://app.clickup.com", "_blank", "noopener,noreferrer");
+      showToast("No project link found — opened ClickUp for manual search", "success");
+      handleMarkDone();
+    }
   };
 
   const handleMarkDone = async () => {

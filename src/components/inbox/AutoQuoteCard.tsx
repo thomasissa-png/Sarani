@@ -543,7 +543,7 @@ export function AutoQuoteCard({
 
           {/* Next step hint */}
           <p className="text-xs text-neutral-500 pl-1">
-            Next: Review pricing, then generate PDF and send
+            Next: Review pricing, then generate PDF and create draft email
           </p>
 
           {/* Actions */}
@@ -565,9 +565,9 @@ export function AutoQuoteCard({
                   ? "bg-brand-flame hover:bg-brand-flame/90"
                   : "bg-neutral-300 cursor-not-allowed"
               )}
-              aria-label="Generate PDF and send"
+              aria-label="Generate PDF and create email draft"
             >
-              {finalizing ? "Generating..." : "Generate PDF & Send"}
+              {finalizing ? "Generating..." : "Generate PDF & Create Draft"}
             </button>
           </div>
         </>
