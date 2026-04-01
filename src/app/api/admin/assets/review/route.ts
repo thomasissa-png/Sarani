@@ -5,6 +5,7 @@ import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import {
   listDriveItems,
+  graphFetch,
   type DriveItem,
 } from "@/lib/integrations/sharepoint";
 import {
@@ -29,11 +30,27 @@ const AssetReviewInputSchema = z.object({
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
+interface ThumbnailInfo {
+  small?: string;  // ~96px
+  medium?: string; // ~176px
+  large?: string;  // ~800px
+}
+
+interface DriveItemWithThumbnails extends DriveItem {
+  thumbnails?: Array<{
+    small?: { url: string };
+    medium?: { url: string };
+    large?: { url: string };
+  }>;
+}
+
 interface FileMatch {
   file: string;
   expected: string;
   status: "match" | "format_mismatch";
   details?: string;
+  thumbnailUrl?: string;
+  mimeType?: string;
 }
 
 interface AssetReviewReport {
@@ -41,8 +58,14 @@ interface AssetReviewReport {
   expectedFiles: number;
   matches: FileMatch[];
   missing: string[];
-  unexpected: string[];
+  unexpected: FileInfo[];
   anomalies: string[];
+}
+
+interface FileInfo {
+  name: string;
+  thumbnailUrl?: string;
+  mimeType?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -69,7 +92,7 @@ function normalizeName(name: string): string {
  * Uses fuzzy name matching + optional format check.
  */
 function matchFileToExpected(
-  file: DriveItem,
+  file: DriveItemWithThumbnails,
   expected: z.infer<typeof ExpectedDeliverableSchema>
 ): FileMatch | null {
   const fileName = file.name;
@@ -89,12 +112,17 @@ function matchFileToExpected(
 
   // Check format
   const fileExt = getExtension(fileName);
+  const thumbnailUrl = extractThumbnailUrl(file);
+  const mimeType = file.file?.mimeType;
+
   if (expected.format && fileExt !== expected.format.toUpperCase()) {
     return {
       file: fileName,
       expected: expected.name,
       status: "format_mismatch",
       details: `Expected ${expected.format.toUpperCase()}, got ${fileExt}`,
+      thumbnailUrl,
+      mimeType,
     };
   }
 
@@ -102,18 +130,45 @@ function matchFileToExpected(
     file: fileName,
     expected: expected.name,
     status: "match",
+    thumbnailUrl,
+    mimeType,
   };
 }
 
 /**
+ * List drive items with thumbnails expanded via Graph API.
+ */
+async function listDriveItemsWithThumbnails(
+  driveId: string,
+  path: string
+): Promise<DriveItemWithThumbnails[]> {
+  const encodedPath = encodeURIComponent(path).replace(/%2F/g, "/");
+  const data = await graphFetch<{ value: DriveItemWithThumbnails[] }>(
+    `/drives/${driveId}/root:${encodedPath}:/children?$expand=thumbnails`
+  );
+  return data.value;
+}
+
+/**
+ * Extract the best thumbnail URL from a DriveItem with thumbnails.
+ * Prefers "small" for list views (~96px).
+ */
+function extractThumbnailUrl(item: DriveItemWithThumbnails): string | undefined {
+  const thumbSet = item.thumbnails?.[0];
+  if (!thumbSet) return undefined;
+  return thumbSet.small?.url ?? thumbSet.medium?.url ?? thumbSet.large?.url;
+}
+
+/**
  * Recursively list all files in a SharePoint folder (1 level deep for subfolders).
+ * Includes thumbnail URLs when available.
  */
 async function listAllFiles(
   driveId: string,
   path: string
-): Promise<DriveItem[]> {
-  const items = await listDriveItems(driveId, path);
-  const files: DriveItem[] = [];
+): Promise<DriveItemWithThumbnails[]> {
+  const items = await listDriveItemsWithThumbnails(driveId, path);
+  const files: DriveItemWithThumbnails[] = [];
 
   for (const item of items) {
     if (item.file) {
@@ -121,7 +176,7 @@ async function listAllFiles(
     } else if (item.folder && item.folder.childCount > 0) {
       // Go 1 level deep into subfolders
       try {
-        const subItems = await listDriveItems(driveId, `${path}/${item.name}`);
+        const subItems = await listDriveItemsWithThumbnails(driveId, `${path}/${item.name}`);
         for (const sub of subItems) {
           if (sub.file) {
             files.push(sub);
@@ -215,7 +270,11 @@ export async function POST(request: NextRequest) {
         expectedFiles: 0,
         matches: [],
         missing: [],
-        unexpected: relevantFiles.map((f) => f.name),
+        unexpected: relevantFiles.map((f) => ({
+          name: f.name,
+          thumbnailUrl: extractThumbnailUrl(f),
+          mimeType: f.file?.mimeType,
+        })),
         anomalies,
       };
       return NextResponse.json({ report, folderPath });
@@ -259,9 +318,13 @@ export async function POST(request: NextRequest) {
       });
 
     // Find unexpected files (present but not matched to any expected)
-    const unexpected = relevantFiles
+    const unexpected: FileInfo[] = relevantFiles
       .filter((f) => !matchedFileNames.has(f.name))
-      .map((f) => f.name);
+      .map((f) => ({
+        name: f.name,
+        thumbnailUrl: extractThumbnailUrl(f),
+        mimeType: f.file?.mimeType,
+      }));
 
     const report: AssetReviewReport = {
       totalFiles: relevantFiles.length,
