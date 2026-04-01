@@ -624,7 +624,9 @@ export default function InboxPage() {
       return bDate - aDate;
     }
     // Default: createdAt DESC (already sorted by API, but ensure)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bTime - aTime;
   });
 
   // Pagination: show 20 items at a time, "Show more" loads 20 more
