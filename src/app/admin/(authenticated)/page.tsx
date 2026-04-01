@@ -458,7 +458,7 @@ export default function InboxPage() {
     }
   };
 
-  const handleAction = async (id: string, status: "done" | "dismissed") => {
+  const handleAction = async (id: string, status: "done" | "dismissed" | "in_progress") => {
     setActionLoading(id);
     try {
       const res = await fetch("/api/admin/inbox", {
@@ -469,7 +469,13 @@ export default function InboxPage() {
       if (res.ok) {
         const data = await res.json();
         const updatedItem = data.item as InboxItem | undefined;
-        setItems((prev) => prev.filter((item) => item.id !== id));
+        // Only remove from list if done/dismissed — in_progress items stay visible
+        if (status !== "in_progress") {
+          setItems((prev) => prev.filter((item) => item.id !== id));
+        } else {
+          // Update the item status in-place
+          setItems((prev) => prev.map((item) => item.id === id ? { ...item, status } : item));
+        }
         if (editingId === id) setEditingId(null);
 
         // Protocol-specific redirects on approve
@@ -995,7 +1001,11 @@ export default function InboxPage() {
                 isActioning={actionLoading === item.id}
                 isEditing={!isManagedTab && editingId === item.id}
                 editContent={editingId === item.id ? editContent : ""}
-                onApprove={() => handleAction(item.id, "done")}
+                onApprove={() => {
+                  // Review items: mark as in_progress (stay in inbox until review complete)
+                  const isReviewItem = ["review_human", "review_ai_ready", "review_escalated"].includes(item.type);
+                  handleAction(item.id, isReviewItem ? "in_progress" : "done");
+                }}
                 onDismiss={() => handleAction(item.id, "dismissed")}
                 onEdit={() => handleEdit(item)}
                 onEditContentChange={setEditContent}
