@@ -241,7 +241,7 @@ Pour chaque feature > 1 fichier :
 2. Définir l'ordre (dépendances)
 3. Implémenter fichier par fichier
 4. Tester après chaque fichier critique (tsc --noEmit + test)
-5. **Vérification build obligatoire avant de déclarer le travail terminé.** L'environnement Claude Code n'a pas node_modules → tsc local ne détecte pas les erreurs réelles. Au minimum grep les patterns d'erreur connus : (a) `z.record` à 1 argument (Zod v4 en requiert 2), (b) variables inférées circulairement sans type explicite, (c) imports manquants (vérifier que chaque import pointe vers un fichier/module existant), (d) signatures de fonctions incorrectes. Ne JAMAIS déclarer "build OK" sans cette vérification.
+5. **`npx tsc --noEmit` obligatoire avant CHAQUE commit.** Lancer `npx tsc --noEmit` et vérifier **0 erreurs** avant de `git commit`. C'est la SEULE vérification fiable — les tests vitest ne détectent pas les types cross-fichiers. Quand on ajoute un type union member (ex: `"daily_digest"` à `InboxItemType`), il faut le mettre à jour dans TOUS les endroits : type local, Record<Type,...>, switch/case, enum Zod, TYPE_CONFIG. `tsc --noEmit` les détecte tous. Signalé comme P0 — 7 erreurs de build consécutives sur Replit.
 
 ### Protocole projet existant (code déjà en place)
 

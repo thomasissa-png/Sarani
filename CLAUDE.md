@@ -264,6 +264,8 @@ Si un agent a été interrompu par un timeout :
 
 21. **Tout composant IA doit appeler le LLM, pas copier-coller.** Si un composant affiche du contenu qui devrait être généré par IA (brief, feedback, reply), il DOIT appeler le LLM au moment de l'affichage. Ne JAMAIS montrer un placeholder vide ou un copier-coller de l'email brut quand un prompt LLM existe pour ce cas. Si le champ LLM est vide (donnée pré-existante avant le fix), appeler le LLM à la volée au mount du composant. Signalé comme P0 sur 1 projet — le CreateBriefModal copiait-collait l'email au lieu d'appeler le brief-extractor.
 
+22. **`tsc --noEmit` obligatoire avant CHAQUE commit.** Lancer `npx tsc --noEmit` et vérifier **0 erreurs** AVANT de `git commit`. Les tests vitest ne suffisent PAS — ils ne vérifient pas la cohérence des types entre fichiers. Quand on ajoute un type union member (ex: `"daily_digest"` à `InboxItemType`), vérifier TOUS les endroits qui utilisent ce type (Record<Type, ...>, switch/case, enum Zod). Un commit qui casse le build sur Replit = un commit qui n'aurait jamais dû être pushé. Signalé comme P0 sur 1 projet — 7 erreurs de build consécutives, 30+ minutes perdues par Thomas.
+
 ## Protocole de test du framework
 
 Pour valider que les agents fonctionnent correctement ensemble, utiliser ce protocole sur un projet fictif ou réel :
