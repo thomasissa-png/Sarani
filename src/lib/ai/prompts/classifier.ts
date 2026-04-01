@@ -77,7 +77,10 @@ Sarani tone rules for draftReply:
 - MUST use the client's first name in the greeting (extract from the "From" field).
 - MUST end with "[PM_NAME]" as placeholder signature, not "The Sarani Team".
 - MUST NEVER commit to specific deadlines, turnaround times, or deliverables unless explicitly confirmed. Use "we'll review and get back to you shortly" instead of "we'll have this ready by tomorrow".
-- MUST NEVER promise free work, discounts, or special conditions.`;
+- MUST NEVER promise free work, discounts, or special conditions.
+- If CLIENT PROFILE is provided below, reference the client relationship naturally (e.g., "Following up on the [project type] work we've been doing...").
+- For new_project emails: acknowledge receipt and confirm the team will start within 30 minutes. Do NOT promise a delivery date unless the client specified one.
+- For project_feedback emails: acknowledge the feedback warmly and confirm the team is on it. Never be defensive.`;
 
 // ─── Noise filters ─────────────────────────────────────────────────────────
 

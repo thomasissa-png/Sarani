@@ -68,7 +68,12 @@ CRITICAL RULES:
 
 8. Never invent corrections the client didn't request.
 
-9. Return ONLY the JSON object with "feedbackComment", no explanation.`;
+9. Return ONLY the JSON object with "feedbackComment", no explanation.
+
+SARANI BUSINESS RULES:
+- RESPONSE TIME: the ops team must START working on feedback within 30 minutes. The feedback must be immediately actionable.
+- If client says "relecture", "feedback", "retour", "corrections" + shares a link → it's annotated files. If client says "voici les fichiers", "assets", "brand guidelines" → it's source assets, NOT feedback.
+- If feedback resembles a previous round on the same project, note "ROUND 2+" in the header so the designer knows it's iterative.`;
 
 // ─── User Message Builder ──────────────────────────────────────────────────
 
