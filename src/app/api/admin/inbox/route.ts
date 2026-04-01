@@ -15,6 +15,7 @@ const InboxFiltersSchema = z.object({
       "email_classified", "ai_team_complete", "qa_gates_pass", "followup_alert",
       "noise", "auto_brief_ready", "auto_quote_ready", "lark_message",
       "review_human", "review_ai_ready", "review_escalated",
+      "daily_digest", "deadline_alert",
     ])
     .optional(),
   priority: z.enum(["high", "medium", "low"]).optional(),
