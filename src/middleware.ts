@@ -19,6 +19,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow setup-webhooks with Bearer token (route handler validates ADMIN_TOKEN)
+  if (pathname === "/api/admin/setup-webhooks") {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      return NextResponse.next();
+    }
+  }
+
   // Protect all /admin and /api/admin routes
   const cookieHeader = request.headers.get("cookie");
   const auth = await isAuthenticatedFromCookie(cookieHeader);
