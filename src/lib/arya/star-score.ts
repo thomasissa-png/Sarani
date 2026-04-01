@@ -52,8 +52,8 @@ export interface StarScoreResult {
 
 export type PipelineOutput =
   | "case_study"
-  | "linkedin_article"
-  | "commercial_slide"
+  | "linkedin_post"
+  | "presentation_slide"
   | "seo_signal";
 
 // ─── Tier 1 Clients (Top-tier global brands) ───────────────────────────────
@@ -306,13 +306,13 @@ export function calculateStarScore(
     starStatus = "STAR";
     pipelineRecommendation = [
       "case_study",
-      "linkedin_article",
-      "commercial_slide",
+      "linkedin_post",
+      "presentation_slide",
       "seo_signal",
     ];
   } else if (totalScore >= 75 && csScore < 70) {
     starStatus = "STRONG_STORY_WEAK_ASSETS";
-    pipelineRecommendation = ["linkedin_article"];
+    pipelineRecommendation = ["linkedin_post"];
   } else if (totalScore >= 50) {
     starStatus = "NOTEWORTHY";
     pipelineRecommendation = [];
