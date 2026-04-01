@@ -700,6 +700,8 @@ export const inboxItems = pgTable(
     priority: varchar("priority", { length: 10 }).default("medium"), // 'high', 'medium', 'low'
     pmId: varchar("pm_id", { length: 255 }), // assigned PM (nullable, future multi-PM)
     processedAt: timestamp("processed_at"), // when PM acted on the item
+    verificationAttempt: integer("verification_attempt"), // 1-3 for AI reviews, null for human
+    aryaReport: jsonb("arya_report"), // LLM verification output, null for human reviews
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -921,6 +923,37 @@ export const starPipelineItems = pgTable(
   ]
 );
 
+// ─── Arya Verification Log ────────────────────────────────────────────────
+// Tracks LLM pre-verification attempts for AI project reviews.
+
+export interface VerificationCriteria {
+  briefCoverage: boolean;
+  formatCompliance: boolean;
+  versionConsistency: boolean;
+  completeness: boolean;
+  clientReadyQuality: boolean;
+}
+
+export const aryaVerificationLog = pgTable(
+  "arya_verification_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inboxItemId: uuid("inbox_item_id").references(() => inboxItems.id, {
+      onDelete: "set null",
+    }),
+    clickupTaskId: text("clickup_task_id").notNull(),
+    attempt: integer("attempt").notNull().default(1),
+    criteria: jsonb("criteria").$type<VerificationCriteria>(),
+    passed: boolean("passed").notNull().default(false),
+    failureReasons: jsonb("failure_reasons").$type<string[]>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_verification_log_task").on(table.clickupTaskId),
+    index("idx_verification_log_inbox").on(table.inboxItemId),
+  ]
+);
+
 // ─── Type exports ───────────────────────────────────────────────────────────
 
 export type Client = typeof clients.$inferSelect;
@@ -985,3 +1018,5 @@ export type ProjectClosure = typeof projectClosures.$inferSelect;
 export type NewProjectClosure = typeof projectClosures.$inferInsert;
 export type StarPipelineItem = typeof starPipelineItems.$inferSelect;
 export type NewStarPipelineItem = typeof starPipelineItems.$inferInsert;
+export type AryaVerificationLogEntry = typeof aryaVerificationLog.$inferSelect;
+export type NewAryaVerificationLogEntry = typeof aryaVerificationLog.$inferInsert;

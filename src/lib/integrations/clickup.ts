@@ -41,6 +41,12 @@ export interface ClickUpUserField {
   profilePicture: string | null;
 }
 
+export interface ClickUpTag {
+  name: string;
+  tag_fg: string;
+  tag_bg: string;
+}
+
 export interface ClickUpTask {
   id: string;
   name: string;
@@ -53,6 +59,7 @@ export interface ClickUpTask {
   start_date: string | null;
   assignees: ClickUpAssignee[];
   custom_fields: ClickUpCustomField[];
+  tags?: ClickUpTag[];
   url: string;
   list: { id: string; name: string };
   space: { id: string };
