@@ -113,6 +113,15 @@ const TYPE_CONFIG: Record<
   },
 };
 
+const PROTOCOL_LABELS: Record<string, string> = {
+  "PROTO-CLIENT-RETURN": "Client follow-up",
+  "PROTO-EMAIL-INTAKE": "New project",
+  "PROTO-CLIENT-REPLY": "Client reply",
+  "PROTO-REVIEW-PIPELINE": "Review pipeline",
+  "PROTO-PROJECT-FOLLOWUP": "Follow-up alert",
+  "PROTO-PITCH": "New prospect",
+};
+
 type FilterTab = "all" | "urgent" | "email_classified" | "ai_team_complete" | "qa_gates_pass" | "followup_alert";
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
@@ -418,11 +427,7 @@ export default function InboxPage() {
       return;
     }
     setEditingId(item.id);
-    setEditContent(
-      item.arya_payload
-        ? JSON.stringify(item.arya_payload, null, 2)
-        : item.summary ?? ""
-    );
+    setEditContent("");
   };
 
   const handleSaveAndApprove = async (id: string) => {
@@ -570,7 +575,7 @@ export default function InboxPage() {
               try {
                 payload = JSON.parse(item.summary) as AutoBriefPayload;
               } catch {
-                // Malformed summary — fall through to standard card
+                // Malformed summary — show error fallback
               }
               if (payload) {
                 return (
@@ -589,6 +594,26 @@ export default function InboxPage() {
                   />
                 );
               }
+              return (
+                <div key={item.id} className="bg-white rounded-xl border border-error/30 p-5">
+                  <p className="text-sm text-error font-medium">Auto Brief — could not load</p>
+                  <p className="text-xs text-neutral-500 mt-1">Summary data is malformed. Try refreshing or archive this item.</p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => fetchItems()}
+                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors"
+                    >
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => handleAction(item.id, "dismissed")}
+                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors"
+                    >
+                      Archive
+                    </button>
+                  </div>
+                </div>
+              );
             }
 
             // Render AutoQuoteCard for auto_quote_ready items
@@ -597,7 +622,7 @@ export default function InboxPage() {
               try {
                 quotePayload = JSON.parse(item.summary) as AutoQuotePayload;
               } catch {
-                // Malformed summary — fall through to standard card
+                // Malformed summary — show error fallback
               }
               if (quotePayload) {
                 return (
@@ -612,6 +637,26 @@ export default function InboxPage() {
                   />
                 );
               }
+              return (
+                <div key={item.id} className="bg-white rounded-xl border border-error/30 p-5">
+                  <p className="text-sm text-error font-medium">Auto Quote — could not load</p>
+                  <p className="text-xs text-neutral-500 mt-1">Summary data is malformed. Try refreshing or archive this item.</p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => fetchItems()}
+                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors"
+                    >
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => handleAction(item.id, "dismissed")}
+                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors"
+                    >
+                      Archive
+                    </button>
+                  </div>
+                </div>
+              );
             }
 
             // Render EmailCard for email_classified and lark_message items
@@ -634,6 +679,28 @@ export default function InboxPage() {
                   />
                 );
               }
+              return (
+                <div key={item.id} className="bg-white rounded-xl border border-error/30 p-5">
+                  <p className="text-sm text-error font-medium">
+                    {item.type === "lark_message" ? "Lark Message" : "Email"} — could not load
+                  </p>
+                  <p className="text-xs text-neutral-500 mt-1">Summary data is malformed. Try refreshing or archive this item.</p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => fetchItems()}
+                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors"
+                    >
+                      Refresh
+                    </button>
+                    <button
+                      onClick={() => handleAction(item.id, "dismissed")}
+                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors"
+                    >
+                      Archive
+                    </button>
+                  </div>
+                </div>
+              );
             }
 
             return (
@@ -667,6 +734,7 @@ export default function InboxPage() {
           className="flex items-center gap-2 text-sm font-medium text-neutral-400 hover:text-neutral-600 transition-colors min-h-[44px]"
           aria-expanded={noiseOpen}
           aria-controls="noise-section"
+          title="Items classified as not relevant by Arya. Review here if something was misclassified."
         >
           <svg
             className={cn(
@@ -683,7 +751,7 @@ export default function InboxPage() {
           >
             <polyline points="9 18 15 12 9 6" />
           </svg>
-          Other
+          Filtered out
           {noiseItems.length > 0 && (
             <span className="text-xs px-1.5 py-0.5 rounded-full bg-neutral-100 text-neutral-400">
               {noiseItems.length}
@@ -855,7 +923,10 @@ function InboxCard({
   }, [isEditing]);
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-300 p-5 hover:shadow-sm transition-shadow">
+    <div className={cn(
+      "bg-white rounded-xl border border-neutral-300 p-5 hover:shadow-sm transition-shadow",
+      item.type === "review_escalated" && "border-l-4 border-l-brand-flame"
+    )}>
       <div className="flex flex-col sm:flex-row sm:items-start gap-4">
         {/* Left: content */}
         <div className="flex-1 min-w-0 space-y-2">
@@ -923,11 +994,12 @@ function InboxCard({
             </p>
           )}
 
-          {/* Protocol / source */}
-          <div className="flex items-center gap-3 text-xs text-neutral-400">
-            {item.protocol && <span>Protocol: {item.protocol}</span>}
-            {item.sourceType && <span>Source: {item.sourceType}</span>}
-          </div>
+          {/* Protocol label */}
+          {item.protocol && (
+            <div className="flex items-center gap-3 text-xs text-neutral-400">
+              <span>{PROTOCOL_LABELS[item.protocol] ?? item.protocol}</span>
+            </div>
+          )}
         </div>
 
         {/* Right: actions */}
@@ -974,7 +1046,7 @@ function InboxCard({
       {isEditing && (
         <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
           <label htmlFor={`edit-${item.id}`} className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
-            Payload / Content
+            Notes / Feedback
           </label>
           <textarea
             ref={textareaRef}
@@ -982,8 +1054,9 @@ function InboxCard({
             value={editContent}
             onChange={(e) => onEditContentChange(e.target.value)}
             rows={8}
-            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-mono text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y"
-            aria-label="Edit payload content"
+            placeholder="Add your notes or feedback here..."
+            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y"
+            aria-label="Notes and feedback"
           />
           <div className="flex items-center gap-2 justify-end">
             <button

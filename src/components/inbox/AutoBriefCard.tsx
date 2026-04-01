@@ -148,7 +148,7 @@ export function AutoBriefCard({
   const timeAgo = formatRelativeTime(createdAt);
 
   return (
-    <div className="bg-white rounded-xl border border-brand-cerulean/30 p-5 space-y-4">
+    <div className="bg-white rounded-xl border border-brand-cerulean/50 p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ export function AutoBriefCard({
             value={brief}
             onChange={(e) => setBrief(e.target.value)}
             rows={12}
-            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-mono text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y"
+            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm font-sans text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y"
             aria-label="Brief content with emoji section headers"
           />
         </div>

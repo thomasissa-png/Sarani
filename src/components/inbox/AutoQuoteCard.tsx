@@ -4,7 +4,7 @@
 // Inline form for reviewing and editing auto-generated quote drafts.
 // Displayed in the inbox when an item has type "auto_quote_ready".
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -234,11 +234,48 @@ export function AutoQuoteCard({
   }, [itemId, onDismissed, showToast]);
 
   const timeAgo = formatRelativeTime(createdAt);
+  const confirmModalRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap for confirmation modal
+  useEffect(() => {
+    if (!showConfirm || !confirmModalRef.current) return;
+
+    const modal = confirmModalRef.current;
+    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableElements = modal.querySelectorAll<HTMLElement>(focusableSelector);
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
+
+    first?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setShowConfirm(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [showConfirm]);
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <div className="bg-white rounded-xl border border-brand-flame/30 p-5 space-y-4">
+    <div className="bg-white rounded-xl border border-brand-flame/50 p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2 flex-wrap">
@@ -538,9 +575,9 @@ export function AutoQuoteCard({
 
       {/* Confirmation modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-brand-black mb-2">Confirm & Send</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby={`confirm-title-${payload.quoteId}`}>
+          <div ref={confirmModalRef} className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 id={`confirm-title-${payload.quoteId}`} className="text-lg font-semibold text-brand-black mb-2">Confirm & Send</h3>
             <p className="text-sm text-neutral-600 mb-1">
               This will generate the PDF, upload to SharePoint, and create an email draft to <strong>{payload.contactEmail}</strong>.
             </p>
