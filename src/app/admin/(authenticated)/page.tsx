@@ -1141,6 +1141,8 @@ export default function InboxPage() {
           clients={CLIENT_MAPPINGS.map((m) => ({
             spaceName: m.clickupSpaceName,
             spaceId: m.clickupSpaceId,
+            excelTrackerFilename: m.excelTrackerFilename,
+            sharepointCustomerFolder: m.sharepointCustomerFolder,
           }))}
           onClose={() => setActiveModal(null)}
           onCreated={fetchItems}

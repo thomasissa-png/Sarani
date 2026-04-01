@@ -16,6 +16,8 @@ type Assignee = { name: string; clickupUserId: number };
 interface ClientOption {
   spaceName: string;
   spaceId: string;
+  excelTrackerFilename?: string;
+  sharepointCustomerFolder?: string;
 }
 
 interface CreateBriefModalProps {
@@ -112,6 +114,56 @@ export function CreateBriefModal({
   const [createSharepointFolder, setCreateSharepointFolder] = useState(!!matchedClient);
   const [assigneeId, setAssigneeId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExtractingBrief, setIsExtractingBrief] = useState(true);
+
+  // LLM brief extraction on mount — Arya reformulates the email into a professional brief
+  useEffect(() => {
+    let cancelled = false;
+    async function extractBrief() {
+      try {
+        const res = await fetch("/api/admin/brief/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            emailSubject: payload.subject,
+            emailBody: payload.bodyPreview ?? "",
+            senderEmail: payload.from,
+          }),
+        });
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          // Update all fields with LLM extraction
+          if (data.brief_body) setBrief(data.brief_body);
+          if (data.entity) setEntity(data.entity);
+          if (data.project_type && data.project_type !== "generic") {
+            setProjectType(data.project_type as ProjectType);
+          }
+          if (data.client_name) {
+            // Try to match client from extraction
+            const extracted = clients.find(
+              (c) => c.spaceName.toLowerCase().includes(data.client_name.toLowerCase()) ||
+                data.client_name.toLowerCase().includes(c.spaceName.toLowerCase())
+            );
+            if (extracted) {
+              setSelectedSpaceId(extracted.spaceId);
+              setAddToTracker(true);
+              setCreateSharepointFolder(true);
+            }
+          }
+          if (data.project_title) {
+            const clientName = data.client_name || matchedClient?.spaceName || senderName;
+            setProjectName(`${clientName} - ${data.project_title}`);
+          }
+        }
+      } catch {
+        // Fallback: keep the default brief (buildDefaultBrief)
+      } finally {
+        if (!cancelled) setIsExtractingBrief(false);
+      }
+    }
+    extractBrief();
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [dbAssignees, setDbAssignees] = useState<Assignee[]>([]);
 
   // Fetch assignees from DB (users with ClickUp mapping), fallback to hardcoded
@@ -406,33 +458,48 @@ export function CreateBriefModal({
               />
             </div>
 
-            {/* Tracker + SharePoint checkboxes */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={addToTracker}
-                  onChange={(e) => setAddToTracker(e.target.checked)}
-                  className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40"
-                />
-                <span className="text-sm text-brand-black">Add row to Excel tracker</span>
-                <span className="text-xs text-neutral-400">
-                  {selectedSpaceId ? "" : "(select client first)"}
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={createSharepointFolder}
-                  onChange={(e) => setCreateSharepointFolder(e.target.checked)}
-                  className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40"
-                />
-                <span className="text-sm text-brand-black">Create SharePoint folder</span>
-                <span className="text-xs text-neutral-400">
-                  {selectedSpaceId ? "" : "(select client first)"}
-                </span>
-              </label>
-            </div>
+            {/* Tracker + SharePoint checkboxes with resolved paths */}
+            {(() => {
+              const selectedClient = clients.find((c) => c.spaceId === selectedSpaceId);
+              const trackerFile = selectedClient?.excelTrackerFilename;
+              const spFolder = selectedClient?.sharepointCustomerFolder;
+              return (
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={addToTracker}
+                      onChange={(e) => setAddToTracker(e.target.checked)}
+                      className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40 mt-0.5"
+                    />
+                    <div>
+                      <span className="text-sm text-brand-black">Add row to Excel tracker</span>
+                      {trackerFile ? (
+                        <span className="block text-xs text-neutral-400">{trackerFile}</span>
+                      ) : (
+                        <span className="block text-xs text-neutral-400">(select client first)</span>
+                      )}
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createSharepointFolder}
+                      onChange={(e) => setCreateSharepointFolder(e.target.checked)}
+                      className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40 mt-0.5"
+                    />
+                    <div>
+                      <span className="text-sm text-brand-black">Create SharePoint folder</span>
+                      {spFolder ? (
+                        <span className="block text-xs text-neutral-400">{spFolder}/</span>
+                      ) : (
+                        <span className="block text-xs text-neutral-400">(select client first)</span>
+                      )}
+                    </div>
+                  </label>
+                </div>
+              );
+            })()}
 
             {/* Brief textarea */}
             <div>
@@ -440,14 +507,18 @@ export function CreateBriefModal({
                 htmlFor="brief-body"
                 className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5"
               >
-                Brief
+                Brief {isExtractingBrief && <span className="text-brand-cerulean font-normal normal-case">(Arya is preparing the brief...)</span>}
               </label>
               <textarea
                 id="brief-body"
-                value={brief}
+                value={isExtractingBrief ? "Arya is analyzing the email and preparing a professional brief for the ops team..." : brief}
                 onChange={(e) => setBrief(e.target.value)}
-                rows={8}
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed"
+                disabled={isExtractingBrief}
+                rows={10}
+                className={cn(
+                  "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed",
+                  isExtractingBrief && "opacity-60 italic"
+                )}
                 placeholder="Project brief details..."
               />
             </div>
