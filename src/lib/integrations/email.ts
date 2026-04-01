@@ -51,9 +51,10 @@ export async function getRecentEmails(
   limit: number = 20
 ): Promise<EmailMessage[]> {
   // Build query string manually — URLSearchParams encodes $ as %24 which Graph API rejects
-  // Filter: unread emails NOT sent from any @sarani.studio address
+  // Note: filtering @sarani.studio in OData is not supported (Graph rejects nested field filters)
+  // So we filter client-side after fetch
   const query = [
-    "$filter=isRead eq false and not(startswith(from/emailAddress/address,'team@sarani.studio'))",
+    "$filter=isRead eq false",
     "$orderby=receivedDateTime desc",
     `$top=${limit}`,
     "$select=id,subject,from,receivedDateTime,bodyPreview,hasAttachments,conversationId",
@@ -63,8 +64,7 @@ export async function getRecentEmails(
     `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages?${query}`
   );
 
-  // Additional client-side filter: exclude ALL @sarani.studio senders
-  // (the Graph filter above only catches team@, this catches fanny@, etc.)
+  // Client-side filter: exclude ALL @sarani.studio senders
   return data.value.filter((email) => {
     const fromAddr = email.from?.emailAddress?.address?.toLowerCase() ?? "";
     return !fromAddr.endsWith("@sarani.studio");
