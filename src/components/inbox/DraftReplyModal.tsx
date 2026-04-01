@@ -33,9 +33,10 @@ export function DraftReplyModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const replyRef = useRef<HTMLTextAreaElement>(null);
 
-  const suggestedReply = payload.classification.suggestedAction || "";
+  const draftReply = payload.classification.draftReply || "";
+  const suggestedAction = payload.classification.suggestedAction || "";
 
-  const [replyBody, setReplyBody] = useState(suggestedReply);
+  const [replyBody, setReplyBody] = useState(draftReply);
   const [subject, setSubject] = useState(
     payload.subject.startsWith("Re:") ? payload.subject : `Re: ${payload.subject}`
   );
@@ -226,6 +227,20 @@ export function DraftReplyModal({
             </div>
           </div>
 
+          {/* Arya's analysis (readonly context for PM) */}
+          {suggestedAction && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
+                Arya&apos;s Analysis
+              </h3>
+              <div className="bg-neutral-50 rounded-lg px-4 py-3">
+                <p className="text-sm text-neutral-600 leading-relaxed italic">
+                  {suggestedAction}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Reply fields */}
           <div className="space-y-4">
             {/* To (readonly) */}
@@ -272,9 +287,9 @@ export function DraftReplyModal({
                 className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed"
                 placeholder="Write your reply here..."
               />
-              {suggestedReply && (
+              {draftReply && (
                 <p className="text-xs text-neutral-400 mt-1 italic">
-                  Pre-filled with Arya's suggested reply
+                  Pre-filled with Arya&apos;s suggested reply
                 </p>
               )}
             </div>

@@ -7,25 +7,17 @@ import { checkRateLimit } from "@/lib/rate-limit";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
-type EmailCategory =
-  | "client_brief"
-  | "client_followup"
-  | "noise"
-  | "new_client_potential"
-  | "new_client_prospect";
+type EmailCategory = "enquiry" | "new_project" | "project_feedback" | "other";
 
-type RouteTo =
-  | "PROTO-EMAIL-INTAKE"
-  | "PROTO-CLIENT-RETURN"
-  | "PROTO-PITCH"
-  | "PROTO-CLIENT-REPLY"
-  | "archive";
+type RouteTo = "PROTO-ENQUIRY" | "PROTO-EMAIL-INTAKE" | "PROTO-CLIENT-RETURN" | "archive";
 
 interface ClassificationResult {
   category: EmailCategory;
   confidence: number;
   reasoning: string;
   suggestedAction: string;
+  draftReply: string;
+  clickupProjectHint: string | null;
   language: string;  // ISO 639-1 code ("en", "fr", "de", etc.)
   routeTo: RouteTo;  // Protocol target for routing
 }
@@ -45,24 +37,14 @@ const ClassifyByContentSchema = z.object({
 const ClassifySchema = z.union([ClassifyByIdSchema, ClassifyByContentSchema]);
 
 const ClassificationResultSchema = z.object({
-  category: z.enum([
-    "client_brief",
-    "client_followup",
-    "noise",
-    "new_client_potential",
-    "new_client_prospect",
-  ]),
+  category: z.enum(["enquiry", "new_project", "project_feedback", "other"]),
   confidence: z.number().min(0).max(1),
   reasoning: z.string(),
   suggestedAction: z.string(),
+  draftReply: z.string(),
+  clickupProjectHint: z.string().nullable(),
   language: z.string().min(2).max(5),
-  routeTo: z.enum([
-    "PROTO-EMAIL-INTAKE",
-    "PROTO-CLIENT-RETURN",
-    "PROTO-PITCH",
-    "PROTO-CLIENT-REPLY",
-    "archive",
-  ]),
+  routeTo: z.enum(["PROTO-ENQUIRY", "PROTO-EMAIL-INTAKE", "PROTO-CLIENT-RETURN", "archive"]),
 });
 
 // ─── Pre-LLM noise filters ────────────────────────────────────────────────
@@ -87,33 +69,28 @@ function isNoiseByEmail(from: string): boolean {
 
 // ─── Claude prompt ─────────────────────────────────────────────────────────
 
-const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following email into exactly ONE category AND detect its language.
+const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier and reply assistant. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following email into exactly ONE category, detect its language, and draft a professional reply.
 
 Categories:
-- "client_brief": email containing a project brief, request for work, or new deliverable request from an EXISTING or KNOWN client. The sender has worked with Sarani before, the brief is clear and specific (deliverables, timeline, brand mentioned).
-- "client_followup": follow-up, question, feedback, revision request, or status update about an ONGOING project.
-- "noise": newsletters, automated notifications, marketing emails, system alerts, subscription confirmations, out-of-office replies.
-- "new_client_potential": first contact from someone who could become a client — casual inquiry, introduction, "just reaching out". No specific project request yet.
-- "new_client_prospect": first contact from a prospect who WANTS something specific — requests a quote, a pitch, a proposal, asks for pricing, describes a project they need help with. They are ready to buy, not just browsing.
+- "enquiry": Question about Sarani's services, request for quote/pricing, general question, first contact (casual or specific). No existing project involved.
+- "new_project": A brief for a NEW project from an existing OR new client — contains deliverables, timeline, brand info, or a clear project request. Sender may or may not have worked with Sarani before.
+- "project_feedback": Feedback, revision request, follow-up, status question, or any message about an EXISTING ongoing project. The sender references a specific past or ongoing project.
+- "other": Newsletters, automated notifications, system alerts, out-of-office, marketing emails.
 
-Key distinction — client_brief vs new_client_prospect:
-- client_brief = KNOWN client + CLEAR brief (specific deliverables, deadline, brand context). Example: "Hi team, we need 20 banners for our Q3 campaign, here are the specs..."
-- new_client_prospect = UNKNOWN sender + WANTS a quote/pitch/proposal. Example: "We're a fashion brand looking for a creative agency to handle our social media. Can you send us a proposal?"
-- If unsure: does the sender reference past Sarani projects or use internal vocabulary (SharePoint links, ClickUp refs)? → client_brief. Otherwise → new_client_prospect.
-
-Routing rules:
-- client_brief → "PROTO-EMAIL-INTAKE"
-- client_followup → "PROTO-CLIENT-RETURN"
-- noise → "archive"
-- new_client_potential → "PROTO-CLIENT-REPLY"
-- new_client_prospect → "PROTO-PITCH"
+Routing:
+- enquiry → "PROTO-ENQUIRY"
+- new_project → "PROTO-EMAIL-INTAKE"
+- project_feedback → "PROTO-CLIENT-RETURN"
+- other → "archive"
 
 Return JSON:
 {
-  "category": "<one of the 5 categories>",
+  "category": "<one of the 4 categories>",
   "confidence": 0.0 to 1.0,
   "reasoning": "one sentence explaining why this category",
-  "suggestedAction": "one sentence — what should the PM do next",
+  "suggestedAction": "one sentence — internal analysis for the PM on what to do next",
+  "draftReply": "Complete email reply ready to send. Greeting: 'Hi [FirstName],' or formal equivalent matching the sender's language. Body: 2-3 sentences directly addressing the email content. Closing: 'Best regards,\\nThe Sarani Team'. Language: MUST match the sender's email language.",
+  "clickupProjectHint": "Client name or project name extracted from the email, as it would appear in ClickUp task titles. Null if not identifiable.",
   "language": "<ISO 639-1 code of the email's language>",
   "routeTo": "<protocol name from routing rules>"
 }
@@ -122,7 +99,9 @@ Rules:
 - Return valid JSON only, no markdown.
 - If unsure between two categories, pick the one that requires human attention (prefer false positive over missed client email).
 - Confidence below 0.6 means you are uncertain — flag it in reasoning.
-- Language detection: identify the PRIMARY language of the email body. If mixed, use the dominant language. Default to "en" only if truly ambiguous.`;
+- Language detection: identify the PRIMARY language of the email body. If mixed, use the dominant language. Default to "en" only if truly ambiguous.
+- draftReply MUST be a real email reply the PM can send as-is. Never include analysis phrases like "I suggest", "This email is about", "You should".
+- clickupProjectHint: extract the client or project name only if the email references a specific ongoing project. Return null for enquiries, new projects, and other.`;
 
 // ─── POST handler ──────────────────────────────────────────────────────────
 
@@ -186,10 +165,12 @@ export async function POST(request: NextRequest) {
     // Pre-LLM filter: obvious noise
     if (isNoiseByEmail(from)) {
       const result: ClassificationResult = {
-        category: "noise",
+        category: "other",
         confidence: 0.95,
         reasoning: `Sender address "${from}" matches automated/notification pattern.`,
         suggestedAction: "Archive or ignore — automated sender detected.",
+        draftReply: "",
+        clickupProjectHint: null,
         language: "en",
         routeTo: "archive",
       };
@@ -220,7 +201,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(parseResult.data);
+    // ─── ClickUp project search for project_feedback ───────────────────
+    const classificationData = { ...parseResult.data } as Record<string, unknown>;
+
+    if (
+      parseResult.data.category === "project_feedback" &&
+      parseResult.data.clickupProjectHint
+    ) {
+      try {
+        const searchUrl = new URL("/api/admin/clickup/search", request.url);
+        const searchRes = await fetch(searchUrl.toString(), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: parseResult.data.clickupProjectHint }),
+        });
+        if (searchRes.ok) {
+          const searchData = await searchRes.json() as {
+            taskId: string | null;
+            taskUrl: string | null;
+            taskName: string | null;
+          };
+          if (searchData.taskId) {
+            classificationData.taskId = searchData.taskId;
+            classificationData.taskUrl = searchData.taskUrl;
+            classificationData.taskName = searchData.taskName;
+          }
+        }
+      } catch (searchError) {
+        // Graceful degradation — classification still works without ClickUp link
+        console.warn("[Email Classify] ClickUp search failed:", searchError);
+      }
+    }
+
+    return NextResponse.json(classificationData);
   } catch (error) {
     console.error("[Email Classify] Error:", error);
 

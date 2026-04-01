@@ -13,6 +13,8 @@ interface EmailClassification {
   confidence: number;
   reasoning: string;
   suggestedAction: string;
+  draftReply?: string;
+  clickupProjectHint?: string | null;
   language: string;
   routeTo: string;
 }
@@ -39,48 +41,60 @@ interface EmailCardProps {
   onDraftReply?: () => void;
   onPreparePitch?: () => void;
   showToast: (message: string, type: "success" | "error") => void;
+  // Fix 6: Managed view — read-only with action badge + restore
+  isManagedView?: boolean;
+  actionBadge?: string;
+  processedAt?: string | null;
+  onRestore?: () => void;
 }
 
 // ─── Category Config ────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
+  // ─── New 4 categories ──────────────────────────────────────────────
+  enquiry: {
+    label: "Enquiry",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/10",
+  },
+  new_project: {
+    label: "New Project",
+    color: "text-brand-cerulean",
+    bgColor: "bg-brand-cerulean/10",
+  },
+  project_feedback: {
+    label: "Project Feedback",
+    color: "text-success",
+    bgColor: "bg-success/10",
+  },
+  other: {
+    label: "Other",
+    color: "text-neutral-400",
+    bgColor: "bg-neutral-100",
+  },
+  // ─── Legacy categories (backward compat for existing DB items) ────
   client_brief: {
-    label: "Client Brief",
+    label: "New Project",
     color: "text-brand-cerulean",
     bgColor: "bg-brand-cerulean/10",
   },
   client_followup: {
-    label: "Follow-up",
+    label: "Project Feedback",
     color: "text-success",
     bgColor: "bg-success/10",
   },
   new_client: {
-    label: "New Client",
+    label: "Enquiry",
     color: "text-brand-flame",
     bgColor: "bg-brand-flame/10",
   },
   new_client_prospect: {
-    label: "New Prospect",
+    label: "Enquiry",
     color: "text-brand-flame",
     bgColor: "bg-brand-flame/10",
   },
-  internal: {
-    label: "Internal",
-    color: "text-neutral-600",
-    bgColor: "bg-neutral-100",
-  },
-  vendor: {
-    label: "Vendor",
-    color: "text-neutral-600",
-    bgColor: "bg-neutral-100",
-  },
-  newsletter: {
-    label: "Newsletter",
-    color: "text-neutral-400",
-    bgColor: "bg-neutral-100",
-  },
   noise: {
-    label: "Noise",
+    label: "Other",
     color: "text-neutral-400",
     bgColor: "bg-neutral-100",
   },
@@ -162,13 +176,17 @@ function ConfidenceDot({ confidence }: { confidence: number }) {
 // ─── Next Step Hints ─────────────────────────────────────────────────────────
 
 function getNextStepHint(category: string, routeTo: string): string {
-  if (routeTo === "PROTO-EMAIL-INTAKE" || category === "client_brief") {
+  if (routeTo === "PROTO-EMAIL-INTAKE" || category === "new_project" || category === "client_brief") {
     return "Next: Review and create project brief";
   }
-  if (routeTo === "PROTO-CLIENT-RETURN" || category === "client_followup") {
+  if (routeTo === "PROTO-CLIENT-RETURN" || category === "project_feedback" || category === "client_followup") {
     return "Next: Check project status and reply to client";
   }
-  if (routeTo === "PROTO-PITCH" || category === "new_client_prospect" || category === "new_client") {
+  if (routeTo === "PROTO-ENQUIRY" || category === "enquiry" || category === "new_client_prospect" || category === "new_client") {
+    return "Next: Review draft reply and send to prospect";
+  }
+  // Legacy protocols
+  if (routeTo === "PROTO-PITCH") {
     return "Next: Prepare pitch deck and proposal";
   }
   if (routeTo === "PROTO-CLIENT-REPLY") {
@@ -193,6 +211,10 @@ export function EmailCard({
   onOpenProject,
   onDraftReply,
   onPreparePitch,
+  isManagedView,
+  actionBadge,
+  processedAt,
+  onRestore,
 }: EmailCardProps) {
   const { from, subject, classification, bodyPreview } = payload;
   const senderName = extractSenderName(from);
@@ -203,13 +225,15 @@ export function EmailCard({
   const isLark = sourceType === "lark";
 
   // Determine which action buttons to show based on routeTo + category
-  const isClientBrief =
-    routeTo === "PROTO-EMAIL-INTAKE" || classification.category === "client_brief";
-  const isClientFollowup =
-    routeTo === "PROTO-CLIENT-RETURN" || classification.category === "client_followup";
-  const isNewProspect =
-    routeTo === "PROTO-PITCH" || classification.category === "new_client_prospect" || classification.category === "new_client";
-  const isDraftReply = routeTo === "PROTO-CLIENT-REPLY";
+  const isNewProject =
+    routeTo === "PROTO-EMAIL-INTAKE" || classification.category === "new_project" || classification.category === "client_brief";
+  const isProjectFeedback =
+    routeTo === "PROTO-CLIENT-RETURN" || classification.category === "project_feedback" || classification.category === "client_followup";
+  const isEnquiry =
+    routeTo === "PROTO-ENQUIRY" || classification.category === "enquiry" || classification.category === "new_client_prospect" || classification.category === "new_client";
+  // Legacy protocols
+  const isNewProspect = routeTo === "PROTO-PITCH" && !isEnquiry;
+  const isDraftReply = routeTo === "PROTO-CLIENT-REPLY" && !isEnquiry;
 
   const nextStepHint = getNextStepHint(classification.category, routeTo);
 
@@ -293,7 +317,7 @@ export function EmailCard({
         </div>
       </div>
 
-      {/* Classification badge + subject */}
+      {/* Classification badge + managed badge + subject */}
       <div className="flex items-center gap-2 mb-2">
         <span
           className={cn(
@@ -304,6 +328,11 @@ export function EmailCard({
         >
           {catConfig.label}
         </span>
+        {isManagedView && actionBadge && (
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-500">
+            {actionBadge}
+          </span>
+        )}
         {classification.language && classification.language !== "en" && (
           <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500 uppercase">
             {classification.language}
@@ -323,8 +352,8 @@ export function EmailCard({
         </p>
       )}
 
-      {/* Suggested action */}
-      {suggestedAction && (
+      {/* Suggested action — hidden in managed view */}
+      {!isManagedView && suggestedAction && (
         <div className="bg-neutral-50 rounded-lg px-3 py-2 mb-4">
           <p className="text-xs text-neutral-500 italic leading-relaxed">
             <span className="font-semibold not-italic text-neutral-600">Arya suggests:</span>{" "}
@@ -333,30 +362,50 @@ export function EmailCard({
         </div>
       )}
 
-      {/* Actions */}
+      {/* Managed view: read-only with date + restore */}
+      {isManagedView && (
+        <div className="flex items-center gap-3 pt-3 border-t border-neutral-200">
+          <span className="text-xs text-neutral-400">
+            {processedAt ? formatManagedDate(processedAt) : "Date unknown"}
+          </span>
+          {onRestore && (
+            <button
+              onClick={onRestore}
+              disabled={isActioning}
+              className="px-3 py-2 min-h-[44px] rounded-lg text-xs font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
+              aria-label="Restore this item to inbox"
+            >
+              {isActioning ? "Restoring..." : "Restore"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Actions — hidden in managed view */}
+      {!isManagedView && (
       <div className="flex items-center gap-2 flex-wrap pt-3 border-t border-neutral-200">
-        {/* === Client Brief: primary = "Create Project Brief" === */}
-        {isClientBrief && (
+        {/* === Enquiry (PROTO-ENQUIRY): Draft Reply / Archive === */}
+        {isEnquiry && (
           <button
-            onClick={handleCreateBrief}
+            onClick={onDraftReply ?? onApprove}
             disabled={isActioning}
-            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
-            aria-label="Create project brief from this email"
+            className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+            aria-label="Draft a reply to this enquiry"
           >
-            {isActioning ? "Redirecting..." : "Create Project Brief \u2192"}
+            {isActioning ? "Creating draft..." : "Draft Reply"}
           </button>
         )}
 
-        {/* === Client Follow-up: primary = "Open Project", secondary = "Draft Reply" === */}
-        {isClientFollowup && (
+        {/* === New Project (PROTO-EMAIL-INTAKE): Create Brief / Draft Reply / Archive === */}
+        {isNewProject && (
           <>
             <button
-              onClick={onOpenProject ?? onApprove}
+              onClick={handleCreateBrief}
               disabled={isActioning}
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
-              aria-label="Open the related project"
+              aria-label="Create project brief from this email"
             >
-              {isActioning ? "Opening..." : "Open Project"}
+              {isActioning ? "Redirecting..." : "Create Brief \u2192"}
             </button>
             <button
               onClick={onDraftReply ?? onApprove}
@@ -369,7 +418,29 @@ export function EmailCard({
           </>
         )}
 
-        {/* === New Prospect: primary = "Prepare Pitch" === */}
+        {/* === Project Feedback (PROTO-CLIENT-RETURN): Open Project / Draft Reply / Archive === */}
+        {isProjectFeedback && (
+          <>
+            <button
+              onClick={onOpenProject ?? onApprove}
+              disabled={isActioning}
+              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
+              aria-label="Open the related project in ClickUp"
+            >
+              {isActioning ? "Opening..." : "Add ClickUp Comment"}
+            </button>
+            <button
+              onClick={onDraftReply ?? onApprove}
+              disabled={isActioning}
+              className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-success text-white hover:bg-green-700 transition-colors disabled:opacity-50"
+              aria-label="Draft a reply to this client"
+            >
+              Draft Reply
+            </button>
+          </>
+        )}
+
+        {/* === Legacy: New Prospect (PROTO-PITCH) === */}
         {isNewProspect && (
           <button
             onClick={onPreparePitch ?? onApprove}
@@ -381,8 +452,8 @@ export function EmailCard({
           </button>
         )}
 
-        {/* === Draft Reply (AI-suggested reply ready): primary = "Draft Reply" === */}
-        {isDraftReply && !isClientFollowup && (
+        {/* === Legacy: Draft Reply (PROTO-CLIENT-REPLY) === */}
+        {isDraftReply && (
           <button
             onClick={onDraftReply ?? onApprove}
             disabled={isActioning}
@@ -393,8 +464,8 @@ export function EmailCard({
           </button>
         )}
 
-        {/* === Default: no specific protocol matched === */}
-        {!isClientBrief && !isClientFollowup && !isNewProspect && !isDraftReply && (
+        {/* === Default: no specific protocol matched (includes "other" / archive) === */}
+        {!isEnquiry && !isNewProject && !isProjectFeedback && !isNewProspect && !isDraftReply && (
           <button
             onClick={onApprove}
             disabled={isActioning}
@@ -423,13 +494,30 @@ export function EmailCard({
           Not relevant
         </button>
       </div>
+      )}
 
-      {/* Next step hint */}
-      <p className="text-xs text-neutral-500 mt-2 pl-1">
-        {nextStepHint}
-      </p>
+      {/* Next step hint — hidden in managed view */}
+      {!isManagedView && (
+        <p className="text-xs text-neutral-500 mt-2 pl-1">
+          {nextStepHint}
+        </p>
+      )}
     </div>
   );
+}
+
+// ─── Managed date formatter ────────────────────────────────────────────────
+
+function formatManagedDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 // ─── Safe parser ────────────────────────────────────────────────────────────
@@ -463,6 +551,8 @@ export function parseEmailPayload(summary: string | null): EmailPayload | null {
           confidence: typeof cls.confidence === "number" ? cls.confidence : 0,
           reasoning: (cls.reasoning as string) ?? "",
           suggestedAction: (cls.suggestedAction as string) ?? "",
+          draftReply: (cls.draftReply as string) ?? "",
+          clickupProjectHint: (cls.clickupProjectHint as string) ?? null,
           language: (cls.language as string) ?? "en",
           routeTo: (cls.routeTo as string) ?? "",
         },
@@ -487,6 +577,8 @@ export function parseEmailPayload(summary: string | null): EmailPayload | null {
           confidence: typeof cls.confidence === "number" ? cls.confidence : 0,
           reasoning: (cls.reasoning as string) ?? "",
           suggestedAction: (cls.suggestedAction as string) ?? (cls.suggested_action as string) ?? "",
+          draftReply: (cls.draftReply as string) ?? "",
+          clickupProjectHint: (cls.clickupProjectHint as string) ?? null,
           language: (cls.language as string) ?? "en",
           routeTo: (cls.routeTo as string) ?? "",
         },
