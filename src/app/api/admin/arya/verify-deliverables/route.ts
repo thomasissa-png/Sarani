@@ -7,10 +7,9 @@ import { callClaudeJSON } from "@/lib/ai/claude";
 import {
   addTaskComment,
   updateTaskStatus,
-  type ClickUpTask,
 } from "@/lib/integrations/clickup";
 import { getUserFromSession } from "@/lib/auth";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -118,9 +117,17 @@ function parseVerificationOutput(
 // ─── POST /api/admin/arya/verify-deliverables ───────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const user = await getUserFromSession();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Support both session auth (PM calling directly) and internal cron auth
+  const internalCronHeader = request.headers.get("x-internal-cron");
+  const cronSecret = process.env.CRON_SECRET;
+  const isInternalCall =
+    !!cronSecret && !!internalCronHeader && internalCronHeader === cronSecret;
+
+  if (!isInternalCall) {
+    const user = await getUserFromSession();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   let body: unknown;
