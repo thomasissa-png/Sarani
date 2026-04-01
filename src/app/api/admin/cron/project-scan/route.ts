@@ -305,9 +305,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Create inbox_items for each alert
+    // Create inbox_items for each alert (with dedup to prevent flooding)
     let createdCount = 0;
     for (const alert of allAlerts) {
+      // Dedup: skip if a pending/in_progress alert already exists for this task
+      const existingAlert = await db
+        .select({ id: inboxItems.id })
+        .from(inboxItems)
+        .where(
+          and(
+            eq(inboxItems.sourceId, alert.taskId),
+            eq(inboxItems.type, "followup_alert"),
+            eq(inboxItems.status, "pending")
+          )
+        )
+        .limit(1);
+
+      if (existingAlert.length > 0) continue;
+
       const emoji =
         alert.level === "red" ? "🔴" : alert.level === "orange" ? "🟠" : "🟡";
 
