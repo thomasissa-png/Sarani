@@ -174,6 +174,13 @@ export const quotes = pgTable(
     total: numeric("total", { precision: 12, scale: 2 }).notNull(),
     currency: varchar("currency", { length: 3 }).notNull().default("EUR"),
     pdfUrl: text("pdf_url"), // SharePoint URL or null if not yet uploaded
+    status: varchar("status", { length: 20 }).notNull().default("draft"), // draft | sent | dismissed
+    purposeOfWork: text("purpose_of_work"),
+    lang: varchar("lang", { length: 5 }).notNull().default("EN"), // FR | EN
+    paymentTermsDays: integer("payment_terms_days").notNull().default(30),
+    estimationConfidence: varchar("estimation_confidence", { length: 10 }), // high | medium | low
+    unpricedItems: jsonb("unpriced_items").$type<string[]>(),
+    clickupTaskId: text("clickup_task_id"), // linked ClickUp task for finalize flow
     createdBy: text("created_by").notNull(), // user ID or email
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
@@ -189,6 +196,21 @@ export interface QuoteLineItem {
   quantity: number;
   unitPrice: number;
   total: number;
+}
+
+/** Shape of the auto-quote draft extracted by the LLM */
+export interface QuoteDraftPayload {
+  lang: "FR" | "EN";
+  purposeOfWork: string;
+  paymentTermsDays: number;
+  estimationConfidence: "high" | "medium" | "low";
+  unpricedItems: string[];
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number | null;
+    total: number | null;
+  }>;
 }
 
 // ─── Project Teams ──────────────────────────────────────────────────────────

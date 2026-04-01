@@ -330,11 +330,47 @@ export async function POST(request: NextRequest) {
     warnings.push("Inbox item was not updated to done — update manually");
   }
 
+  // ─── Step 7: Trigger auto-quote pipeline (non-blocking) ────────────────
+  // If this fails, the project is still created — the PM can build the quote manually.
+
+  let autoQuoteTriggered = false;
+  try {
+    const autoQuoteUrl = new URL("/api/admin/inbox/auto-quote", request.url);
+    const autoQuoteRes = await fetch(autoQuoteUrl.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: request.headers.get("Cookie") ?? "",
+      },
+      body: JSON.stringify({
+        clientName: body.clientName,
+        projectName: body.projectName,
+        briefText: body.brief,
+        contactEmail: body.contactEmail,
+        clickupTaskId: clickupTask.id,
+        clickupSpaceId: body.clickupSpaceId,
+      }),
+      signal: AbortSignal.timeout(35_000), // 30s LLM + 5s overhead
+    });
+    autoQuoteTriggered = autoQuoteRes.ok;
+    if (!autoQuoteRes.ok) {
+      const errData = await autoQuoteRes.json().catch(() => ({}));
+      const errDetail = (errData as Record<string, unknown>).error ?? autoQuoteRes.statusText;
+      console.error("[Auto-Brief Execute] Auto-quote trigger failed:", errDetail);
+      warnings.push(`Auto-quote not generated: ${errDetail}. Build quote manually.`);
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[Auto-Brief Execute] Auto-quote trigger error:", errMsg);
+    warnings.push(`Auto-quote not generated: ${errMsg}. Build quote manually.`);
+  }
+
   return NextResponse.json({
     success: true,
     taskId: clickupTask.id,
     taskUrl: clickupTask.url || null,
     folderUrl,
+    autoQuoteTriggered,
     warnings: warnings.length > 0 ? warnings : undefined,
   });
 }

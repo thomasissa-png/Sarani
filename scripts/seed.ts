@@ -747,6 +747,36 @@ async function ensureSchema() {
     EXCEPTION WHEN duplicate_column THEN NULL;
     END $$;
 
+    -- Auto-quote columns on quotes (migration 0020)
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "status" VARCHAR(20) NOT NULL DEFAULT 'draft';
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "purpose_of_work" TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "lang" VARCHAR(5) NOT NULL DEFAULT 'EN';
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "payment_terms_days" INTEGER NOT NULL DEFAULT 30;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "estimation_confidence" VARCHAR(10);
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "unpriced_items" JSONB;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "clickup_task_id" TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+
     -- Review pipeline columns on inbox_items (migration 0019)
     DO $$ BEGIN
       ALTER TABLE "inbox_items" ADD COLUMN "verification_attempt" integer;
