@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { AutoBriefCard, type AutoBriefPayload } from "@/components/inbox/AutoBriefCard";
+import { AutoQuoteCard, type AutoQuotePayload } from "@/components/inbox/AutoQuoteCard";
 import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -16,7 +17,8 @@ type InboxItemType =
   | "qa_gates_pass"
   | "followup_alert"
   | "noise"
-  | "auto_brief_ready";
+  | "auto_brief_ready"
+  | "auto_quote_ready";
 
 type InboxItemStatus = "pending" | "pending_review" | "in_progress" | "done" | "dismissed";
 
@@ -78,6 +80,11 @@ const TYPE_CONFIG: Record<
     label: "Auto Brief",
     color: "text-brand-cerulean",
     bgColor: "bg-brand-cerulean/10",
+  },
+  auto_quote_ready: {
+    label: "Auto Quote",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/10",
   },
 };
 
@@ -514,6 +521,29 @@ export default function InboxPage() {
                     }))}
                     createdAt={item.createdAt}
                     onCreated={fetchItems}
+                    onDismissed={fetchItems}
+                    showToast={showToast}
+                  />
+                );
+              }
+            }
+
+            // Render AutoQuoteCard for auto_quote_ready items
+            if (item.type === "auto_quote_ready" && item.summary) {
+              let quotePayload: AutoQuotePayload | null = null;
+              try {
+                quotePayload = JSON.parse(item.summary) as AutoQuotePayload;
+              } catch {
+                // Malformed summary — fall through to standard card
+              }
+              if (quotePayload) {
+                return (
+                  <AutoQuoteCard
+                    key={item.id}
+                    itemId={item.id}
+                    payload={quotePayload}
+                    createdAt={item.createdAt}
+                    onFinalized={fetchItems}
                     onDismissed={fetchItems}
                     showToast={showToast}
                   />
