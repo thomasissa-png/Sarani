@@ -170,47 +170,188 @@ export const CLICKUP_PM_MAPPING: Record<string, number> = {
 export interface ClickUpTeamMember {
   readonly name: string;
   readonly id: number;
+  readonly skills: readonly string[];       // "design", "video", "translation", "social", "copywriting", "pm"
+  readonly languages: readonly string[];    // ISO codes: "fr", "en", "es", "it", "de", etc.
+  readonly clients: readonly string[];      // Client names: "Sony", "TikTok", etc.
 }
 
 export const CLICKUP_TEAM_MEMBERS: readonly ClickUpTeamMember[] = [
-  { name: "Thomas Issa", id: 38103140 },
-  { name: "Lauriane Celton", id: 290479583 },
-  { name: "Andrew S.", id: 242627931 },
-  { name: "Camilla Palermo", id: 49467956 },
-  { name: "Claire Boutreux", id: 266547441 },
-  { name: "Hiruni", id: 95230414 },
-  { name: "Claudia Salgueiro", id: 89382349 },
-  { name: "Affan Hakim", id: 60852951 },
-  { name: "JC", id: 89363031 },
-  { name: "Mahée Ahouansou", id: 89360336 },
-  { name: "Branko Rosic", id: 89354959 },
-  { name: "Cristina Ramos", id: 38467924 },
-  { name: "Ameena Gorton", id: 89353227 },
-  { name: "Gabrielle Belledent", id: 80499023 },
-  { name: "Anissa Baroudi", id: 78188831 },
-  { name: "Clara Jaeger", id: 89331511 },
-  { name: "AnneLaure G.", id: 89316728 },
-  { name: "Prudence Ip", id: 182471913 },
-  { name: "Milan Pantović", id: 182468711 },
-  { name: "Marie Foster", id: 88228411 },
-  { name: "Carla Pavetti", id: 89273119 },
-  { name: "Claire Boussuge", id: 89271372 },
-  { name: "Abdelrahman Garhi", id: 4663471 },
-  { name: "Aurélie Touchard", id: 96738712 },
-  { name: "Amjad Jameel", id: 89225560 },
-  { name: "Pablo Ojeda", id: 89176064 },
-  { name: "Alessia Faustini", id: 89176061 },
-  { name: "Chloé Mwenge", id: 10948297 },
-  { name: "Genaro Splendore", id: 56576185 },
-  { name: "Jason Angeles", id: 56575760 },
-  { name: "Luis Caballero", id: 56575759 },
-  { name: "Silvia Franzi", id: 56575757 },
-  { name: "Laura Martinez", id: 56575756 },
-  { name: "Fanny Place", id: 56575754 },
-  { name: "Carole Eid", id: 56575753 },
-  { name: "Ara dela Fuente", id: 38103175 },
-  { name: "Binary Data", id: 94804152 },
+  { name: "Thomas Issa", id: 38103140, skills: ["pm"], languages: ["fr", "en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS"] },
+  { name: "Lauriane Celton", id: 290479583, skills: ["pm"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Andrew S.", id: 242627931, skills: ["design"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Camilla Palermo", id: 49467956, skills: ["design"], languages: ["en", "it"], clients: ["Sony"] },
+  { name: "Claire Boutreux", id: 266547441, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Hiruni", id: 95230414, skills: ["design"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Claudia Salgueiro", id: 89382349, skills: ["design", "video"], languages: ["pt", "en", "es"], clients: [] }, // TODO: Thomas to fill
+  { name: "Affan Hakim", id: 60852951, skills: ["video"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
+  { name: "JC", id: 89363031, skills: ["video"], languages: ["en"], clients: ["TikTok"] }, // TODO: Thomas to fill
+  { name: "Mahée Ahouansou", id: 89360336, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Branko Rosic", id: 89354959, skills: ["video"], languages: ["en", "sr"], clients: [] }, // TODO: Thomas to fill
+  { name: "Cristina Ramos", id: 38467924, skills: ["design"], languages: ["es", "en"], clients: ["Sony"] },
+  { name: "Ameena Gorton", id: 89353227, skills: ["copywriting"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Gabrielle Belledent", id: 80499023, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Anissa Baroudi", id: 78188831, skills: ["design"], languages: ["fr", "en", "ar"], clients: [] }, // TODO: Thomas to fill
+  { name: "Clara Jaeger", id: 89331511, skills: ["design"], languages: ["fr", "en", "de"], clients: [] }, // TODO: Thomas to fill
+  { name: "AnneLaure G.", id: 89316728, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Prudence Ip", id: 182471913, skills: ["design"], languages: ["en", "zh"], clients: [] }, // TODO: Thomas to fill
+  { name: "Milan Pantović", id: 182468711, skills: ["video"], languages: ["en", "sr"], clients: [] }, // TODO: Thomas to fill
+  { name: "Marie Foster", id: 88228411, skills: ["design"], languages: ["en", "fr"], clients: [] }, // TODO: Thomas to fill
+  { name: "Carla Pavetti", id: 89273119, skills: ["design"], languages: ["it", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Claire Boussuge", id: 89271372, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Abdelrahman Garhi", id: 4663471, skills: ["video"], languages: ["ar", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Aurélie Touchard", id: 96738712, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Amjad Jameel", id: 89225560, skills: ["design"], languages: ["ar", "en"], clients: ["Aujan"] }, // TODO: Thomas to fill
+  { name: "Pablo Ojeda", id: 89176064, skills: ["video"], languages: ["es", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Alessia Faustini", id: 89176061, skills: ["design", "translation"], languages: ["it", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Chloé Mwenge", id: 10948297, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Genaro Splendore", id: 56576185, skills: ["video"], languages: ["it", "en", "es"], clients: [] }, // TODO: Thomas to fill
+  { name: "Jason Angeles", id: 56575760, skills: ["video"], languages: ["en"], clients: ["TikTok"] }, // TODO: Thomas to fill
+  { name: "Luis Caballero", id: 56575759, skills: ["video"], languages: ["es", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Silvia Franzi", id: 56575757, skills: ["translation", "copywriting"], languages: ["it", "en", "fr"], clients: ["Sony"] },
+  { name: "Laura Martinez", id: 56575756, skills: ["translation", "copywriting"], languages: ["es", "en", "fr"], clients: [] }, // TODO: Thomas to fill
+  { name: "Fanny Place", id: 56575754, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Carole Eid", id: 56575753, skills: ["design"], languages: ["fr", "en", "ar"], clients: [] }, // TODO: Thomas to fill
+  { name: "Ara dela Fuente", id: 38103175, skills: ["design"], languages: ["es", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Binary Data", id: 94804152, skills: [], languages: [], clients: [] }, // System user — not a real team member
 ];
+
+// ─── Team Recommendation Helper ─────────────────────────────────────────────
+// Returns the top N team members matching the project's requirements.
+
+export interface TeamRecommendation {
+  member: ClickUpTeamMember;
+  score: number;        // 0-100 relevance score
+  reasons: string[];    // Why this member is recommended
+}
+
+/**
+ * Recommend team members for a project based on skill match, language match,
+ * and prior client experience. Returns top `limit` matches sorted by score.
+ */
+export function recommendTeamMembers(params: {
+  projectType: string;      // "design", "video", "translation", "social", "other"
+  clientName?: string;       // "Sony", "TikTok", etc.
+  languages?: string[];      // ["en", "fr"]
+  limit?: number;            // default 5
+}): TeamRecommendation[] {
+  const { projectType, clientName, languages = [], limit = 5 } = params;
+
+  const recommendations: TeamRecommendation[] = [];
+
+  for (const member of CLICKUP_TEAM_MEMBERS) {
+    // Skip system users and PMs
+    if (member.skills.length === 0) continue;
+    if (member.skills.length === 1 && member.skills[0] === "pm") continue;
+
+    let score = 0;
+    const reasons: string[] = [];
+
+    // Skill match (40 points)
+    const skillMap: Record<string, string[]> = {
+      design: ["design"],
+      video: ["video"],
+      translation: ["translation", "copywriting"],
+      social: ["social", "design", "copywriting"],
+      other: ["design", "copywriting"],
+    };
+    const relevantSkills = skillMap[projectType] ?? ["design"];
+    const hasSkill = member.skills.some((s) => relevantSkills.includes(s));
+    if (hasSkill) {
+      score += 40;
+      const matched = member.skills.filter((s) => relevantSkills.includes(s));
+      reasons.push(`Skills: ${matched.join(", ")}`);
+    } else {
+      continue; // No point recommending someone without the right skills
+    }
+
+    // Client experience (30 points)
+    if (clientName && member.clients.some((c) => c.toLowerCase() === clientName.toLowerCase())) {
+      score += 30;
+      reasons.push(`Worked with ${clientName}`);
+    }
+
+    // Language match (30 points — proportional to overlap)
+    if (languages.length > 0) {
+      const langOverlap = languages.filter((l) =>
+        member.languages.includes(l.toLowerCase())
+      );
+      if (langOverlap.length > 0) {
+        const langScore = Math.round((langOverlap.length / languages.length) * 30);
+        score += langScore;
+        reasons.push(`Languages: ${langOverlap.join(", ").toUpperCase()}`);
+      }
+    } else {
+      // No language requirement — give partial credit to English speakers
+      if (member.languages.includes("en")) {
+        score += 10;
+      }
+    }
+
+    recommendations.push({ member, score, reasons });
+  }
+
+  return recommendations
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+
+// ─── Project Benchmarks (few-shot references for estimation) ────────────────
+// Historical project data used to calibrate LLM workload estimation.
+// Add real examples as they accumulate — the more, the better Arya estimates.
+
+export interface ProjectBenchmark {
+  readonly type: string;          // "design", "video", "translation", "social"
+  readonly description: string;   // Short description of the project scope
+  readonly totalFiles: number;    // Total deliverable count
+  readonly estimatedHours: number;// Actual hours spent (or best estimate)
+  readonly exampleClient: string; // Client for context
+}
+
+export const PROJECT_BENCHMARKS: readonly ProjectBenchmark[] = [
+  { type: "design", description: "50 banners 3 sizes 2 languages", totalFiles: 300, estimatedHours: 8, exampleClient: "Sony" },
+  { type: "video", description: "80 TikTok videos editing", totalFiles: 80, estimatedHours: 40, exampleClient: "TikTok" },
+  { type: "translation", description: "Cashback copies 10 markets 10 languages", totalFiles: 100, estimatedHours: 16, exampleClient: "Sony" },
+  { type: "design", description: "350 presentation slides rebranding", totalFiles: 350, estimatedHours: 24, exampleClient: "GEODIS" },
+  { type: "design", description: "10 social media posts 3 sizes", totalFiles: 30, estimatedHours: 3, exampleClient: "Bose" },
+  { type: "video", description: "5 product launch videos 30s each", totalFiles: 5, estimatedHours: 15, exampleClient: "Aristocrat" },
+  { type: "translation", description: "Website copy 5 languages", totalFiles: 50, estimatedHours: 10, exampleClient: "CMC Markets" },
+  { type: "design", description: "Full brand guidelines deck 80 pages", totalFiles: 80, estimatedHours: 16, exampleClient: "Lamarck" },
+] as const;
+
+/**
+ * Get benchmarks relevant to a project type for few-shot prompt injection.
+ * Returns up to `limit` benchmarks sorted by type match then total files.
+ */
+export function getRelevantBenchmarks(
+  projectType: string,
+  limit: number = 4
+): ProjectBenchmark[] {
+  // Exact type matches first, then all others as fallback
+  const exactMatches = PROJECT_BENCHMARKS.filter((b) => b.type === projectType);
+  const others = PROJECT_BENCHMARKS.filter((b) => b.type !== projectType);
+  return [...exactMatches, ...others].slice(0, limit);
+}
+
+/**
+ * Build a prompt block with estimation references for injection into brief-extractor.
+ * Pass "all" to include all benchmarks (useful when project type is unknown).
+ */
+export function buildEstimationPromptBlock(projectType: string): string {
+  const benchmarks = projectType === "all"
+    ? [...PROJECT_BENCHMARKS]
+    : getRelevantBenchmarks(projectType);
+  if (benchmarks.length === 0) return "";
+
+  const lines = [
+    "",
+    "ESTIMATION REFERENCE (similar past projects):",
+  ];
+  for (const b of benchmarks) {
+    lines.push(`- ${b.description} = ${b.totalFiles} files → ~${b.estimatedHours}h ${b.type}`);
+  }
+  lines.push("Estimate this project's complexity based on these references.");
+  return lines.join("\n");
+}
 
 // ─── Cache TTL Configuration (seconds) ──────────────────────────────────────
 

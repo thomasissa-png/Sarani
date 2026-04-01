@@ -47,6 +47,20 @@ const jobs: CronJob[] = [
     lastRun: 0,
     running: false,
   },
+  {
+    name: "deadline-alerts",
+    path: "/api/admin/cron/deadline-alerts",
+    intervalMs: 60 * 60 * 1000, // every 1 hour
+    lastRun: 0,
+    running: false,
+  },
+  {
+    name: "daily-digest",
+    path: "/api/admin/cron/daily-digest",
+    intervalMs: 8 * 60 * 60 * 1000, // every 8 hours (route self-deduplicates to 1/day)
+    lastRun: 0,
+    running: false,
+  },
 ];
 
 // ─── Runner ─────────────────────────────────────────────────────────────────

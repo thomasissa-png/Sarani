@@ -20,6 +20,8 @@ export const BriefExtractionResultSchema = z.object({
   quantity: z.string(),           // "50 banners x 3 sizes x 2 languages = 300 files"
   output_languages: z.string(),   // "EN, FR" or "To be confirmed"
   reference_links: z.string(),    // URLs or "None provided"
+  estimated_hours: z.string().optional(), // "~8h design" or "To be confirmed — no similar reference"
+  recommended_assignee: z.string().optional(), // Team member name recommended for this project
 });
 
 export type BriefExtractionResult = z.infer<typeof BriefExtractionResultSchema>;
@@ -96,6 +98,8 @@ Other JSON fields:
 - quantity: string — "50 banners × 3 sizes × 2 languages = 300 files" or "To be confirmed"
 - output_languages: string — "EN, FR" or "To be confirmed"
 - reference_links: string — URLs or "None provided"
+- estimated_hours: string — Estimate based on ESTIMATION REFERENCE if provided. Format: "~Xh type" (e.g. "~8h design", "~40h editing"). If no similar reference exists: "To be confirmed — no similar reference". If info insufficient to estimate: "To be confirmed — deliverables unclear".
+- recommended_assignee: string — If TEAM AVAILABLE section is provided, pick the best match (name only). If no team info: leave empty string "".
 
 Return ONLY the JSON object, no explanation.`;
 

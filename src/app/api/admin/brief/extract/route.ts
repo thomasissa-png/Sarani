@@ -10,6 +10,10 @@ import {
   type BriefExtractionResult,
 } from "@/lib/ai/prompts/brief-extractor";
 import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
+import {
+  recommendTeamMembers,
+  buildEstimationPromptBlock,
+} from "@/lib/integrations/config";
 
 const RequestSchema = z.object({
   emailSubject: z.string(),
@@ -44,13 +48,38 @@ export async function POST(request: NextRequest) {
       senderEmail: body.senderEmail,
     });
 
+    // Build estimation reference block (all benchmarks — LLM picks relevant ones)
+    const estimationBlock = buildEstimationPromptBlock("all");
+
+    // Build team recommendation block (all non-PM members for LLM to pick from)
+    const teamRecs = (() => {
+      const seen = new Set<number>();
+      const recs: ReturnType<typeof recommendTeamMembers> = [];
+      for (const type of ["design", "video", "translation", "social"]) {
+        for (const r of recommendTeamMembers({ projectType: type, limit: 15 })) {
+          if (!seen.has(r.member.id)) {
+            seen.add(r.member.id);
+            recs.push(r);
+          }
+        }
+      }
+      return recs;
+    })();
+    const teamBlock = teamRecs.length > 0
+      ? "\n\nTEAM AVAILABLE FOR ASSIGNMENT:\n" +
+        teamRecs.map((r) =>
+          `- ${r.member.name}: ${r.member.skills.join(", ")}, ${r.member.languages.map((l) => l.toUpperCase()).join("/")}${r.member.clients.length > 0 ? `, worked with ${r.member.clients.join(", ")}` : ""}`
+        ).join("\n") +
+        "\nRecommend the best match based on project type, languages needed, and client familiarity."
+      : "";
+
     const llmResult = await callClaudeJSON<BriefExtractionResult>({
       systemPrompt: BRIEF_EXTRACTOR_SYSTEM_PROMPT,
       userMessage: buildBriefExtractionUserMessage({
         emailSubject: body.emailSubject,
         emailBody: body.emailBody,
         senderEmail: body.senderEmail,
-      }) + clientProfile,
+      }) + clientProfile + estimationBlock + teamBlock,
       model: "claude-haiku-4-5-20251001",
       maxTokens: 1024,
       timeout: 20_000,

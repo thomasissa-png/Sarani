@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { AutoBriefCard, type AutoBriefPayload } from "@/components/inbox/AutoBriefCard";
 import { AutoQuoteCard, type AutoQuotePayload } from "@/components/inbox/AutoQuoteCard";
 import { EmailCard, parseEmailPayload, type EmailPayload } from "@/components/inbox/EmailCard";
+import { DailyDigestCard, type DailyDigestPayload, type DeadlineAlertPayload } from "@/components/inbox/DailyDigestCard";
 import { CreateBriefModal } from "@/components/inbox/CreateBriefModal";
 import { DraftReplyModal } from "@/components/inbox/DraftReplyModal";
 import { ProjectActionModal } from "@/components/inbox/ProjectActionModal";
@@ -799,6 +800,30 @@ export default function InboxPage() {
       ) : (
         <div className="space-y-3">
           {visibleItems.map((item) => {
+            // Render DailyDigestCard for daily_digest and deadline_alert items
+            if ((item.type === "daily_digest" || item.type === "deadline_alert") && item.summary) {
+              let digestPayload: DailyDigestPayload | DeadlineAlertPayload | null = null;
+              try {
+                digestPayload = JSON.parse(item.summary) as DailyDigestPayload | DeadlineAlertPayload;
+              } catch {
+                // Malformed summary — skip
+              }
+              if (digestPayload) {
+                return (
+                  <DailyDigestCard
+                    key={item.id}
+                    itemId={item.id}
+                    type={item.type as "daily_digest" | "deadline_alert"}
+                    title={item.title ?? "Digest"}
+                    payload={digestPayload}
+                    createdAt={item.createdAt}
+                    onDismissed={fetchItems}
+                    showToast={showToast}
+                  />
+                );
+              }
+            }
+
             // Render AutoBriefCard for auto_brief_ready items
             if (item.type === "auto_brief_ready" && item.summary) {
               let payload: AutoBriefPayload | null = null;

@@ -116,6 +116,7 @@ export function CreateBriefModal({
   const [assigneeId, setAssigneeId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExtractingBrief, setIsExtractingBrief] = useState(true);
+  const [estimatedHours, setEstimatedHours] = useState("");
   const [entityOptions, setEntityOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoadingEntities, setIsLoadingEntities] = useState(false);
 
@@ -176,6 +177,20 @@ export function CreateBriefModal({
           if (data.project_title) {
             const clientName = data.client_name || matchedClient?.spaceName || senderName;
             setProjectName(`${clientName} - ${data.project_title}`);
+          }
+          // Pre-select recommended assignee if LLM suggested one
+          if (data.recommended_assignee) {
+            const recName = data.recommended_assignee.toLowerCase();
+            const matchedMember = CLICKUP_TEAM_MEMBERS.find(
+              (m) => m.name.toLowerCase() === recName || m.name.toLowerCase().includes(recName)
+            );
+            if (matchedMember) {
+              setAssigneeId(String(matchedMember.id));
+            }
+          }
+          // Set estimated hours
+          if (data.estimated_hours) {
+            setEstimatedHours(data.estimated_hours);
           }
         }
       } catch {
@@ -366,6 +381,7 @@ export function CreateBriefModal({
               ...(entity ? [{ label: "Entity", value: entity }] : []),
               { label: "Type", value: PROJECT_TYPES.find((pt) => pt.value === projectType)?.label ?? projectType },
               ...(assigneeId ? [{ label: "Assignee", value: assigneeOptions.find((a) => String(a.id) === assigneeId)?.name ?? "" }] : []),
+              ...(estimatedHours ? [{ label: "Estimated effort", value: estimatedHours }] : []),
               ...(payload.classification.confidence >= 0.8 ? [{ label: "Confidence", value: `${Math.round(payload.classification.confidence * 100)}%` }] : []),
               ...(payload.classification.suggestedAction ? [{ label: "Action", value: payload.classification.suggestedAction }] : []),
             ]}

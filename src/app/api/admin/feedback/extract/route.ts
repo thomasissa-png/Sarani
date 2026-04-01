@@ -9,6 +9,7 @@ import {
   buildFeedbackExtractionUserMessage,
   type FeedbackExtractionResult,
 } from "@/lib/ai/prompts/feedback-extractor";
+import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -56,6 +57,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Load client profile (non-blocking — empty string if unavailable)
+    const clientProfile = await buildClientProfileBlock({
+      senderEmail: parsed.from,
+      clientName: parsed.clientName,
+    });
+
     const llmResult = await callClaudeJSON<FeedbackExtractionResult>({
       systemPrompt: FEEDBACK_EXTRACTOR_SYSTEM_PROMPT,
       userMessage: buildFeedbackExtractionUserMessage({
@@ -63,7 +70,7 @@ export async function POST(request: NextRequest) {
         emailBody: parsed.body.slice(0, 3000),
         senderEmail: parsed.from,
         clientName: parsed.clientName,
-      }),
+      }) + clientProfile,
       model: "claude-haiku-4-5-20251001",
       maxTokens: 1024,
       timeout: 10_000,

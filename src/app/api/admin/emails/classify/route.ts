@@ -10,6 +10,7 @@ import {
   isNoiseByEmail,
   type ClassificationResult,
 } from "@/lib/ai/prompts/classifier";
+import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -99,10 +100,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(result);
     }
 
+    // Load client profile (non-blocking — empty string if unavailable)
+    const clientProfile = await buildClientProfileBlock({
+      senderEmail: from,
+    });
+
     // Classify with Claude Haiku
     const llmResult = await callClaudeJSON<ClassificationResult>({
       systemPrompt: CLASSIFICATION_SYSTEM_PROMPT,
-      userMessage: `Subject: ${subject}\nFrom: ${from}\nBody preview: ${bodyPreview}`,
+      userMessage: `Subject: ${subject}\nFrom: ${from}\nBody preview: ${bodyPreview}${clientProfile}`,
       model: "claude-haiku-4-5-20251001",
       maxTokens: 512,
       timeout: 10_000,
