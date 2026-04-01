@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       systemPrompt: CLASSIFICATION_SYSTEM_PROMPT,
       userMessage: `Subject: ${subject}\nFrom: ${from}\nBody preview: ${bodyPreview}`,
       model: "claude-haiku-4-5-20251001",
-      maxTokens: 256,
+      maxTokens: 512,
       timeout: 10_000,
     });
 
@@ -209,23 +209,12 @@ export async function POST(request: NextRequest) {
       parseResult.data.clickupProjectHint
     ) {
       try {
-        const searchUrl = new URL("/api/admin/clickup/search", request.url);
-        const searchRes = await fetch(searchUrl.toString(), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: parseResult.data.clickupProjectHint }),
-        });
-        if (searchRes.ok) {
-          const searchData = await searchRes.json() as {
-            taskId: string | null;
-            taskUrl: string | null;
-            taskName: string | null;
-          };
-          if (searchData.taskId) {
-            classificationData.taskId = searchData.taskId;
-            classificationData.taskUrl = searchData.taskUrl;
-            classificationData.taskName = searchData.taskName;
-          }
+        const { searchTaskByName } = await import("@/lib/integrations/clickup");
+        const match = await searchTaskByName(parseResult.data.clickupProjectHint);
+        if (match) {
+          classificationData.taskId = match.taskId;
+          classificationData.taskUrl = match.taskUrl;
+          classificationData.taskName = match.taskName;
         }
       } catch (searchError) {
         // Graceful degradation — classification still works without ClickUp link

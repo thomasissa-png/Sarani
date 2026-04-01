@@ -354,6 +354,49 @@ export async function setCustomFieldValue(
 }
 
 /**
+ * Search tasks by name in the workspace. Returns the first matching task or null.
+ * Graceful degradation: returns null if ClickUp is not configured or API fails.
+ */
+export async function searchTaskByName(
+  query: string
+): Promise<{ taskId: string; taskUrl: string; taskName: string } | null> {
+  const apiKey = process.env.CLICKUP_API_KEY;
+  const teamId = process.env.CLICKUP_WORKSPACE_ID;
+  if (!apiKey || !teamId) return null;
+
+  try {
+    const searchUrl = `https://api.clickup.com/api/v2/team/${teamId}/task?page=0&include_closed=false&custom_task_ids=false&subtasks=false`;
+    const res = await fetch(searchUrl, {
+      method: "GET",
+      headers: { Authorization: apiKey, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!res.ok) {
+      console.warn(`[ClickUp Search] API returned ${res.status}`);
+      return null;
+    }
+
+    const data = (await res.json()) as {
+      tasks: Array<{ id: string; name: string; url: string }>;
+    };
+
+    const queryLower = query.toLowerCase();
+    const match = data.tasks.find((task) => {
+      const nameLower = task.name.toLowerCase();
+      return nameLower.includes(queryLower) || queryLower.includes(nameLower);
+    });
+
+    return match
+      ? { taskId: match.id, taskUrl: match.url, taskName: match.name }
+      : null;
+  } catch (error) {
+    console.warn("[ClickUp Search] Error:", error);
+    return null;
+  }
+}
+
+/**
  * Check if the ClickUp API is reachable and credentials are valid.
  * Returns "not_configured" if env vars are missing (not an error -- expected state).
  */

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // ─── GET — ClickUp tasks due today ────────────────────────────────────────
 
@@ -7,6 +8,10 @@ export async function GET() {
   const session = await getUserFromSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!checkRateLimit("clickup-due-today", 20, 60_000)) {
+    return NextResponse.json({ error: "Rate limited" }, { status: 429 });
   }
 
   const apiKey = process.env.CLICKUP_API_KEY;

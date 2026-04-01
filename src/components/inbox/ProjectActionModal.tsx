@@ -339,6 +339,7 @@ export function ProjectActionModal({
                 </button>
                 <button
                   onClick={handleDraftReply}
+                  aria-label="Draft a reply to this email"
                   className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-success text-white hover:bg-green-700 transition-colors"
                 >
                   Draft Reply
@@ -364,6 +365,7 @@ export function ProjectActionModal({
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handleDraftReply}
+                aria-label="Draft a welcome reply to this prospect"
                 className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-semibold bg-brand-flame text-white hover:bg-brand-flame/90 transition-colors"
               >
                 Draft Welcome Reply
@@ -373,6 +375,7 @@ export function ProjectActionModal({
                   handleMarkDone();
                   window.open("/admin/clients/new", "_blank", "noopener,noreferrer");
                 }}
+                aria-label="Create a new client profile"
                 className="flex-1 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors"
               >
                 Create Client Profile
@@ -384,12 +387,14 @@ export function ProjectActionModal({
             <button
               onClick={handleArchive}
               disabled={isArchiving}
+              aria-label="Archive this item"
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-200 text-neutral-600 hover:bg-neutral-300 transition-colors disabled:opacity-50"
             >
               {isArchiving ? "Archiving..." : "Archive"}
             </button>
             <button
               onClick={onClose}
+              aria-label="Cancel and close modal"
               className="px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 transition-colors"
             >
               Cancel
