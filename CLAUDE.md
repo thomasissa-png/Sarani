@@ -260,6 +260,10 @@ Si un agent a été interrompu par un timeout :
 
 19. **Zéro dépendance externe pour l'infrastructure.** Ne JAMAIS recommander de service tiers (UptimeRobot, cron-job.org, BetterStack, etc.) pour des tâches récurrentes, du monitoring ou des crons. Implémenter un scheduler interne (setInterval via instrumentation.ts) ou un mécanisme Replit natif. Thomas veut une autonomie complète — zéro service externe.
 
+20. **Tests incrémentaux obligatoires.** Le patrimoine de tests GRANDIT AUTOMATIQUEMENT avec le projet. À chaque bug signalé par Thomas, chaque fix appliqué, chaque feature ajoutée : @qa ou @fullstack DOIT ajouter un test unitaire correspondant AVANT de déclarer le travail terminé. Un fix sans test est un fix incomplet. @qa audite en vérifiant que le nombre de tests a augmenté proportionnellement aux changements de la session. Les tests ne sont jamais "terminés" — ils sont un patrimoine vivant. Signalé comme P0 sur 1 projet — Thomas passait trop de temps à tester manuellement des choses logiques que des tests auraient dû couvrir.
+
+21. **Tout composant IA doit appeler le LLM, pas copier-coller.** Si un composant affiche du contenu qui devrait être généré par IA (brief, feedback, reply), il DOIT appeler le LLM au moment de l'affichage. Ne JAMAIS montrer un placeholder vide ou un copier-coller de l'email brut quand un prompt LLM existe pour ce cas. Si le champ LLM est vide (donnée pré-existante avant le fix), appeler le LLM à la volée au mount du composant. Signalé comme P0 sur 1 projet — le CreateBriefModal copiait-collait l'email au lieu d'appeler le brief-extractor.
+
 ## Protocole de test du framework
 
 Pour valider que les agents fonctionnent correctement ensemble, utiliser ce protocole sur un projet fictif ou réel :
