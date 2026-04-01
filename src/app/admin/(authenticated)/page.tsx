@@ -329,12 +329,15 @@ export default function InboxPage() {
         // Exclude internal @sarani.studio emails (retroactive filter for items already in DB)
         const filtered = allItems.filter((i) => {
           if (i.type === "followup_alert") return false;
-          // Filter out emails from @sarani.studio (internal)
+          // Filter out emails from @sarani.studio AND emails where body is a Sarani outgoing reply
           if (i.type === "email_classified" && i.summary) {
             try {
               const parsed = typeof i.summary === "string" ? JSON.parse(i.summary) : i.summary;
-              const from = (parsed.from as string) ?? "";
-              if (from.toLowerCase().endsWith("@sarani.studio")) return false;
+              const from = ((parsed.from as string) ?? "").toLowerCase();
+              if (from.endsWith("@sarani.studio")) return false;
+              // Detect Sarani outgoing replies embedded in client threads
+              const body = ((parsed.bodyPreview as string) ?? "").toLowerCase().slice(0, 400);
+              if (body.includes("@sarani.studio") && (body.includes("de :") || body.includes("from:") || body.includes("envoyé :"))) return false;
             } catch { /* keep item if parse fails */ }
           }
           return true;

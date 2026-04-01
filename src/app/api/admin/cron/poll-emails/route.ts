@@ -85,7 +85,15 @@ export async function GET(request: NextRequest) {
         const bodyPreview = stripHtml(fullEmail.body.content).slice(0, 2000);
 
         // Skip internal Sarani emails — they should not appear in the inbox
-        if (isSaraniEmail(from)) {
+        // Check both the from field AND the body content for Sarani outgoing replies
+        // (email threads where a Sarani team member replied — the from is the client but
+        //  the body preview starts with the Sarani reply text before "De :" / "From:")
+        const bodyStart = bodyPreview.slice(0, 400).toLowerCase();
+        const hasSaraniInBody = bodyStart.includes("@sarani.studio");
+        const hasThreadMarker = bodyStart.includes("de :") || bodyStart.includes("from:") || bodyStart.includes("envoyé :");
+        const isSaraniOutgoingReply = hasSaraniInBody && hasThreadMarker;
+
+        if (isSaraniEmail(from) || isSaraniOutgoingReply) {
           // Record as processed to avoid re-checking
           await db.insert(processedEmails).values({
             messageId: email.id,
