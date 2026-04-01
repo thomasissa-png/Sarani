@@ -2,7 +2,7 @@
 
 // Client Component — Arya supervision dashboard with live stats and learnings.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,16 @@ interface InboxStats {
   pending: number;
   processedToday: number;
 }
+
+interface ScanResult {
+  emailsScanned: number;
+  clientsDetected: number;
+  knowledgeEntriesCreated: number;
+  knowledgeEntriesUpdated: number;
+  llmErrors: number;
+}
+
+type ScanStatus = "idle" | "scanning" | "done" | "error";
 
 // ─── Agent list ─────────────────────────────────────────────────────────────
 
@@ -72,6 +82,41 @@ export default function AryaSupervisionPage() {
   const [stats, setStats] = useState<InboxStats>({ pending: 0, processedToday: 0 });
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Email history scan state
+  const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+
+  const handleScanEmails = useCallback(async () => {
+    setScanStatus("scanning");
+    setScanResult(null);
+    setScanError(null);
+
+    try {
+      const response = await fetch("/api/admin/arya/scan-email-history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ maxEmails: 500, olderThanDays: 365 }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({ error: "Unknown error" }));
+        setScanError(data.error ?? `Scan failed (${response.status})`);
+        setScanStatus("error");
+        return;
+      }
+
+      const data: ScanResult = await response.json();
+      setScanResult(data);
+      setScanStatus("done");
+    } catch (error) {
+      setScanError(
+        error instanceof Error ? error.message : "Network error during scan"
+      );
+      setScanStatus("error");
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -153,6 +198,101 @@ export default function AryaSupervisionPage() {
           <StatCard label="Total Learnings" value={learningsTotal} />
         </div>
       )}
+
+      {/* Email History Scan */}
+      <div className="bg-white rounded-xl border border-neutral-300 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-black">
+              Knowledge Base — Email Scan
+            </h2>
+            <p className="text-sm text-neutral-500 mt-0.5">
+              Scan Outlook email history to bootstrap Arya&apos;s knowledge base with client insights
+            </p>
+          </div>
+          <button
+            onClick={handleScanEmails}
+            disabled={scanStatus === "scanning"}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-all",
+              scanStatus === "scanning"
+                ? "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                : "bg-brand-cerulean text-white hover:bg-brand-cerulean/90"
+            )}
+            aria-label="Scan email history to extract client knowledge"
+          >
+            {scanStatus === "scanning" ? "Scanning..." : "Scan Email History"}
+          </button>
+        </div>
+
+        {/* Scanning progress */}
+        {scanStatus === "scanning" && (
+          <div className="space-y-2">
+            <div className="h-2 w-full bg-neutral-100 rounded-full overflow-hidden">
+              <div className="h-full bg-brand-cerulean rounded-full animate-pulse" style={{ width: "60%" }} />
+            </div>
+            <p className="text-xs text-neutral-400">
+              Fetching emails from Microsoft Graph and extracting knowledge with AI...
+              This may take a few minutes.
+            </p>
+          </div>
+        )}
+
+        {/* Scan error */}
+        {scanStatus === "error" && scanError && (
+          <div
+            className="bg-brand-flame/10 border border-brand-flame/30 rounded-lg px-4 py-3 text-sm text-brand-flame"
+            role="alert"
+          >
+            {scanError}
+          </div>
+        )}
+
+        {/* Scan results */}
+        {scanStatus === "done" && scanResult && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-neutral-50 rounded-lg p-3">
+              <p className="text-xs text-neutral-500">Emails Scanned</p>
+              <p className="text-xl font-bold text-brand-black">
+                {scanResult.emailsScanned}
+              </p>
+            </div>
+            <div className="bg-neutral-50 rounded-lg p-3">
+              <p className="text-xs text-neutral-500">Clients Detected</p>
+              <p className="text-xl font-bold text-brand-black">
+                {scanResult.clientsDetected}
+              </p>
+            </div>
+            <div className="bg-success/10 rounded-lg p-3">
+              <p className="text-xs text-neutral-500">Entries Created</p>
+              <p className="text-xl font-bold text-success">
+                {scanResult.knowledgeEntriesCreated}
+              </p>
+            </div>
+            <div className="bg-neutral-50 rounded-lg p-3">
+              <p className="text-xs text-neutral-500">Entries Existing</p>
+              <p className="text-xl font-bold text-neutral-600">
+                {scanResult.knowledgeEntriesUpdated}
+              </p>
+            </div>
+            {scanResult.llmErrors > 0 && (
+              <div className="col-span-full bg-amber-50 rounded-lg px-3 py-2">
+                <p className="text-xs text-amber-700">
+                  {scanResult.llmErrors} batch{scanResult.llmErrors > 1 ? "es" : ""} failed LLM extraction (partial results)
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Idle state info */}
+        {scanStatus === "idle" && (
+          <p className="text-xs text-neutral-400">
+            Scans up to 500 emails from the last 365 days. Groups by client domain and extracts
+            structured knowledge (preferences, communication style, feedback patterns).
+          </p>
+        )}
+      </div>
 
       {/* Recent Learnings */}
       <div className="bg-white rounded-xl border border-neutral-300 p-6">
