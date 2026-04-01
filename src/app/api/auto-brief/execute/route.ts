@@ -8,6 +8,8 @@ import {
   getListsForSpace,
   createTask,
   addTaskComment,
+  getTask,
+  setCustomFieldValue,
   type ClickUpTask,
 } from "@/lib/integrations/clickup";
 import {
@@ -26,6 +28,7 @@ import {
   EXCEL_SHEET_NAME_CANDIDATES,
   getMappingBySpaceId,
   getTrackerFullPath,
+  CLICKUP_PM_MAPPING,
 } from "@/lib/integrations/config";
 import { COL_MAP, findColumnIndex } from "@/lib/integrations/excel-parser";
 
@@ -35,10 +38,13 @@ const ExecuteAutoBriefSchema = z.object({
   inboxItemId: z.string().uuid(),
   projectName: z.string().min(1, "Project name is required").max(200),
   clientName: z.string().min(1, "Client name is required"),
+  entity: z.string().optional(),
   brief: z.string().max(20_000),
   contactEmail: z.string().email("Invalid contact email"),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
   clickupSpaceId: z.string().min(1, "ClickUp space is required"),
+  addToTracker: z.boolean().optional().default(true),
+  createSharepointFolder: z.boolean().optional().default(true),
   // Optional: stored taskId from a previous partial execution (retry-safe)
   previousTaskId: z.string().optional(),
 });
@@ -139,12 +145,37 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ─── Step 1b: Set PM custom field on ClickUp task ──────────────────────────
+  // Non-blocking: warning on failure.
+
+  try {
+    const pmEmail = session.email;
+    const clickupUserId = pmEmail ? CLICKUP_PM_MAPPING[pmEmail] : undefined;
+    if (clickupUserId) {
+      const taskDetails = await getTask(clickupTask.id);
+      const pmField = taskDetails.custom_fields.find(
+        (f) => f.name.toLowerCase() === "pm" || f.name.toLowerCase() === "project manager"
+      );
+      if (pmField) {
+        await setCustomFieldValue(clickupTask.id, pmField.id, { add: [clickupUserId] });
+      } else {
+        console.warn("[Auto-Brief Execute] PM custom field not found on task");
+      }
+    } else if (pmEmail) {
+      console.warn(`[Auto-Brief Execute] No ClickUp user ID mapped for ${pmEmail}`);
+    }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[Auto-Brief Execute] PM field setter failed:", errMsg);
+    warnings.push(`Could not set PM field: ${errMsg}`);
+  }
+
   // ─── Step 2: Create SharePoint folder ─────────────────────────────────────
   // Non-blocking: warnings on failure, not abort.
 
   let folderUrl: string | null = null;
 
-  try {
+  if (body.createSharepointFolder) try {
     const parentPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
     const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const maxNameLength = 80;
@@ -231,9 +262,9 @@ export async function POST(request: NextRequest) {
   }
 
   // ─── Step 5: Add tracker row ──────────────────────────────────────────────
-  // Non-blocking: warning on failure.
+  // Non-blocking: warning on failure. Skipped if PM opted out.
 
-  try {
+  if (body.addToTracker) try {
     const trackerPath = getTrackerFullPath(mapping.excelTrackerFilename);
 
     const releaseLock = await acquireAdvisoryLock(

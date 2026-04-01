@@ -13,6 +13,7 @@ export interface AutoBriefPayload {
   sourceInboxItemId: string;
   projectName: string;
   clientName: string;
+  entity?: string;
   contactEmail: string;
   startDate: string;
   briefBody: string;
@@ -52,12 +53,15 @@ export function AutoBriefCard({
 }: AutoBriefCardProps) {
   const [projectName, setProjectName] = useState(payload.projectName);
   const [selectedSpaceId, setSelectedSpaceId] = useState(payload.clickupSpaceId ?? "");
+  const [entity, setEntity] = useState(payload.entity || payload.clientName || "");
   const [brief, setBrief] = useState(payload.briefBody);
   const [contactEmail, setContactEmail] = useState(payload.contactEmail);
   const [startDate, setStartDate] = useState(
     payload.startDate || new Date().toISOString().slice(0, 10)
   );
   const [projectType, setProjectType] = useState<string>(payload.projectType ?? "generic");
+  const [addToTracker, setAddToTracker] = useState(payload.clientResolved && !!payload.excelTrackerFilename);
+  const [createSharepointFolder, setCreateSharepointFolder] = useState(payload.clientResolved && !!payload.sharepointCustomerFolder);
   const [creating, setCreating] = useState(false);
   const [dismissing, setDismissing] = useState(false);
 
@@ -77,11 +81,14 @@ export function AutoBriefCard({
           projectName: projectName.trim(),
           clientName:
             clients.find((c) => c.spaceId === selectedSpaceId)?.spaceName ?? payload.clientName,
+          entity: entity.trim() || undefined,
           brief,
           contactEmail,
           startDate,
           projectType,
           clickupSpaceId: selectedSpaceId,
+          addToTracker,
+          createSharepointFolder,
         }),
       });
 
@@ -249,6 +256,24 @@ export function AutoBriefCard({
           </div>
         </div>
 
+        {/* Entity */}
+        <div>
+          <label
+            htmlFor={`abf-entity-${itemId}`}
+            className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1"
+          >
+            Entity / Subsidiary
+          </label>
+          <input
+            id={`abf-entity-${itemId}`}
+            type="text"
+            value={entity}
+            onChange={(e) => setEntity(e.target.value)}
+            placeholder="e.g. Sony France, TikTok EMEA"
+            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
+          />
+        </div>
+
         {/* Start Date */}
         <div className="max-w-[200px]">
           <label
@@ -287,6 +312,42 @@ export function AutoBriefCard({
             <option value="social">Social</option>
             <option value="other">Other</option>
           </select>
+        </div>
+
+        {/* Tracker + SharePoint checkboxes */}
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={addToTracker}
+              onChange={(e) => setAddToTracker(e.target.checked)}
+              className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40"
+            />
+            <span className="text-sm text-brand-black">
+              Add row to Excel tracker
+            </span>
+            <span className="text-xs text-neutral-400">
+              {payload.excelTrackerFilename
+                ? `(${payload.excelTrackerFilename})`
+                : "(client not resolved — select client first)"}
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={createSharepointFolder}
+              onChange={(e) => setCreateSharepointFolder(e.target.checked)}
+              className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40"
+            />
+            <span className="text-sm text-brand-black">
+              Create SharePoint folder
+            </span>
+            <span className="text-xs text-neutral-400">
+              {payload.sharepointCustomerFolder
+                ? `(${payload.sharepointCustomerFolder})`
+                : "(client not resolved — select client first)"}
+            </span>
+          </label>
         </div>
 
         {/* Brief textarea */}

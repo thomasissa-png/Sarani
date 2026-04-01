@@ -308,6 +308,7 @@ export async function GET(request: NextRequest) {
               // Fallback: create item with empty brief so PM can fill manually
               briefData = {
                 client_name: "",
+                entity: "",
                 project_title: subject || "Untitled",
                 contact_email: from,
                 project_type: "generic",
@@ -332,6 +333,7 @@ export async function GET(request: NextRequest) {
               sourceInboxItemId: inboxItemId,
               projectName,
               clientName: briefData.client_name,
+              entity: briefData.entity || briefData.client_name,
               contactEmail: briefData.contact_email || from,
               startDate: new Date().toISOString().slice(0, 10),
               briefBody: briefData.brief_body,

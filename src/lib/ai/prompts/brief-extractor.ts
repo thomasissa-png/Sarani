@@ -9,9 +9,10 @@ import { z } from "zod";
 
 export const BriefExtractionResultSchema = z.object({
   client_name: z.string(),
+  entity: z.string(),
   project_title: z.string(),
   contact_email: z.string(),
-  project_type: z.enum(["generic", "design", "video", "translation"]),
+  project_type: z.enum(["generic", "design", "video", "translation", "social", "other"]),
   brief_introduction: z.string(),
   brief_body: z.string(),
 });
@@ -26,9 +27,17 @@ Extract the following fields from the email below and return valid JSON only.
 
 Fields:
 - client_name: string — name of the client company sending the email (use the exact company name, not the sender's personal name)
+- entity: string — the specific entity or subsidiary mentioned in the email (e.g., "Sony France", "Sony Music UK", "TikTok EMEA"). If not clear, use the general client name.
 - project_title: string — short title for the project (5-10 words max), derived from the email subject or first sentence
 - contact_email: string — sender's email address
-- project_type: "generic" | "design" | "video" | "translation" — best match based on content
+- project_type: "generic" | "design" | "video" | "translation" | "social" | "other"
+  Choose based on the PRIMARY deliverable:
+  - "translation": any request mentioning translation, localization, adaptation, multilingual, version FR/EN/etc.
+  - "video": video editing, motion graphics, animation, TikTok content
+  - "design": graphic design, banners, posters, deck, presentation, branding
+  - "social": social media posts, stories, reels (but NOT video editing)
+  - "other": copywriting, strategy, consulting, or unclear
+  - "generic": only if absolutely no deliverable type can be inferred
 - brief_introduction: string — 1-2 sentence summary of the project goal
 - brief_body: string — full brief extracted and reformatted using this exact structure:
 

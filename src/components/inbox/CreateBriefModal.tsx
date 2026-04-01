@@ -51,20 +51,23 @@ function extractClientFromEmail(from: string, clients: ClientOption[]): ClientOp
 }
 
 function buildDefaultBrief(payload: EmailPayload): string {
-  const lines: string[] = [];
-  lines.push("--- Project Brief ---");
-  lines.push("");
-  lines.push(`From: ${payload.from}`);
-  lines.push(`Subject: ${payload.subject}`);
-  lines.push("");
-  lines.push("--- Client Request ---");
-  lines.push(payload.bodyPreview || "(No body preview available)");
-  lines.push("");
-  if (payload.classification.reasoning) {
-    lines.push("--- Arya's Analysis ---");
-    lines.push(payload.classification.reasoning);
-  }
-  return lines.join("\n");
+  return `🌟 Introduction / Goal:
+${payload.subject}
+
+✈️ Brief:
+${payload.bodyPreview || "(To be confirmed)"}
+
+🚚 Deliverables:
+To be confirmed
+
+📍 Source Files:
+To be provided by client
+
+💬 Branding / Inspirations:
+See brand guidelines on SharePoint
+
+➡️ Others:
+N/A`;
 }
 
 function extractSenderName(email: string): string {
@@ -97,10 +100,13 @@ export function CreateBriefModal({
     `${matchedClient?.spaceName ?? senderName} - ${payload.subject}`
   );
   const [selectedSpaceId, setSelectedSpaceId] = useState(matchedClient?.spaceId ?? "");
+  const [entity, setEntity] = useState("");
   const [brief, setBrief] = useState(buildDefaultBrief(payload));
   const [contactEmail, setContactEmail] = useState(payload.from);
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [projectType, setProjectType] = useState<ProjectType>("other");
+  const [addToTracker, setAddToTracker] = useState(!!matchedClient);
+  const [createSharepointFolder, setCreateSharepointFolder] = useState(!!matchedClient);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Focus trap + Escape
@@ -168,10 +174,13 @@ export function CreateBriefModal({
           projectName: projectName.trim(),
           clientName:
             clients.find((c) => c.spaceId === selectedSpaceId)?.spaceName ?? "",
+          entity: entity.trim() || undefined,
           brief,
           contactEmail,
           startDate,
           clickupSpaceId: selectedSpaceId,
+          addToTracker,
+          createSharepointFolder,
         }),
       });
 
@@ -352,6 +361,52 @@ export function CreateBriefModal({
                   Auto-matched from sender email
                 </p>
               )}
+            </div>
+
+            {/* Entity */}
+            <div>
+              <label
+                htmlFor="brief-entity"
+                className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5"
+              >
+                Entity / Subsidiary
+              </label>
+              <input
+                id="brief-entity"
+                type="text"
+                value={entity}
+                onChange={(e) => setEntity(e.target.value)}
+                placeholder="e.g. Sony France, TikTok EMEA"
+                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 min-h-[44px] text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
+              />
+            </div>
+
+            {/* Tracker + SharePoint checkboxes */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={addToTracker}
+                  onChange={(e) => setAddToTracker(e.target.checked)}
+                  className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40"
+                />
+                <span className="text-sm text-brand-black">Add row to Excel tracker</span>
+                <span className="text-xs text-neutral-400">
+                  {selectedSpaceId ? "" : "(select client first)"}
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={createSharepointFolder}
+                  onChange={(e) => setCreateSharepointFolder(e.target.checked)}
+                  className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40"
+                />
+                <span className="text-sm text-brand-black">Create SharePoint folder</span>
+                <span className="text-xs text-neutral-400">
+                  {selectedSpaceId ? "" : "(select client first)"}
+                </span>
+              </label>
             </div>
 
             {/* Brief textarea */}

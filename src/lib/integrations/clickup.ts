@@ -342,7 +342,7 @@ export function getCustomFieldValue(
 export async function setCustomFieldValue(
   taskId: string,
   fieldId: string,
-  value: string | number
+  value: string | number | Record<string, unknown>
 ): Promise<void> {
   await clickupFetch<Record<string, unknown>>(
     `/task/${taskId}/field/${fieldId}`,
@@ -354,7 +354,24 @@ export async function setCustomFieldValue(
 }
 
 /**
- * Search tasks by name in the workspace. Returns the first matching task or null.
+ * Score how well a query matches a task name using word-level overlap.
+ * Returns a value between 0 and 1 (proportion of query words matched).
+ */
+function matchScore(query: string, taskName: string): number {
+  const queryWords = query.toLowerCase().split(/[\s\-\/,]+/).filter((w) => w.length > 2);
+  const nameWords = taskName.toLowerCase().split(/[\s\-\/,]+/).filter((w) => w.length > 2);
+  if (queryWords.length === 0) return 0;
+  const matched = queryWords.filter((qw) =>
+    nameWords.some((nw) => nw.includes(qw) || qw.includes(nw))
+  );
+  return matched.length / queryWords.length;
+}
+
+/**
+ * Search tasks by name in the workspace. Returns the best matching task or null.
+ * Uses a two-tier strategy:
+ *   1. Exact substring match (bidirectional includes) — instant return on first hit
+ *   2. Word-level scoring across all pages — returns the best score >= 0.6
  * Graceful degradation: returns null if ClickUp is not configured or API fails.
  */
 export async function searchTaskByName(
@@ -367,6 +384,9 @@ export async function searchTaskByName(
   try {
     const queryLower = query.toLowerCase();
     const maxPages = 5; // Cap to avoid excessive API calls
+    const MATCH_THRESHOLD = 0.6;
+
+    let bestCandidate: { taskId: string; taskUrl: string; taskName: string; score: number } | null = null;
 
     for (let page = 0; page < maxPages; page++) {
       const searchUrl = `https://api.clickup.com/api/v2/team/${teamId}/task?page=${page}&include_closed=false&custom_task_ids=false&subtasks=false`;
@@ -378,7 +398,7 @@ export async function searchTaskByName(
 
       if (!res.ok) {
         console.warn(`[ClickUp Search] API returned ${res.status} on page ${page}`);
-        return null;
+        return bestCandidate;
       }
 
       const data = (await res.json()) as {
@@ -388,14 +408,27 @@ export async function searchTaskByName(
       // No more tasks — stop pagination
       if (data.tasks.length === 0) break;
 
-      const match = data.tasks.find((task) => {
+      for (const task of data.tasks) {
         const nameLower = task.name.toLowerCase();
-        return nameLower.includes(queryLower) || queryLower.includes(nameLower);
-      });
 
-      if (match) {
-        return { taskId: match.id, taskUrl: match.url, taskName: match.name };
+        // Tier 1: exact substring match (bidirectional) — immediate return
+        if (nameLower.includes(queryLower) || queryLower.includes(nameLower)) {
+          return { taskId: task.id, taskUrl: task.url, taskName: task.name };
+        }
+
+        // Tier 2: word-level scoring — collect best candidate
+        const score = matchScore(query, task.name);
+        if (score >= MATCH_THRESHOLD && (!bestCandidate || score > bestCandidate.score)) {
+          bestCandidate = { taskId: task.id, taskUrl: task.url, taskName: task.name, score };
+        }
       }
+    }
+
+    if (bestCandidate) {
+      console.log(
+        `[ClickUp Search] Best word match: "${bestCandidate.taskName}" (score: ${bestCandidate.score.toFixed(2)}) for query: "${query}"`
+      );
+      return { taskId: bestCandidate.taskId, taskUrl: bestCandidate.taskUrl, taskName: bestCandidate.taskName };
     }
 
     return null;

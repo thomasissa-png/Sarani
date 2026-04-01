@@ -157,6 +157,16 @@ export const GLOBAL_OVERVIEW_FILENAME = "00. Global Overview.xlsx";
 // Used by both the tracker route and the create-project route.
 export const EXCEL_SHEET_NAME_CANDIDATES = ["Sheet1", "Feuil1", "Feuille1"] as const;
 
+// ─── ClickUp PM User ID Mapping ─────────────────────────────────────────────
+// Maps Sarani user emails to their ClickUp user IDs.
+// Used to set the PM custom field on newly created tasks.
+// Find IDs via ClickUp API: GET /team/{team_id}/member
+
+export const CLICKUP_PM_MAPPING: Record<string, number> = {
+  "thomas@sarani.studio": 62498950,
+  // Add more PMs as needed
+};
+
 // ─── Cache TTL Configuration (seconds) ──────────────────────────────────────
 
 export const CACHE_TTL = {
