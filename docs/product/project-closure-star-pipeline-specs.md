@@ -473,3 +473,554 @@ When @social selects a signal to develop into a post:
 3. Status: "Ready" (replacing "Draft")
 4. The source signal is marked `used: true` in the project's `linkedin_signals` record — prevents the same signal from appearing in future weekly briefs
 
+---
+
+## 5. User Stories
+
+### US-CLOSE-01 — Detect timeout-ready projects
+
+**As** the PM,
+**I want** Arya to automatically detect projects in "Client Review" status with no client response for >= 14 days,
+**So that** no project is left open indefinitely because of a non-responsive client.
+
+**Acceptance Criteria:**
+
+Happy path:
+- [ ] GIVEN a project in status "Client Review" WHEN the last client email on that domain is > 14 calendar days ago THEN Arya flags the project as "timeout-closure" and surfaces it in the PM dashboard
+- [ ] GIVEN a flagged project WHEN the PM selects "CLOSE PROJECT" THEN PROTO-PROJECT-CLOSURE executes steps 1–7 in sequence
+- [ ] GIVEN a project flagged for timeout closure WHEN Arya computes the Star Score THEN the score is computed and displayed in the closure summary before PM confirmation
+
+Error cases:
+- [ ] GIVEN a ClickUp API timeout during closure WHEN Arya cannot update the status THEN she logs the error, notifies PM, and provides manual instructions — she does NOT retry automatically
+- [ ] GIVEN the PM selects "KEEP OPEN" on a flagged project THEN the project is removed from the timeout queue for 7 days, then re-flagged if still unresolved
+
+Edge cases:
+- [ ] GIVEN a project with no client email domain in the system WHEN timeout check runs THEN the project is flagged for PM manual review with note "No client email found — cannot verify non-response"
+- [ ] GIVEN double-click on "CLOSE PROJECT" button THEN second click is ignored — closure runs exactly once (idempotent)
+
+Permissions:
+- [ ] GIVEN a user with role "user" (not admin) WHEN they attempt to trigger closure THEN closure is blocked and PM (admin) is notified
+
+Existing data:
+- [ ] GIVEN a project already in status "Closed" WHEN the daily scan runs THEN the project is excluded from all closure checks
+
+---
+
+### US-CLOSE-02 — Client validation triggers closure
+
+**As** the PM,
+**I want** Arya to detect a client validation email and automatically flag the project for closure,
+**So that** I don't need to manually initiate closure when a client says "approved."
+
+**Acceptance Criteria:**
+
+Happy path:
+- [ ] GIVEN an email classified as `client_approval` by PROTO-CLIENT-RETURN WHEN the email is matched to an open project THEN Arya flags the project for "validation-closure" and surfaces a closure summary in the PM dashboard
+- [ ] GIVEN a closure summary surfaced WHEN the PM confirms THEN ClickUp status updates to "Closed", invoice is generated, Star Score is computed, LinkedIn signals are captured — all in sequence
+
+Error cases:
+- [ ] GIVEN an email classified as `client_approval` WHEN the project match returns `{ matched: false }` THEN Arya notifies PM: "Approval email received but no project matched. Please manually link and trigger closure."
+- [ ] GIVEN invoice generation fails (Evoliz API error) WHEN PM confirms closure THEN ClickUp is still closed, PM is notified of the invoice error separately — closure is not rolled back
+
+Edge cases:
+- [ ] GIVEN a client sends a partial approval ("the logo version is approved, not the banner") WHEN PROTO-CLIENT-RETURN classifies it THEN classification returns `client_partial_approval` (not `client_approval`) and Arya does NOT trigger closure — she flags it for PM review instead
+- [ ] GIVEN a project with NDA flag WHEN validation-closure is triggered THEN Star Pipeline is suppressed and PM receives the NDA gate: "This project scored [X]/100 but is under NDA. Options: A, B, C."
+
+---
+
+### US-STAR-01 — Star scoring on project closure
+
+**As** the PM,
+**I want** Arya to automatically score every closed project on the 5-criterion Star matrix,
+**So that** I can immediately see which projects deserve content generation without having to evaluate them manually.
+
+**Acceptance Criteria:**
+
+Happy path:
+- [ ] GIVEN a project being closed WHEN PROTO-PROJECT-CLOSURE runs THEN Star Score is computed against the 5-criterion matrix and stored on the project record before the PM sees the final summary
+- [ ] GIVEN a Star Score >= 75 AND case study score >= 70 THEN the project is flagged as STAR and the pipeline is offered to the PM in the closure summary
+- [ ] GIVEN a Star Score >= 75 AND case study score < 70 THEN the project is flagged as "Strong Story, Weak Assets" — LinkedIn article only pipeline is offered
+- [ ] GIVEN a Star Score 50–74 THEN the project is flagged as "Noteworthy" and added to the LinkedIn feeder queue without triggering the full pipeline
+
+Error cases:
+- [ ] GIVEN a project with missing data (no client name in ClickUp, no invoice amount) WHEN Star Score is computed THEN missing criteria are scored 5 pts (minimum), PM is shown "[criterion] could not be scored — defaulted to minimum. Override?" after closure
+- [ ] GIVEN an admin overrides a criterion score WHEN the new score pushes the total above or below a threshold THEN the pipeline status updates immediately and PM is notified of the change
+
+Edge cases:
+- [ ] GIVEN a project with `nda_blocks_publication: true` WHEN Star Score >= 75 THEN score is stored but pipeline is suppressed — PM sees the NDA gate options
+- [ ] GIVEN a project that was already scored by the case-study-generator WHEN Star Score runs THEN both scores are stored independently — no overwrite of the case study generator score
+
+Permissions:
+- [ ] GIVEN a user with role "user" WHEN they attempt to override a Star criterion score THEN the override is blocked — only admin can override
+
+---
+
+### US-STAR-02 — Star Pipeline trigger and validation
+
+**As** the PM,
+**I want** to review all four pipeline outputs (case study, LinkedIn article, commercial slide, SEO signal) before any of them goes live,
+**So that** nothing is published automatically without my approval.
+
+**Acceptance Criteria:**
+
+Happy path:
+- [ ] GIVEN a project flagged as STAR WHEN the PM confirms the pipeline in the closure summary THEN all four outputs are generated asynchronously and available in the back-office within [HYPOTHÈSE : 2–5 minutes depending on content generation latency]
+- [ ] GIVEN a LinkedIn article draft generated WHEN the PM reviews it THEN she can: (A) approve and schedule (inserts into editorial calendar), (B) edit the draft inline, or (C) reject (draft archived, not deleted)
+- [ ] GIVEN a commercial slide brief generated WHEN the PM approves THEN the brief is saved to `docs/pm/slide-briefs/` and a notification is queued for the design team
+- [ ] GIVEN an SEO signal generated THEN it is immediately appended to `docs/seo/star-signal-queue.md` without PM action required
+
+Error cases:
+- [ ] GIVEN the case-study-generator API fails WHEN the pipeline is triggered THEN Arya notifies PM: "Case study generation failed. [Error detail]. You can retry here: [button]. Other pipeline outputs are unaffected."
+- [ ] GIVEN LinkedIn article generation produces a draft with a placeholder (e.g. "[METRIC NEEDED]") WHEN PM reviews THEN the placeholder is highlighted in red and the PM is blocked from approving until the placeholder is resolved
+
+Edge cases:
+- [ ] GIVEN the PM selects "SKIP PIPELINE" at the closure confirmation THEN no pipeline outputs are generated. The Star Score is still stored. PM can re-trigger the pipeline later from the project record.
+- [ ] GIVEN a pipeline is triggered for a project that already has a published case study THEN the case study pipeline is skipped (duplicate prevention). Arya notifies PM: "Case study already published for this project — skipped. LinkedIn, slide and SEO generated normally."
+
+---
+
+### US-FEEDER-01 — Weekly LinkedIn brief generation
+
+**As** the PM,
+**I want** Arya to produce a weekly content brief every Friday with the strongest signals from the week's projects,
+**So that** @social has fresh material each week without me having to manually compile project data.
+
+**Acceptance Criteria:**
+
+Happy path:
+- [ ] GIVEN the Friday cron runs at 9:00 AM WHEN there are projects closed or updated during the week with captured LinkedIn signals THEN a weekly brief is generated and saved to `docs/pm/linkedin-briefs/weekly-[date].md`
+- [ ] GIVEN the weekly brief is generated THEN it contains at minimum: strongest signals table, editorial calendar gaps, proof points cleared for publication
+- [ ] GIVEN the PM clicks a signal in the brief WHEN she selects "Trigger LinkedIn Draft" THEN the LinkedIn Article pipeline (Section 3.2) is triggered with that signal as input
+
+Error cases:
+- [ ] GIVEN no projects were closed or updated this week WHEN the Friday cron runs THEN a brief is still generated with: "No new project signals this week. [Reminder of unused signals from previous weeks still available.]"
+
+Edge cases:
+- [ ] GIVEN a signal was already marked `used: true` WHEN the Friday cron runs THEN the signal is excluded from the brief
+- [ ] GIVEN a brief generation fails (e.g. DB error) WHEN the cron runs THEN the error is logged and PM is notified via back-office notification — no silent failure
+
+---
+
+## 6. UI Wireframes (ASCII)
+
+### W1 — Closure Summary Card (PM Dashboard)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  PROJECT CLOSURE — [Project Name] — [Client]                    │
+│  ─────────────────────────────────────────────────────────────  │
+│  Reason:  Client validation received on [date]                  │
+│           (OR) No client response for 14+ days                  │
+│                                                                 │
+│  Deliverables:  ✅ 12 files archived in SharePoint              │
+│  Invoice:       € [amount] — ready to generate                  │
+│  Open tasks:    ✅ All closed                                    │
+│                                                                 │
+│  ⭐ STAR SCORE (preliminary)                                    │
+│  ┌──────────────────────────────────────────────────────┐      │
+│  │ Client Tier        ██████████████████████  20/25     │      │
+│  │ Measurable Impact  ██████████████████████  20/25     │      │
+│  │ Creative Ambition  ████████████████        15/20     │      │
+│  │ Storytelling       ████████████████████    15/15     │      │
+│  │ Portfolio Gap      ██████████████          10/15     │      │
+│  │ ─────────────────────────────────────────────────    │      │
+│  │ TOTAL              ████████████████████    80/100 ⭐ │      │
+│  └──────────────────────────────────────────────────────┘      │
+│  Full scoring runs after you confirm closure.                   │
+│                                                                 │
+│  [ CLOSE PROJECT ] [ KEEP OPEN ] [ ESCALATE TO THOMAS ]        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### W2 — Star Badge & Pipeline Panel (Post-Closure)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ✅ PROJECT CLOSED — [Project Name]                             │
+│  ClickUp: Closed | Invoice: €[X] generated | SP: archived      │
+│                                                                 │
+│  ⭐ STAR PROJECT — 80/100                                       │
+│  ─────────────────────────────────────────────────────────────  │
+│  CONTENT PIPELINE                                               │
+│                                                                 │
+│  📄 Case Study         [ GENERATING... / REVIEW DRAFT ]        │
+│  📝 LinkedIn Article   [ GENERATING... / REVIEW DRAFT ]        │
+│  🖼  Commercial Slide   [ BRIEF READY — APPROVE ]              │
+│  🔍 SEO Signal         [ SENT TO PIPELINE ✅ ]                 │
+│                                                                 │
+│  All drafts require your approval before use.                  │
+│                                                                 │
+│  [ VIEW ALL DRAFTS ] [ SKIP PIPELINE ] [ OVERRIDE STAR (🔒) ] │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### W3 — LinkedIn Article Review Panel
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  LINKEDIN ARTICLE DRAFT — [Project Name]                        │
+│  Pillar: 1 — Proof Point  |  ~4 min read                       │
+│  Suggested slot: Thursday April 9 (Pillar 1 gap in calendar)   │
+│  ─────────────────────────────────────────────────────────────  │
+│  TITLE                                                          │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │ 94 million views. 3,800€. Here's exactly how it happened. │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  BODY (scrollable)                                              │
+│  ┌───────────────────────────────────────────────────────────┐ │
+│  │ [Opening paragraph — jaw-dropping fact]                   │ │
+│  │ [Context paragraph — what the client needed]              │ │
+│  │ [Process paragraph — how Sarani delivered]                │ │
+│  │ [Result paragraph — numbers + client reaction]            │ │
+│  │ [Closing — principle + soft CTA]                          │ │
+│  │ #EnterpriseCreative #VideoProduction                      │ │
+│  └───────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  [ APPROVE + SCHEDULE Thu Apr 9 ] [ EDIT ] [ REJECT ]          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### W4 — Weekly LinkedIn Brief (PM View)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ARYA WEEKLY BRIEF — Week of April 1                            │
+│  3 signals captured | 1 proof point cleared | 2 calendar gaps  │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  STRONGEST SIGNALS                                              │
+│  ┌──┬──────────────────────────────┬───────┬────────┬────────┐ │
+│  │# │ Signal                       │Pillar │Strength│Action  │ │
+│  ├──┼──────────────────────────────┼───────┼────────┼────────┤ │
+│  │1 │ Client X: delivered 48h      │   1   │  High  │[DRAFT] │ │
+│  │  │ ahead of 5-day deadline      │       │        │        │ │
+│  ├──┼──────────────────────────────┼───────┼────────┼────────┤ │
+│  │2 │ 2nd pharma brief this month  │   3   │  Med   │[SAVE]  │ │
+│  ├──┼──────────────────────────────┼───────┼────────┼────────┤ │
+│  │3 │ "How did you deliver this    │   2   │  High  │[DRAFT] │ │
+│  │  │ so fast?" — [Client Y]       │       │        │        │ │
+│  └──┴──────────────────────────────┴───────┴────────┴────────┘ │
+│                                                                 │
+│  EDITORIAL CALENDAR GAPS (next 7 days)                         │
+│  · Thu Apr 4 — Pillar 1 slot empty                             │
+│  · Fri Apr 5 — Pillar 3 slot empty                             │
+│                                                                 │
+│  [ VIEW FULL BRIEF ] [ OPEN EDITORIAL CALENDAR ]               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 7. Edge Cases
+
+### EC-1 — Client who never responds
+
+**Scenario:** A project is in "Client Review" for 14 days. Arya flags it. PM closes it. Client responds 2 weeks later saying they want changes.
+
+**Handling:**
+- The email is classified as `client_followup` by PROTO-CLIENT-RETURN
+- PROTO-CLIENT-RETURN's US-2.3 applies: Arya detects the project status is "Closed" and proposes reopening
+- ⏸️ VALIDATION PM: "Project [Name] was closed on [date]. Client sent feedback on [date]. Reopen as In Progress?"
+- If PM reopens: invoice is put on hold (PM must cancel or amend in Evoliz manually — Arya cannot automatically retract a sent invoice)
+- Star Pipeline outputs already generated are kept in draft status — not deleted
+
+---
+
+### EC-2 — Project cancelled mid-flight
+
+**Scenario:** Client cancels the project before any deliverables are produced. No completion, no invoice possible.
+
+**Handling:**
+- Closure triggered by PM (not by timeout or validation)
+- PROTO-PROJECT-CLOSURE runs, but at Step 3 (invoice generation): ⏸️ VALIDATION PM — "Invoice amount: 0 or [cancellation fee]? Check your contract." Arya does not generate an invoice amount she cannot verify.
+- Star Score still runs. Score will be low (no measurable impact, no delivered assets) — expected result: Standard (< 50).
+- No pipeline triggered.
+- ClickUp: status = "Cancelled" (not "Closed") — Arya uses a separate status to distinguish cancelled from completed projects.
+
+---
+
+### EC-3 — NDA strict (no publication possible)
+
+**Scenario:** A project has `nda_blocks_publication: true`. The project scores 90/100 — clearly a Star.
+
+**Handling:**
+- Star Score computed and stored (internal value)
+- Pipeline is NOT triggered automatically
+- PM sees the NDA gate:
+  ```
+  ⏸️ NDA GATE:
+  "This project scored 90/100 (STAR) but is under NDA.
+  A: Anonymise — generate content without naming the client brand
+  B: Skip — no content generated now
+  C: Defer — mark for review when NDA expires (set reminder date)"
+  ```
+- If A (anonymise): Arya generates all pipeline outputs with `clientName = "a global [sector] brand"`. PM reviews before any publication.
+- If B or C: score is stored, signals are archived, no outputs generated.
+
+---
+
+### EC-4 — Project too small for Star
+
+**Scenario:** A simple banner pack for a startup, invoiced at 350€.
+
+**Handling:**
+- Star Score computed: Client Tier = 5, Impact = 5, Creative Ambition = 5, Storytelling = 5, Portfolio Gap = 5 → Total = 25
+- Status: Standard — no pipeline triggered, not surfaced by default
+- Project is still accessible via filters in the case-study-generator dashboard
+- No PM notification about Star Score (below 50 = silent)
+
+---
+
+### EC-5 — LinkedIn slot conflict
+
+**Scenario:** Arya tries to insert an approved LinkedIn article into the editorial calendar but the next available Pillar 1 slot is already filled by another draft.
+
+**Handling:**
+- Arya inserts the article as a new row after the filled slot and flags it: "Added by Star Pipeline — not in original schedule. Review calendar to reorder if needed."
+- Arya does NOT overwrite or delete existing calendar entries.
+
+---
+
+### EC-6 — Case study already published
+
+**Scenario:** A project was manually published as a case study 6 months ago. Now the Star Pipeline runs on a related project and tries to generate a duplicate.
+
+**Handling:**
+- Case-study-generator checks for existing case studies by `clickupTaskId` before generating.
+- If found: case study pipeline is skipped. Arya notifies PM: "Case study already published for [Project] — skipped. LinkedIn article and slide generated normally."
+
+---
+
+### EC-7 — Score tie at threshold
+
+**Scenario:** A project scores exactly 75 on the Star Score but 69 on the case study score (one point below the 70 threshold).
+
+**Handling:**
+- Status: "Strong Story, Weak Assets" (not full STAR)
+- LinkedIn article pipeline is triggered
+- Case study pipeline is NOT triggered (threshold not met)
+- PM can manually override to force case study generation — override reason is logged
+
+---
+
+## 8. Data Model Additions
+
+### Table: `project_star_scores`
+
+| Column | Type | Description |
+|---|---|---|
+| id | uuid | PK |
+| project_id | varchar(255) | FK → projects |
+| client_tier_score | int | 5–25 |
+| impact_score | int | 5–25 |
+| creative_ambition_score | int | 5–20 |
+| storytelling_score | int | 5–15 |
+| portfolio_gap_score | int | 5–15 |
+| total_score | int | 0–100 |
+| star_status | enum | STAR / STRONG_STORY_WEAK_ASSETS / NOTEWORTHY / STANDARD |
+| override_by | uuid | FK → users (null if no override) |
+| override_reason | text | Required if override_by is set |
+| nda_blocks_publication | boolean | default false |
+| pipeline_triggered | boolean | default false |
+| pipeline_triggered_at | timestamp | null if not triggered |
+| created_at | timestamp | |
+| updated_at | timestamp | |
+
+### Table: `linkedin_signals`
+
+| Column | Type | Description |
+|---|---|---|
+| id | uuid | PK |
+| project_id | varchar(255) | FK → projects |
+| type | enum | result / verbatim / process_insight / sector_trend / challenge_overcome / volume_milestone |
+| content | text | Signal in 1 sentence |
+| content_pillar | int | 1–5 |
+| strength | enum | high / medium / low |
+| usable_with_nda | boolean | |
+| client_name_required | boolean | |
+| suggested_hook | text | Arya's draft first line |
+| used | boolean | default false |
+| created_at | timestamp | |
+
+### Table: `star_pipeline_outputs`
+
+| Column | Type | Description |
+|---|---|---|
+| id | uuid | PK |
+| project_id | varchar(255) | FK → projects |
+| output_type | enum | case_study / linkedin_article / commercial_slide / seo_signal |
+| status | enum | generating / draft / approved / rejected / skipped |
+| draft_content | text | JSON or markdown content |
+| pm_reviewed_by | uuid | FK → users |
+| pm_reviewed_at | timestamp | |
+| rejection_reason | text | Required if status = rejected |
+| published_at | timestamp | null until published |
+| created_at | timestamp | |
+
+### Additions to existing `projects` table
+
+| Column | Type | Description |
+|---|---|---|
+| closure_trigger | enum | client_validation / timeout / manual / cancelled | null |
+| closure_flagged_at | timestamp | When Arya first flagged for closure |
+| closed_at | timestamp | When PM confirmed closure |
+| nda_blocks_publication | boolean | default false |
+
+---
+
+## 9. API Routes
+
+### POST /api/admin/projects/[id]/close-check
+
+Check whether a project is eligible for closure (reads ClickUp status + email history).
+
+```typescript
+// Response
+interface CloseCheckResponse {
+  eligible: boolean;
+  reason: "client_validation" | "timeout" | "not_eligible";
+  lastClientEmailDate?: string; // ISO date
+  openTasksCount: number;
+  deliverableCount: number;
+  invoiceAmount?: number; // from Excel tracker, null if not found
+}
+```
+
+---
+
+### POST /api/admin/projects/[id]/star-score
+
+Compute the full Star Score. Idempotent — re-running updates the score.
+
+```typescript
+// Input
+interface StarScoreInput {
+  projectId: string;
+  overrides?: { criterion: string; score: number; reason: string }[]; // optional manual overrides
+}
+
+// Response
+interface StarScoreResponse {
+  clientTierScore: number;
+  impactScore: number;
+  creativeAmbitionScore: number;
+  storytellingScore: number;
+  portfolioGapScore: number;
+  totalScore: number;
+  starStatus: "STAR" | "STRONG_STORY_WEAK_ASSETS" | "NOTEWORTHY" | "STANDARD";
+  caseStudyScore: number; // from case-study-generator scoring
+  pipelineRecommendation: ("case_study" | "linkedin_article" | "commercial_slide" | "seo_signal")[];
+}
+```
+
+---
+
+### POST /api/admin/projects/[id]/linkedin-signals
+
+Extract and store LinkedIn signals from project data.
+
+```typescript
+// No input body — reads project record, ClickUp data, SharePoint file count, email history
+// Response
+interface LinkedInSignalsResponse {
+  signalsCount: number;
+  signals: LinkedInSignal[];
+}
+```
+
+---
+
+### POST /api/admin/projects/[id]/star-pipeline/trigger
+
+Trigger all pipeline outputs for a starred project. Returns immediately — generation is async.
+
+```typescript
+// Input
+interface StarPipelineTriggerInput {
+  outputs: ("case_study" | "linkedin_article" | "commercial_slide" | "seo_signal")[]; // which outputs to generate
+  anonymise?: boolean; // true if NDA — replaces client name with sector description
+}
+
+// Response
+interface StarPipelineTriggerResponse {
+  jobId: string;
+  estimatedReadyAt: string; // ISO datetime — [HYPOTHÈSE: 2–5 min]
+  outputsQueued: string[];
+}
+```
+
+---
+
+### POST /api/admin/arya/linkedin-weekly-digest
+
+Generate the Friday weekly brief. Called by cron or manually.
+
+```typescript
+// No input body — reads all linkedin_signals from the past 7 days, editorial calendar, star pipeline outputs
+// Response
+interface WeeklyDigestResponse {
+  savedTo: string; // path to the generated .md file
+  signalCount: number;
+  calendarGapsFound: number;
+  proofPointsCleared: number;
+}
+```
+
+---
+
+## 10. Hypotheses to Validate
+
+| Hypothesis | Evidence Level | Validation Test | Status |
+|---|---|---|---|
+| The 5-criterion Star matrix correctly identifies the projects Sarani would intuitively call "exceptional" | Low — calibrated on limited examples | Run the matrix on 10–15 historical projects, compare with Thomas's intuitive ranking | To validate |
+| A 14-day timeout is the right threshold for non-response closure | Low — no data | Track closure-by-timeout cases for 60 days; if > 20% reopen after closure → lower threshold to 10 days | To validate |
+| LinkedIn articles generated by Arya reach publishing quality with 1 PM review pass | Low | PM review time tracking on first 10 articles — if avg edit time > 30 min → rework the generation prompt | To validate |
+| The Friday brief format is actionable enough that @social uses it without further clarification | Low | Track @social brief-to-post conversion rate for 4 weeks | To validate |
+| [HYPOTHÈSE : pipeline generation latency is 2–5 minutes] | Not measured | Instrument generation endpoint with timing; adjust UX loading states if > 5 min | To validate |
+| The "Strong Story, Weak Assets" threshold (case study score < 70 but star score >= 75) correctly identifies edge cases | Low | Manually review all projects that hit this condition in the first 90 days | To validate |
+
+---
+
+**Handoff → @fullstack**
+
+Files produced:
+- `/home/user/Sarani/docs/product/project-closure-star-pipeline-specs.md` — this document
+
+Decisions taken:
+- **Closure is never automatic** — Arya flags, PM confirms. Every irreversible action (ClickUp status change, invoice generation) has a ⏸️ gate.
+- **Star Score is a new matrix (5 criteria, 0–100)** separate from but complementary to the case-study-generator scoring matrix. Both thresholds must be met (star >= 75 AND case study >= 70) to trigger the full pipeline.
+- **Pipeline outputs are all drafts** — nothing is auto-published. PM validates each output individually.
+- **Arya as LinkedIn Feeder** is signal-extraction only, not content creation. The content is created by @social using Arya's signals. This preserves the content quality standard from `docs/social/linkedin-strategy.md`.
+- **NDA gate** is a hard stop on all publication pipelines — score is stored but no output is generated without explicit PM decision.
+- **SEO signal is the only output with no PM approval** — it is informational only and feeds `docs/seo/star-signal-queue.md`.
+
+Points of attention for implementation:
+- **PROTO-PROJECT-CLOSURE** extends the existing `PROTO-PROJECT-CLOSE` from `docs/pm/arya-protocols.md`. Steps 1–3 of the existing protocol are unchanged. New steps (Star Score, LinkedIn signals, pipeline trigger) are inserted at Steps 4–5 before the final PM summary.
+- **Case study generation** must call the existing case-study-generator API (see `docs/product/case-study-generator-specs.md`) — do not duplicate the generation logic in Arya.
+- **Email classification** for `client_partial_approval` is a new classification label — extend the classify route to support it (distinct from `client_approval` — does not trigger closure).
+- **Editorial calendar** (`docs/social/editorial-calendar.md`) is a markdown file. The insertion logic (Pillar slot detection, row append) requires a parser that can read and write this specific table format.
+- **Data model additions** (3 new tables + 4 columns on `projects`) are defined in Section 8 — add to `src/lib/db/schema.ts`.
+- **Weekly cron** — add a Friday 9:00 AM Paris time cron job (or manual trigger) for the LinkedIn weekly digest.
+
+**Handoff → @qa**
+
+Test scenarios to derive:
+- Timeout closure: project at exactly 14 days, project at 13 days (should NOT trigger), project at 15 days
+- Double-click on "CLOSE PROJECT" — idempotency test
+- Star Score with all fields present vs missing client name vs missing invoice amount
+- NDA gate: project with NDA that scores STAR → verify pipeline is suppressed until PM decision
+- Editorial calendar insertion with full slots vs empty slots vs calendar in malformed state
+- Weekly digest with zero signals (empty week), normal week, week with NDA-only projects
+
+**Handoff → @social**
+
+Weekly LinkedIn briefs are now generated automatically every Friday by Arya and saved to `docs/pm/linkedin-briefs/`. @social should read the latest brief at the start of each content creation session as the primary input, alongside `docs/social/linkedin-strategy.md` and `docs/social/editorial-calendar.md`.
+
+Hot signals (immediate notifications) can also arrive mid-week when exceptional project moments are detected — @social should treat these as priority content opportunities.
