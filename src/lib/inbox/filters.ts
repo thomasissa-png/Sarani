@@ -35,6 +35,8 @@ export interface InboxItemFilterable {
   type: InboxItemType;
   status: InboxItemStatus;
   protocol: string | null;
+  processedAt?: string | Date | null;
+  createdAt?: string | Date;
 }
 
 // ─── Constants ─────────────────────────────────────────────────────────────
