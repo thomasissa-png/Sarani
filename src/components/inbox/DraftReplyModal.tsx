@@ -37,10 +37,36 @@ export function DraftReplyModal({
   const suggestedAction = payload.classification.suggestedAction || "";
 
   const [replyBody, setReplyBody] = useState(draftReply);
+  const [isGeneratingReply, setIsGeneratingReply] = useState(!draftReply);
   const [subject, setSubject] = useState(
     payload.subject.startsWith("Re:") ? payload.subject : `Re: ${payload.subject}`
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If draftReply is empty (old emails without LLM reply), generate one on mount
+  useEffect(() => {
+    if (draftReply) return; // Already have a reply
+    let cancelled = false;
+    setIsGeneratingReply(true);
+    fetch("/api/admin/emails/classify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject: payload.subject,
+        from: payload.from,
+        bodyPreview: payload.bodyPreview ?? "",
+      }),
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!cancelled && data?.draftReply) {
+          setReplyBody(data.draftReply);
+        }
+      })
+      .catch(() => { /* fallback: empty field, PM writes manually */ })
+      .finally(() => { if (!cancelled) setIsGeneratingReply(false); });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Focus trap + Escape
   useEffect(() => {
@@ -281,10 +307,11 @@ export function DraftReplyModal({
               <textarea
                 ref={replyRef}
                 id="draft-reply-body"
-                value={replyBody}
+                value={isGeneratingReply ? "Arya is preparing a reply..." : replyBody}
                 onChange={(e) => setReplyBody(e.target.value)}
+                disabled={isGeneratingReply}
                 rows={10}
-                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed"
+                className={`w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed${isGeneratingReply ? " opacity-60 italic" : ""}`}
                 placeholder="Write your reply here..."
               />
               {draftReply && (
