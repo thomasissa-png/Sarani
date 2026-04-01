@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
 import { inboxItems } from "@/lib/db/schema";
 import { eq, ne, desc, and, SQL } from "drizzle-orm";
@@ -102,6 +103,10 @@ export async function PATCH(request: NextRequest) {
   const session = await getUserFromSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!checkRateLimit("inbox-patch", 60, 60_000)) {
+    return NextResponse.json({ error: "Rate limited" }, { status: 429 });
   }
 
   let body: z.infer<typeof PatchInboxItemSchema>;

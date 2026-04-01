@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { isAuthenticatedFromCookie, hashPassword } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 async function requireAdmin(request: NextRequest): Promise<
   | { authorized: true }
@@ -26,6 +27,10 @@ export async function PATCH(
   try {
     const check = await requireAdmin(request);
     if (!check.authorized) return check.response;
+
+    if (!checkRateLimit("users-update", 20, 60_000)) {
+      return NextResponse.json({ error: "Rate limited" }, { status: 429 });
+    }
 
     const { id } = await params;
     const body = await request.json();
@@ -114,6 +119,10 @@ export async function DELETE(
   try {
     const check = await requireAdmin(request);
     if (!check.authorized) return check.response;
+
+    if (!checkRateLimit("users-update", 20, 60_000)) {
+      return NextResponse.json({ error: "Rate limited" }, { status: 429 });
+    }
 
     const { id } = await params;
 

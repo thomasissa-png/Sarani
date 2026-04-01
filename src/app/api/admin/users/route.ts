@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { isAuthenticatedFromCookie, hashPassword } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { CLICKUP_TEAM_MEMBERS } from "@/lib/integrations/config";
+
+const CreateUserSchema = z.object({
+  email: z.string().email("Invalid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  name: z.string().min(1, "Name is required"),
+  role: z.enum(["admin", "user"]).optional().default("user"),
+});
 
 // ─── Auto-match ClickUp user by name or email ──────────────────────────────
 // Uses the hardcoded CLICKUP_TEAM_MEMBERS as a fallback matching source.
@@ -83,27 +92,22 @@ export async function POST(request: NextRequest) {
     const check = await requireAdmin(request);
     if (!check.authorized) return check.response;
 
-    const body = await request.json();
-    const { email, password, name, role } = body;
+    if (!checkRateLimit("users-create", 10, 60_000)) {
+      return NextResponse.json({ error: "Rate limited" }, { status: 429 });
+    }
 
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email required" }, { status: 400 });
+    let body: z.infer<typeof CreateUserSchema>;
+    try {
+      const rawBody = await request.json();
+      body = CreateUserSchema.parse(rawBody);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json({ error: "Validation failed", details: error.issues }, { status: 400 });
+      }
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
-    if (!password || typeof password !== "string" || password.length < 8) {
-      return NextResponse.json(
-        { error: "Password required (min 8 characters)" },
-        { status: 400 }
-      );
-    }
-    if (!name || typeof name !== "string") {
-      return NextResponse.json({ error: "Name required" }, { status: 400 });
-    }
-    if (role && !["admin", "user"].includes(role)) {
-      return NextResponse.json(
-        { error: "Role must be 'admin' or 'user'" },
-        { status: 400 }
-      );
-    }
+
+    const { email, password, name, role } = body;
 
     // Check for existing user with same email
     const [existing] = await db
