@@ -313,6 +313,11 @@ export async function GET(request: NextRequest) {
                 project_type: "generic",
                 brief_introduction: "",
                 brief_body: "",
+                deadline: "To be confirmed",
+                dimensions: "To be confirmed",
+                quantity: "To be confirmed",
+                output_languages: "To be confirmed",
+                reference_links: "None provided",
               };
             } else {
               briefData = briefParsed.data;
