@@ -27,6 +27,7 @@ export interface EmailPayload {
 interface EmailCardProps {
   itemId: string;
   sourceId: string | null;
+  sourceType?: string | null;
   payload: EmailPayload;
   createdAt: string;
   isActioning: boolean;
@@ -51,6 +52,11 @@ const CATEGORY_CONFIG: Record<string, { label: string; color: string; bgColor: s
   },
   new_client: {
     label: "New Client",
+    color: "text-brand-flame",
+    bgColor: "bg-brand-flame/10",
+  },
+  new_client_prospect: {
+    label: "New Prospect",
     color: "text-brand-flame",
     bgColor: "bg-brand-flame/10",
   },
