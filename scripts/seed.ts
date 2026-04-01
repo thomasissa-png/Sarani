@@ -705,6 +705,70 @@ async function ensureSchema() {
       ALTER TABLE "quotes" ADD COLUMN "quote_number" VARCHAR(20);
     EXCEPTION WHEN duplicate_column THEN NULL;
     END $$;
+
+    -- Project closures (migration 0017)
+    CREATE TABLE IF NOT EXISTS "project_closures" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "clickup_task_id" text NOT NULL UNIQUE,
+      "client_id" uuid REFERENCES "clients"("id") ON DELETE SET NULL,
+      "project_name" text NOT NULL,
+      "status" varchar(30) NOT NULL DEFAULT 'pending_closure',
+      "closure_reason" varchar(30) NOT NULL DEFAULT 'manual',
+      "star_score" integer,
+      "star_details" jsonb,
+      "star_status" varchar(30),
+      "closed_at" timestamp,
+      "closed_by" text,
+      "created_at" timestamp NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "idx_closures_status" ON "project_closures"("status");
+    CREATE INDEX IF NOT EXISTS "idx_closures_star" ON "project_closures"("star_status");
+
+    CREATE TABLE IF NOT EXISTS "star_pipeline_items" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "closure_id" uuid NOT NULL REFERENCES "project_closures"("id") ON DELETE CASCADE,
+      "output_type" varchar(30) NOT NULL,
+      "status" varchar(20) NOT NULL DEFAULT 'pending',
+      "content" text,
+      "metadata" jsonb,
+      "created_at" timestamp NOT NULL DEFAULT now(),
+      "reviewed_at" timestamp,
+      "reviewed_by" text
+    );
+    CREATE INDEX IF NOT EXISTS "idx_pipeline_closure" ON "star_pipeline_items"("closure_id");
+
+    -- Knowledge code names (migration 0018)
+    DO $$ BEGIN
+      ALTER TABLE "client_knowledge" ADD COLUMN "code_name" varchar(20);
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "team_knowledge" ADD COLUMN "code_name" varchar(20);
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+
+    -- Review pipeline columns on inbox_items (migration 0019)
+    DO $$ BEGIN
+      ALTER TABLE "inbox_items" ADD COLUMN "verification_attempt" integer;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+    DO $$ BEGIN
+      ALTER TABLE "inbox_items" ADD COLUMN "arya_report" jsonb;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+
+    CREATE TABLE IF NOT EXISTS "arya_verification_log" (
+      "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      "inbox_item_id" uuid REFERENCES "inbox_items"("id") ON DELETE SET NULL,
+      "clickup_task_id" text NOT NULL,
+      "attempt" integer NOT NULL DEFAULT 1,
+      "criteria" jsonb,
+      "passed" boolean NOT NULL DEFAULT false,
+      "failure_reasons" jsonb,
+      "created_at" timestamp NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS "idx_verification_log_task" ON "arya_verification_log"("clickup_task_id");
+    CREATE INDEX IF NOT EXISTS "idx_verification_log_inbox" ON "arya_verification_log"("inbox_item_id");
   `);
 
   console.log("Schema up to date.\n");
