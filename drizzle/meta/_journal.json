@@ -134,6 +134,20 @@
       "when": 1774440000000,
       "tag": "0018_knowledge_code_names",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1774440100000,
+      "tag": "0019_arya_verification_log",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1774440200000,
+      "tag": "0020_add_clickup_user_id",
+      "breakpoints": true
     }
   ]
 }

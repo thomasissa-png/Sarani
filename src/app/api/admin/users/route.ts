@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { isAuthenticatedFromCookie, hashPassword } from "@/lib/auth";
+import { CLICKUP_TEAM_MEMBERS } from "@/lib/integrations/config";
 
 async function requireAdmin(request: NextRequest): Promise<
   | { authorized: true }
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
         email: users.email,
         name: users.name,
         role: users.role,
+        clickupUserId: users.clickupUserId,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       })
@@ -85,6 +87,9 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password);
     const now = new Date();
 
+    // Auto-map: try to find a matching ClickUp member by name or email
+    const clickupUserId = autoMatchClickUp(name, email.toLowerCase().trim());
+
     const [created] = await db
       .insert(users)
       .values({
@@ -92,6 +97,7 @@ export async function POST(request: NextRequest) {
         passwordHash,
         name,
         role: role || "user",
+        clickupUserId,
         createdAt: now,
         updatedAt: now,
       })
@@ -100,9 +106,16 @@ export async function POST(request: NextRequest) {
         email: users.email,
         name: users.name,
         role: users.role,
+        clickupUserId: users.clickupUserId,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       });
+
+    if (clickupUserId) {
+      console.log(
+        `[users] Auto-mapped user "${name}" to ClickUp ID ${clickupUserId}`
+      );
+    }
 
     return NextResponse.json({ user: created }, { status: 201 });
   } catch {

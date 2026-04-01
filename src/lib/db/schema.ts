@@ -118,6 +118,7 @@ export const users = pgTable(
     passwordHash: text("password_hash").notNull(),
     name: text("name").notNull(),
     role: varchar("role", { length: 20 }).notNull().default("user"), // "admin" | "user"
+    clickupUserId: integer("clickup_user_id"), // nullable — not all users have a ClickUp account
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
