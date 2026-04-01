@@ -812,6 +812,7 @@ export const clientKnowledge = pgTable(
     division: varchar("division", { length: 255 }),
     contactName: varchar("contact_name", { length: 255 }),
     contactEmail: varchar("contact_email", { length: 255 }),
+    codeName: varchar("code_name", { length: 20 }),
     category: varchar("category", { length: 50 }).notNull(), // tone | preference | positive_feedback | improvement | guideline | workflow
     knowledgeText: text("knowledge_text").notNull(),
     source: text("source").notNull(),
@@ -838,6 +839,7 @@ export const teamKnowledge = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     teamMemberEmail: varchar("team_member_email", { length: 255 }).notNull(),
     teamMemberName: varchar("team_member_name", { length: 255 }).notNull(),
+    codeName: varchar("code_name", { length: 20 }),
     role: varchar("role", { length: 50 }).notNull(), // designer | copywriter | video_editor | translator | project_manager | developer | strategist
     category: varchar("category", { length: 50 }).notNull(), // skill | preference | availability | speed | quality_note | language | tool | style
     knowledgeText: text("knowledge_text").notNull(),

@@ -127,6 +127,13 @@
       "when": 1774426900000,
       "tag": "0017_project_closures",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1774440000000,
+      "tag": "0018_knowledge_code_names",
+      "breakpoints": true
     }
   ]
 }

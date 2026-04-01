@@ -15,6 +15,11 @@ import {
   type KnowledgeEntry,
   type KnowledgeExtractionResult,
 } from "@/lib/ai/prompts/knowledge-extractor";
+import {
+  encodeContactName,
+  encodeDivisionName,
+  encodeTeamMemberName,
+} from "@/lib/arya/name-encoder";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -265,6 +270,7 @@ export async function GET(request: NextRequest) {
                   await db.insert(teamKnowledge).values({
                     teamMemberEmail: entry.teamMemberEmail,
                     teamMemberName: entry.entityName,
+                    codeName: encodeTeamMemberName(entry.entityName, entry.teamMemberEmail),
                     role: "unknown",
                     category: entry.category,
                     knowledgeText: entry.knowledgeText,
@@ -282,12 +288,19 @@ export async function GET(request: NextRequest) {
                   entry.category
                 );
                 if (!exists) {
+                  const contactCode = entry.scope === "individual"
+                    ? encodeContactName(entry.entityName, entry.contactEmail)
+                    : entry.scope === "division" && entry.division
+                      ? encodeDivisionName(client.name, entry.division)
+                      : null;
+
                   await db.insert(clientKnowledge).values({
                     clientId: client.id,
                     division: entry.division ?? null,
                     contactName:
                       entry.scope === "individual" ? entry.entityName : null,
                     contactEmail: entry.contactEmail ?? null,
+                    codeName: contactCode,
                     category: entry.category,
                     knowledgeText: entry.knowledgeText,
                     source: `email-scan:${domain}`,
