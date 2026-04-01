@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── GET — ClickUp tasks due today ────────────────────────────────────────
 
@@ -55,12 +56,22 @@ export async function GET() {
       }>;
     };
 
-    const tasks = data.tasks.map((t) => ({
-      id: t.id,
-      name: t.name,
-      url: t.url,
-      client: t.space?.name ?? "Other",
-    }));
+    // Build space ID → name lookup from CLIENT_MAPPINGS + API response
+    const spaceNameMap = new Map<string, string>();
+    for (const m of CLIENT_MAPPINGS) {
+      spaceNameMap.set(m.clickupSpaceId, m.clickupSpaceName);
+    }
+
+    const tasks = data.tasks.map((t) => {
+      const spaceId = t.space?.id ?? "";
+      const clientName = t.space?.name || spaceNameMap.get(spaceId) || "Other";
+      return {
+        id: t.id,
+        name: t.name,
+        url: t.url,
+        client: clientName,
+      };
+    });
 
     return NextResponse.json({ tasks });
   } catch (error) {

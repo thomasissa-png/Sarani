@@ -784,12 +784,13 @@ export default function InboxPage() {
                   return a.localeCompare(b);
                 });
                 return sortedClients.map((client) => (
-                  <div key={client}>
-                    <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1">{client} ({grouped[client].length})</p>
-                    <div className="flex flex-wrap gap-x-3 gap-y-1">
-                      {grouped[client].map((task) => (
+                  <div key={client} className="text-sm">
+                    <span className="font-semibold text-brand-black">{client}</span>
+                    <span className="text-neutral-500"> (</span>
+                    {grouped[client].map((task, idx) => (
+                      <span key={task.id}>
+                        {idx > 0 && <span className="text-neutral-400">, </span>}
                         <a
-                          key={task.id}
                           href={task.url}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -797,8 +798,9 @@ export default function InboxPage() {
                         >
                           {task.name}
                         </a>
-                      ))}
-                    </div>
+                      </span>
+                    ))}
+                    <span className="text-neutral-500">)</span>
                   </div>
                 ));
               })()}
