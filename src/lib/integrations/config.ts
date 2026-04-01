@@ -176,42 +176,40 @@ export interface ClickUpTeamMember {
 }
 
 export const CLICKUP_TEAM_MEMBERS: readonly ClickUpTeamMember[] = [
-  { name: "Thomas Issa", id: 38103140, skills: ["pm"], languages: ["fr", "en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS"] },
-  { name: "Lauriane Celton", id: 290479583, skills: ["pm"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Andrew S.", id: 242627931, skills: ["design"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Thomas Issa", id: 38103140, skills: ["pm"], languages: ["fr", "en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
+  { name: "Lauriane Celton", id: 290479583, skills: ["design"], languages: ["fr", "en"], clients: ["Lamarck"] },
   { name: "Camilla Palermo", id: 49467956, skills: ["design"], languages: ["en", "it"], clients: ["Sony"] },
-  { name: "Claire Boutreux", id: 266547441, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Hiruni", id: 95230414, skills: ["design"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Claudia Salgueiro", id: 89382349, skills: ["design", "video"], languages: ["pt", "en", "es"], clients: [] }, // TODO: Thomas to fill
-  { name: "Affan Hakim", id: 60852951, skills: ["video"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
-  { name: "JC", id: 89363031, skills: ["video"], languages: ["en"], clients: ["TikTok"] }, // TODO: Thomas to fill
-  { name: "Mahée Ahouansou", id: 89360336, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Branko Rosic", id: 89354959, skills: ["video"], languages: ["en", "sr"], clients: [] }, // TODO: Thomas to fill
+  { name: "Claire Boutreux", id: 266547441, skills: ["design"], languages: ["fr", "en"], clients: ["Lamarck"] },
+  { name: "Hiruni", id: 95230414, skills: ["pm"], languages: ["en"], clients: ["TikTok", "Sony", "GEODIS", "PICO XR"] },
+  { name: "Claudia Salgueiro", id: 89382349, skills: ["design"], languages: ["pt", "en", "es"], clients: ["TikTok"] },
+  { name: "Affan Hakim", id: 60852951, skills: ["video"], languages: ["en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
+  { name: "JC", id: 89363031, skills: ["video"], languages: ["en"], clients: ["TikTok", "Sony"] },
+  { name: "Mahée Ahouansou", id: 89360336, skills: ["pm"], languages: ["fr", "en"], clients: ["TikTok"] },
+  { name: "Branko Rosic", id: 89354959, skills: ["design"], languages: ["en", "sr"], clients: ["Bose", "Ubi"] },
   { name: "Cristina Ramos", id: 38467924, skills: ["design"], languages: ["es", "en"], clients: ["Sony"] },
-  { name: "Ameena Gorton", id: 89353227, skills: ["copywriting"], languages: ["en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Gabrielle Belledent", id: 80499023, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Anissa Baroudi", id: 78188831, skills: ["design"], languages: ["fr", "en", "ar"], clients: [] }, // TODO: Thomas to fill
-  { name: "Clara Jaeger", id: 89331511, skills: ["design"], languages: ["fr", "en", "de"], clients: [] }, // TODO: Thomas to fill
-  { name: "AnneLaure G.", id: 89316728, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Prudence Ip", id: 182471913, skills: ["design"], languages: ["en", "zh"], clients: [] }, // TODO: Thomas to fill
-  { name: "Milan Pantović", id: 182468711, skills: ["video"], languages: ["en", "sr"], clients: [] }, // TODO: Thomas to fill
-  { name: "Marie Foster", id: 88228411, skills: ["design"], languages: ["en", "fr"], clients: [] }, // TODO: Thomas to fill
-  { name: "Carla Pavetti", id: 89273119, skills: ["design"], languages: ["it", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Claire Boussuge", id: 89271372, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Abdelrahman Garhi", id: 4663471, skills: ["video"], languages: ["ar", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Aurélie Touchard", id: 96738712, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Amjad Jameel", id: 89225560, skills: ["design"], languages: ["ar", "en"], clients: ["Aujan"] }, // TODO: Thomas to fill
-  { name: "Pablo Ojeda", id: 89176064, skills: ["video"], languages: ["es", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Alessia Faustini", id: 89176061, skills: ["design", "translation"], languages: ["it", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Chloé Mwenge", id: 10948297, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Genaro Splendore", id: 56576185, skills: ["video"], languages: ["it", "en", "es"], clients: [] }, // TODO: Thomas to fill
-  { name: "Jason Angeles", id: 56575760, skills: ["video"], languages: ["en"], clients: ["TikTok"] }, // TODO: Thomas to fill
-  { name: "Luis Caballero", id: 56575759, skills: ["video"], languages: ["es", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Ameena Gorton", id: 89353227, skills: ["pm"], languages: ["en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
+  { name: "Gabrielle Belledent", id: 80499023, skills: ["social"], languages: ["fr", "en"], clients: ["TikTok", "PICO XR"] },
+  { name: "Anissa Baroudi", id: 78188831, skills: ["design"], languages: ["fr", "en", "ar"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
+  { name: "Clara Jaeger", id: 89331511, skills: ["pm"], languages: ["fr", "en", "de"], clients: ["TikTok", "Sony", "Ubi"] },
+  { name: "AnneLaure G.", id: 89316728, skills: ["pm"], languages: ["fr", "en"], clients: ["Lamarck", "Ubi"] },
+  { name: "Prudence Ip", id: 182471913, skills: ["design"], languages: ["en", "zh"], clients: ["TikTok", "Sony"] },
+  { name: "Milan Pantović", id: 182468711, skills: ["design"], languages: ["en", "sr"], clients: ["Ubi", "Sony", "PICO XR", "Aristocrat"] },
+  { name: "Marie Foster", id: 88228411, skills: ["copywriting"], languages: ["en", "fr"], clients: ["TikTok"] },
+  { name: "Carla Pavetti", id: 89273119, skills: ["design"], languages: ["it", "en"], clients: ["Ubi", "PICO XR", "Sony"] },
+  { name: "Claire Boussuge", id: 89271372, skills: ["pm"], languages: ["fr", "en"], clients: ["TikTok", "Aristocrat"] },
+  { name: "Abdelrahman Garhi", id: 4663471, skills: ["design"], languages: ["ar", "en"], clients: ["TikTok"] },
+  { name: "Aurélie Touchard", id: 96738712, skills: ["pm"], languages: ["fr", "en"], clients: ["Sony", "PICO XR"] },
+  { name: "Amjad Jameel", id: 89225560, skills: ["design"], languages: ["ar", "en"], clients: ["Aujan"] },
+  { name: "Pablo Ojeda", id: 89176064, skills: ["design"], languages: ["es", "en"], clients: ["TikTok"] },
+  { name: "Alessia Faustini", id: 89176061, skills: ["copywriting"], languages: ["it", "en"], clients: ["TikTok"] },
+  { name: "Chloé Mwenge", id: 10948297, skills: ["design"], languages: ["fr", "en"], clients: ["Ubi"] },
+  { name: "Genaro Splendore", id: 56576185, skills: ["video"], languages: ["it", "en", "es"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
+  { name: "Jason Angeles", id: 56575760, skills: ["design"], languages: ["en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
+  { name: "Luis Caballero", id: 56575759, skills: ["design"], languages: ["es", "en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
   { name: "Silvia Franzi", id: 56575757, skills: ["translation", "copywriting"], languages: ["it", "en", "fr"], clients: ["Sony"] },
-  { name: "Laura Martinez", id: 56575756, skills: ["translation", "copywriting"], languages: ["es", "en", "fr"], clients: [] }, // TODO: Thomas to fill
-  { name: "Fanny Place", id: 56575754, skills: ["design"], languages: ["fr", "en"], clients: [] }, // TODO: Thomas to fill
-  { name: "Carole Eid", id: 56575753, skills: ["design"], languages: ["fr", "en", "ar"], clients: [] }, // TODO: Thomas to fill
-  { name: "Ara dela Fuente", id: 38103175, skills: ["design"], languages: ["es", "en"], clients: [] }, // TODO: Thomas to fill
+  { name: "Fanny Place", id: 56575754, skills: ["pm"], languages: ["fr", "en"], clients: ["Sony", "TikTok"] },
+  { name: "Carole Eid", id: 56575753, skills: ["pm"], languages: ["fr", "en", "ar"], clients: ["TikTok"] },
+  { name: "Ara dela Fuente", id: 38103175, skills: ["design"], languages: ["es", "en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
   { name: "Binary Data", id: 94804152, skills: [], languages: [], clients: [] }, // System user — not a real team member
 ];
 
