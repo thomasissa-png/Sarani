@@ -76,6 +76,7 @@ export function AutoQuoteCard({
   const [confidence, setConfidence] = useState(payload.estimationConfidence);
   const [finalizing, setFinalizing] = useState(false);
   const [dismissing, setDismissing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [fetched, setFetched] = useState(false);
 
   // Fetch full quote details on first render
@@ -514,7 +515,7 @@ export function AutoQuoteCard({
               {dismissing ? "Dismissing..." : "Dismiss"}
             </button>
             <button
-              onClick={handleFinalize}
+              onClick={() => setShowConfirm(true)}
               disabled={finalizing || dismissing || items.length === 0 || hasNullPrices}
               className={cn(
                 "px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50",
@@ -528,6 +529,37 @@ export function AutoQuoteCard({
             </button>
           </div>
         </>
+      )}
+
+      {/* Confirmation modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-brand-black mb-2">Confirm & Send</h3>
+            <p className="text-sm text-neutral-600 mb-1">
+              This will generate the PDF, upload to SharePoint, and create an email draft to <strong>{payload.contactEmail}</strong>.
+            </p>
+            <p className="text-sm text-neutral-600 mb-4">
+              Total: <strong>{currency} {grandTotal.toFixed(2)}</strong> — {items.length} item{items.length > 1 ? "s" : ""}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-neutral-600 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowConfirm(false); handleFinalize(); }}
+                className="px-4 py-2 text-sm font-medium text-white bg-brand-flame rounded-lg hover:bg-brand-flame/90 transition-colors"
+              >
+                Confirm & Generate
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

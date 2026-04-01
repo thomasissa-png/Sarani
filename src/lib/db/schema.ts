@@ -181,6 +181,7 @@ export const quotes = pgTable(
     estimationConfidence: varchar("estimation_confidence", { length: 10 }), // high | medium | low
     unpricedItems: jsonb("unpriced_items").$type<string[]>(),
     clickupTaskId: text("clickup_task_id"), // linked ClickUp task for finalize flow
+    contactEmail: text("contact_email"), // client contact for email draft
     createdBy: text("created_by").notNull(), // user ID or email
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

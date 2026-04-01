@@ -232,35 +232,17 @@ export async function POST(
       .where(eq(quotes.id, id));
   } catch (err) {
     console.error("[Finalize] DB update failed:", err);
-    warnings.push("Quote DB update failed — PDF was uploaded but status not updated");
+    return NextResponse.json(
+      { error: "Failed to update quote status. PDF uploaded but quote remains draft. Contact support." },
+      { status: 500 }
+    );
   }
 
   // ─── Step 5: Create Outlook draft with PDF attachment (non-blocking) ─────
 
   try {
-    // Resolve client's contact email from the inbox item summary
-    let contactEmail: string | null = null;
-    try {
-      const [inboxItem] = await db
-        .select({ summary: inboxItems.summary })
-        .from(inboxItems)
-        .where(
-          and(
-            eq(inboxItems.type, "auto_quote_ready"),
-            eq(inboxItems.status, "pending")
-          )
-        )
-        .limit(1);
-
-      if (inboxItem?.summary) {
-        const summaryData = JSON.parse(inboxItem.summary) as Record<string, unknown>;
-        if (summaryData.quoteId === id) {
-          contactEmail = (summaryData.contactEmail as string) ?? null;
-        }
-      }
-    } catch {
-      // Non-critical — we may not find the email
-    }
+    // Use contactEmail stored directly on the quote row
+    const contactEmail: string | null = existingQuote.contactEmail ?? null;
 
     if (contactEmail) {
       const subjectPrefix = body.lang === "FR" ? "Devis" : "Quote";

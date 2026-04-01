@@ -776,6 +776,10 @@ async function ensureSchema() {
       ALTER TABLE "quotes" ADD COLUMN "clickup_task_id" TEXT;
     EXCEPTION WHEN duplicate_column THEN NULL;
     END $$;
+    DO $$ BEGIN
+      ALTER TABLE "quotes" ADD COLUMN "contact_email" TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
 
     -- Review pipeline columns on inbox_items (migration 0019)
     DO $$ BEGIN
