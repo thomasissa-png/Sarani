@@ -10,7 +10,11 @@ import { eq, ne, desc, and, SQL } from "drizzle-orm";
 const InboxFiltersSchema = z.object({
   status: z.enum(["pending", "pending_review", "in_progress", "done", "dismissed"]).optional(),
   type: z
-    .enum(["email_classified", "ai_team_complete", "qa_gates_pass", "followup_alert", "noise", "auto_brief_ready"])
+    .enum([
+      "email_classified", "ai_team_complete", "qa_gates_pass", "followup_alert",
+      "noise", "auto_brief_ready", "auto_quote_ready", "lark_message",
+      "review_human", "review_ai_ready", "review_escalated",
+    ])
     .optional(),
   priority: z.enum(["high", "medium", "low"]).optional(),
   includeNoise: z

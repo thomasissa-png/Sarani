@@ -185,12 +185,11 @@ function filterItems(items: InboxItem[], filter: FilterTab): InboxItem[] {
     if (i.status === "done" || i.status === "dismissed") return false;
     // "Others" tab: items with null protocol that are not noise/followup_alert/review types
     if (filter === "other") {
+      // Items with null/archive protocol that don't belong in other tabs
       if (i.protocol === null || i.protocol === "archive") {
-        // Exclude noise (already hidden) and review types (they have their own tab)
         return !["noise", "followup_alert", "review_human", "review_ai_ready", "review_escalated"].includes(i.type);
       }
-      // Also include items with legacy protocol "PROTO-LARK-TRIAGE" (old Lark items)
-      return i.protocol === "PROTO-LARK-TRIAGE";
+      return false;
     }
     // Direct match
     if (i.protocol === targetProtocol) return true;

@@ -129,8 +129,9 @@ export function AutoBriefCard({
       setCreating(false);
     }
   }, [
-    canCreate, itemId, projectName, selectedSpaceId, brief,
+    canCreate, itemId, projectName, selectedSpaceId, entity, brief,
     contactEmail, startDate, projectType, clients, payload.clientName,
+    addToTracker, createSharepointFolder, assigneeId,
     onCreated, showToast,
   ]);
 

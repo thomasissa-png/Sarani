@@ -39,6 +39,7 @@ const ExecuteAutoBriefSchema = z.object({
   projectName: z.string().min(1, "Project name is required").max(200),
   clientName: z.string().min(1, "Client name is required"),
   entity: z.string().optional(),
+  projectType: z.string().optional(),
   brief: z.string().max(20_000),
   contactEmail: z.string().email("Invalid contact email"),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
@@ -120,8 +121,20 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Build task name: include entity if provided (e.g., "Sony France - Banner Campaign")
+      const taskName = body.entity
+        ? `${body.entity} - ${body.projectName}`
+        : body.projectName;
+
+      // Build description: include project type if provided
+      const descriptionParts: string[] = [];
+      if (body.projectType) descriptionParts.push(`Type: ${body.projectType}`);
+      if (body.entity) descriptionParts.push(`Entity: ${body.entity}`);
+      if (body.contactEmail) descriptionParts.push(`Contact: ${body.contactEmail}`);
+
       clickupTask = await createTask(lists[0].id, {
-        name: body.projectName,
+        name: taskName,
+        description: descriptionParts.length > 0 ? descriptionParts.join("\n") : undefined,
         status: "Open",
         due_date: new Date(body.startDate).getTime(),
         assignees: body.assigneeId ? [body.assigneeId] : undefined,
