@@ -48,6 +48,10 @@ const ALLOWED_MIMETYPES = new Set([
   "image/gif",
   "image/webp",
   "application/pdf",
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+  "video/x-msvideo",
 ]);
 
 // Folders to SKIP when scanning for deliverables
@@ -513,6 +517,9 @@ export default async function ProjectPreviewPage({ params }: Props) {
               const batchImages = batch.items.filter((i) =>
                 i.mimeType.startsWith("image/")
               );
+              const batchVideos = batch.items.filter((i) =>
+                i.mimeType.startsWith("video/")
+              );
               const batchPdfs = batch.items.filter(
                 (i) => i.mimeType === "application/pdf"
               );
@@ -553,6 +560,36 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             </div>
                           </div>
                         </ImageLightbox>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Video Players */}
+                  {batchVideos.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                      {batchVideos.map((item) => (
+                        <div key={item.webUrl} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                          <video
+                            controls
+                            preload="metadata"
+                            className="w-full aspect-video bg-black"
+                            playsInline
+                          >
+                            <source src={item.webUrl} type={item.mimeType} />
+                            Your browser does not support video playback.
+                          </video>
+                          <div className="px-3 py-2 flex items-center justify-between">
+                            <span className="text-xs text-white/60 truncate">{item.name}</span>
+                            <a
+                              href={item.webUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-white/40 hover:text-white/70 transition-colors shrink-0 ml-2"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
