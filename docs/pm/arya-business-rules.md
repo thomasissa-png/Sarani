@@ -43,6 +43,22 @@
 14. **CMC Markets et Lamarck** : Arya reste dans la boucle sur tous les briefs pour aider les PMs dédiées (AnneLaure, Clara).
 15. **Response time** : 30 min pour commencer à traiter, 1h max. Au-delà → relance automatique.
 
+## Clients partenaires (agences sous-traitantes)
+
+Certains "clients" Sarani sont en réalité des **agences partenaires** qui sous-traitent à Sarani pour leurs propres clients finaux :
+
+| Client Sarani (facturable) | Client final (production) | Exemples |
+|---|---|---|
+| **Ubi** (Ubisoft) | Adidas, Lego, etc. | Ubi nous brief pour Adidas → branding = Adidas |
+| **Lamarck** | Relai d'Or Miko, etc. | Lamarck nous brief pour Miko → branding = Miko |
+
+**Règles pour Arya :**
+16. **Client facturable ≠ client final.** Quand Ubi envoie un brief pour Adidas, le brief doit mentionner les DEUX : "Client: Ubi (for Adidas)". Le devis va à Ubi, mais le branding/guidelines sont ceux d'Adidas.
+17. **Le contact est chez le partenaire.** Les contacts Ubi/Lamarck sont les interlocuteurs Sarani, pas les contacts du client final.
+18. **SharePoint/ClickUp = espace du partenaire.** Les projets Adidas via Ubi vont dans l'espace ClickUp "Ubi", le tracker Excel "Ubi", le dossier SharePoint "Ubi". PAS dans un espace "Adidas".
+19. **Branding = client final.** Le graphiste utilise les guidelines d'Adidas/Lego/Miko, pas celles d'Ubi. Si Arya ne connaît pas les guidelines du client final, elle doit demander au PM.
+20. **Détection automatique.** Quand un email d'Ubi mentionne "Adidas", "Lego", "pour [marque]", Arya doit extraire le client final et le mettre dans le champ Entity du brief.
+
 ## Branding par client
 
 > Thomas va compléter cette section avec les specs branding par client.

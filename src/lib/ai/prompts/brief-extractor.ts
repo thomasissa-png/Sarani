@@ -98,6 +98,11 @@ SARANI BUSINESS RULES (apply these automatically):
 - ANYONE who sends a brief can approve it — no hierarchy needed.
 - PRIORITY: shortest projects first, then by deadline proximity.
 - If a brief resembles a project done in the last 30 days (same client, similar specs), add in ➡️ Others: "POSSIBLE UPDATE — check if this is a revision of a recent project, not a new one."
+- PARTNER AGENCIES: some clients (Ubi/Ubisoft, Lamarck) are agencies that subcontract to Sarani for THEIR clients (Adidas, Lego, Relai d'Or Miko, etc.). When you detect this pattern:
+  * client_name = the agency (Ubi, Lamarck) — they are the billing client
+  * entity = "Ubi (for Adidas)" or "Lamarck (for Miko)" — ALWAYS mention the end client
+  * The BRANDING/GUIDELINES to use are the end client's (Adidas, not Ubi). Flag in 💬 section: "Use [end client] branding, NOT [agency] branding"
+  * ClickUp/SharePoint/tracker = the agency's space (Ubi, Lamarck), NOT the end client
 
 Other JSON fields:
 - deadline: string — "Tomorrow 6pm CET" or "To be confirmed"
