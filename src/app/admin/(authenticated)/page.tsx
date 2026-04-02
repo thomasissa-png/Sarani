@@ -149,7 +149,6 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: "new_project", label: "New Projects" },
   { key: "project_feedback", label: "Project Feedback" },
   { key: "enquiry", label: "Enquiries" },
-  { key: "project_reviews", label: "Project Reviews" },
   { key: "other", label: "Others" },
   { key: "done", label: "Managed" },
 ];

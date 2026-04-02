@@ -27,6 +27,8 @@ export interface TrackerProject {
   division?: string;
   /** Country/market extracted from sheet name (e.g. "France", "Germany", "Global") */
   country?: string;
+  /** ClickUp list name (e.g. "TikTok Shop UK") — used to find the right SP subfolder */
+  clickupListName?: string;
 }
 
 export interface SourceMeta {

@@ -1294,6 +1294,7 @@ export default function TrackerPage() {
         projectName={shareModalProject?.project ?? ""}
         sharepointLink={shareModalProject?.sharepointLink ?? ""}
         clickupTaskUrl={shareModalProject?.clickupTaskUrl ?? ""}
+        clickupListName={shareModalProject?.clickupListName ?? ""}
       />
     </div>
   );

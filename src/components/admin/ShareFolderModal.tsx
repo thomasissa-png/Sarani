@@ -50,6 +50,8 @@ interface ShareFolderModalProps {
   projectName: string;
   clickupTaskUrl?: string;
   sharepointLink?: string;
+  /** ClickUp list name — used to auto-navigate to the right SP subfolder */
+  clickupListName?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -69,7 +71,7 @@ function formatSize(bytes: number): string {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink }: ShareFolderModalProps) {
+export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink, clickupListName }: ShareFolderModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FoldersResponse | null>(null);
@@ -108,26 +110,46 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       setData(result);
       // Auto-select all files in the new folder
       setSelectedFiles(new Set(result.files.map((f) => f.id)));
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load folders");
+      return null;
     } finally {
       setLoading(false);
     }
   }, [clientName]);
 
   // Load folders on open — use SP link from ClickUp if available
+  // If no SP link but we have a clickupListName, auto-navigate to the matching subfolder
   useEffect(() => {
-    if (isOpen) {
-      setBreadcrumb([]);
-      setSharedLink(null);
-      setCopied(false);
-      if (sharepointLink) {
-        fetchFolders({ url: sharepointLink });
-      } else {
-        fetchFolders({ clientRoot: true });
-      }
+    if (!isOpen) return;
+    setBreadcrumb([]);
+    setSharedLink(null);
+    setCopied(false);
+
+    if (sharepointLink) {
+      fetchFolders({ url: sharepointLink });
+      return;
     }
-  }, [isOpen, fetchFolders, sharepointLink]);
+
+    // No SP link — load client root, then try to auto-navigate to the right subfolder
+    fetchFolders({ clientRoot: true }).then((result) => {
+      if (!result || !clickupListName) return;
+
+      // Find a subfolder matching the ClickUp list name (fuzzy: contains match)
+      const listLower = clickupListName.toLowerCase();
+      const match = result.folders.find((f) => {
+        const folderLower = f.name.toLowerCase();
+        return folderLower.includes(listLower) || listLower.includes(folderLower);
+      });
+
+      if (match) {
+        // Auto-navigate into the matching subfolder
+        setBreadcrumb([{ name: match.name, folderId: match.id }]);
+        fetchFolders({ folderId: match.id });
+      }
+    });
+  }, [isOpen, fetchFolders, sharepointLink, clickupListName]);
 
   // Navigate into a subfolder by its ID
   const navigateInto = useCallback((folderName: string, folderId: string) => {

@@ -675,6 +675,7 @@ export function mergeData(
       displayClient,
       division,
       country,
+      clickupListName: clickupTask?.list?.name ?? undefined,
     };
   });
 
@@ -702,6 +703,7 @@ export function mergeData(
       invoiceNumber: "",
       clickupTaskUrl: task.url ?? "",
       clickupStatus: rawStatus,
+      clickupListName: task.list?.name ?? undefined,
     });
   }
 
@@ -733,6 +735,7 @@ export function mergeData(
         displayClient: existing.displayClient || p.displayClient,
         division: existing.division || p.division,
         country: existing.country || p.country,
+        clickupListName: existing.clickupListName || p.clickupListName,
       });
     }
   }
