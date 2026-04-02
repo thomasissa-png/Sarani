@@ -12,8 +12,10 @@ import { StickyCTAMobile } from "@/components/layout/sticky-cta-mobile";
 export function PublicSiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
+  const isProjectPreview = pathname.startsWith("/project/");
 
-  if (isAdmin) {
+  // Admin pages and project presentation pages have their own layout
+  if (isAdmin || isProjectPreview) {
     return <>{children}</>;
   }
 
