@@ -29,28 +29,28 @@ function isBusinessHours(): boolean {
 }
 
 export async function GET(): Promise<NextResponse<HealthResponse>> {
-  const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
   // ─── Check 1: cron poll emails ────────────────────────────────────────────
-  // If latest email_classified item was created within 15 min, cron is running.
-  // Outside business hours, we don't flag it as degraded.
+  // Check if the cron has been active: latest email_classified OR noise item.
+  // If no new items in 1 hour during business hours → likely not running.
+  // Note: if all emails are already processed, the cron runs but creates 0 items.
+  // That's OK — the 1h window is generous enough to avoid most false positives.
   let cronPollEmails: HealthCheck = { ok: true, lastRun: null };
   try {
     const [latest] = await db
       .select({ createdAt: inboxItems.createdAt })
       .from(inboxItems)
-      .where(eq(inboxItems.type, "email_classified"))
       .orderBy(desc(inboxItems.createdAt))
       .limit(1);
 
     if (latest) {
       cronPollEmails.lastRun = latest.createdAt.toISOString();
-      // Only flag as NOT ok if in business hours and last item > 15 min ago
-      if (isBusinessHours() && latest.createdAt < fifteenMinAgo) {
+      // Only flag if in business hours AND no item at all in the last hour
+      if (isBusinessHours() && latest.createdAt < oneHourAgo) {
         cronPollEmails.ok = false;
       }
     } else {
-      // No items at all — flag only during business hours
       cronPollEmails.ok = !isBusinessHours();
     }
   } catch {
@@ -64,7 +64,7 @@ export async function GET(): Promise<NextResponse<HealthResponse>> {
     const [latest] = await db
       .select({ createdAt: inboxItems.createdAt })
       .from(inboxItems)
-      .where(gte(inboxItems.createdAt, fifteenMinAgo))
+      .where(gte(inboxItems.createdAt, oneHourAgo))
       .orderBy(desc(inboxItems.createdAt))
       .limit(1);
 

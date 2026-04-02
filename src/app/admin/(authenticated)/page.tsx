@@ -286,6 +286,7 @@ export default function InboxPage() {
         // Exclude internal @sarani.studio emails (retroactive filter for items already in DB)
         const filtered = allItems.filter((i) => {
           if (i.type === "followup_alert") return false;
+          if (i.type === "deadline_alert") return false; // DueTodayBanner already covers this
           // Filter out emails from @sarani.studio AND emails where body is a Sarani outgoing reply
           if (i.type === "email_classified" && i.summary) {
             try {

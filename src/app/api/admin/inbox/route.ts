@@ -65,10 +65,13 @@ export async function GET(request: NextRequest) {
       conditions.push(ne(inboxItems.type, "noise"));
     }
 
-    // Exclude followup_alert from inbox display (Fix 5)
-    // Independent from includeNoise — followup_alert is always hidden unless explicitly requested
+    // Exclude followup_alert and deadline_alert from inbox display
+    // DueTodayBanner already shows due projects — individual alerts are noise
     if (filters.type !== "followup_alert") {
       conditions.push(ne(inboxItems.type, "followup_alert"));
+    }
+    if (filters.type !== "deadline_alert") {
+      conditions.push(ne(inboxItems.type, "deadline_alert"));
     }
 
     if (filters.status) {

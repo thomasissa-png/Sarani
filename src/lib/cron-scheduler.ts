@@ -47,13 +47,8 @@ const jobs: CronJob[] = [
     lastRun: 0,
     running: false,
   },
-  {
-    name: "deadline-alerts",
-    path: "/api/admin/cron/deadline-alerts",
-    intervalMs: 60 * 60 * 1000, // every 1 hour
-    lastRun: 0,
-    running: false,
-  },
+  // deadline-alerts REMOVED — DueTodayBanner already shows due projects.
+  // Thomas explicitly asked to remove these individual alerts from the inbox (regression).
   {
     name: "daily-digest",
     path: "/api/admin/cron/daily-digest",
