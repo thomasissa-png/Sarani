@@ -287,15 +287,12 @@ export default function InboxPage() {
         const filtered = allItems.filter((i) => {
           if (i.type === "followup_alert") return false;
           if (i.type === "deadline_alert") return false; // DueTodayBanner already covers this
-          // Filter out emails from @sarani.studio AND emails where body is a Sarani outgoing reply
+          // Filter out emails FROM @sarani.studio (internal team emails)
           if (i.type === "email_classified" && i.summary) {
             try {
               const parsed = typeof i.summary === "string" ? JSON.parse(i.summary) : i.summary;
               const from = ((parsed.from as string) ?? "").toLowerCase();
               if (from.endsWith("@sarani.studio")) return false;
-              // Detect Sarani outgoing replies embedded in client threads
-              const body = ((parsed.bodyPreview as string) ?? "").toLowerCase().slice(0, 400);
-              if (body.includes("@sarani.studio") && (body.includes("de :") || body.includes("from:") || body.includes("envoyé :"))) return false;
             } catch { /* keep item if parse fails */ }
           }
           return true;

@@ -10,16 +10,12 @@ export function isSaraniEmail(from: string): boolean {
 }
 
 /**
- * Detect if an email body is a Sarani outgoing reply forwarded back.
- * Checks if the beginning of the body contains @sarani.studio AND a thread marker
- * (De : / From: / Envoyé :), indicating this is a thread where Sarani already replied.
+ * DEPRECATED — body detection caused too many false positives.
+ * Client email threads contain @sarani.studio in quoted replies below,
+ * which filtered out legitimate client emails.
+ * Now we only filter by FROM address (isSaraniEmail).
+ * Kept for backward compat with tests — always returns false.
  */
-export function isSaraniOutgoingReply(bodyPreview: string): boolean {
-  const bodyStart = bodyPreview.slice(0, 400).toLowerCase();
-  const hasSaraniInBody = bodyStart.includes("@sarani.studio");
-  const hasThreadMarker =
-    bodyStart.includes("de :") ||
-    bodyStart.includes("from:") ||
-    bodyStart.includes("envoyé :");
-  return hasSaraniInBody && hasThreadMarker;
+export function isSaraniOutgoingReply(_bodyPreview: string): boolean {
+  return false;
 }

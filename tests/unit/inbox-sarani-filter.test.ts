@@ -53,51 +53,23 @@ describe("isSaraniEmail — detects Sarani team addresses", () => {
 });
 
 /* ---------- isSaraniOutgoingReply ---------- */
+// DEPRECATED: body detection removed — caused too many false positives.
+// Now only filters by FROM address. Function always returns false.
 
-describe("isSaraniOutgoingReply — detects forwarded Sarani replies", () => {
-  it('detects body with @sarani.studio + "De :" (French thread marker)', () => {
-    const body = 'De : Fanny Calvet <fanny@sarani.studio>\nEnvoyé : lundi 31 mars 2026\nObjet : RE: Black Friday\n\nHi Marc, got it!';
-    expect(isSaraniOutgoingReply(body)).toBe(true);
-  });
-
-  it('detects body with @sarani.studio + "From:" (English thread marker)', () => {
-    const body = 'From: thomas@sarani.studio\nSent: Monday March 31\nSubject: RE: TikTok Campaign\n\nWe are on it.';
-    expect(isSaraniOutgoingReply(body)).toBe(true);
-  });
-
-  it('detects body with @sarani.studio + "Envoyé :" marker', () => {
-    const body = 'Envoyé : mardi 1 avril\narya@sarani.studio a écrit :\nVoici le brief.';
-    expect(isSaraniOutgoingReply(body)).toBe(true);
-  });
-
-  it("does NOT flag body without @sarani.studio", () => {
-    const body = 'De : Marc Dupont <marc@sony.com>\nEnvoyé : lundi 31 mars\n\nPlease adjust the banners.';
+describe("isSaraniOutgoingReply — DEPRECATED (always false)", () => {
+  it("always returns false (body detection disabled)", () => {
+    const body = 'De : Fanny Calvet <fanny@sarani.studio>\nEnvoyé : lundi 31 mars 2026';
     expect(isSaraniOutgoingReply(body)).toBe(false);
   });
 
-  it("does NOT flag body with @sarani.studio but no thread marker", () => {
-    const body = 'Hi team, please forward this to fanny@sarani.studio for review. Thanks!';
+  it("does not filter client emails with sarani in thread", () => {
+    const body = 'Hi Thomas, here is my feedback.\n\nDe : fanny@sarani.studio\nSent: Monday';
     expect(isSaraniOutgoingReply(body)).toBe(false);
   });
 
-  it("only checks the first 400 characters of the body", () => {
-    // @sarani.studio appears AFTER the 400-char boundary — should NOT match
-    const padding = "A".repeat(390);
-    const body = `${padding} De : fanny@sarani.studio`;
-    expect(isSaraniOutgoingReply(body)).toBe(false);
-  });
-
-  it("detects markers within the 400-char window", () => {
-    const body = 'De : fanny@sarani.studio\n' + "A".repeat(500);
-    expect(isSaraniOutgoingReply(body)).toBe(true);
-  });
-
-  it("handles empty body gracefully", () => {
+  it("does not filter any body content (deprecated)", () => {
+    expect(isSaraniOutgoingReply("De : fanny@sarani.studio\ntest")).toBe(false);
+    expect(isSaraniOutgoingReply("From: thomas@sarani.studio\ntest")).toBe(false);
     expect(isSaraniOutgoingReply("")).toBe(false);
-  });
-
-  it("is case-insensitive on markers", () => {
-    const body = 'DE : FANNY@SARANI.STUDIO\nENVOYÉ : LUNDI';
-    expect(isSaraniOutgoingReply(body)).toBe(true);
   });
 });
