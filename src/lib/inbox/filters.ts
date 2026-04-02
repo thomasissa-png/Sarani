@@ -67,7 +67,12 @@ export const LEGACY_PROTOCOL_TO_FILTER: Record<string, string> = {
 
 export function filterItems(items: InboxItemFilterable[], filter: FilterTab): InboxItemFilterable[] {
   if (filter === "all") {
-    return items.filter((i) => i.status !== "done" && i.status !== "dismissed");
+    return items.filter((i) =>
+      i.status !== "done" &&
+      i.status !== "dismissed" &&
+      // Asset Review items are hidden (feature removed from sidebar/tabs)
+      !["review_human", "review_ai_ready", "review_escalated"].includes(i.type)
+    );
   }
   if (filter === "done") {
     return items.filter((i) => i.status === "done" || i.status === "dismissed");
