@@ -69,12 +69,10 @@ Certains "clients" Sarani sont en réalité des **agences partenaires** qui sous
 - Aristocrat : TODO — Thomas to fill
 - Ubi : TODO — Thomas to fill
 - Aujan : TODO — Thomas to fill
-- Bose : TODO — Thomas to fill
-- Lamarck : TODO — Thomas to fill
-- CMC Markets : TODO — Thomas to fill
+
 - GEODIS : TODO — Thomas to fill
 
-Sony :
+**Sony** : client final
 - Guidelines et assets: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCTQO0L4sJvQpoB3l-hU8BwAbQZUn84k4yu5MzIZjZ0yM8?e=FkZepm
 - Logo: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDz2ywnj3atTJC2AEzlfuokAYVbofZQ4B4t6vRC_DDC1lo?e=gXHyRG
 - Font: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDZ6KVJoYInQK1cxGQRvMoJAYEpi-aH55eaLAOCUZXogEY?e=d2ZVMJ
@@ -84,3 +82,172 @@ Sony :
 - Folder projets Sony France : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCeSwE3o4J-T4-eIOHQx01DAY78Dc9-8Je9xFxud2aM-eE?e=NsR6ea
 - Folder projets Sony Pro : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDiBHRNhUD8S7Eb50r9PiRKAX4J2cDov4obkwQ9sifF-LY?e=ux6KxX
 
+**Lamarck** : partenaire (TVA 20%)
+=> Un seul client pour l'instant : MIKO Relai d'or :
+- Charte: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQDfXwOvZseyTJP5rq6C1TRUAUAc5dcmwgPvRzNBPfQXI2c?e=iXJXBb
+- Logos: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDktrAXJTaFSZeIPtlpEp-5AW5FnPKMaDvqJ4SaehIoJiA?e=4FquVZ
+- Bibliothèque de contenus: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDLKQmm7iV8TKqYWWwCyulzAVwCzt8-TEJ67qbYl28cpds?e=BvLeJZ
+- Dossier projet catalogues: https://saranistudio.sharepoint.com/:f:/r/sites/SaraniAssets/Shared%20Documents/03.%20Customers/21.Lamarck/2.Catalogues?csf=1&web=1&e=WV1mre
+- Dossier project hors catalogue : https://saranistudio.sharepoint.com/:f:/r/sites/SaraniAssets/Shared%20Documents/03.%20Customers/21.Lamarck/3.Cr%C3%A9as%20-%20Hors%20catalogues?csf=1&web=1&e=XF6ZIm
+- click up: https://app.clickup.com/14389859/v/li/901708730218
+
+**CMC Markets**: client final:
+- Dossier projet: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDQdkRT7xrtQbgflPZMPMc-AfpJXeqkNg9cjSITiij_ezw?e=69Ncat
+- charte graphique: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCnEmhVukvISL7fxouW_sPnAVdS8Y3dQjd8YtzbkQTELhs?e=0l8A3G
+- logo: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCnEmhVukvISL7fxouW_sPnAVdS8Y3dQjd8YtzbkQTELhs?e=0l8A3G
+- click-up: https://app.clickup.com/14389859/v/li/901708074740
+
+**Bose**: Client final:
+- guidelines: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMrKMBePVfQY-z0u2iwAa_AadlAU9eOtOqcZy8jQiD2Cg?e=6i97yw
+- logos: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAzFUoicfYcRqCFgDaSCn0hAT90Bf_uj7C1Mc7J09ygRoM?e=ZbLEYm
+- font: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBZk4O5VR0tQZzaBi822r50AemNHN0JMdibM6rAfWVDPpY?e=Aht69u
+- palette: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCBAT58XQCARomKBGZcDskXAZK19wgSxaMO-usjnq4J7CI?e=ZrFaz1
+- dossier projets : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBWxeaeB9lPQqcj9YgZW6EQAZz4uIQhm0XldkBNT40ai9E?e=Cp6qBz (attention trier par entité bose)
+- bibliotheque d'assets: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBWsfMlV66cTJbLAkbe8pkZAbsgwbSYCaRldXUMfwJBAX4?e=iJxjO7
+- click up : https://app.clickup.com/14389859/v/li/901705794806
+
+**Others**: au cas par cas : (TVA 20% pour la plupart si francais comme air corsica)
+- Click up: air corsica : https://app.clickup.com/14389859/v/li/901705224702 + tous les autres ici : https://app.clickup.com/14389859/v/li/900303492355
+- dossiers projet sharepoint:  https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCCo4_62lS6RZa42GBKac4SAaW6WgxyxguH3Sl7UGJ798o?e=rg5p8U
+- assets air corsica: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A?e=JgTgrc (le reste regarde au cas par cas)
+
+**Aujan** Client final avec des soumarques :
+- Aujan (quand c'est pour la maison mere) : 
+a. dossier projet: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBEeix4GTJFTZet1EgoQ2eJAYmdPbV-yAlsEjgP_AjXzMA?e=uJcr2N
+b. dossier click up : https://app.clickup.com/14389859/v/li/901705328640
+- Rani : 
+a. branding: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBPylSuEyrcTLERDaOf5P9aAU8ISsUfKlHHdEr0N1qaagQ?e=l65Egs + assets/logos/font ici : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMmlFzHJBpTJJPUEgmypmLAetzo8F6MalqdLpRvNUh5Yg?e=QCRNRW
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDELsciMTuQSIL1y_E7DLS1Af8qQ1H8cpe5vBfUYsioR4E?e=nw3eAi
+c. dossier click up : https://app.clickup.com/14389859/v/li/901704818470
+- Barbican :
+a. branding:https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQAZuGuHSxGtQK-kc2YcRaGVAelL_QfVJzR1F2dVV55UZcI?e=bZ1sNa + assets logo etc. ici: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAzqDsWe7PRTYVHvEEwZOxTAVF9mNnxYc1Jv6581YFKM4w?e=qVU23i
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAUjy6M6U3HTrwm5itBbwbaAcaBMZwxMd1ZFKVZc_PkGYY?e=Wk5FIM
+c. dossier click up : https://app.clickup.com/14389859/v/li/901705328468
+
+**Ubi** : partenaire (TVA 20%)
+=> Beaucoup de clients. Il faut que tu trouves les informations ici : 
+- Adidas :
+a. branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBL8zzafFOASphGhuGJLY19AfSX9UBxan6jy0cICZX4QUA?e=kg7NrH
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBc1Qgais5hSpRRZThKoVMRATCgn9Rcis1aPw-th_lPTqM?e=c9Tqbk
+c. dossier click up : https://app.clickup.com/14389859/v/li/901704341200
+- Ubi (quand c'est pour eux) et tous les autres qui nont pas de dossier :
+a. branding: https://ubi.fr/
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBHvp1VtG72T4woW-pVPn0DAeD7zwuXzbcScwzphTnKHi0?e=o7ql3X
+c. dossier click up : https://app.clickup.com/14389859/v/li/901704345673
+- Red Bull:
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCW1WKHi_eBTZA6jjct-xGpAUCQNp5PXCu6BA-0V93ReeM?e=0Lew5K
+c. dossier click up : https://app.clickup.com/14389859/v/li/901707332168
+- LEGO :
+a. branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDQ4K2X9UPTSbpEaCNynATwAekjalnGuoe-INSRwwcNjCs?e=nEvHFL
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgA84GvbIUUpQJqVBqb2cVZIAVgbcgc8oasPU-Pi5HD7_bA?e=6ThkDP
+c. dossier click up : https://app.clickup.com/14389859/v/li/901704345855
+- Ubisoft :
+a. branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBuEIMN9LBMQJqAcOvIZVKfAX5mmMbmcV-Baw9sGG9LQps?e=kqIglp
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgD1nVIk-TCBTJvyNPNIkChhATieL_mPpSmGGKpHI-aFcNk?e=0KYthf
+c. dossier click up : 
+- Perrier:
+a. branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBDtIHXF4q4To0HKqUTePQgAYIuO_UyqLvFxn9boRY_djA?e=LPpc4g
+b. dossier projet : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDkkSZ-IRNoSIyMyvtjfLkXAXT1g46X5c1BQ0JvEoBxU3c?e=mkqjyX
+c. dossier click up : 
+- IKEA :
+a. branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCaJaA6RjKsTYMNIuqlBCEPAQdrbuZE75qAKLNZvpp2f_0?e=jtItgd
+b. dossier projet : https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F17%2E%20Ubi%2F08%2E%20IKEA%2F02%2E%20Projects&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+c. dossier click up : https://app.clickup.com/14389859/v/li/901704970300
+- TikTok (via UBI, différent de tous les autres tiktok attention, que quand le messaage vient dubi et non de tiktok):
+a. branding: les memes que tiktok
+b. dossier projet : https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F17%2E%20Ubi%2F09%2E%20TikTok%2F02%2E%20Projects&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+c. dossier click up : https://app.clickup.com/14389859/v/li/901706944747
+
+- Barilla :
+b. dossier projet : https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F17%2E%20Ubi%2F10%2EBarilla&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+c. dossier click up : https://app.clickup.com/14389859/v/li/901712149614
+
+**ProcessOut** : Client final 
+a. Branding: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F15%2E%20ProcessOut%2F01%2E%20Branding&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+b. Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F15%2E%20ProcessOut%2F02%2E%20Projects&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+c. Click-up: avec les autres clients car petit CA; https://app.clickup.com/14389859/v/li/900303492355
+
+**GEODIS**: (TVA 20%)
+a. branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCC3EZk4-7JQ5xtMxUU4oHvAYLb_CRN_go6XmmjAWl0XRE?e=yS7jOz
+b. Projets: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgA0Sve1JhpdTIh3WDBHubSSAewowE4xzQ3ClxX5S_Wa6Ig?e=pvGsNE
+c. Click-up: avec les autres clients car petit CA; https://app.clickup.com/14389859/v/li/900303492355
+
+**Aristocrat** : Client final: 
+a. branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBCJutkb3MqRJvd0Hu2kNh1AaHtXHxVcdZ8SZTGsOh8Ky8?e=SOdcVh
+b. projets (pas de distinction zone): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCuIyrllU6qRaCyZWJy73JmAVPwoquaFsMtCBkMkCghyTU?e=i6tNli
+c. clickup: USA (https://app.clickup.com/14389859/v/li/901712262709) et Asia (https://app.clickup.com/14389859/v/li/901712262834)
+
+**TikTok** client final (le plus gros)
+a. branding: tout a récupéré ici et classifier https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCLhBQNdaHKQpaviLeO_b39AYXKcD_KVcncmYK_TYi4MZg?e=G9yXVg . Egalement ici :https://tiktokbrandhub.com/
+b. TikTok Germany (TiKTok DE) : et TikTok LIVE DE (2 onglets sur le tracker, mais un dossier projet/clickup)
+- Projets: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgB-MdP6lt7vSrFVSc47QDoaAXuYjYGF5HEd8tJcsHEGZ24?e=4nh1Db
+- click-up: https://app.clickup.com/14389859/v/li/900502249117
+c. TikTok France (TiKTok FR) : (les seuls avec TVA 20%)
+- Projets: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAc3wDK_xZVTI-K2GD1xRfwAcFK44VifikL-o1h1ivbBpk?e=4k8KSI
+- click-up: https://app.clickup.com/14389859/v/li/900502247465
+  d. TikTok UK: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F03%2E%20UK&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/900303407539
+e. TikTok SMB: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F04%2E%20SMB&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/900802525893
+f. TikTok Global Accounts: 
+- Projets:  https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F05%2E%20Global%20Accounts&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/900502263845
+g. TikTok Benelux: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F06%2E%20Benelux&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/900502247464
+h. TikTok Shop SEA : 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F07%2E%20SEA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/900303407539
+i. TikTok US Branding: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F08%2E%20US%20Branding&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/900502251376
+j. TikTok METAP (MENA): 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F10%2E%20METAP&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901701490958
+k. TikTok USA: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F09%2E%20USA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901701757963
+l. TikTok LIVE: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F12%2E%20TikTok%20LIVE&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204 
+- click-up: https://app.clickup.com/14389859/v/li/901702577214
+m. TikTok Shop EMEA: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F13%2E%20TikTok%20Shop%20EMEA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901702723533
+n. TikTok CEE: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F14%2E%20TikTok%20CEE&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901702750815
+o. TikTok P&E SEA: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F15%2E%20TikTok%20P%26E%20SEA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901702879453
+p. TikTok Shop USA : 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F16%2E%20TikTok%20Shop%20USA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901702899564
+q. TikTok Shop LATAM: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F18%2E%20TikTok%20Shop%20LATAM&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901704846947
+r. TikTok CCA: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F19%2E%20TikTok%20CCA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901705458972
+s. TikTok Shop UK: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F20%2E%20TikTok%20Shop%20UK&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901706876621
+t. TikTok EU Branding 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F21%2E%20TikTok%20EU%20Branding&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click up: https://app.clickup.com/14389859/v/li/901711816120
+u.TTS Global Ops: 
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F22%2E%20TTS%20Global%20Ops&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- click-up: https://app.clickup.com/14389859/v/li/901702723533
+v. TikTok Others (autres divisions non au dessus):
+- Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F17%2E%20Others&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
+- Click up: https://app.clickup.com/14389859/v/li/901705458972
+
+**PICO** : client final, part of Bytedance (maison mere de TikTok)
+- Branding:https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBbX1jrkGZaSqX40qP4uLA4AUzpGlEatWDexJtlNDb-cOE?e=8EPMMS 
+a. Entité B2C:
+- projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F04%2E%20PICO%20XR%2F03%2E%20Projects%2F01%2E%20B2C%20EMEA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204&p=true
+- click up: https://app.clickup.com/14389859/v/li/900502247535
+b. Entité B2B: 
+- projet: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F04%2E%20PICO%20XR%2F03%2E%20Projects%2F02%2E%20B2B%20EMEA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204&p=true
+- click up: https://app.clickup.com/14389859/v/li/900502247536
