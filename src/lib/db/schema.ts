@@ -864,6 +864,33 @@ export const clientKnowledge = pgTable(
   ]
 );
 
+// ─── Client Contacts ─────────────────────────────────────────────────────────
+// Individual contacts associated with a client (e.g. all people at Sony).
+// Populated automatically by the email scanner and manually via back-office.
+
+export const clientContacts = pgTable(
+  "client_contacts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    email: varchar("email", { length: 255 }),
+    division: text("division"), // "Sony France", "Sony Pro", "Sony Europe"
+    role: text("role"), // "Marketing Director", "Project Manager"
+    source: varchar("source", { length: 20 }).notNull().default("auto"), // 'auto' (email scan) or 'manual'
+    lastSeenAt: timestamp("last_seen_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_cc_client_id").on(table.clientId),
+    index("idx_cc_email").on(table.email),
+    uniqueIndex("idx_cc_client_email").on(table.clientId, table.email),
+  ]
+);
+
 // ─── Team Knowledge ──────────────────────────────────────────────────────────
 // Structured knowledge about Sarani team members — skills, preferences, work style.
 // Used by Arya to assign the right person and adapt communication.
@@ -1045,6 +1072,8 @@ export type AryaRule = typeof aryaRules.$inferSelect;
 export type NewAryaRule = typeof aryaRules.$inferInsert;
 export type ClientKnowledge = typeof clientKnowledge.$inferSelect;
 export type NewClientKnowledge = typeof clientKnowledge.$inferInsert;
+export type ClientContact = typeof clientContacts.$inferSelect;
+export type NewClientContact = typeof clientContacts.$inferInsert;
 export type TeamKnowledge = typeof teamKnowledge.$inferSelect;
 export type NewTeamKnowledge = typeof teamKnowledge.$inferInsert;
 export type ProjectClosure = typeof projectClosures.$inferSelect;

@@ -155,6 +155,13 @@
       "when": 1775126805876,
       "tag": "0021_worthless_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1775213200000,
+      "tag": "0022_client_contacts",
+      "breakpoints": true
     }
   ]
 }
