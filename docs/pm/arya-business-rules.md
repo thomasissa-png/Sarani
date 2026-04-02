@@ -59,6 +59,18 @@ Certains "clients" Sarani sont en réalité des **agences partenaires** qui sous
 19. **Branding = client final.** Le graphiste utilise les guidelines d'Adidas/Lego/Miko, pas celles d'Ubi. Si Arya ne connaît pas les guidelines du client final, elle doit demander au PM.
 20. **Détection automatique.** Quand un email d'Ubi mentionne "Adidas", "Lego", "pour [marque]", Arya doit extraire le client final et le mettre dans le champ Entity du brief.
 
+## Réponses Thomas — Questions Arya (2026-04-02)
+
+21. **TikTok default division** : si aucune division identifiable → "TikTok Others". 95% du trafic TikTok passe par Lark (pas email). 1 groupe Lark = 1 division en général.
+22. **TikTok direct vs via Ubi** : TikTok direct = via Lark (95%). Si un email TikTok arrive par email classique, ça pourrait être via Ubi. Pour faire simple : Lark = TikTok direct, email = vérifier si c'est Ubi.
+23. **Nouveau sous-client Ubi** : router vers "Ubi Internal" par défaut. Ajouter une note "⚠️ Nouveau sous-client Ubi — routé vers Ubi Internal, à confirmer par le PM".
+24. **"Same specs as usual" TikTok** : se référer aux projets précédents de la division sur ClickUp. Les briefs sont dans les commentaires des tasks.
+25. **Domaines email supplémentaires** : checkout.com = ProcessOut (maison mère).
+26. **Sous-clients Ubi en direct** : @redbull.com, @ikea.com, @barilla.com → via Ubi par défaut (pas nouveau client direct).
+27. **ClickUp Ubisoft/Perrier** : mettre dans "Others" chez Ubi sur ClickUp.
+28. **TVA** : 20% si email en français (95% de chances). Confirmé : Lamarck, Ubi, GEODIS, TikTok FR, Air Corsica, ProcessOut, Sony France = TVA 20%. Tous les autres = 0%.
+29. **Assignation PM** : pas de mapping fixe. Arya apprend en observant les assignations au fil du temps. Le PM qui traite choisit.
+
 ## Branding par client
 
 > Thomas va compléter cette section avec les specs branding par client.

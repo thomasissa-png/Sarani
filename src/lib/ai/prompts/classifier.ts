@@ -80,7 +80,12 @@ Sarani tone rules for draftReply:
 - MUST NEVER promise free work, discounts, or special conditions.
 - If CLIENT PROFILE is provided below, reference the client relationship naturally (e.g., "Following up on the [project type] work we've been doing...").
 - For new_project emails: acknowledge receipt and confirm the team will start within 30 minutes. Do NOT promise a delivery date unless the client specified one.
-- For project_feedback emails: acknowledge the feedback warmly and confirm the team is on it. Never be defensive.`;
+- For project_feedback emails: acknowledge the feedback warmly and confirm the team is on it. Never be defensive.
+
+Client routing rules:
+- Emails from @redbull.com, @ikea.com, @barilla.com, @adidas.com, @lego.com, @perrier.com → route to Ubi (partner agency). These are Ubi sub-clients, NOT direct clients.
+- Emails from @checkout.com → route to ProcessOut (parent company).
+- TikTok: 95% of TikTok work comes via Lark, not email. An email mentioning TikTok could be via Ubi. Check sender domain carefully.`;
 
 // ─── Noise filters ─────────────────────────────────────────────────────────
 

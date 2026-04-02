@@ -121,7 +121,15 @@ const DOMAIN_CLIENT_MAP: Record<string, string> = {
   "cmcmarkets.com": "CMC Markets",
   "geodis.com": "GEODIS",
   "processout.com": "ProcessOut",
+  "checkout.com": "ProcessOut",
   "aircorsica.com": "Other customers",
+  // Ubi sub-clients — route to Ubi by default (not direct clients)
+  "redbull.com": "Ubi",
+  "ikea.com": "Ubi",
+  "barilla.com": "Ubi",
+  "adidas.com": "Ubi",
+  "lego.com": "Ubi",
+  "perrier.com": "Ubi",
 };
 
 /**
