@@ -145,37 +145,51 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     }
   }, [breadcrumb, fetchFolders, sharepointLink]);
 
-  // Share a folder — create anonymous link
-  const shareFolder = useCallback(async (folderId: string) => {
+  // Share a folder — create a branded presentation page with assets from this folder
+  const shareFolder = useCallback(async (folderId: string, folderName: string) => {
     setSharing(folderId);
     setError(null);
     try {
-      const res = await fetch("/api/admin/integrations/sharepoint/folders", {
+      // Create/update project preview in DB with the selected SP folder
+      const res = await fetch("/api/admin/project-previews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folderId }),
+        body: JSON.stringify({
+          projectId: `${clientName}::${projectName}`,
+          clientName,
+          projectName,
+          spFolderId: folderId,
+          spDriveId: "", // Will be resolved server-side
+          brief: `Deliverables for ${projectName} — ${folderName}`,
+        }),
       });
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create sharing link");
+        throw new Error(err.message || "Failed to generate presentation link");
       }
-      const result = await res.json();
-      setSharedLink(result.sharingLink);
+
+      const data = await res.json();
+      const fullUrl = `${window.location.origin}${data.url}`;
+      setSharedLink(fullUrl);
 
       // Copy to clipboard
       try {
-        await navigator.clipboard.writeText(result.sharingLink);
+        await navigator.clipboard.writeText(fullUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 3000);
       } catch {
-        // Clipboard may not be available — link is still shown
+        // Clipboard may not be available
       }
+
+      // Open in new tab
+      window.open(fullUrl, "_blank");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create sharing link");
+      setError(err instanceof Error ? err.message : "Failed to generate presentation");
     } finally {
       setSharing(null);
     }
-  }, []);
+  }, [clientName, projectName]);
 
   if (!isOpen) return null;
 
@@ -320,7 +334,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                     </div>
                   </button>
                   <button
-                    onClick={() => shareFolder(folder.id)}
+                    onClick={() => shareFolder(folder.id, folder.name)}
                     disabled={sharing === folder.id}
                     className={cn(
                       "px-3 py-1.5 text-xs font-medium rounded-md transition-all shrink-0",
@@ -329,7 +343,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                       sharing === folder.id && "opacity-100 cursor-wait"
                     )}
                   >
-                    {sharing === folder.id ? "Creating link..." : "Share"}
+                    {sharing === folder.id ? "Generating..." : "Create presentation"}
                   </button>
                 </div>
               ))}

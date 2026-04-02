@@ -12,6 +12,7 @@ import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import {
   listDriveItems,
+  graphFetch,
   type DriveItem,
   SharePointApiError,
 } from "@/lib/integrations/sharepoint";
@@ -119,6 +120,96 @@ function formatBatchName(name: string): string {
 
 // ─── SharePoint Batch Fetching ─────────────────────────────────────────────
 
+/**
+ * Fetch batches directly from a known SP folder ID (Graph API item ID).
+ * Used when the PM selected the exact folder via the Share modal.
+ * No fuzzy matching needed — the folder ID is exact.
+ */
+async function fetchBatchesByFolderId(
+  folderId: string,
+  driveId: string
+): Promise<{ batches: BatchGroup[]; error?: string }> {
+  try {
+    // List direct children of the selected folder
+    const data = await graphFetch<{ value: Array<{
+      id: string;
+      name: string;
+      size: number;
+      file?: { mimeType: string };
+      folder?: { childCount: number };
+      webUrl: string;
+      "@microsoft.graph.downloadUrl"?: string;
+    }> }>(`/drives/${driveId}/items/${folderId}/children`);
+
+    const items = data.value ?? [];
+
+    // Separate folders (batch subfolders) and files (direct assets)
+    const subfolders = items
+      .filter((item) => item.folder && !SKIP_FOLDER_NAMES.has(item.name.toLowerCase().trim()))
+      .sort((a, b) => naturalSort(a.name, b.name));
+
+    const directFiles = items
+      .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
+      .map((item) => ({
+        name: item.name,
+        webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+        mimeType: item.file!.mimeType,
+        size: item.size,
+      }));
+
+    const batches: BatchGroup[] = [];
+
+    // If there are subfolders, treat each as a batch and list its files
+    for (const folder of subfolders) {
+      try {
+        const subData = await graphFetch<{ value: Array<{
+          name: string;
+          size: number;
+          file?: { mimeType: string };
+          webUrl: string;
+          "@microsoft.graph.downloadUrl"?: string;
+        }> }>(`/drives/${driveId}/items/${folder.id}/children`);
+
+        const batchFiles = (subData.value ?? [])
+          .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
+          .sort((a, b) => {
+            const aIsImage = a.file!.mimeType.startsWith("image/");
+            const bIsImage = b.file!.mimeType.startsWith("image/");
+            if (aIsImage && !bIsImage) return -1;
+            if (!aIsImage && bIsImage) return 1;
+            return a.name.localeCompare(b.name);
+          })
+          .map((item) => ({
+            name: item.name,
+            webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+            mimeType: item.file!.mimeType,
+            size: item.size,
+          }));
+
+        if (batchFiles.length > 0) {
+          batches.push({ name: folder.name, items: batchFiles });
+        }
+      } catch {
+        // Skip unreadable subfolders
+      }
+    }
+
+    // If no subfolders with assets found, show direct files as a single batch
+    if (batches.length === 0 && directFiles.length > 0) {
+      batches.push({ name: "Assets", items: directFiles });
+    }
+
+    return { batches };
+  } catch (err) {
+    console.error("[share-page] Error loading folder by ID:", err);
+    return { batches: [] };
+  }
+}
+
+/**
+ * Legacy: fetch batches by client name + fuzzy project name matching.
+ * Used for old previews without a specific spFolderId.
+ */
 async function fetchBatches(
   clientName: string,
   projectName: string
@@ -288,10 +379,14 @@ export default async function ProjectPreviewPage({ params }: Props) {
     notFound();
   }
 
-  const { batches, error: spError } = await fetchBatches(
-    preview.clientName,
-    preview.projectName
-  );
+  // If the PM selected a specific SP folder (spFolderId), load assets directly from it.
+  // Otherwise, fall back to the old fuzzy-match approach.
+  const { batches, error: spError } = preview.spFolderId
+    ? await fetchBatchesByFolderId(
+        preview.spFolderId,
+        preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID
+      )
+    : await fetchBatches(preview.clientName, preview.projectName);
 
   const images = batches.flatMap((b) =>
     b.items.filter((i) => i.mimeType.startsWith("image/"))

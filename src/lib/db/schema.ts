@@ -647,6 +647,8 @@ export const projectPreviews = pgTable(
     projectName: text("project_name").notNull(),
     brief: text("brief"),
     sharepointLink: text("sharepoint_link"),
+    spFolderId: text("sp_folder_id"),   // Graph API item ID of the selected SP folder
+    spDriveId: text("sp_drive_id"),     // Graph API drive ID containing the folder
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

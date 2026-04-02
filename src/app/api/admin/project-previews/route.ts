@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { projectId?: string; clientName?: string; projectName?: string; brief?: string; sharepointLink?: string };
+  let body: { projectId?: string; clientName?: string; projectName?: string; brief?: string; sharepointLink?: string; spFolderId?: string; spDriveId?: string };
   try {
     body = await request.json();
   } catch {
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { projectId, clientName, projectName, brief, sharepointLink } = body;
+  const { projectId, clientName, projectName, brief, sharepointLink, spFolderId, spDriveId } = body;
 
   if (!projectId || typeof projectId !== "string") {
     return NextResponse.json(
@@ -99,10 +99,12 @@ export async function POST(request: NextRequest) {
       .where(eq(projectPreviews.projectId, projectId));
 
     if (existing) {
-      // Reactivate and ALWAYS update brief + sharepointLink (may have changed)
+      // Reactivate and update all fields (folder may have changed)
       const updates: Record<string, unknown> = { updatedAt: new Date(), isActive: true };
       if (brief && typeof brief === "string") updates.brief = brief;
       if (sharepointLink && typeof sharepointLink === "string") updates.sharepointLink = sharepointLink;
+      if (spFolderId && typeof spFolderId === "string") updates.spFolderId = spFolderId;
+      if (spDriveId && typeof spDriveId === "string") updates.spDriveId = spDriveId;
 
       if (Object.keys(updates).length > 1) {
         await db
@@ -166,6 +168,8 @@ export async function POST(request: NextRequest) {
       projectName,
       brief: brief && typeof brief === "string" ? brief : null,
       sharepointLink: sharepointLink && typeof sharepointLink === "string" ? sharepointLink : null,
+      spFolderId: spFolderId && typeof spFolderId === "string" ? spFolderId : null,
+      spDriveId: spDriveId && typeof spDriveId === "string" ? spDriveId : null,
       isActive: true,
     }).returning({ id: projectPreviews.id });
 
