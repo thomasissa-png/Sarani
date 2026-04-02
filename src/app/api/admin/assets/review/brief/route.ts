@@ -10,11 +10,31 @@ import { getTask, getTaskComments, type ClickUpTask } from "@/lib/integrations/c
  */
 function findSharePointUrl(task: ClickUpTask): string | null {
   for (const field of task.custom_fields) {
-    if (field.value && typeof field.value === "string") {
+    if (!field.value) continue;
+
+    if (typeof field.value === "string") {
       const val = field.value.trim();
-      if (val.includes("sharepoint.com") || val.includes("1drv.ms")) {
-        return val;
+      if (val.includes("sharepoint.com") || val.includes("1drv.ms")) return val;
+      continue;
+    }
+
+    // Object value — ClickUp URL fields can return { url: "..." }
+    if (typeof field.value === "object" && !Array.isArray(field.value)) {
+      const obj = field.value as Record<string, unknown>;
+      for (const key of ["url", "value", "link", "href"]) {
+        const nested = obj[key];
+        if (typeof nested === "string") {
+          const val = nested.trim();
+          if (val.includes("sharepoint.com") || val.includes("1drv.ms")) return val;
+        }
       }
+    }
+
+    // Stringify fallback
+    const str = String(field.value);
+    if (str.includes("sharepoint.com") || str.includes("1drv.ms")) {
+      const urlMatch = str.match(/(https?:\/\/[^\s"',]+(?:sharepoint\.com|1drv\.ms)[^\s"',]*)/i);
+      if (urlMatch) return urlMatch[1];
     }
   }
   return null;

@@ -28,11 +28,38 @@ import type { TrackerProject } from "@/types/integrations";
 function extractSharePointLink(task: ClickUpTask): string {
   if (!task.custom_fields) return "";
   for (const field of task.custom_fields) {
-    if (field.value && typeof field.value === "string") {
+    if (!field.value) continue;
+
+    // String value (most common)
+    if (typeof field.value === "string") {
       const val = field.value.trim();
       if (val.includes("sharepoint.com") || val.includes("1drv.ms")) {
         return val;
       }
+      continue;
+    }
+
+    // Object value — ClickUp URL fields can return { url: "..." } or other structures
+    if (typeof field.value === "object" && !Array.isArray(field.value)) {
+      const obj = field.value as Record<string, unknown>;
+      // Check common object shapes: { url: "..." }, { value: "..." }, { link: "..." }
+      for (const key of ["url", "value", "link", "href"]) {
+        const nested = obj[key];
+        if (typeof nested === "string") {
+          const val = nested.trim();
+          if (val.includes("sharepoint.com") || val.includes("1drv.ms")) {
+            return val;
+          }
+        }
+      }
+    }
+
+    // Stringify as last resort — catches any weird format
+    const str = String(field.value);
+    if (str.includes("sharepoint.com") || str.includes("1drv.ms")) {
+      // Extract URL from the stringified value
+      const urlMatch = str.match(/(https?:\/\/[^\s"',]+(?:sharepoint\.com|1drv\.ms)[^\s"',]*)/i);
+      if (urlMatch) return urlMatch[1];
     }
   }
   return "";
