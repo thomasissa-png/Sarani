@@ -72,11 +72,12 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FoldersResponse | null>(null);
-  // Breadcrumb: each entry has a name (display) and folderId (for navigation)
   const [breadcrumb, setBreadcrumb] = useState<Array<{ name: string; folderId: string }>>([]);
   const [sharing, setSharing] = useState<string | null>(null);
   const [sharedLink, setSharedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Selected files for the presentation (by file ID)
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
 
   // Fetch folder contents by ID, URL, or client mapping
   const fetchFolders = useCallback(async (opts: { folderId?: string; url?: string; clientRoot?: boolean }) => {
@@ -102,6 +103,8 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       }
       const result: FoldersResponse = await res.json();
       setData(result);
+      // Auto-select all files in the new folder
+      setSelectedFiles(new Set(result.files.map((f) => f.id)));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load folders");
     } finally {
@@ -192,6 +195,54 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       setSharing(null);
     }
   }, [clientName, projectName]);
+
+  // Share folder with specific file selection — stores selected file names in DB
+  const shareFolderWithSelection = useCallback(async (folderId: string, folderName: string) => {
+    setSharing(folderId);
+    setError(null);
+    try {
+      // Build the list of selected file names from current data
+      const selected = data?.files
+        .filter((f) => selectedFiles.has(f.id))
+        .map((f) => ({ id: f.id, name: f.name, mimeType: f.mimeType })) ?? [];
+
+      const currentDriveId = data?.driveId ?? "";
+      const res: Response = await fetch("/api/admin/project-previews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: `${clientName}::${projectName}`,
+          clientName,
+          projectName,
+          spFolderId: folderId,
+          spDriveId: currentDriveId,
+          brief: `Deliverables for ${projectName} — ${folderName}`,
+          selectedAssets: selected.length > 0 ? JSON.stringify(selected) : null,
+        }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || "Failed to generate presentation link");
+      }
+
+      const result = await res.json();
+      const fullUrl = `${window.location.origin}${result.url}`;
+      setSharedLink(fullUrl);
+
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+      } catch { /* clipboard not available */ }
+
+      window.open(fullUrl, "_blank");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to generate presentation");
+    } finally {
+      setSharing(null);
+    }
+  }, [clientName, projectName, data, selectedFiles]);
 
   if (!isOpen) return null;
 
@@ -358,53 +409,93 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                 </div>
               ))}
 
-              {/* Files (info only, not shareable individually) */}
-              {data.files.length > 0 && data.folders.length > 0 && (
-                <div className="border-t border-neutral-100 mt-2 pt-2">
-                  <p className="text-xs text-neutral-400 uppercase tracking-wide mb-2">
-                    Files ({data.files.length})
-                  </p>
+              {/* Files — selectable with checkboxes */}
+              {data.files.length > 0 && (
+                <div className={data.folders.length > 0 ? "border-t border-neutral-100 mt-2 pt-2" : ""}>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-neutral-400 uppercase tracking-wide">
+                      Files ({selectedFiles.size}/{data.files.length} selected)
+                    </p>
+                    <button
+                      onClick={() => {
+                        if (selectedFiles.size === data.files.length) {
+                          setSelectedFiles(new Set());
+                        } else {
+                          setSelectedFiles(new Set(data.files.map((f) => f.id)));
+                        }
+                      }}
+                      className="text-xs text-brand-cerulean hover:underline"
+                    >
+                      {selectedFiles.size === data.files.length ? "Deselect all" : "Select all"}
+                    </button>
+                  </div>
+                  {data.files.map((file) => {
+                    const isSelected = selectedFiles.has(file.id);
+                    const isImage = file.mimeType.startsWith("image/");
+                    return (
+                      <label
+                        key={file.id}
+                        className={cn(
+                          "flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg cursor-pointer transition-colors",
+                          isSelected ? "bg-brand-cerulean/5" : "hover:bg-neutral-50"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            setSelectedFiles((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(file.id)) next.delete(file.id);
+                              else next.add(file.id);
+                              return next;
+                            });
+                          }}
+                          className="w-4 h-4 rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40 shrink-0"
+                        />
+                        {isImage ? (
+                          <svg className="w-4 h-4 text-brand-cerulean shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 text-neutral-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                        )}
+                        <span className={cn("text-sm truncate flex-1", isSelected ? "text-brand-black" : "text-neutral-500")}>{file.name}</span>
+                        <span className="text-xs text-neutral-300 shrink-0">{formatSize(file.size)}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
-              {data.files.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-lg"
-                >
-                  <svg className="w-4 h-4 text-neutral-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
-                  <span className="text-sm text-neutral-500 truncate flex-1">{file.name}</span>
-                  <span className="text-xs text-neutral-300 shrink-0">{formatSize(file.size)}</span>
-                </div>
-              ))}
             </>
           )}
         </div>
 
-        {/* Footer — share current folder */}
-        {breadcrumb.length > 0 && !loading && (
-          <div className="px-6 py-3 border-t border-neutral-200 flex items-center justify-between">
+        {/* Footer — Create presentation from selected files */}
+        {!loading && data && (data.files.length > 0 || data.folders.length > 0) && (
+          <div className="px-6 py-3 border-t border-neutral-200 flex items-center justify-between gap-3">
             <p className="text-xs text-neutral-400">
-              Share the entire current folder with an anonymous link
+              {selectedFiles.size > 0
+                ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? "s" : ""} selected for presentation`
+                : "Select files or pick a folder above"}
             </p>
-            <button
-              onClick={() => {
-                // Find the current folder in the parent's listing
-                // Use the last navigated folder
-                const currentFolderName = breadcrumb[breadcrumb.length - 1];
-                // We need the folder ID — but we only have the name
-                // Refetch parent to get the ID, or store it during navigation
-                // For now, use the first folder that matches in the parent response
-                // This is a fallback — the inline Share button is preferred
-                if (data?.folders.length === 0 && data?.files.length === 0) return;
-                // The user can use the inline Share buttons instead
-              }}
-              className="hidden" // Hidden for now — inline Share buttons handle this
-            >
-              Share this folder
-            </button>
+            {selectedFiles.size > 0 && breadcrumb.length > 0 && (
+              <button
+                onClick={() => {
+                  const currentEntry = breadcrumb[breadcrumb.length - 1];
+                  shareFolderWithSelection(currentEntry.folderId, currentEntry.name);
+                }}
+                disabled={!!sharing}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+              >
+                {sharing ? "Generating..." : "Create presentation"}
+              </button>
+            )}
           </div>
         )}
       </div>

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: { projectId?: string; clientName?: string; projectName?: string; brief?: string; sharepointLink?: string; spFolderId?: string; spDriveId?: string };
+  let body: { projectId?: string; clientName?: string; projectName?: string; brief?: string; sharepointLink?: string; spFolderId?: string; spDriveId?: string; selectedAssets?: string | null };
   try {
     body = await request.json();
   } catch {
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { projectId, clientName, projectName, brief, sharepointLink, spFolderId, spDriveId } = body;
+  const { projectId, clientName, projectName, brief, sharepointLink, spFolderId, spDriveId, selectedAssets } = body;
 
   if (!projectId || typeof projectId !== "string") {
     return NextResponse.json(
@@ -105,6 +105,7 @@ export async function POST(request: NextRequest) {
       if (sharepointLink && typeof sharepointLink === "string") updates.sharepointLink = sharepointLink;
       if (spFolderId && typeof spFolderId === "string") updates.spFolderId = spFolderId;
       if (spDriveId && typeof spDriveId === "string") updates.spDriveId = spDriveId;
+      if (selectedAssets !== undefined) updates.selectedAssets = selectedAssets;
 
       if (Object.keys(updates).length > 1) {
         await db
@@ -170,6 +171,7 @@ export async function POST(request: NextRequest) {
       sharepointLink: sharepointLink && typeof sharepointLink === "string" ? sharepointLink : null,
       spFolderId: spFolderId && typeof spFolderId === "string" ? spFolderId : null,
       spDriveId: spDriveId && typeof spDriveId === "string" ? spDriveId : null,
+      selectedAssets: selectedAssets ?? null,
       isActive: true,
     }).returning({ id: projectPreviews.id });
 

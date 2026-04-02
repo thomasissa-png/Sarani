@@ -381,12 +381,28 @@ export default async function ProjectPreviewPage({ params }: Props) {
 
   // If the PM selected a specific SP folder (spFolderId), load assets directly from it.
   // Otherwise, fall back to the old fuzzy-match approach.
-  const { batches, error: spError } = preview.spFolderId
+  let { batches, error: spError } = preview.spFolderId
     ? await fetchBatchesByFolderId(
         preview.spFolderId,
         preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID
       )
     : await fetchBatches(preview.clientName, preview.projectName);
+
+  // If PM selected specific assets, filter batches to only show those
+  if (preview.selectedAssets) {
+    try {
+      const selected: Array<{ name: string }> = JSON.parse(preview.selectedAssets);
+      const selectedNames = new Set(selected.map((s) => s.name.toLowerCase()));
+      batches = batches
+        .map((b) => ({
+          ...b,
+          items: b.items.filter((item) => selectedNames.has(item.name.toLowerCase())),
+        }))
+        .filter((b) => b.items.length > 0);
+    } catch {
+      // Invalid JSON — show all assets
+    }
+  }
 
   const images = batches.flatMap((b) =>
     b.items.filter((i) => i.mimeType.startsWith("image/"))
