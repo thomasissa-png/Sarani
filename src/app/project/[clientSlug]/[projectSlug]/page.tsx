@@ -522,23 +522,25 @@ export default async function ProjectPreviewPage({ params }: Props) {
                     {formatBatchName(batch.name)}
                   </h3>
 
-                  {/* Image Grid — respects natural aspect ratios */}
+                  {/* Image Grid — uniform cards with contained images */}
                   {batchImages.length > 0 && (
-                    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 mb-4 [&>*]:mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                       {batchImages.map((item) => (
                         <ImageLightbox
                           key={item.webUrl}
                           src={item.webUrl}
                           alt={item.name}
                         >
-                          <div className="group rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors break-inside-avoid">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={item.webUrl}
-                              alt={item.name.replace(/\.[^.]+$/, "")}
-                              loading="lazy"
-                              className="w-full h-auto"
-                            />
+                          <div className="group rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors">
+                            <div className="aspect-[4/3] flex items-center justify-center bg-neutral-900 p-2">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={item.webUrl}
+                                alt={item.name.replace(/\.[^.]+$/, "")}
+                                loading="lazy"
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            </div>
                             <div className="px-3 py-2 bg-white/5">
                               <span className="text-xs text-white/50 truncate block">
                                 {item.name.replace(/\.[^.]+$/, "")}
@@ -661,21 +663,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
         </section>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-white/10">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-center gap-3">
-          <span className="text-xs text-white/30">Sarani Studio — Creative Agency</span>
-          <span className="text-white/10">·</span>
-          <a
-            href="https://sarani.studio"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-white/40 hover:text-white/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
-          >
-            sarani.studio
-          </a>
-        </div>
-      </footer>
+      {/* Footer is injected by PublicSiteChrome (site-wide footer) */}
     </div>
   );
 }

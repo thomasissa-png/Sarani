@@ -14,9 +14,19 @@ export function PublicSiteChrome({ children }: { children: React.ReactNode }) {
   const isAdmin = pathname.startsWith("/admin");
   const isProjectPreview = pathname.startsWith("/project/");
 
-  // Admin pages and project presentation pages have their own layout
-  if (isAdmin || isProjectPreview) {
+  // Admin pages have their own layout entirely
+  if (isAdmin) {
     return <>{children}</>;
+  }
+
+  // Project presentation pages: no site Header/StickyCTA, but keep the Footer
+  if (isProjectPreview) {
+    return (
+      <>
+        {children}
+        <Footer />
+      </>
+    );
   }
 
   return (
