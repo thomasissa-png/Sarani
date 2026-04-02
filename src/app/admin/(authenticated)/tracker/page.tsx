@@ -175,6 +175,10 @@ function TrackerContent() {
   // Share folder modal state
   const [shareModalProject, setShareModalProject] = useState<TrackerProject | null>(null);
 
+  // Star / case study candidates
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+  const [starringId, setStarringId] = useState<string | null>(null);
+
   // Toast notification
   const [toast, setToast] = useState<{
     message: string;
@@ -370,11 +374,48 @@ function TrackerContent() {
 
   useEffect(() => {
     fetchData();
+    // Hydrate starred projects
+    fetch("/api/admin/tracker/star")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.starredIds) setStarredIds(new Set(d.starredIds)); })
+      .catch(() => {});
   }, [fetchData]);
 
   // Share button handler — open folder browser modal
   const handleShare = useCallback((p: TrackerProject) => {
     setShareModalProject(p);
+  }, []);
+
+  // Toggle star (case study candidate)
+  const handleStar = useCallback(async (p: TrackerProject) => {
+    // Need a ClickUp task URL to extract the task ID
+    const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
+    const clickupTaskId = taskIdMatch?.[1] ?? `${p.client}::${p.project}`;
+
+    setStarringId(clickupTaskId);
+    try {
+      const res = await fetch("/api/admin/tracker/star", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clickupTaskId,
+          clientName: p.client,
+          projectName: p.project,
+          projectAmount: p.totalValue,
+          sharepointFolderUrl: p.sharepointLink || undefined,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStarredIds((prev) => {
+          const next = new Set(prev);
+          if (data.starred) next.add(clickupTaskId);
+          else next.delete(clickupTaskId);
+          return next;
+        });
+      }
+    } catch { /* ignore */ }
+    finally { setStarringId(null); }
   }, []);
 
   // Derived data
@@ -1066,9 +1107,26 @@ function TrackerContent() {
                       <td className="px-3 py-3 text-sm text-neutral-600 whitespace-nowrap">
                         {formatDate(p.date)}
                       </td>
-                      {/* Actions — primary: Quote, Share, Launch | secondary: ... dropdown */}
+                      {/* Actions — star + Quote, Share, Launch */}
                       <td className="px-3 py-3.5">
                         <div className="flex items-center gap-1">
+                          {(() => {
+                            const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
+                            const tid = taskIdMatch?.[1] ?? `${p.client}::${p.project}`;
+                            const isStarred = starredIds.has(tid);
+                            return (
+                              <button
+                                onClick={() => handleStar(p)}
+                                disabled={starringId === tid}
+                                title={isStarred ? "Remove from case studies" : "Add to case studies"}
+                                className={`p-1 rounded transition-colors ${isStarred ? "text-brand-lemon" : "text-neutral-300 hover:text-brand-lemon/70"}`}
+                              >
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill={isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                              </button>
+                            );
+                          })()}
                           <Link
                             href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
                             className="px-1.5 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors whitespace-nowrap"
