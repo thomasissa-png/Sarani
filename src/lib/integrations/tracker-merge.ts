@@ -19,6 +19,24 @@ import type { ClickUpTask } from "@/lib/integrations/clickup";
 import type { EvolizInvoice } from "@/lib/integrations/evoliz";
 import type { ExcelProject } from "@/lib/integrations/excel-parser";
 import type { TrackerProject } from "@/types/integrations";
+
+/**
+ * Extract SharePoint URL from a ClickUp task's custom fields.
+ * Scans ALL custom fields for any value containing sharepoint.com.
+ * Thomas: "le bon lien est dans ClickUp directement, pourquoi chercher?"
+ */
+function extractSharePointLink(task: ClickUpTask): string {
+  if (!task.custom_fields) return "";
+  for (const field of task.custom_fields) {
+    if (field.value && typeof field.value === "string") {
+      const val = field.value.trim();
+      if (val.includes("sharepoint.com") || val.includes("1drv.ms")) {
+        return val;
+      }
+    }
+  }
+  return "";
+}
 import { getMappingBySpaceId, mapClickUpStatus } from "@/lib/integrations/config";
 
 // ─── Debug Logging ──────────────────────────────────────────────────────────
@@ -617,7 +635,7 @@ export function mergeData(
       contact: ep.contact,
       status: mappedStatus?.projectStatus || clickupStatusRaw || ep.status,
       category: ep.category,
-      sharepointLink: ep.sharepointLink,
+      sharepointLink: ep.sharepointLink || (clickupTask ? extractSharePointLink(clickupTask) : ""),
       totalValue: ep.totalValue,
       poNumber: ep.poNumber,
       invoiceStatus,
@@ -650,7 +668,7 @@ export function mergeData(
       contact: task.assignees?.[0]?.username ?? "",
       status: mapped?.projectStatus || rawStatus,
       category: "",
-      sharepointLink: "",
+      sharepointLink: extractSharePointLink(task),
       totalValue: null,
       poNumber: "",
       invoiceStatus: mapped?.invoiceStatus ?? "",
