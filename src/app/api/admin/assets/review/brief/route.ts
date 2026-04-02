@@ -2,9 +2,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getTask, getCustomFieldValue } from "@/lib/integrations/clickup";
-import { getMappingBySpaceId, ASSETS_CUSTOMERS_BASE_PATH, SHAREPOINT_ASSETS_DRIVE_ID } from "@/lib/integrations/config";
-import { getDriveItemByPath, listDriveItems } from "@/lib/integrations/sharepoint";
+import { getTask, type ClickUpTask } from "@/lib/integrations/clickup";
+
+/**
+ * Find the SharePoint project folder URL from ANY custom field in a ClickUp task.
+ * No field name guessing — just scan all fields for a sharepoint.com URL value.
+ */
+function findSharePointUrl(task: ClickUpTask): string | null {
+  for (const field of task.custom_fields) {
+    if (field.value && typeof field.value === "string") {
+      const val = field.value.trim();
+      if (val.includes("sharepoint.com") || val.includes("1drv.ms")) {
+        return val;
+      }
+    }
+  }
+  return null;
+}
 
 export async function GET(request: NextRequest) {
   const session = await getUserFromSession();
@@ -56,48 +70,16 @@ export async function GET(request: NextRequest) {
 
     const brief = parts.join("\n").trim();
 
-    // Extract SharePoint folder URL from custom fields
-    // Common field names: "Folder URL", "Folder", "SharePoint", "SP Link"
-    let folderUrl =
-      getCustomFieldValue(task, "Folder URL") ||
-      getCustomFieldValue(task, "Folder") ||
-      getCustomFieldValue(task, "SharePoint") ||
-      getCustomFieldValue(task, "SP Link") ||
-      getCustomFieldValue(task, "folder url") ||
-      null;
-
-    // Fallback: find the project folder inside the client's SP directory
-    if (!folderUrl && task.space?.id && task.name) {
-      const mapping = getMappingBySpaceId(task.space.id);
-      if (mapping?.sharepointCustomerFolder) {
-        const clientPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
-        try {
-          // List folders in the client directory and find one matching the project name
-          const items = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, clientPath);
-          const projectName = task.name.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
-          const projectFolder = items
-            .filter((item) => item.folder)
-            .find((item) => {
-              const folderName = item.name.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
-              return folderName.includes(projectName) || projectName.includes(folderName);
-            });
-          if (projectFolder) {
-            folderUrl = projectFolder.webUrl ?? `${clientPath}/${projectFolder.name}`;
-          }
-          // If no project folder found, don't fallback to client folder — leave null
-          // so the PM knows to enter the path manually
-        } catch {
-          // SP error — leave folderUrl null
-        }
-      }
-    }
+    // Extract SharePoint folder URL from ClickUp custom fields.
+    // Instead of guessing field names, scan ALL custom fields for any
+    // value that looks like a SharePoint URL. The data is already in ClickUp.
+    const folderUrl = findSharePointUrl(task);
 
     return NextResponse.json({
       brief: brief || null,
       taskName: task.name,
       taskUrl: task.url,
       folderUrl,
-      clientName: task.space?.id ? getMappingBySpaceId(task.space.id)?.clickupSpaceName ?? null : null,
     });
   } catch (error) {
     console.error("[Asset Review Brief] Error loading ClickUp task:", error);
