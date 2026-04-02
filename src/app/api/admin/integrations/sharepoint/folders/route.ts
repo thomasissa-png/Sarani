@@ -108,17 +108,38 @@ export async function GET(request: NextRequest) {
 
     // ─── Mode 1: Direct SharePoint URL (from ClickUp custom field) ────
     if (directUrl) {
-      const item = await resolveSharePointUrl(directUrl);
-      if (!item?.id || !item?.parentReference?.driveId) {
+      // Try 1: resolve via Graph sharing API (works for most URLs)
+      let resolvedItem = await resolveSharePointUrl(directUrl);
+
+      // Try 2: if sharing API fails, extract path from URL and try getDriveItemByPath
+      if (!resolvedItem?.id && directUrl.includes("sharepoint.com")) {
+        try {
+          // Extract path from URL like: https://xxx.sharepoint.com/sites/SiteName/Shared%20Documents/path/to/folder
+          const urlObj = new URL(directUrl);
+          const pathMatch = urlObj.pathname.match(/\/(?:Shared\s*Documents|Documents)\/(.*)/i);
+          if (pathMatch) {
+            const spPath = "/Documents/" + decodeURIComponent(pathMatch[1]).replace(/\/$/, "");
+            const { getDriveItemByPath } = await import("@/lib/integrations/sharepoint");
+            const byPath = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, spPath);
+            if (byPath?.id) {
+              resolvedItem = { ...byPath, parentReference: { driveId: SHAREPOINT_ASSETS_DRIVE_ID } } as typeof resolvedItem;
+            }
+          }
+        } catch {
+          // Path-based resolution also failed — will return 404 below
+        }
+      }
+
+      if (!resolvedItem?.id || !resolvedItem?.parentReference?.driveId) {
         return NextResponse.json(
-          { error: "Could not resolve SharePoint URL" },
+          { error: `Could not resolve SharePoint URL. The link may be invalid or inaccessible.` },
           { status: 404 }
         );
       }
 
-      const driveId = item.parentReference.driveId;
+      const driveId = resolvedItem.parentReference.driveId;
       const children = await graphFetch<{ value: DriveItemChild[] }>(
-        `/drives/${driveId}/items/${item.id}/children?$expand=thumbnails`
+        `/drives/${driveId}/items/${resolvedItem.id}/children?$expand=thumbnails`
       );
 
       const items = children.value ?? [];
@@ -147,7 +168,7 @@ export async function GET(request: NextRequest) {
         }));
 
       return NextResponse.json({
-        path: item.name ?? "Project folder",
+        path: resolvedItem.name ?? "Project folder",
         folders,
         files,
         totalFolders: folders.length,
