@@ -116,9 +116,11 @@ export async function GET(request: NextRequest) {
         try {
           // Extract path from URL like: https://xxx.sharepoint.com/sites/SiteName/Shared%20Documents/path/to/folder
           const urlObj = new URL(directUrl);
-          const pathMatch = urlObj.pathname.match(/\/(?:Shared\s*Documents|Documents)\/(.*)/i);
+          // Decode %20 before regex matching — Node keeps %20 in pathname
+          const decodedPath = decodeURIComponent(urlObj.pathname);
+          const pathMatch = decodedPath.match(/\/(?:Shared\s*Documents|Documents)\/(.*)/i);
           if (pathMatch) {
-            const spPath = "/Documents/" + decodeURIComponent(pathMatch[1]).replace(/\/$/, "");
+            const spPath = "/Documents/" + pathMatch[1].replace(/\/$/, "");
             const { getDriveItemByPath } = await import("@/lib/integrations/sharepoint");
             const byPath = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, spPath);
             if (byPath?.id) {
