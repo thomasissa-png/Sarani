@@ -177,9 +177,13 @@ export async function POST(request: NextRequest) {
 
     const url = `/project/${clientSlug}/${finalSlug}`;
     return NextResponse.json({ url, created: true, id: inserted.id }, { status: 201 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[project-previews] POST error:", error);
-    const detail = error instanceof Error ? error.message : String(error);
+    // Extract the real PostgreSQL error from Drizzle wrapper
+    const pgError = (error as { cause?: { message?: string; code?: string } })?.cause;
+    const pgDetail = pgError?.message ?? "";
+    const pgCode = pgError?.code ?? "";
+    const detail = pgDetail || (error instanceof Error ? error.message : String(error));
 
     // Common DB errors with user-friendly messages
     if (detail.includes("relation") && detail.includes("does not exist")) {
@@ -196,7 +200,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "INTERNAL", message: `Failed to create project preview: ${detail}` },
+      { error: "INTERNAL", message: `Failed to create project preview: ${detail}${pgCode ? ` [PG:${pgCode}]` : ""}` },
       { status: 500 }
     );
   }
