@@ -260,6 +260,14 @@ export default function ClientDetailPage() {
     preferredContractTemplate:
       (client.preferredContractTemplate as ClientFormData["preferredContractTemplate"]) ??
       "",
+    clickupSpaceId: (client as Record<string, unknown>).clickupSpaceId as string ?? "",
+    sharepointFolder: (client as Record<string, unknown>).sharepointFolder as string ?? "",
+    excelTrackerFilename: (client as Record<string, unknown>).excelTrackerFilename as string ?? "",
+    brandGuidelinesLink: (client as Record<string, unknown>).brandGuidelinesLink as string ?? "",
+    logoFolderLink: (client as Record<string, unknown>).logoFolderLink as string ?? "",
+    fontFolderLink: (client as Record<string, unknown>).fontFolderLink as string ?? "",
+    notes: (client as Record<string, unknown>).notes as string ?? "",
+    isEndClient: (client as Record<string, unknown>).isEndClient as boolean ?? true,
   };
 
   return (
