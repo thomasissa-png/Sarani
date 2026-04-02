@@ -17,6 +17,20 @@ interface ClientProfileOptions {
   emailDomain?: string;
 }
 
+// ─── Client branding profiles (from Thomas) ──────────────────────────────
+
+const CLIENT_BRANDING: Record<string, string> = {
+  Sony: `- Brand guidelines: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCTQO0L4sJvQpoB3l-hU8BwAbQZUn84k4yu5MzIZjZ0yM8
+- Logo files: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDz2ywnj3atTJC2AEzlfuokAYVbofZQ4B4t6vRC_DDC1lo
+- Font files: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDZ6KVJoYInQK1cxGQRvMoJAYEpi-aH55eaLAOCUZXogEY
+- Visual inspirations: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBndjYcTj6wSbgVgecq_Cb_AWboH1TbZQsjSDFPSqlFbT8
+- Asset library: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCGrl6DdC5-Tpz-M68Y8qZHAU7fegA6mxcIIwpsaLCuFUM
+- Projects folder (Sony Europe): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBcCvUgAzMbQ6ep6NU2gwDaAXs0wAKlVuw_jTB3k5Olr8A
+- Projects folder (Sony France): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCeSwE3o4J-T4-eIOHQx01DAY78Dc9-8Je9xFxud2aM-eE
+- Projects folder (Sony Pro): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDiBHRNhUD8S7Eb50r9PiRKAX4J2cDov4obkwQ9sifF-LY`,
+  // Add more clients as Thomas provides them
+};
+
 // ─── Domain-to-client heuristic ─────────────────────────────────────────────
 
 const DOMAIN_CLIENT_MAP: Record<string, string> = {
@@ -117,6 +131,14 @@ export async function buildClientProfileBlock(
     if (knowledgeBlock) {
       lines.push("");
       lines.push(knowledgeBlock);
+    }
+
+    // Add branding links if available
+    const branding = CLIENT_BRANDING[clientName] ?? CLIENT_BRANDING[mapping?.clickupSpaceName ?? ""];
+    if (branding) {
+      lines.push("");
+      lines.push("BRANDING & ASSETS:");
+      lines.push(branding);
     }
 
     return lines.join("\n");
