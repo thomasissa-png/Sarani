@@ -219,7 +219,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     } finally {
       setSharing(null);
     }
-  }, [clientName, projectName]);
+  }, [clientName, projectName, data]);
 
   // Share folder with specific file selection — stores selected file names in DB
   const shareFolderWithSelection = useCallback(async (folderId: string, folderName: string) => {
