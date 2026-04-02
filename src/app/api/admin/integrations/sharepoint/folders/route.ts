@@ -21,6 +21,11 @@ interface DriveItemChild {
   webUrl: string;
   folder?: { childCount: number };
   file?: { mimeType: string };
+  thumbnails?: Array<{
+    small?: { url: string };
+    medium?: { url: string };
+  }>;
+  "@microsoft.graph.downloadUrl"?: string;
 }
 
 /**
@@ -62,7 +67,7 @@ export async function GET(request: NextRequest) {
     // ─── Mode 0: Drill-down by folder ID (for subfolder navigation) ───
     if (folderId) {
       const children = await graphFetch<{ value: DriveItemChild[] }>(
-        `/drives/${SHAREPOINT_ASSETS_DRIVE_ID}/items/${folderId}/children`
+        `/drives/${SHAREPOINT_ASSETS_DRIVE_ID}/items/${folderId}/children?$expand=thumbnails`
       );
 
       const items = children.value ?? [];
@@ -87,6 +92,7 @@ export async function GET(request: NextRequest) {
           mimeType: i.file?.mimeType ?? "",
           lastModified: i.lastModifiedDateTime,
           webUrl: i.webUrl,
+          thumbnailUrl: i.thumbnails?.[0]?.medium?.url ?? i.thumbnails?.[0]?.small?.url ?? null,
         }));
 
       return NextResponse.json({
@@ -112,7 +118,7 @@ export async function GET(request: NextRequest) {
 
       const driveId = item.parentReference.driveId;
       const children = await graphFetch<{ value: DriveItemChild[] }>(
-        `/drives/${driveId}/items/${item.id}/children`
+        `/drives/${driveId}/items/${item.id}/children?$expand=thumbnails`
       );
 
       const items = children.value ?? [];
@@ -137,6 +143,7 @@ export async function GET(request: NextRequest) {
           mimeType: i.file?.mimeType ?? "",
           lastModified: i.lastModifiedDateTime,
           webUrl: i.webUrl,
+          thumbnailUrl: i.thumbnails?.[0]?.medium?.url ?? i.thumbnails?.[0]?.small?.url ?? null,
         }));
 
       return NextResponse.json({

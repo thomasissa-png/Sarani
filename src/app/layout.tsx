@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   },
   description:
     "35+ experts, 5 continents, 18 languages. Fixed pricing, unlimited revisions. Trusted by TikTok, Sony, Adidas, GEODIS. Brief today, assets tomorrow.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   metadataBase: new URL("https://sarani.studio"),
   alternates: {
     canonical: "https://sarani.studio",

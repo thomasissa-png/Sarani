@@ -31,6 +31,7 @@ interface FileItem {
   mimeType: string;
   lastModified: string;
   webUrl: string;
+  thumbnailUrl?: string | null;
 }
 
 interface FoldersResponse {
@@ -78,6 +79,8 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   const [copied, setCopied] = useState(false);
   // Selected files for the presentation (by file ID)
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  // Toggle between list view and thumbnail grid view
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
 
   // Fetch folder contents by ID, URL, or client mapping
   const fetchFolders = useCallback(async (opts: { folderId?: string; url?: string; clientRoot?: boolean }) => {
@@ -409,27 +412,100 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                 </div>
               ))}
 
-              {/* Files — selectable with checkboxes */}
+              {/* Files — selectable with checkboxes + thumbnail/list toggle */}
               {data.files.length > 0 && (
                 <div className={data.folders.length > 0 ? "border-t border-neutral-100 mt-2 pt-2" : ""}>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs text-neutral-400 uppercase tracking-wide">
                       Files ({selectedFiles.size}/{data.files.length} selected)
                     </p>
-                    <button
-                      onClick={() => {
-                        if (selectedFiles.size === data.files.length) {
-                          setSelectedFiles(new Set());
-                        } else {
-                          setSelectedFiles(new Set(data.files.map((f) => f.id)));
-                        }
-                      }}
-                      className="text-xs text-brand-cerulean hover:underline"
-                    >
-                      {selectedFiles.size === data.files.length ? "Deselect all" : "Select all"}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {/* View toggle */}
+                      <div className="flex items-center border border-neutral-200 rounded-md overflow-hidden">
+                        <button
+                          onClick={() => setViewMode("grid")}
+                          className={cn("p-1", viewMode === "grid" ? "bg-neutral-100" : "hover:bg-neutral-50")}
+                          title="Thumbnail view"
+                        >
+                          <svg className="w-3.5 h-3.5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
+                        </button>
+                        <button
+                          onClick={() => setViewMode("list")}
+                          className={cn("p-1", viewMode === "list" ? "bg-neutral-100" : "hover:bg-neutral-50")}
+                          title="List view"
+                        >
+                          <svg className="w-3.5 h-3.5 text-neutral-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (selectedFiles.size === data.files.length) {
+                            setSelectedFiles(new Set());
+                          } else {
+                            setSelectedFiles(new Set(data.files.map((f) => f.id)));
+                          }
+                        }}
+                        className="text-xs text-brand-cerulean hover:underline"
+                      >
+                        {selectedFiles.size === data.files.length ? "Deselect all" : "Select all"}
+                      </button>
+                    </div>
                   </div>
-                  {data.files.map((file) => {
+
+                  {/* Grid view (thumbnails) */}
+                  {viewMode === "grid" && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {data.files.map((file) => {
+                        const isSelected = selectedFiles.has(file.id);
+                        const isImage = file.mimeType.startsWith("image/");
+                        return (
+                          <label
+                            key={file.id}
+                            className={cn(
+                              "relative rounded-lg overflow-hidden cursor-pointer transition-all border-2",
+                              isSelected ? "border-brand-cerulean ring-1 ring-brand-cerulean/30" : "border-transparent hover:border-neutral-200"
+                            )}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {
+                                setSelectedFiles((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(file.id)) next.delete(file.id);
+                                  else next.add(file.id);
+                                  return next;
+                                });
+                              }}
+                              className="sr-only"
+                            />
+                            {/* Thumbnail or placeholder */}
+                            <div className="aspect-square bg-neutral-50 flex items-center justify-center overflow-hidden">
+                              {isImage && file.thumbnailUrl ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
+                                <img src={file.thumbnailUrl} alt={file.name} className="w-full h-full object-cover" loading="lazy" />
+                              ) : isImage ? (
+                                <svg className="w-8 h-8 text-neutral-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                              ) : (
+                                <svg className="w-8 h-8 text-neutral-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+                              )}
+                            </div>
+                            {/* Selection indicator */}
+                            {isSelected && (
+                              <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-brand-cerulean flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                              </div>
+                            )}
+                            {/* File name */}
+                            <p className="text-[10px] text-neutral-500 truncate px-1 py-0.5">{file.name}</p>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* List view */}
+                  {viewMode === "list" && data.files.map((file) => {
                     const isSelected = selectedFiles.has(file.id);
                     const isImage = file.mimeType.startsWith("image/");
                     return (
@@ -453,16 +529,16 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                           }}
                           className="w-4 h-4 rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40 shrink-0"
                         />
-                        {isImage ? (
+                        {isImage && file.thumbnailUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={file.thumbnailUrl} alt="" className="w-8 h-8 rounded object-cover shrink-0" />
+                        ) : isImage ? (
                           <svg className="w-4 h-4 text-brand-cerulean shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <polyline points="21 15 16 10 5 21" />
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
                           </svg>
                         ) : (
                           <svg className="w-4 h-4 text-neutral-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
                           </svg>
                         )}
                         <span className={cn("text-sm truncate flex-1", isSelected ? "text-brand-black" : "text-neutral-500")}>{file.name}</span>
