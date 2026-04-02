@@ -875,18 +875,18 @@ export default function ProjectViewPage() {
         quotes={data?.quotes ?? []}
       />
 
-      {/* ─── Section 2: AI Outputs ───────────────────────────────────────── */}
-      <section className="bg-white border border-neutral-200 rounded-lg p-6">
-        <h2 className="text-base font-semibold text-brand-black mb-4 flex items-center gap-2">
-          Deliverables / AI Outputs
-          {outputCount > 0 && (
+      {/* ─── Section 2: AI Outputs — hidden when empty ────────────────── */}
+      {outputCount > 0 && (
+        <section className="bg-white border border-neutral-200 rounded-lg p-6">
+          <h2 className="text-base font-semibold text-brand-black mb-4 flex items-center gap-2">
+            Deliverables / AI Outputs
             <span className="text-xs font-normal text-neutral-400">
               ({outputCount})
             </span>
-          )}
-        </h2>
-        <AgentOutputsSection outputs={data?.agentOutputs ?? []} />
-      </section>
+          </h2>
+          <AgentOutputsSection outputs={data?.agentOutputs ?? []} />
+        </section>
+      )}
 
       {/* ─── Section 3: Presentation Links ───────────────────────────────── */}
       <section className="bg-white border border-neutral-200 rounded-lg p-6">

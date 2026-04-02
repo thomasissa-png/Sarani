@@ -526,7 +526,7 @@ function TrackerContent() {
     setClientFilter("All");
     setStatusFilter("In progress");
     setInvoiceFilter("All");
-    setSourceFilter("All");
+    setSourceFilter("ClickUp");
   }, []);
 
   // Toast auto-dismiss
