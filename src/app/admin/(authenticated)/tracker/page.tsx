@@ -175,7 +175,7 @@ export default function TrackerPage() {
   const [clientFilter, setClientFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("Active");
   const [invoiceFilter, setInvoiceFilter] = useState("All");
-  const [countryFilter, setCountryFilter] = useState("All");
+  // Country filter removed per Thomas — no use in practice
   const [sourceFilter, setSourceFilter] = useState<"All" | "ClickUp" | "Excel Only">("ClickUp");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -351,31 +351,32 @@ export default function TrackerPage() {
   }, []);
 
   // Derived data
+  // Client filter: show only main clients (ClickUp space names), not divisions
   const clients = useMemo(() => {
     if (!data) return [];
-    const set = new Set(data.projects.map((p) => p.displayClient ?? p.client));
+    const set = new Set(data.projects.map((p) => p.client));
     return ["All", ...Array.from(set).sort()];
   }, [data]);
 
-  const countries = useMemo(() => {
-    if (!data) return [];
-    const set = new Set(data.projects.map((p) => p.country ?? "Other"));
-    return ["All", ...Array.from(set).sort()];
-  }, [data]);
-
-  // Dynamic status list: static mapped statuses + any extra statuses from Excel data
+  // Dynamic status list: static mapped statuses + extra statuses from actual data
+  // Recalculates based on source filter (ClickUp vs Excel Only show different statuses)
   const projectStatuses = useMemo(() => {
     if (!data) return [...STATIC_PROJECT_STATUSES];
+    const filtered = sourceFilter === "ClickUp"
+      ? data.projects.filter((p) => p.clickupTaskUrl)
+      : sourceFilter === "Excel Only"
+        ? data.projects.filter((p) => !p.clickupTaskUrl)
+        : data.projects;
     const staticSet = new Set(STATIC_PROJECT_STATUSES.map((s) => s.toLowerCase()));
     const extras = new Set<string>();
-    for (const p of data.projects) {
+    for (const p of filtered) {
       const s = p.status.trim();
       if (s && !staticSet.has(s.toLowerCase())) {
         extras.add(s);
       }
     }
     return [...STATIC_PROJECT_STATUSES, ...Array.from(extras).sort()];
-  }, [data]);
+  }, [data, sourceFilter]);
 
   const filteredProjects = useMemo(() => {
     if (!data) return [];
@@ -390,7 +391,7 @@ export default function TrackerPage() {
       ) {
         return false;
       }
-      if (clientFilter !== "All" && (p.displayClient ?? p.client) !== clientFilter) return false;
+      if (clientFilter !== "All" && p.client !== clientFilter) return false;
       if (statusFilter === "Active") {
         if (!ACTIVE_STATUSES.has(p.status.toLowerCase())) return false;
       } else if (
@@ -406,7 +407,7 @@ export default function TrackerPage() {
           return false;
         }
       }
-      if (countryFilter !== "All" && (p.country ?? "Other") !== countryFilter) return false;
+      // Country filter removed
       // Source filter: ClickUp = has clickupTaskUrl, Excel Only = no clickupTaskUrl
       if (sourceFilter === "ClickUp" && !p.clickupTaskUrl) return false;
       if (sourceFilter === "Excel Only" && p.clickupTaskUrl) return false;
@@ -439,13 +440,13 @@ export default function TrackerPage() {
     }
 
     return filtered;
-  }, [data, search, clientFilter, statusFilter, invoiceFilter, countryFilter, sourceFilter, sort]);
+  }, [data, search, clientFilter, statusFilter, invoiceFilter, sourceFilter, sort]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
     setPageInputValue("1");
-  }, [search, clientFilter, statusFilter, invoiceFilter, countryFilter, sourceFilter]);
+  }, [search, clientFilter, statusFilter, invoiceFilter, sourceFilter]);
 
   // Sync page input with currentPage
   useEffect(() => {
@@ -481,7 +482,7 @@ export default function TrackerPage() {
   }, [filteredProjects.length, currentPage]);
 
   // Stats (Fix #9 — scoped to filtered projects when filters active)
-  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All" || countryFilter !== "All" || sourceFilter !== "ClickUp";
+  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All" || sourceFilter !== "ClickUp";
   const stats = useMemo(() => {
     if (!data) return { total: 0, totalValue: 0, open: 0, overdue: 0, globalTotal: 0 };
     const source = filteredProjects;
@@ -504,7 +505,6 @@ export default function TrackerPage() {
     setClientFilter("All");
     setStatusFilter("All");
     setInvoiceFilter("All");
-    setCountryFilter("All");
     setSourceFilter("All");
   }, []);
 
@@ -528,10 +528,10 @@ export default function TrackerPage() {
     if (clientFilter !== "All") count++;
     if (statusFilter !== "All") count++;
     if (invoiceFilter !== "All") count++;
-    if (countryFilter !== "All") count++;
+    // Country filter removed
     if (sourceFilter !== "All") count++;
     return count;
-  }, [clientFilter, statusFilter, invoiceFilter, countryFilter, sourceFilter]);
+  }, [clientFilter, statusFilter, invoiceFilter, sourceFilter]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -699,18 +699,6 @@ export default function TrackerPage() {
             ))}
           </select>
           <select
-            value={countryFilter}
-            onChange={(e) => setCountryFilter(e.target.value)}
-            aria-label="Filter by country"
-            className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-          >
-            {countries.map((c) => (
-              <option key={c} value={c}>
-                {c === "All" ? "All Countries" : c}
-              </option>
-            ))}
-          </select>
-          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             aria-label="Filter by project status"
@@ -787,18 +775,6 @@ export default function TrackerPage() {
                   {clients.map((c) => (
                     <option key={c} value={c}>
                       {c === "All" ? "All Clients" : c}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={countryFilter}
-                  onChange={(e) => setCountryFilter(e.target.value)}
-                  aria-label="Filter by country"
-                  className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
-                >
-                  {countries.map((c) => (
-                    <option key={c} value={c}>
-                      {c === "All" ? "All Countries" : c}
                     </option>
                   ))}
                 </select>
