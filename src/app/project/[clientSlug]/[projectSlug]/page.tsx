@@ -4,7 +4,6 @@
  * Dark-themed (Sarani brand: bg-black, text-white, accent Flame).
  */
 import { Metadata } from "next";
-import Image from "next/image";
 import ImageLightbox from "@/components/ui/ImageLightbox";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
@@ -420,10 +419,10 @@ export default async function ProjectPreviewPage({ params }: Props) {
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/sarani-logo-white-sm.png"
+            src="/sarani-logo-white.png"
             alt="Sarani"
             width={120}
-            height={57}
+            height={32}
             className="h-8 w-auto"
           />
           <a
@@ -459,13 +458,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
           {totalAssets > 0 && (
             <span className="flex items-center gap-1.5">
               <span className="w-1 h-1 rounded-full bg-white/30" />
-              {totalAssets} asset{totalAssets !== 1 ? "s" : ""}
-            </span>
-          )}
-          {batches.length > 0 && (
-            <span className="flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-white/30" />
-              {batches.length} delivery{batches.length !== 1 ? " batches" : ""}
+              {totalAssets} file{totalAssets !== 1 ? "s" : ""}
             </span>
           )}
         </div>
@@ -523,39 +516,32 @@ export default async function ProjectPreviewPage({ params }: Props) {
               const batchPdfs = batch.items.filter(
                 (i) => i.mimeType === "application/pdf"
               );
-              const isFinal = idx === 0; // First after reverse = highest batch
-
               return (
                 <div key={batch.name}>
-                  <h3 className="text-lg font-semibold mb-5 text-white/80 flex items-center gap-3">
+                  <h3 className="text-lg font-semibold mb-5 text-white/80">
                     {formatBatchName(batch.name)}
-                    {isFinal && (
-                      <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-brand-flame/20 text-brand-flame">
-                        Final
-                      </span>
-                    )}
                   </h3>
 
-                  {/* Image Grid */}
+                  {/* Image Grid — respects natural aspect ratios */}
                   {batchImages.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
+                    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 mb-4 [&>*]:mb-3">
                       {batchImages.map((item) => (
                         <ImageLightbox
                           key={item.webUrl}
                           src={item.webUrl}
                           alt={item.name}
                         >
-                          <div className="group relative aspect-video rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 transition-colors">
+                          <div className="group rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors break-inside-avoid">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={item.webUrl}
-                              alt={item.name}
+                              alt={item.name.replace(/\.[^.]+$/, "")}
                               loading="lazy"
-                              className="w-full h-full object-cover"
+                              className="w-full h-auto"
                             />
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                              <span className="text-xs text-white/80 truncate">
-                                {item.name}
+                            <div className="px-3 py-2 bg-white/5">
+                              <span className="text-xs text-white/50 truncate block">
+                                {item.name.replace(/\.[^.]+$/, "")}
                               </span>
                             </div>
                           </div>
@@ -654,6 +640,26 @@ export default async function ProjectPreviewPage({ params }: Props) {
           </div>
         )}
       </section>
+
+      {/* Download section */}
+      {preview.sharepointLink && (
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <div className="rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
+            <p className="text-sm text-white/50 mb-4">
+              Need to download all files or access the full project folder?
+            </p>
+            <a
+              href={preview.sharepointLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+              Download project files
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-white/10">
