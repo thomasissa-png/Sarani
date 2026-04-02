@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ClientForm } from "@/components/admin/client-form";
+import { ClientContactsSection } from "@/components/admin/ClientContactsSection";
 import type { ClientFormData } from "@/lib/validations/client";
 import type { Client } from "@/lib/db/schema";
 
@@ -68,9 +69,9 @@ export default function ClientDetailPage() {
   const [agentFilter, setAgentFilter] = useState<string>("");
 
   // Active tab
-  const [activeTab, setActiveTab] = useState<"outputs" | "settings">(
-    "outputs"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "outputs" | "contacts" | "settings"
+  >("outputs");
 
   // Report download state
   const [reportMonth, setReportMonth] = useState(() => {
@@ -386,6 +387,16 @@ export default function ClientDetailPage() {
           Activity ({outputs.length})
         </button>
         <button
+          onClick={() => setActiveTab("contacts")}
+          className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            activeTab === "contacts"
+              ? "border-brand-black text-brand-black"
+              : "border-transparent text-neutral-500 hover:text-brand-black"
+          }`}
+        >
+          Contacts
+        </button>
+        <button
           onClick={() => setActiveTab("settings")}
           className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
             activeTab === "settings"
@@ -406,6 +417,10 @@ export default function ClientDetailPage() {
           onAgentFilterChange={setAgentFilter}
           availableAgentTypes={availableAgentTypes}
         />
+      )}
+
+      {activeTab === "contacts" && (
+        <ClientContactsSection clientId={id} />
       )}
 
       {activeTab === "settings" && (

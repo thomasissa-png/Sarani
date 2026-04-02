@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { clients, clientKnowledge, teamKnowledge, processedEmails } from "@/lib/db/schema";
+import { clients, clientKnowledge, clientContacts, teamKnowledge, processedEmails } from "@/lib/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { graphFetch } from "@/lib/integrations/sharepoint";
 import { stripHtml, isEmailConfigured } from "@/lib/integrations/email";
@@ -347,6 +347,34 @@ export async function GET(request: NextRequest) {
                     isActive: true,
                   });
                   knowledgeEntriesCreated++;
+
+                  // Upsert into clientContacts for individual contacts with email
+                  if (entry.scope === "individual" && entry.contactEmail) {
+                    try {
+                      await db
+                        .insert(clientContacts)
+                        .values({
+                          clientId: client.id,
+                          name: entry.entityName,
+                          email: entry.contactEmail,
+                          division: entry.division ?? null,
+                          role: null,
+                          source: "auto",
+                          lastSeenAt: new Date(),
+                        })
+                        .onConflictDoUpdate({
+                          target: [clientContacts.clientId, clientContacts.email],
+                          set: {
+                            name: entry.entityName,
+                            division: entry.division ?? sql`${clientContacts.division}`,
+                            lastSeenAt: new Date(),
+                            updatedAt: new Date(),
+                          },
+                        });
+                    } catch (contactErr) {
+                      console.error("[scan-knowledge] Contact upsert error:", contactErr);
+                    }
+                  }
                 }
               }
             } catch (insertError) {
