@@ -8,6 +8,7 @@ import type {
   TrackerResponse,
 } from "@/types/integrations";
 // Status mappings are now applied in tracker-merge.ts — dropdown uses dynamic values
+import { ShareFolderModal } from "@/components/admin/ShareFolderModal";
 
 // ─── Sorting Types ──────────────────────────────────────────────────────────
 
@@ -159,12 +160,8 @@ export default function TrackerPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Project preview links (Share Preview feature)
-  // Maps projectId -> { url, previewId, isActive }
-  const [previewLinks, setPreviewLinks] = useState<
-    Record<string, { url: string; previewId: string; isActive: boolean }>
-  >({});
-  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+  // Share folder modal state
+  const [shareModalProject, setShareModalProject] = useState<TrackerProject | null>(null);
 
   // Toast notification
   const [toast, setToast] = useState<{
@@ -348,16 +345,9 @@ export default function TrackerPage() {
     fetchData();
   }, [fetchData]);
 
-  // Hydrate existing preview links from DB on mount
-  useEffect(() => {
-    fetch("/api/admin/project-previews")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.previews) setPreviewLinks(data.previews);
-      })
-      .catch(() => {
-        // Non-critical — previews will be created on demand
-      });
+  // Share button handler — open folder browser modal
+  const handleShare = useCallback((p: TrackerProject) => {
+    setShareModalProject(p);
   }, []);
 
   // Derived data
@@ -530,140 +520,7 @@ export default function TrackerPage() {
     return `${p.client}::${p.project}`;
   }, []);
 
-  // Share Preview: create or copy existing preview link
-  const handleSharePreview = useCallback(async (p: TrackerProject) => {
-    const projectId = getProjectId(p);
-
-    // If already active, open the preview directly
-    const existing = previewLinks[projectId];
-    if (existing?.isActive) {
-      const fullUrl = `${window.location.origin}${existing.url}`;
-      window.open(fullUrl, "_blank");
-      setToast({
-        message: "Preview opened in new tab",
-        detail: existing.url,
-        type: "success",
-      });
-      return;
-    }
-
-    setPreviewLoading(projectId);
-    try {
-      // Brief for the share page — project presentation tone (not sales)
-      const clientDisplay = p.displayClient ?? p.client;
-      const cat = (p.category || "").toLowerCase();
-      const proj = p.project;
-      const projLower = proj.toLowerCase();
-
-      // Variants: factual project presentation, not a pitch
-      const briefVariants: Record<string, string> = {
-        design: `Here are the creative assets for ${proj}. All designs are ready for your review — let us know if you'd like any adjustments.`,
-        video: `Your video deliverables for ${proj} are ready. All cuts and formats are included below for your review.`,
-        translation: `The translations for ${proj} are complete and ready for your review across all target markets.`,
-        presentation: `Your ${proj} presentation is ready. All slides are included below for final review before your meeting.`,
-        social: `Your social media assets for ${proj} are ready — all formats and platform sizes are included below.`,
-        brand: `The brand identity deliverables for ${proj} are ready for your review. Let us know your first impressions.`,
-        print: `Your print-ready files for ${proj} are below. All formats are export-ready for your print vendor.`,
-        default: `Here are the deliverables for ${proj}. Everything is ready for your review — let us know if you need any changes.`,
-      };
-
-      // Match category to variant
-      let briefText = briefVariants.default;
-      if (cat.includes("design") || cat.includes("banner") || cat.includes("graphic")) briefText = briefVariants.design;
-      else if (cat.includes("video") || cat.includes("motion") || cat.includes("edit")) briefText = briefVariants.video;
-      else if (cat.includes("translat") || cat.includes("locali")) briefText = briefVariants.translation;
-      else if (cat.includes("present") || cat.includes("slide") || cat.includes("deck")) briefText = briefVariants.presentation;
-      else if (cat.includes("social")) briefText = briefVariants.social;
-      else if (cat.includes("brand") || cat.includes("identity")) briefText = briefVariants.brand;
-      else if (cat.includes("print") || cat.includes("packag")) briefText = briefVariants.print;
-      else if (projLower.includes("banner") || projLower.includes("visual") || projLower.includes("design")) briefText = briefVariants.design;
-      else if (projLower.includes("video") || projLower.includes("motion")) briefText = briefVariants.video;
-      else if (projLower.includes("slide") || projLower.includes("deck") || projLower.includes("present")) briefText = briefVariants.presentation;
-
-      const res = await fetch("/api/admin/project-previews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          projectId,
-          clientName: p.client,
-          projectName: p.project,
-          brief: briefText,
-          sharepointLink: p.sharepointLink || "",
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: "Unknown error" }));
-        setToast({
-          message: err.message || "Could not generate preview link. Try again.",
-          type: "error",
-        });
-        return;
-      }
-
-      const data: { url: string; created: boolean; id?: string } = await res.json();
-
-      setPreviewLinks((prev) => ({
-        ...prev,
-        [projectId]: { url: data.url, previewId: data.id ?? "", isActive: true },
-      }));
-
-      const fullUrl = `${window.location.origin}${data.url}`;
-      window.open(fullUrl, "_blank");
-      setToast({
-        message: "Preview opened in new tab",
-        detail: data.url,
-        type: "success",
-      });
-    } catch {
-      setToast({
-        message: "Could not generate preview link. Try again.",
-        type: "error",
-      });
-    } finally {
-      setPreviewLoading(null);
-    }
-  }, [getProjectId, previewLinks]);
-
-  // Deactivate a preview link
-  const handleDeactivatePreview = useCallback(async (p: TrackerProject) => {
-    const projectId = getProjectId(p);
-    const existing = previewLinks[projectId];
-    if (!existing) return;
-
-    setPreviewLoading(projectId);
-    try {
-      const patchRes = await fetch(`/api/admin/project-previews/${encodeURIComponent(projectId)}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: false }),
-      });
-
-      if (!patchRes.ok) {
-        setToast({
-          message: "Could not deactivate. Try again.",
-          type: "error",
-        });
-        return;
-      }
-
-      setPreviewLinks((prev) => ({
-        ...prev,
-        [projectId]: { ...prev[projectId], isActive: false },
-      }));
-      setToast({
-        message: "Preview link deactivated.",
-        type: "warning",
-      });
-    } catch {
-      setToast({
-        message: "Could not deactivate. Try again.",
-        type: "error",
-      });
-    } finally {
-      setPreviewLoading(null);
-    }
-  }, [getProjectId, previewLinks]);
+  // Share: open SharePoint folder browser modal (replaces old preview system)
 
   // Active filter count (for mobile badge)
   const activeFilterCount = useMemo(() => {
@@ -1203,13 +1060,14 @@ export default function TrackerPage() {
                           >
                             Quote
                           </Link>
-                          <SharePreviewButton
-                            project={p}
-                            preview={previewLinks[getProjectId(p)]}
-                            isLoading={previewLoading === getProjectId(p)}
-                            onShare={handleSharePreview}
-                            onDeactivate={handleDeactivatePreview}
-                          />
+                          <button
+                            onClick={() => handleShare(p)}
+                            className="px-1.5 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors whitespace-nowrap inline-flex items-center gap-1"
+                            title="Browse SharePoint folders and create a sharing link"
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                            Share
+                          </button>
                           <SecondaryActionsDropdown project={p} />
                         </div>
                       </td>
@@ -1332,13 +1190,13 @@ export default function TrackerPage() {
                 >
                   Quote
                 </Link>
-                <SharePreviewButton
-                  project={p}
-                  preview={previewLinks[getProjectId(p)]}
-                  isLoading={previewLoading === getProjectId(p)}
-                  onShare={handleSharePreview}
-                  onDeactivate={handleDeactivatePreview}
-                />
+                <button
+                  onClick={() => handleShare(p)}
+                  className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors inline-flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
+                  Share
+                </button>
                 <SecondaryActionsDropdown project={p} />
               </div>
             </div>
@@ -1427,6 +1285,14 @@ export default function TrackerPage() {
           </div>
         </div>
       )}
+
+      {/* Share folder modal */}
+      <ShareFolderModal
+        isOpen={!!shareModalProject}
+        onClose={() => setShareModalProject(null)}
+        clientName={shareModalProject?.client ?? ""}
+        projectName={shareModalProject?.project ?? ""}
+      />
     </div>
   );
 }
@@ -1589,114 +1455,6 @@ function FolderIcon() {
     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
     </svg>
-  );
-}
-
-// ─── Share Preview Button ──────────────────────────────────────────────────
-
-function SharePreviewButton({
-  project,
-  preview,
-  isLoading,
-  onShare,
-  onDeactivate,
-}: {
-  project: TrackerProject;
-  preview?: { url: string; previewId: string; isActive: boolean };
-  isLoading: boolean;
-  onShare: (p: TrackerProject) => void;
-  onDeactivate: (p: TrackerProject) => void;
-}) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  // If preview is active, show "Active" badge with dropdown
-  if (preview?.isActive) {
-    return (
-      <div className="relative">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setDropdownOpen((prev) => !prev);
-          }}
-          disabled={isLoading}
-          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded border border-green-300 bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-          Active
-          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-        {dropdownOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-30"
-              onClick={() => setDropdownOpen(false)}
-              aria-hidden="true"
-            />
-            <div className="absolute right-0 top-full mt-1 w-36 bg-white border border-neutral-200 rounded-lg shadow-lg z-40 py-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDropdownOpen(false);
-                  onShare(project);
-                }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-neutral-700 hover:bg-neutral-50 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" />
-                  <line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-                Open
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDropdownOpen(false);
-                  onDeactivate(project);
-                }}
-                className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="15" y1="9" x2="9" y2="15" />
-                  <line x1="9" y1="9" x2="15" y2="15" />
-                </svg>
-                Deactivate
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
-
-  // Default state: show "Share" button
-  return (
-    <button
-      type="button"
-      onClick={() => onShare(project)}
-      disabled={isLoading}
-      className="inline-flex items-center gap-1 px-1.5 py-1 text-xs font-medium rounded border border-brand-cerulean/30 bg-brand-cerulean/5 text-brand-cerulean hover:bg-brand-cerulean/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      title="Generate and open a public preview link"
-    >
-      {isLoading ? (
-        <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-        </svg>
-      ) : (
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-          <polyline points="16 6 12 2 8 6" />
-          <line x1="12" y1="2" x2="12" y2="15" />
-        </svg>
-      )}
-      {isLoading ? "..." : "Share"}
-    </button>
   );
 }
 
