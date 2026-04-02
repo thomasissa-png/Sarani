@@ -652,27 +652,37 @@ export default function InboxPage() {
   const clientFilteredItems = activeClientFilter === "all"
     ? filteredItems
     : filteredItems.filter((i) => {
-        if (!i.summary) return activeClientFilter === "Others";
-        try {
-          const parsed = typeof i.summary === "string" ? JSON.parse(i.summary) : i.summary;
-          const from = ((parsed.from as string) ?? "").toLowerCase();
-          const subject = ((parsed.subject as string) ?? "").toLowerCase();
-          const body = ((parsed.bodyPreview as string) ?? "").toLowerCase();
-          const text = `${from} ${subject} ${body}`;
-          const clientLower = activeClientFilter.toLowerCase();
-          // Match client name in from/subject/body
-          if (text.includes(clientLower)) return true;
-          // Special cases
-          if (activeClientFilter === "TikTok" && (text.includes("tiktok") || text.includes("bytedance"))) return true;
-          if (activeClientFilter === "Ubi" && (text.includes("ubisoft") || text.includes("@ubi."))) return true;
-          if (activeClientFilter === "PICO XR" && text.includes("pico")) return true;
-          if (activeClientFilter === "Others") {
-            // Items that don't match any known client
-            const knownClients = ["tiktok", "sony", "bose", "ubi", "ubisoft", "lamarck", "aristocrat", "aujan", "cmc", "pico", "geodis"];
-            return !knownClients.some((c) => text.includes(c));
-          }
-          return false;
-        } catch { return activeClientFilter === "Others"; }
+        // Build searchable text from ALL available fields
+        let text = ((i.title as string) ?? "").toLowerCase();
+
+        if (i.summary) {
+          try {
+            const parsed = typeof i.summary === "string" ? JSON.parse(i.summary) : i.summary;
+            const from = ((parsed.from as string) ?? "").toLowerCase();
+            const subject = ((parsed.subject as string) ?? "").toLowerCase();
+            const body = ((parsed.bodyPreview as string) ?? "").toLowerCase();
+            const projectName = ((parsed.projectName as string) ?? "").toLowerCase();
+            const clientName = ((parsed.clientName as string) ?? "").toLowerCase();
+            const clickupHint = ((parsed.classification?.clickupProjectHint as string) ?? "").toLowerCase();
+            text += ` ${from} ${subject} ${body} ${projectName} ${clientName} ${clickupHint}`;
+          } catch { /* keep title-only text */ }
+        }
+
+        if (!text.trim()) return activeClientFilter === "Others";
+
+        const clientLower = activeClientFilter.toLowerCase();
+        // Direct match
+        if (text.includes(clientLower)) return true;
+        // Special cases
+        if (activeClientFilter === "TikTok" && (text.includes("tiktok") || text.includes("bytedance"))) return true;
+        if (activeClientFilter === "Ubi" && (text.includes("ubisoft") || text.includes("@ubi.") || text.includes("adidas") || text.includes("lego") || text.includes("red bull") || text.includes("ikea") || text.includes("perrier") || text.includes("barilla"))) return true;
+        if (activeClientFilter === "PICO XR" && text.includes("pico")) return true;
+        if (activeClientFilter === "CMC Markets" && text.includes("cmc")) return true;
+        if (activeClientFilter === "Others") {
+          const knownClients = ["tiktok", "sony", "bose", "ubi", "ubisoft", "lamarck", "aristocrat", "aujan", "cmc", "pico", "geodis", "adidas", "lego", "bytedance"];
+          return !knownClients.some((c) => text.includes(c));
+        }
+        return false;
       });
 
   // Pagination: show 20 items at a time, "Show more" loads 20 more
