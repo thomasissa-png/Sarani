@@ -62,6 +62,27 @@ export const clientFormSchema = z.object({
     .enum(CONTRACT_TEMPLATE_OPTIONS)
     .optional()
     .or(z.literal("")),
+
+  // Bloc workspace (optional)
+  clickupSpaceId: z.string().max(100).optional().or(z.literal("")),
+  sharepointFolder: z.string().max(500).optional().or(z.literal("")),
+  excelTrackerFilename: z.string().max(200).optional().or(z.literal("")),
+  brandGuidelinesLink: z
+    .string()
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")),
+  logoFolderLink: z
+    .string()
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")),
+  fontFolderLink: z
+    .string()
+    .url("Must be a valid URL")
+    .optional()
+    .or(z.literal("")),
+  notes: z.string().max(5000).optional().or(z.literal("")),
 });
 
 export type ClientFormData = z.infer<typeof clientFormSchema>;

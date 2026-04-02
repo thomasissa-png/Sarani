@@ -33,6 +33,43 @@ interface ScanResult {
 
 type ScanStatus = "idle" | "scanning" | "done" | "error";
 
+// ─── Knowledge Base Types ──────────────────────────────────────────────────
+
+interface KnowledgeEntry {
+  id: string;
+  category: string;
+  content: string;
+  division?: string | null;
+  contactName?: string | null;
+  source?: string;
+  confidence?: string | null;
+  isActive?: boolean | null;
+  createdAt: string;
+}
+
+interface ClientKnowledgeGroup {
+  clientName: string;
+  entries: KnowledgeEntry[];
+  count: number;
+}
+
+interface TeamKnowledgeEntry {
+  id: string;
+  category: string;
+  content: string;
+  memberName: string;
+  role?: string;
+  source?: string | null;
+  confidence?: string | null;
+  isActive?: boolean | null;
+  createdAt: string;
+}
+
+interface KnowledgeData {
+  clients: ClientKnowledgeGroup[];
+  team: TeamKnowledgeEntry[];
+}
+
 // ─── Agent list ─────────────────────────────────────────────────────────────
 
 const AGENTS = [
@@ -87,6 +124,13 @@ export default function AryaSupervisionPage() {
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
+
+  // Knowledge base state
+  const [knowledge, setKnowledge] = useState<KnowledgeData | null>(null);
+  const [knowledgeLoading, setKnowledgeLoading] = useState(true);
+  const [knowledgeError, setKnowledgeError] = useState<string | null>(null);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set());
+  const [expandedTeam, setExpandedTeam] = useState(false);
 
   const handleScanEmails = useCallback(async () => {
     setScanStatus("scanning");
@@ -161,6 +205,34 @@ export default function AryaSupervisionPage() {
     }
 
     fetchData();
+    return () => { mounted = false; };
+  }, []);
+
+  // Fetch knowledge base data
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchKnowledge() {
+      try {
+        const res = await fetch("/api/admin/knowledge");
+        if (!mounted) return;
+
+        if (res.ok) {
+          const data: KnowledgeData = await res.json();
+          setKnowledge(data);
+        } else {
+          setKnowledgeError("Failed to load knowledge base");
+        }
+      } catch {
+        if (mounted) {
+          setKnowledgeError("Unable to load knowledge base — check your connection");
+        }
+      } finally {
+        if (mounted) setKnowledgeLoading(false);
+      }
+    }
+
+    fetchKnowledge();
     return () => { mounted = false; };
   }, []);
 
@@ -292,6 +364,210 @@ export default function AryaSupervisionPage() {
             structured knowledge (preferences, communication style, feedback patterns).
           </p>
         )}
+      </div>
+
+      {/* Knowledge Base Explorer */}
+      <div className="bg-white rounded-xl border border-neutral-300 p-6">
+        <div className="mb-4">
+          <h2 className="text-lg font-semibold text-brand-black">
+            Knowledge Base
+          </h2>
+          <p className="text-sm text-neutral-500 mt-0.5">
+            Structured knowledge about clients and team members extracted by Arya
+          </p>
+        </div>
+
+        {knowledgeLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse flex gap-3 py-3 border-b border-neutral-100 last:border-0">
+                <div className="h-5 w-32 bg-neutral-200 rounded" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/2 bg-neutral-200 rounded" />
+                  <div className="h-3 w-1/4 bg-neutral-200 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : knowledgeError ? (
+          <div className="bg-brand-flame/10 border border-brand-flame/30 rounded-lg px-4 py-3 text-sm text-brand-flame" role="alert">
+            {knowledgeError}
+          </div>
+        ) : knowledge && knowledge.clients.length === 0 && knowledge.team.length === 0 ? (
+          <p className="text-neutral-400 text-sm py-8 text-center">
+            No knowledge entries yet. Use the Email Scan above or process inbox items to build the knowledge base.
+          </p>
+        ) : knowledge ? (
+          <div className="space-y-6">
+            {/* Client Knowledge */}
+            {knowledge.clients.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-neutral-600 uppercase tracking-wide mb-3">
+                  Client Knowledge ({knowledge.clients.reduce((sum, c) => sum + c.count, 0)} entries)
+                </h3>
+                <div className="divide-y divide-neutral-100">
+                  {knowledge.clients.map((client) => {
+                    const isExpanded = expandedClients.has(client.clientName);
+                    return (
+                      <div key={client.clientName}>
+                        <button
+                          onClick={() => {
+                            setExpandedClients((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(client.clientName)) {
+                                next.delete(client.clientName);
+                              } else {
+                                next.add(client.clientName);
+                              }
+                              return next;
+                            });
+                          }}
+                          className="w-full flex items-center justify-between py-3 text-left hover:bg-neutral-50 rounded-lg px-2 transition-colors"
+                          aria-expanded={isExpanded}
+                          aria-label={`Toggle knowledge entries for ${client.clientName}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-brand-black">
+                              {client.clientName}
+                            </span>
+                            <span className="text-xs bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full">
+                              {client.count} {client.count === 1 ? "entry" : "entries"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-neutral-400">
+                              {client.entries.length > 0
+                                ? formatRelativeTime(client.entries[0].createdAt)
+                                : ""}
+                            </span>
+                            <svg
+                              className={cn(
+                                "w-4 h-4 text-neutral-400 transition-transform",
+                                isExpanded && "rotate-180"
+                              )}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="pl-4 pb-3 space-y-2">
+                            {client.entries.map((entry) => (
+                              <div
+                                key={entry.id}
+                                className="bg-neutral-50 rounded-lg p-3 space-y-1"
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span
+                                    className={cn(
+                                      "text-xs font-semibold px-2 py-0.5 rounded-full",
+                                      CATEGORY_COLORS[entry.category] ?? "bg-neutral-100 text-neutral-600"
+                                    )}
+                                  >
+                                    {entry.category}
+                                  </span>
+                                  {entry.confidence && (
+                                    <span className="text-xs text-neutral-400">
+                                      {entry.confidence}
+                                    </span>
+                                  )}
+                                  {entry.contactName && (
+                                    <span className="text-xs text-neutral-400">
+                                      {entry.contactName}
+                                    </span>
+                                  )}
+                                  <span className="text-xs text-neutral-400 ml-auto">
+                                    {formatRelativeTime(entry.createdAt)}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-neutral-700">{entry.content}</p>
+                                {entry.source && (
+                                  <p className="text-xs text-neutral-400 truncate">
+                                    Source: {entry.source}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Team Knowledge */}
+            {knowledge.team.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-neutral-600 uppercase tracking-wide mb-3">
+                  Team Knowledge ({knowledge.team.length} entries)
+                </h3>
+                <button
+                  onClick={() => setExpandedTeam((prev) => !prev)}
+                  className="w-full flex items-center justify-between py-3 text-left hover:bg-neutral-50 rounded-lg px-2 transition-colors"
+                  aria-expanded={expandedTeam}
+                  aria-label="Toggle team knowledge entries"
+                >
+                  <span className="text-sm font-semibold text-brand-black">
+                    Team Members
+                  </span>
+                  <svg
+                    className={cn(
+                      "w-4 h-4 text-neutral-400 transition-transform",
+                      expandedTeam && "rotate-180"
+                    )}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {expandedTeam && (
+                  <div className="pl-4 pb-3 space-y-2">
+                    {knowledge.team.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="bg-neutral-50 rounded-lg p-3 space-y-1"
+                      >
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={cn(
+                              "text-xs font-semibold px-2 py-0.5 rounded-full",
+                              CATEGORY_COLORS[entry.category] ?? "bg-neutral-100 text-neutral-600"
+                            )}
+                          >
+                            {entry.category}
+                          </span>
+                          <span className="text-xs font-medium text-brand-black">
+                            {entry.memberName}
+                          </span>
+                          {entry.role && (
+                            <span className="text-xs text-neutral-400">
+                              ({entry.role})
+                            </span>
+                          )}
+                          <span className="text-xs text-neutral-400 ml-auto">
+                            {formatRelativeTime(entry.createdAt)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-neutral-700">{entry.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {/* Recent Learnings */}

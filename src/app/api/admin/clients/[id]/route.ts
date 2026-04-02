@@ -71,6 +71,13 @@ export async function PUT(
         vatNumber: data.vatNumber || null,
         signedFrameworkAgreement: data.signedFrameworkAgreement,
         preferredContractTemplate: data.preferredContractTemplate || null,
+        clickupSpaceId: data.clickupSpaceId || null,
+        sharepointFolder: data.sharepointFolder || null,
+        excelTrackerFilename: data.excelTrackerFilename || null,
+        brandGuidelinesLink: data.brandGuidelinesLink || null,
+        logoFolderLink: data.logoFolderLink || null,
+        fontFolderLink: data.fontFolderLink || null,
+        notes: data.notes || null,
         updatedAt: new Date(),
       })
       .where(eq(clients.id, id));

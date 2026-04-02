@@ -49,6 +49,15 @@ export const clients = pgTable(
     signedFrameworkAgreement: boolean("signed_framework_agreement").default(false),
     preferredContractTemplate: varchar("preferred_contract_template", { length: 20 }), // UGC | SOW | NDA | other
 
+    // Bloc workspace (optional)
+    clickupSpaceId: text("clickup_space_id"),
+    sharepointFolder: text("sharepoint_folder"),
+    excelTrackerFilename: text("excel_tracker_filename"),
+    brandGuidelinesLink: text("brand_guidelines_link"),
+    logoFolderLink: text("logo_folder_link"),
+    fontFolderLink: text("font_folder_link"),
+    notes: text("notes"),
+
     // Timestamps
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

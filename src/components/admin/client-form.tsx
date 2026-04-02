@@ -157,6 +157,39 @@ export function ClientForm({
         </label>
       </FormSection>
 
+      {/* Bloc 5: Workspace */}
+      <FormSection title="Workspace" description="ClickUp, SharePoint, and asset links (optional)">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="ClickUp Space ID" error={errors.clickupSpaceId?.message}>
+            <input {...register("clickupSpaceId")} className={inputClass} placeholder="e.g. 12345678" />
+          </Field>
+
+          <Field label="SharePoint Folder" error={errors.sharepointFolder?.message}>
+            <input {...register("sharepointFolder")} className={inputClass} placeholder="e.g. /Clients/TikTok/Assets" />
+          </Field>
+
+          <Field label="Excel Tracker Filename" error={errors.excelTrackerFilename?.message}>
+            <input {...register("excelTrackerFilename")} className={inputClass} placeholder="e.g. TikTok_Tracker_2026.xlsx" />
+          </Field>
+
+          <Field label="Brand Guidelines Link" error={errors.brandGuidelinesLink?.message}>
+            <input {...register("brandGuidelinesLink")} type="url" className={inputClass} placeholder="https://sharepoint.com/..." />
+          </Field>
+
+          <Field label="Logo Folder Link" error={errors.logoFolderLink?.message}>
+            <input {...register("logoFolderLink")} type="url" className={inputClass} placeholder="https://sharepoint.com/..." />
+          </Field>
+
+          <Field label="Font Folder Link" error={errors.fontFolderLink?.message}>
+            <input {...register("fontFolderLink")} type="url" className={inputClass} placeholder="https://sharepoint.com/..." />
+          </Field>
+        </div>
+
+        <Field label="Notes" error={errors.notes?.message}>
+          <textarea {...register("notes")} className={textareaClass} rows={4} placeholder="Free-form notes about the client..." />
+        </Field>
+      </FormSection>
+
       {/* Submit */}
       <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200">
         {cancelHref && (
