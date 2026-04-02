@@ -423,7 +423,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
             alt="Sarani"
             width={120}
             height={32}
-            className="h-8 w-auto"
+            className="h-10 w-auto"
           />
           <a
             href="https://sarani.studio"
