@@ -28,6 +28,7 @@ const AssetReviewInputSchema = z.object({
   projectId: z.string().min(1, "projectId is required"),
   briefSummary: z.string().optional(),
   expectedDeliverables: z.array(ExpectedDeliverableSchema).optional(),
+  mode: z.enum(["brief", "feedback"]).optional(), // "feedback" = compare 2 latest batches
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -268,10 +269,125 @@ export async function POST(request: NextRequest) {
       // Non-critical — the folder link is a nice-to-have
     }
 
-    // List all files in the project folder
+    // ─── Feedback mode: compare 2 latest batches ────────────────────────
+    if (body.mode === "feedback") {
+      // List top-level items (batch folders) in the project folder
+      let topLevelItems: DriveItemWithThumbnails[];
+      if (resolvedItemId && folderPath === "__resolved__") {
+        const data = await graphFetch<{ value: DriveItemWithThumbnails[] }>(
+          `/drives/${resolvedDriveId}/items/${resolvedItemId}/children?$expand=thumbnails`
+        );
+        topLevelItems = data.value ?? [];
+      } else {
+        topLevelItems = await listDriveItemsWithThumbnails(resolvedDriveId, folderPath!);
+      }
+
+      // Find batch folders (exclude system/hidden folders)
+      const batchFolders = topLevelItems
+        .filter((item) => item.folder && !item.name.startsWith(".") && !item.name.startsWith("~$"))
+        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+      if (batchFolders.length < 2) {
+        return NextResponse.json({
+          report: {
+            mode: "feedback",
+            totalFiles: 0,
+            expectedFiles: 0,
+            matches: [],
+            missing: [],
+            unexpected: [],
+            anomalies: [],
+            batchComparison: null,
+            error: batchFolders.length === 0
+              ? "No batch folders found in this project"
+              : "Only 1 batch found — need at least 2 to compare",
+          },
+          folderPath,
+          folderWebUrl,
+        });
+      }
+
+      // Take the 2 most recent batches (last 2 after natural sort)
+      const previousBatch = batchFolders[batchFolders.length - 2];
+      const latestBatch = batchFolders[batchFolders.length - 1];
+
+      // List files in both batches
+      const listBatchFiles = async (folder: DriveItemWithThumbnails) => {
+        const batchPath = resolvedItemId && folderPath === "__resolved__"
+          ? null
+          : `${folderPath}/${folder.name}`;
+
+        let items: DriveItemWithThumbnails[];
+        if (batchPath) {
+          items = await listDriveItemsWithThumbnails(resolvedDriveId, batchPath);
+        } else {
+          const data = await graphFetch<{ value: DriveItemWithThumbnails[] }>(
+            `/drives/${resolvedDriveId}/items/${folder.id}/children?$expand=thumbnails`
+          );
+          items = data.value ?? [];
+        }
+        return items
+          .filter((i) => i.file && !i.name.startsWith(".") && !i.name.startsWith("~$"))
+          .map((i) => ({
+            name: i.name,
+            size: i.size,
+            mimeType: i.file?.mimeType ?? "",
+            thumbnailUrl: extractThumbnailUrl(i),
+            lastModified: i.lastModifiedDateTime,
+          }));
+      };
+
+      const [previousFiles, latestFiles] = await Promise.all([
+        listBatchFiles(previousBatch),
+        listBatchFiles(latestBatch),
+      ]);
+
+      // Compare: find added, removed, modified files
+      const previousByName = new Map(previousFiles.map((f) => [f.name.toLowerCase(), f]));
+      const latestByName = new Map(latestFiles.map((f) => [f.name.toLowerCase(), f]));
+
+      const added = latestFiles.filter((f) => !previousByName.has(f.name.toLowerCase()));
+      const removed = previousFiles.filter((f) => !latestByName.has(f.name.toLowerCase()));
+      const modified = latestFiles.filter((f) => {
+        const prev = previousByName.get(f.name.toLowerCase());
+        return prev && prev.size !== f.size; // Different size = modified
+      });
+      const unchanged = latestFiles.filter((f) => {
+        const prev = previousByName.get(f.name.toLowerCase());
+        return prev && prev.size === f.size;
+      });
+
+      return NextResponse.json({
+        report: {
+          mode: "feedback",
+          totalFiles: latestFiles.length,
+          expectedFiles: previousFiles.length,
+          matches: [],
+          missing: [],
+          unexpected: [],
+          anomalies: [],
+          batchComparison: {
+            previousBatch: previousBatch.name,
+            latestBatch: latestBatch.name,
+            previousFileCount: previousFiles.length,
+            latestFileCount: latestFiles.length,
+            added: added.map((f) => ({ name: f.name, size: f.size, mimeType: f.mimeType, thumbnailUrl: f.thumbnailUrl })),
+            removed: removed.map((f) => ({ name: f.name, size: f.size, mimeType: f.mimeType })),
+            modified: modified.map((f) => {
+              const prev = previousByName.get(f.name.toLowerCase())!;
+              return { name: f.name, previousSize: prev.size, newSize: f.size, mimeType: f.mimeType, thumbnailUrl: f.thumbnailUrl };
+            }),
+            unchanged: unchanged.map((f) => ({ name: f.name, size: f.size, mimeType: f.mimeType })),
+          },
+        },
+        folderPath,
+        folderWebUrl,
+      });
+    }
+
+    // ─── Brief mode (default): list all files and compare vs deliverables ──
     let files: DriveItemWithThumbnails[];
     if (resolvedItemId && folderPath === "__resolved__") {
-      // Resolved from full URL — list children by item ID
       const data = await graphFetch<{ value: DriveItemWithThumbnails[] }>(
         `/drives/${resolvedDriveId}/items/${resolvedItemId}/children?$expand=thumbnails`
       );

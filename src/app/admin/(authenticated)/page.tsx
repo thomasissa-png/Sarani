@@ -531,13 +531,15 @@ export default function InboxPage() {
           }
 
           if (updatedItem.protocol === "PROTO-REVIEW-INTAKE") {
-            // Redirect to Asset Review page with clickup task ID for auto-loading brief
+            // Redirect to Asset Review page with clickup task ID + review mode
             try {
               const summaryData = JSON.parse(updatedItem.summary ?? "{}") as Record<string, unknown>;
               const clickupTaskId = (summaryData.clickupTaskId as string) ?? updatedItem.projectId ?? "";
+              const reviewMode = (summaryData.reviewMode as string) ?? "brief";
               if (clickupTaskId) {
-                showToast("Opening Asset Review...", "success");
-                window.location.href = `/admin/asset-review?clickupTaskId=${encodeURIComponent(clickupTaskId)}`;
+                const modeLabel = reviewMode === "feedback" ? "Feedback Review" : "Asset Review";
+                showToast(`Opening ${modeLabel}...`, "success");
+                window.location.href = `/admin/asset-review?clickupTaskId=${encodeURIComponent(clickupTaskId)}&mode=${reviewMode}`;
                 return;
               }
             } catch { /* fallback below */ }

@@ -7,6 +7,7 @@ import {
   getListsForSpace,
   getTasksForList,
   checkHealth,
+  getTaskComments,
   type ClickUpTask,
 } from "@/lib/integrations/clickup";
 import { getMappingBySpaceId } from "@/lib/integrations/config";
@@ -199,6 +200,8 @@ async function triggerAryaVerification(task: ClickUpTask): Promise<void> {
 /**
  * Create an inbox item for human review.
  * Resolves clientName from ClickUp space mapping for proper client filtering.
+ * Detects review mode: "brief" (first delivery, no comments) vs "feedback"
+ * (return round, has comments since the task was created).
  */
 async function createReviewInboxItem(task: ClickUpTask, spaceName: string): Promise<void> {
   // Resolve client name from space ID mapping (e.g., ByteDance space → "TikTok")
@@ -206,22 +209,38 @@ async function createReviewInboxItem(task: ClickUpTask, spaceName: string): Prom
   const mapping = spaceId ? getMappingBySpaceId(spaceId) : undefined;
   const clientName = mapping?.clickupSpaceName ?? spaceName;
 
+  // Detect mode: if task has comments → feedback round, else → first delivery
+  let reviewMode: "brief" | "feedback" = "brief";
+  try {
+    const comments = await getTaskComments(task.id);
+    if (comments.length > 0) {
+      reviewMode = "feedback";
+    }
+  } catch {
+    // If comments fetch fails, default to brief mode
+  }
+
+  const isFeedback = reviewMode === "feedback";
+
   await db.insert(inboxItems).values({
     type: "review_human",
     status: "pending",
-    title: `Review Ready — ${task.name}`,
+    title: isFeedback
+      ? `Feedback Review — ${task.name}`
+      : `Review Ready — ${task.name}`,
     summary: JSON.stringify({
       clickupTaskId: task.id,
       taskName: task.name,
       taskUrl: task.url,
       spaceName,
       clientName,
+      reviewMode,
     }),
     sourceId: task.id,
     sourceType: "cron",
     protocol: "PROTO-REVIEW-INTAKE",
     projectId: task.id,
-    priority: "medium",
+    priority: isFeedback ? "high" : "medium",
   });
 }
 

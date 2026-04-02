@@ -157,16 +157,18 @@ function AssetReviewContent() {
   const [returningToDesigner, setReturningToDesigner] = useState(false);
   const [returnedToDesigner, setReturnedToDesigner] = useState(false);
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [reviewMode, setReviewMode] = useState<"brief" | "feedback">("brief");
   const autoLoadedRef = useRef(false);
 
   const canScan = projectPath.trim().length > 0 && status !== "scanning";
 
-  // ─── Load brief from ClickUp task ────────────────────────────────────────
-  const loadBriefFromClickUp = useCallback(async (taskId: string) => {
+  // ─── Load brief or feedback from ClickUp task ───────────────────────────
+  const loadBriefFromClickUp = useCallback(async (taskId: string, mode: "brief" | "feedback" = "brief") => {
     if (!taskId.trim()) return;
     setLoadingBrief(true);
     try {
-      const res = await fetch(`/api/admin/assets/review/brief?taskId=${encodeURIComponent(taskId.trim())}`);
+      const modeParam = mode === "feedback" ? "&mode=feedback" : "";
+      const res = await fetch(`/api/admin/assets/review/brief?taskId=${encodeURIComponent(taskId.trim())}${modeParam}`);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Failed to load brief (${res.status})`);
@@ -177,7 +179,7 @@ function AssetReviewContent() {
         setBriefLoaded(true);
         setTimeout(() => setBriefLoaded(false), 3000);
       }
-      // Auto-fill SharePoint project path from ClickUp custom field "Folder URL"
+      // Auto-fill SharePoint project path from ClickUp custom field
       if (data.folderUrl && !projectPath) {
         setProjectPath(data.folderUrl);
       }
@@ -196,9 +198,14 @@ function AssetReviewContent() {
     if (autoLoadedRef.current) return;
     const paramPath = searchParams.get("projectPath");
     const paramTaskId = searchParams.get("clickupTaskId");
+    const paramMode = searchParams.get("mode") as "brief" | "feedback" | null;
 
     if (!paramPath && !paramTaskId) return;
     autoLoadedRef.current = true;
+
+    if (paramMode === "feedback") {
+      setReviewMode("feedback");
+    }
 
     if (paramPath) {
       setProjectPath(paramPath);
@@ -206,7 +213,7 @@ function AssetReviewContent() {
     }
     if (paramTaskId) {
       setClickupTaskId(paramTaskId);
-      loadBriefFromClickUp(paramTaskId);
+      loadBriefFromClickUp(paramTaskId, paramMode ?? "brief");
     }
   }, [searchParams, loadBriefFromClickUp]);
 
@@ -231,6 +238,7 @@ function AssetReviewContent() {
           projectId: projectPath.trim(),
           briefSummary: briefSummary.trim() || undefined,
           expectedDeliverables: expectedDeliverables.length > 0 ? expectedDeliverables : undefined,
+          mode: reviewMode,
         }),
       });
 
