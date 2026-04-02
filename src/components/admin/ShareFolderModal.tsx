@@ -39,6 +39,7 @@ interface FoldersResponse {
   files: FileItem[];
   totalFolders: number;
   totalFiles: number;
+  driveId?: string;
 }
 
 interface ShareFolderModalProps {
@@ -159,7 +160,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           clientName,
           projectName,
           spFolderId: folderId,
-          spDriveId: "", // Will be resolved server-side
+          spDriveId: data?.driveId ?? "",
           brief: `Deliverables for ${projectName} — ${folderName}`,
         }),
       });
@@ -296,7 +297,15 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
             <div className="py-8 text-center">
               <p className="text-sm text-red-600 mb-3">{error}</p>
               <button
-                onClick={() => fetchFolders(breadcrumb)}
+                onClick={() => {
+                  if (breadcrumb.length > 0) {
+                    fetchFolders({ folderId: breadcrumb[breadcrumb.length - 1].folderId });
+                  } else if (sharepointLink) {
+                    fetchFolders({ url: sharepointLink });
+                  } else {
+                    fetchFolders({ clientRoot: true });
+                  }
+                }}
                 className="text-sm text-brand-cerulean hover:underline"
               >
                 Try again

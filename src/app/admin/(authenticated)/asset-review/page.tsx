@@ -255,7 +255,7 @@ function AssetReviewContent() {
       setErrorMessage(message);
       setStatus("error");
     }
-  }, [canScan, projectPath, briefSummary]);
+  }, [canScan, projectPath, briefSummary, reviewMode]);
 
   // Auto-scan when path is populated from URL params
   useEffect(() => {

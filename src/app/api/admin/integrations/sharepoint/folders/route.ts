@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
         files,
         totalFolders: folders.length,
         totalFiles: files.length,
+        driveId: SHAREPOINT_ASSETS_DRIVE_ID,
         resolvedFrom: "folderId",
       });
     }
@@ -144,6 +145,7 @@ export async function GET(request: NextRequest) {
         files,
         totalFolders: folders.length,
         totalFiles: files.length,
+        driveId,
         resolvedFrom: "url",
       });
     }
