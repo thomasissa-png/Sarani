@@ -306,6 +306,27 @@ export async function updateTaskStatus(
  * Post a comment on a task.
  * Uses plain text format (comment_text).
  */
+export interface ClickUpComment {
+  id: string;
+  comment_text: string;
+  date: string; // unix ms timestamp
+  user: { id: number; username: string; email: string };
+}
+
+/**
+ * Get comments on a ClickUp task, ordered by date DESC (newest first).
+ */
+export async function getTaskComments(
+  taskId: string
+): Promise<ClickUpComment[]> {
+  const data = await clickupFetch<{ comments: ClickUpComment[] }>(
+    `/task/${taskId}/comment`
+  );
+  return (data.comments ?? []).sort(
+    (a, b) => parseInt(b.date) - parseInt(a.date)
+  );
+}
+
 export async function addTaskComment(
   taskId: string,
   commentText: string

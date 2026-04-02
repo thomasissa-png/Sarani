@@ -1,8 +1,8 @@
-// SSR — Load brief/description from a ClickUp task for asset review
+// SSR — Load brief OR latest feedback from a ClickUp task for asset review
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getTask, type ClickUpTask } from "@/lib/integrations/clickup";
+import { getTask, getTaskComments, type ClickUpTask } from "@/lib/integrations/clickup";
 
 /**
  * Find the SharePoint project folder URL from ANY custom field in a ClickUp task.
@@ -20,13 +20,19 @@ function findSharePointUrl(task: ClickUpTask): string | null {
   return null;
 }
 
+/**
+ * GET /api/admin/assets/review/brief?taskId=xxx
+ * GET /api/admin/assets/review/brief?taskId=xxx&mode=feedback
+ *
+ * mode=feedback: returns the latest ClickUp comment as the review context
+ *                (instead of the original brief/description)
+ */
 export async function GET(request: NextRequest) {
   const session = await getUserFromSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Rate limit: 20 req/min
   if (!checkRateLimit("asset-review-brief", 20, 60_000)) {
     return NextResponse.json(
       { error: "Rate limit exceeded. Try again in 1 minute." },
@@ -35,6 +41,8 @@ export async function GET(request: NextRequest) {
   }
 
   const taskId = request.nextUrl.searchParams.get("taskId");
+  const mode = request.nextUrl.searchParams.get("mode"); // "feedback" or null
+
   if (!taskId || taskId.trim().length === 0) {
     return NextResponse.json(
       { error: "taskId query parameter is required" },
@@ -44,8 +52,44 @@ export async function GET(request: NextRequest) {
 
   try {
     const task = await getTask(taskId.trim());
+    const folderUrl = findSharePointUrl(task);
 
-    // Build brief from task description + subtask names
+    // ─── Feedback mode: return latest ClickUp comments ──────────────
+    if (mode === "feedback") {
+      const comments = await getTaskComments(taskId.trim());
+
+      // Build feedback context from the most recent comments (max 5)
+      const recentComments = comments.slice(0, 5);
+      const feedbackParts: string[] = [];
+
+      if (recentComments.length > 0) {
+        feedbackParts.push(`Latest feedback on: ${task.name}`);
+        feedbackParts.push("");
+        for (const comment of recentComments) {
+          const date = new Date(parseInt(comment.date));
+          const dateStr = date.toLocaleDateString("en-GB", {
+            day: "numeric", month: "short", year: "numeric",
+          });
+          const author = comment.user?.username ?? "Unknown";
+          feedbackParts.push(`[${dateStr} — ${author}]`);
+          feedbackParts.push(comment.comment_text);
+          feedbackParts.push("");
+        }
+      } else {
+        feedbackParts.push(`No comments found on task: ${task.name}`);
+      }
+
+      return NextResponse.json({
+        brief: feedbackParts.join("\n").trim(),
+        taskName: task.name,
+        taskUrl: task.url,
+        folderUrl,
+        mode: "feedback",
+        commentCount: comments.length,
+      });
+    }
+
+    // ─── Default mode: return original brief ────────────────────────
     const parts: string[] = [];
 
     if (task.name) {
@@ -53,13 +97,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (task.description) {
-      // ClickUp descriptions can contain markdown — pass through as-is
-      // The frontend brief parser handles plain-text line extraction
       parts.push("");
       parts.push(task.description);
     }
 
-    // Include subtask names as potential deliverable list
     if (task.subtasks && task.subtasks.length > 0) {
       parts.push("");
       parts.push("Deliverables:");
@@ -70,16 +111,12 @@ export async function GET(request: NextRequest) {
 
     const brief = parts.join("\n").trim();
 
-    // Extract SharePoint folder URL from ClickUp custom fields.
-    // Instead of guessing field names, scan ALL custom fields for any
-    // value that looks like a SharePoint URL. The data is already in ClickUp.
-    const folderUrl = findSharePointUrl(task);
-
     return NextResponse.json({
       brief: brief || null,
       taskName: task.name,
       taskUrl: task.url,
       folderUrl,
+      mode: "brief",
     });
   } catch (error) {
     console.error("[Asset Review Brief] Error loading ClickUp task:", error);

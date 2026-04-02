@@ -46,6 +46,8 @@ interface ShareFolderModalProps {
   onClose: () => void;
   clientName: string;
   projectName: string;
+  clickupTaskUrl?: string;
+  sharepointLink?: string;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -65,7 +67,7 @@ function formatSize(bytes: number): string {
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ShareFolderModal({ isOpen, onClose, clientName, projectName }: ShareFolderModalProps) {
+export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink }: ShareFolderModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FoldersResponse | null>(null);
@@ -74,17 +76,22 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName }: S
   const [sharedLink, setSharedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Fetch folders for current path
-  const fetchFolders = useCallback(async (pathSegments: string[]) => {
+  // Fetch folders — supports both client-based path and direct SP URL
+  const fetchFolders = useCallback(async (pathSegments: string[], directUrl?: string) => {
     setLoading(true);
     setError(null);
     setSharedLink(null);
     setCopied(false);
 
     try {
-      const params = new URLSearchParams({ client: clientName });
-      if (pathSegments.length > 0) {
-        params.set("path", pathSegments.join("/"));
+      const params = new URLSearchParams();
+      if (directUrl) {
+        params.set("url", directUrl);
+      } else {
+        params.set("client", clientName);
+        if (pathSegments.length > 0) {
+          params.set("path", pathSegments.join("/"));
+        }
       }
 
       const res = await fetch(`/api/admin/integrations/sharepoint/folders?${params}`);
@@ -101,15 +108,21 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName }: S
     }
   }, [clientName]);
 
-  // Load root folders on open
+  // Load folders on open — use SP link from ClickUp if available
   useEffect(() => {
     if (isOpen) {
       setBreadcrumb([]);
       setSharedLink(null);
       setCopied(false);
-      fetchFolders([]);
+      if (sharepointLink) {
+        // Direct SP URL from ClickUp custom field → resolve via Graph API
+        fetchFolders([], sharepointLink);
+      } else {
+        // Fallback: browse from client root
+        fetchFolders([]);
+      }
     }
-  }, [isOpen, fetchFolders]);
+  }, [isOpen, fetchFolders, sharepointLink]);
 
   // Navigate into a subfolder
   const navigateInto = useCallback((folderName: string) => {

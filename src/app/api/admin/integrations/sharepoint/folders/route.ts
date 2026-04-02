@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
-import { listDriveItems, createAnonymousSharingLink } from "@/lib/integrations/sharepoint";
+import {
+  listDriveItems,
+  createAnonymousSharingLink,
+  resolveSharePointUrl,
+  graphFetch,
+} from "@/lib/integrations/sharepoint";
 import {
   SHAREPOINT_ASSETS_DRIVE_ID,
   ASSETS_CUSTOMERS_BASE_PATH,
@@ -8,13 +13,25 @@ import {
 } from "@/lib/integrations/config";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+interface DriveItemChild {
+  id: string;
+  name: string;
+  size: number;
+  lastModifiedDateTime: string;
+  webUrl: string;
+  folder?: { childCount: number };
+  file?: { mimeType: string };
+}
+
 /**
  * GET /api/admin/integrations/sharepoint/folders?client=TikTok
- * Lists project folders inside a client's SharePoint directory.
- * Used by the Share modal to let the PM pick the right folder.
- *
  * GET /api/admin/integrations/sharepoint/folders?client=TikTok&path=05.%20TikTok/ProjectName
- * Lists subfolders inside a specific path (for drill-down navigation).
+ * GET /api/admin/integrations/sharepoint/folders?url=https://xxx.sharepoint.com/...
+ *
+ * Three modes:
+ * 1. ?url= — resolve a direct SharePoint URL (from ClickUp custom field) and list its contents
+ * 2. ?client=&path= — drill-down into a specific subfolder
+ * 3. ?client= — list project folders inside the client's SP directory
  */
 export async function GET(request: NextRequest) {
   const session = await getUserFromSession();
@@ -29,25 +46,74 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const directUrl = request.nextUrl.searchParams.get("url");
   const client = request.nextUrl.searchParams.get("client");
   const subPath = request.nextUrl.searchParams.get("path");
 
-  if (!client) {
+  if (!directUrl && !client) {
     return NextResponse.json(
-      { error: "Missing required query parameter: client" },
+      { error: "Missing required query parameter: client or url" },
       { status: 400 }
     );
   }
 
   try {
+    // ─── Mode 1: Direct SharePoint URL (from ClickUp custom field) ────
+    if (directUrl) {
+      const item = await resolveSharePointUrl(directUrl);
+      if (!item?.id || !item?.parentReference?.driveId) {
+        return NextResponse.json(
+          { error: "Could not resolve SharePoint URL" },
+          { status: 404 }
+        );
+      }
+
+      const driveId = item.parentReference.driveId;
+      const children = await graphFetch<{ value: DriveItemChild[] }>(
+        `/drives/${driveId}/items/${item.id}/children`
+      );
+
+      const items = children.value ?? [];
+      const folders = items
+        .filter((i) => i.folder)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((i) => ({
+          name: i.name,
+          id: i.id,
+          childCount: i.folder?.childCount ?? 0,
+          lastModified: i.lastModifiedDateTime,
+          webUrl: i.webUrl,
+        }));
+
+      const files = items
+        .filter((i) => i.file)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((i) => ({
+          name: i.name,
+          id: i.id,
+          size: i.size,
+          mimeType: i.file?.mimeType ?? "",
+          lastModified: i.lastModifiedDateTime,
+          webUrl: i.webUrl,
+        }));
+
+      return NextResponse.json({
+        path: item.name ?? "Project folder",
+        folders,
+        files,
+        totalFolders: folders.length,
+        totalFiles: files.length,
+        resolvedFrom: "url",
+      });
+    }
+
+    // ─── Mode 2 & 3: Client-based path resolution ────────────────────
     let folderPath: string;
 
     if (subPath) {
-      // Drill-down: list contents of a specific subfolder
       folderPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${subPath}`;
     } else {
-      // Root: list project folders inside the client's SP directory
-      const mapping = getMappingBySpaceName(client);
+      const mapping = getMappingBySpaceName(client!);
       if (!mapping) {
         return NextResponse.json(
           { error: `No SharePoint mapping found for client "${client}"` },

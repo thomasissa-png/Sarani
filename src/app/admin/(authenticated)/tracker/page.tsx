@@ -1292,6 +1292,8 @@ export default function TrackerPage() {
         onClose={() => setShareModalProject(null)}
         clientName={shareModalProject?.client ?? ""}
         projectName={shareModalProject?.project ?? ""}
+        sharepointLink={shareModalProject?.sharepointLink ?? ""}
+        clickupTaskUrl={shareModalProject?.clickupTaskUrl ?? ""}
       />
     </div>
   );
