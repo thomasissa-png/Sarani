@@ -28,7 +28,50 @@ const CLIENT_BRANDING: Record<string, string> = {
 - Projects folder (Sony Europe): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBcCvUgAzMbQ6ep6NU2gwDaAXs0wAKlVuw_jTB3k5Olr8A
 - Projects folder (Sony France): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCeSwE3o4J-T4-eIOHQx01DAY78Dc9-8Je9xFxud2aM-eE
 - Projects folder (Sony Pro): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDiBHRNhUD8S7Eb50r9PiRKAX4J2cDov4obkwQ9sifF-LY`,
-  // Add more clients as Thomas provides them
+
+  Lamarck: `- TYPE: Partner agency (TVA 20%). End client: MIKO Relai d'Or
+- Charte MIKO: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQDfXwOvZseyTJP5rq6C1TRUAUAc5dcmwgPvRzNBPfQXI2c
+- Logos MIKO: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDktrAXJTaFSZeIPtlpEp-5AW5FnPKMaDvqJ4SaehIoJiA
+- Content library: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDLKQmm7iV8TKqYWWwCyulzAVwCzt8-TEJ67qbYl28cpds
+- Projects (catalogues): https://saranistudio.sharepoint.com/:f:/r/sites/SaraniAssets/Shared%20Documents/03.%20Customers/21.Lamarck/2.Catalogues
+- Projects (hors catalogue): https://saranistudio.sharepoint.com/:f:/r/sites/SaraniAssets/Shared%20Documents/03.%20Customers/21.Lamarck/3.Cr%C3%A9as%20-%20Hors%20catalogues
+- ClickUp: https://app.clickup.com/14389859/v/li/901708730218`,
+
+  "CMC Markets": `- TYPE: End client
+- Brand guidelines + logo: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCnEmhVukvISL7fxouW_sPnAVdS8Y3dQjd8YtzbkQTELhs
+- Projects folder: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDQdkRT7xrtQbgflPZMPMc-AfpJXeqkNg9cjSITiij_ezw
+- ClickUp: https://app.clickup.com/14389859/v/li/901708074740`,
+
+  Bose: `- TYPE: End client
+- Guidelines: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMrKMBePVfQY-z0u2iwAa_AadlAU9eOtOqcZy8jQiD2Cg
+- Logos: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAzFUoicfYcRqCFgDaSCn0hAT90Bf_uj7C1Mc7J09ygRoM
+- Fonts: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBZk4O5VR0tQZzaBi822r50AemNHN0JMdibM6rAfWVDPpY
+- Palette: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCBAT58XQCARomKBGZcDskXAZK19wgSxaMO-usjnq4J7CI
+- Projects: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBWxeaeB9lPQqcj9YgZW6EQAZz4uIQhm0XldkBNT40ai9E (sort by Bose entity)
+- Asset library: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBWsfMlV66cTJbLAkbe8pkZAbsgwbSYCaRldXUMfwJBAX4
+- ClickUp: https://app.clickup.com/14389859/v/li/901705794806`,
+
+  Aujan: `- TYPE: End client with sub-brands (Rani, Barbican)
+- Aujan (parent): Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBEeix4GTJFTZet1EgoQ2eJAYmdPbV-yAlsEjgP_AjXzMA | ClickUp https://app.clickup.com/14389859/v/li/901705328640
+- Rani: Branding https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBPylSuEyrcTLERDaOf5P9aAU8ISsUfKlHHdEr0N1qaagQ + Assets https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMmlFzHJBpTJJPUEgmypmLAetzo8F6MalqdLpRvNUh5Yg | Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDELsciMTuQSIL1y_E7DLS1Af8qQ1H8cpe5vBfUYsioR4E | ClickUp https://app.clickup.com/14389859/v/li/901704818470
+- Barbican: Branding https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQAZuGuHSxGtQK-kc2YcRaGVAelL_QfVJzR1F2dVV55UZcI + Assets https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAzqDsWe7PRTYVHvEEwZOxTAVF9mNnxYc1Jv6581YFKM4w | Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAUjy6M6U3HTrwm5itBbwbaAcaBMZwxMd1ZFKVZc_PkGYY | ClickUp https://app.clickup.com/14389859/v/li/901705328468`,
+
+  Ubi: `- TYPE: Partner agency (TVA 20%). Multiple end clients.
+- Adidas: Branding https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBL8zzafFOASphGhuGJLY19AfSX9UBxan6jy0cICZX4QUA | Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBc1Qgais5hSpRRZThKoVMRATCgn9Rcis1aPw-th_lPTqM | ClickUp https://app.clickup.com/14389859/v/li/901704341200
+- Ubi (internal): Branding https://ubi.fr/ | Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBHvp1VtG72T4woW-pVPn0DAeD7zwuXzbcScwzphTnKHi0 | ClickUp https://app.clickup.com/14389859/v/li/901704345673
+- Red Bull: Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCW1WKHi_eBTZA6jjct-xGpAUCQNp5PXCu6BA-0V93ReeM | ClickUp https://app.clickup.com/14389859/v/li/901707332168
+- LEGO: Branding https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDQ4K2X9UPTSbpEaCNynATwAekjalnGuoe-INSRwwcNjCs | Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgA84GvbIUUpQJqVBqb2cVZIAVgbcgc8oasPU-Pi5HD7_bA | ClickUp https://app.clickup.com/14389859/v/li/901704345855
+- Ubisoft: Branding https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBuEIMN9LBMQJqAcOvIZVKfAX5mmMbmcV-Baw9sGG9LQps | Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgD1nVIk-TCBTJvyNPNIkChhATieL_mPpSmGGKpHI-aFcNk
+- Perrier: Branding https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBDtIHXF4q4To0HKqUTePQgAYIuO_UyqLvFxn9boRY_djA | Projects https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDkkSZ-IRNoSIyMyvtjfLkXAXT1g46X5c1BQ0JvEoBxU3c
+- IKEA: Branding https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCaJaA6RjKsTYMNIuqlBCEPAQdrbuZE75qAKLNZvpp2f_0 | ClickUp https://app.clickup.com/14389859/v/li/901704970300
+- TikTok (via Ubi — ONLY when brief comes from Ubi, not from TikTok directly): Same branding as TikTok direct | ClickUp https://app.clickup.com/14389859/v/li/901706944747
+- Barilla: ClickUp https://app.clickup.com/14389859/v/li/901712149614`,
+
+  "Other customers": `- TYPE: Case by case. TVA 20% for French clients (Air Corsica, etc.)
+- Air Corsica ClickUp: https://app.clickup.com/14389859/v/li/901705224702
+- Other clients ClickUp: https://app.clickup.com/14389859/v/li/900303492355
+- Projects SharePoint: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCCo4_62lS6RZa42GBKac4SAaW6WgxyxguH3Sl7UGJ798o
+- Air Corsica assets: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A`,
 };
 
 // ─── Domain-to-client heuristic ─────────────────────────────────────────────
