@@ -9,11 +9,11 @@ import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
 export const metadata: Metadata = {
   title: "Services — Sarani Enterprise Creative",
   description:
-    "Enterprise creative delivered in 24 hours. 35 experts across 5 continents work in relay — strategy, content, distribution, on-demand production. Fixed prices. Unlimited revisions.",
+    "Enterprise creative delivered in 24 hours. 45 experts across 5 continents work in relay — strategy, content, distribution, on-demand production. Fixed prices. Unlimited revisions.",
   openGraph: {
     title: "Services — Sarani Enterprise Creative",
     description:
-      "Enterprise creative delivered in 24 hours. 35 experts, 5 continents, working in relay. Fixed prices. Unlimited revisions.",
+      "Enterprise creative delivered in 24 hours. 45 experts, 5 continents, working in relay. Fixed prices. Unlimited revisions.",
     url: "/services",
   },
   alternates: {

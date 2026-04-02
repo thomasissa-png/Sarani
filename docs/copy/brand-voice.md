@@ -101,7 +101,7 @@ Vague ◆─────────────────── Over-referenc
 
 **We sound like this:**
 - "Up to 60% savings vs traditional agencies." (number)
-- "35 experts, 5 continents, 18 languages." (three stacked numbers)
+- "45 experts, 5 continents, 18 languages." (three stacked numbers)
 - "L'Oréal, Pernod Ricard, TikTok — these clients set the quality bar." (names)
 
 **We do not sound like this:**
@@ -148,7 +148,7 @@ These rules apply to every piece of Sarani copy — website, email, LinkedIn, UI
 | "Fixed prices" | Any pricing mention |
 | "Unlimited revisions" | Any revision policy mention |
 | "First project satisfaction or no invoice" | Any guarantee context — always verbatim |
-| "35 experts, 5 continents, 18 languages, 24/7" | Any team/scale mention — verbatim as a unit |
+| "45 experts, 5 continents, 18 languages, 24/7" | Any team/scale mention — verbatim as a unit |
 | Named client + deliverable + result | All quality claims (e.g., "Sony, 125 assets, TV launch") |
 | "Up to 60% savings vs traditional agencies" | All cost comparison contexts |
 | "No retainer. No minimum commitment." | All subscription-model comparison contexts |
@@ -184,7 +184,7 @@ These rules apply to every piece of Sarani copy — website, email, LinkedIn, UI
 - **Ellipsis:** Banned in marketing copy. It implies hesitation. Use a full stop.
 
 ### 3.5 Numbers and proof
-- Always use numerals for numbers, not words. "35 experts" not "thirty-five experts."
+- Always use numerals for numbers, not words. "45 experts" not "thirty-five experts."
 - Currency: "155€" not "€155" (European convention, consistent with deck).
 - Large numbers: "1,500+" not "over one thousand five hundred."
 - Percentages: "60%" not "sixty percent."
@@ -347,7 +347,7 @@ This page doesn't exist.
 
 **Subhead:**
 ```
-But we do. 35 experts ready to work on your next project.
+But we do. 45 experts ready to work on your next project.
 ```
 
 **CTA:**
@@ -414,7 +414,7 @@ Seven proven formulas calibrated to Sarani's positioning and Sophie's decision c
 **When to use:** About page, team sections, trust blocks.
 **Pattern:** `[Number] [asset]. [Number] [asset]. [Number] [asset]. [Time context].`
 **Example:**
-> 35 experts. 5 continents. 18 languages. 24/7.
+> 45 experts. 5 continents. 18 languages. 24/7.
 
 ---
 
@@ -470,7 +470,7 @@ DON'T: "We stand behind our work and are committed to your complete satisfaction
 
 **5. Describing the team**
 
-DO: "35 experts across 5 continents, working in time-zone relay so your brief never waits for a timezone to wake up."
+DO: "45 experts across 5 continents, working in time-zone relay so your brief never waits for a timezone to wake up."
 DON'T: "Our talented and diverse global team is always available to support your creative needs."
 
 *Why the DO works: The relay mechanism explains HOW the 24/7 is structurally possible. "Always available" is a claim. Explaining the relay is proof.*
@@ -625,7 +625,7 @@ International creative agency. Design, video, copy, paid ads — delivered in 24
 ```
 Enterprise creative in 24h.
 TikTok • Sony • Adidas • GEODIS
-35 experts, 5 continents, 18 languages.
+45 experts, 5 continents, 18 languages.
 First project or no invoice. ↓ Start here
 ```
 

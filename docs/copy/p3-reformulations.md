@@ -361,7 +361,7 @@ These strings from brand-voice.md §4.1 and §3.2 must remain verbatim throughou
 
 - `Start a project` — primary CTA label, all pages
 - `First project satisfaction or no invoice.` — guarantee, all instances
-- `35 experts, 5 continents, 18 languages` — team stat, appears as a unit
+- `45 experts, 5 continents, 18 languages` — team stat, appears as a unit
 - `Up to 60% savings vs traditional agencies` — pricing claim
 - `No retainer. No minimum commitment.` — commercial model claim
 

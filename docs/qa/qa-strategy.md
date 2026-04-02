@@ -228,7 +228,7 @@ These 3 scenarios map to the causal chain: Sophie/Marc enters the site -> builds
 
 | Step | User Action | Assertion |
 |------|-------------|-----------|
-| 1 | Sophie lands on `/case-studies/nonexistent-slug` | HTTP 404 returned. Custom not-found page renders: H1 "This page doesn't exist." Body includes "But we do. 35 experts ready to work on your next project." "Start a project" CTA present. "Back to homepage" link present. |
+| 1 | Sophie lands on `/case-studies/nonexistent-slug` | HTTP 404 returned. Custom not-found page renders: H1 "This page doesn't exist." Body includes "But we do. 45 experts ready to work on your next project." "Start a project" CTA present. "Back to homepage" link present. |
 
 #### Unhappy Path 2: JavaScript Disabled
 

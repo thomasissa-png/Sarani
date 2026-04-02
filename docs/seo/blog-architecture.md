@@ -263,7 +263,7 @@ The homepage must implement `Organization` JSON-LD. Verify it is in place at `sr
   "logo": "https://sarani.studio/logo.svg",
   "description": "Enterprise-quality creative, delivered in 24 hours — unlimited revisions, fixed prices, zero surprises.",
   "foundingDate": "2020",
-  "numberOfEmployees": "35",
+  "numberOfEmployees": "45",
   "areaServed": "Worldwide",
   "knowsLanguage": ["en", "fr", "de", "es", "zh", "ja", "ko", "ar", "pt", "it", "nl", "ru", "pl", "tr", "sv", "da", "no", "fi"],
   "sameAs": [

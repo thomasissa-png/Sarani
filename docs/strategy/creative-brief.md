@@ -77,11 +77,11 @@ These 10 anchor words define Sarani's semantic field. Every page, every ad, ever
 `enterprise`, `24 hours`, `unlimited revisions`, `fixed pricing`, `5 continents`, `18 languages`, `24/7`, `TikTok` / `Sony` / `Adidas`, `no invoice guarantee`, `speed`
 
 **Extended territory (secondary keywords):**
-`same-day delivery`, `D+1`, `international creative agency`, `no subscription lock-in`, `satisfaction guarantee`, `35 experts`, `full-service creative`, `content at scale`, `enterprise creative partner`
+`same-day delivery`, `D+1`, `international creative agency`, `no subscription lock-in`, `satisfaction guarantee`, `45 experts`, `full-service creative`, `content at scale`, `enterprise creative partner`
 
 **Phrases that should appear verbatim in Sarani content:**
 - "First project satisfaction or no invoice."
-- "35 experts, 5 continents, 18 languages, 24/7."
+- "45 experts, 5 continents, 18 languages, 24/7."
 - "Unlimited revisions. Fixed prices. Zero surprises."
 - "Up to 60% savings vs traditional agencies."
 - "D+1 delivery — not a promise, the standard."
@@ -94,7 +94,7 @@ These claims are verified against the Sarani commercial deck (2026_Sarani Deck_I
 
 ### Agency facts (use freely)
 - Founded in 2020
-- 35 experts
+- 45 experts
 - 5 continents
 - 18 languages
 - 24/7 operations via time-zone relay

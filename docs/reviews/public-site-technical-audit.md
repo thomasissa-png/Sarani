@@ -124,7 +124,7 @@ The `Button` component uses `motion.div` for hover/tap animations. Since `Button
 
 ### 2.3 MEDIUM — `"use client"` audit
 
-56 files have `"use client"`. The admin section accounts for most (35+), which is expected. For the public site:
+56 files have `"use client"`. The admin section accounts for most (45+), which is expected. For the public site:
 
 **Justified `"use client"` (need interactivity/browser APIs):**
 - `contact-form.tsx` — form state, fetch

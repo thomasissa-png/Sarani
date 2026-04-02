@@ -69,7 +69,7 @@ export async function POST(
           ? "LinkedIn post"
           : "nurturing email";
 
-    const systemPrompt = `You are Sarani's content regeneration engine. Sarani is an international creative agency (35 experts, 5 continents, 18 languages).
+    const systemPrompt = `You are Sarani's content regeneration engine. Sarani is an international creative agency (45 experts, 5 continents, 18 languages).
 
 Brand voice: Assured, Direct, Warm, Evidence-first.
 

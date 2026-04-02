@@ -21,7 +21,7 @@
 
 | # | Sévérité | Zone | Description | Recommandation |
 |---|---|---|---|---|
-| 01 | Bloquant | Sidebar / Mobile | La sidebar (w-60) est totalement absente sur mobile — pas de hamburger, pas de drawer. L'interface est inutilisable sur mobile pour 35 experts sur 5 continents. | Ajouter un hamburger + drawer en overlay sur <md, avec close sur backdrop click. |
+| 01 | Bloquant | Sidebar / Mobile | La sidebar (w-60) est totalement absente sur mobile — pas de hamburger, pas de drawer. L'interface est inutilisable sur mobile pour 45 experts sur 5 continents. | Ajouter un hamburger + drawer en overlay sur <md, avec close sur backdrop click. |
 | 02 | Bloquant | Projets | Les projets sont identifiés par `clientId + briefSummary + index` — clé instable, pas cliquable. Il est impossible d'accéder directement à un projet ou de le partager. | Créer un ID de projet persistant côté base de données dès le dispatch. |
 | 03 | Majeur | AdminHeader | Le header (h-14) contient uniquement "Sign out" à droite, rien à gauche. Sur mobile le header full-width cache le contenu sans donner d'info contextuelle (page courante, breadcrumb). | Ajouter le titre de la page courante dans le header (ou breadcrumb). Sur mobile, y placer le bouton hamburger. |
 | 04 | Majeur | Dashboard | "View all clients" dans le bloc "Recent Outputs" est sémantiquement incorrect — on s'attend à "View all outputs". Les outputs ne sont pas cliquables et n'ont pas de lien vers leur détail. | Renommer le lien, ajouter un lien vers la page outputs de chaque client depuis chaque ligne. |
@@ -63,7 +63,7 @@
 
 ## Top 5 priorités d'action
 
-**Par impact utilisateur — équipe de 35 experts, usage quotidien**
+**Par impact utilisateur — équipe de 45 experts, usage quotidien**
 
 ### Priorité 1 — Sidebar mobile (Bloquant, #01)
 L'interface est structurellement inutilisable sur mobile sans navigation. Pour une équipe sur 5 continents, c'est rédhibitoire. A traiter avant tout autre point.

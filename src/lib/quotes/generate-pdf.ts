@@ -60,7 +60,7 @@ const TRANSLATIONS = {
     vat: "VAT",
     references: "About Sarani",
     referencesText:
-      "Sarani is an international creative agency with 35+ experts across 5 continents, delivering enterprise-quality creative in 18 languages. We guarantee next-day delivery on most deliverables, unlimited revisions, and fixed transparent pricing. Our team works 24/7 in relay across timezones to ensure your projects are always on track.",
+      "Sarani is an international creative agency with 45+ experts across 5 continents, delivering enterprise-quality creative in 18 languages. We guarantee next-day delivery on most deliverables, unlimited revisions, and fixed transparent pricing. Our team works 24/7 in relay across timezones to ensure your projects are always on track.",
     paymentTerms: [
       "Work commences once a PO is raised.",
       "Unlimited rounds of revisions are offered before filming and on post-production.",
@@ -95,7 +95,7 @@ const TRANSLATIONS = {
     vat: "TVA",
     references: "À propos de Sarani",
     referencesText:
-      "Sarani est une agence créative internationale avec plus de 35 experts répartis sur 5 continents, livrant des créations de qualité enterprise en 18 langues. Nous garantissons la livraison en J+1 sur la plupart des livrables, des révisions illimitées, et une tarification fixe et transparente. Notre équipe travaille 24h/24 en relais sur tous les fuseaux horaires.",
+      "Sarani est une agence créative internationale avec plus de 45 experts répartis sur 5 continents, livrant des créations de qualité enterprise en 18 langues. Nous garantissons la livraison en J+1 sur la plupart des livrables, des révisions illimitées, et une tarification fixe et transparente. Notre équipe travaille 24h/24 en relais sur tous les fuseaux horaires.",
     paymentTerms: [
       "Les travaux démarrent à réception du bon de commande (PO).",
       "Nombre illimité de révisions inclus avant tournage et en post-production.",

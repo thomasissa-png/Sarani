@@ -52,7 +52,7 @@ She has been burned before. The agency that quoted 3 weeks for a banner refresh.
 ### Objections to Purchase
 
 1. **"Can a small team really handle enterprise volume?"**
-   *Answer:* 35 experts, 5 continents, 1,500+ TikTok edits/month. GEODIS: 350 presentations in 3 weeks.
+   *Answer:* 45 experts, 5 continents, 1,500+ TikTok edits/month. GEODIS: 350 presentations in 3 weeks.
 
 2. **"What's the quality level — are these junior designers?"**
    *Answer:* Sony trusted Sarani with a 125-asset TV launch. L'Oréal, Adidas, Pernod Ricard — these clients have the highest brand standards in the world.

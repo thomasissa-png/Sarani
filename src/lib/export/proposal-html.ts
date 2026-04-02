@@ -99,7 +99,7 @@ function sectionDivider(
 
 function whoWeAreSlide(pageNumber: number, totalPages: number): string {
   const metrics = [
-    { value: "35+", label: "Creative experts" },
+    { value: "45+", label: "Creative experts" },
     { value: "5", label: "Continents" },
     { value: "18", label: "Languages" },
     { value: "24/7", label: "Availability" },

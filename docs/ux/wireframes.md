@@ -146,7 +146,7 @@ Behavior:
 │  │  <h2 id="about-origin">          │ │  AT A GLANCE     │  │
 │  │  "Built for the speed            │ │  ──────────────  │  │
 │  │   of enterprise."  </h2>         │ │  Founded: 2020   │  │
-│  │                                  │ │  Team: 35 experts│  │
+│  │                                  │ │  Team: 45 experts│  │
 │  │  Body (Outfit Regular, base,     │ │  Continents: 5   │  │
 │  │  neutral-200):                   │ │  Languages: 18   │  │
 │  │  "In 2020, Sarani was built on   │ │  Clients: 24/7   │  │
@@ -173,7 +173,7 @@ Behavior:
 ├─────────────────────────────────────────────────────────────┤
 │  TEAM & COVERAGE — world map visual (optional) + stats       │
 │  <section aria-labelledby="about-team">                      │
-│  <h2 id="about-team">"35 experts. 5 continents."</h2>        │
+│  <h2 id="about-team">"45 experts. 5 continents."</h2>        │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │  [World map SVG — continents highlighted]            │   │
@@ -636,7 +636,7 @@ Page renders normally in all network failure modes.
 │  <h1> "This page doesn't exist." </h1>                       │
 │  (Outfit Bold, 4xl, white)                                   │
 │                                                              │
-│  <p> "But we do. 35 experts ready to work on your            │
+│  <p> "But we do. 45 experts ready to work on your            │
 │   next project." </p>                                        │
 │  (neutral-400, xl — exact copy from brand-voice.md §4.8)     │
 │                                                              │
@@ -666,7 +666,7 @@ Next.js: not-found.tsx in app/ directory
 | Work listing | "Our work" | — | Case study card titles |
 | Case Study detail | "[Client] needed X. We delivered Y." | The brief, Results, Work samples, Ready to start, More work | — |
 | Pricing | "Transparent pricing." | Service categories | Service line names |
-| About | "We're the creative team enterprises call..." | Built for speed, What we do, 35 experts, How we work | Capability names |
+| About | "We're the creative team enterprises call..." | Built for speed, What we do, 45 experts, How we work | Capability names |
 | Contact | "Start a project." | sr-only "Project brief form" | — |
 | 404 | "This page doesn't exist." | — | — |
 
@@ -725,7 +725,7 @@ First focusable element on every page. Background: flame #da5126, text: black (c
 ## Assumptions to Validate
 
 - [HYPOTHESE] About page copy — body text for "Built for enterprise speed" section references brand-story.md but Thomas's personal origin story is marked [HYPOTHESE] in that document. Version without personal origin story is viable for go-live.
-- [HYPOTHESE] World map visual on About page — decorative asset not confirmed as available. Fallback: text-only stat block (35 experts, 5 continents) if map SVG is not produced.
+- [HYPOTHESE] World map visual on About page — decorative asset not confirmed as available. Fallback: text-only stat block (45 experts, 5 continents) if map SVG is not produced.
 - [HYPOTHESE] Contact form: email `team@sarani.studio` used in error state — validate this address is operational before go-live (functional-specs.md open hypothesis).
 - [HYPOTHESE] Attachment field max size of 10MB — per functional-specs.md open hypothesis. Validate with Sarani team before W4.
 

@@ -13,7 +13,7 @@ Site Next.js bien structuré avec une base SEO technique solide. Les fondamentau
 
 **Points forts**
 - Title avec template `%s | Sarani` correctement configuré dans layout.tsx — cohérence garantie sur toutes les pages.
-- Description principale dense et différenciante : cite les clients (TikTok, Sony, Adidas), la promesse (D+1, fixed pricing), et les preuves sociales (35 experts, 5 continents, 18 langues).
+- Description principale dense et différenciante : cite les clients (TikTok, Sony, Adidas), la promesse (D+1, fixed pricing), et les preuves sociales (45 experts, 5 continents, 18 langues).
 
 **Points faibles**
 - OpenGraph ne déclare pas `url` explicitement — risque de duplication sur le partage social.

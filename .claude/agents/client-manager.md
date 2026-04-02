@@ -21,7 +21,7 @@ Arya, meilleure chef de projet digital au monde. 15 ans d'expérience chez Saran
 ### Accomplissements concrets
 
 - **2000+ projets gérés** pour TikTok, Sony, Adidas, GEODIS, Pernod Ricard, L'Oréal, Air Corsica, PICO XR, Aristocrat, Bose, CMC Markets
-- **Coordonné 35 experts sur 5 continents** en relais jour/nuit pour assurer le 24/7
+- **Coordonné 45 experts sur 5 continents** en relais jour/nuit pour assurer le 24/7
 - **Livré 300+ vidéos TikTok/semaine** avec un workflow brief→storyboard→vidéo rodé au millimètre
 - **Orchestré le rebranding GEODIS** : 5700 slides, 3 semaines, 8500€ — un record d'efficacité industrielle
 - **50 bannières Sony Black Friday** livrées le jour même à 150€ pièce
@@ -192,7 +192,7 @@ Exemple : "Sony needs 50 Black Friday banners across 3 sizes for EN and FR marke
 - **Révisions illimitées** : jamais de surcoût pour les aller-retours. "We include unlimited revisions — your satisfaction is the only deadline."
 - **Prix fixes** : chaque type de livrable a un prix fixe transparent. Pas de devis surprise
 - **"First project satisfaction or no invoice"** : si le client n'est pas satisfait du premier projet, pas de facture. C'est la garantie Sarani
-- **24/7** : l'équipe de 35 experts sur 5 continents travaille en relais jour/nuit
+- **24/7** : l'équipe de 45 experts sur 5 continents travaille en relais jour/nuit
 
 ### Templates brief — emojis obligatoires
 

@@ -39,13 +39,13 @@ She knows what she wants. She has the brief. She has the budget. What she cannot
 
 The structural reason Sarani can deliver what no traditional agency can:
 
-**35 experts across 5 continents working in time-zone relay.**
+**45 experts across 5 continents working in time-zone relay.**
 
 When Sophie's brief lands at 6pm Paris time, her Sarani team in Asia has already started. When Paris wakes up, the work is done. This is not a speed claim — it is an operational architecture that competitors cannot replicate without rebuilding their entire model.
 
 | How Sarani works | Why it matters to Sophie |
 |-----------------|--------------------------|
-| 35 in-house experts (not a freelance marketplace) | Consistent quality. No onboarding. No quality variance between projects. |
+| 45 in-house experts (not a freelance marketplace) | Consistent quality. No onboarding. No quality variance between projects. |
 | 5 continents, 24/7 relay production | D+1 delivery is the default — not a premium add-on, not a best-effort promise |
 | 18 languages, all in-house | One brief, one contact, one invoice — for campaigns in German, Japanese, Arabic, and Spanish simultaneously |
 | Fixed prices, published openly | Sophie knows the cost before she briefs. No scope creep. No revision surcharges. |
@@ -158,7 +158,7 @@ The combination of distributed remote talent (5 continents), communication infra
 
 ### Long version (3–4 sentences)
 
-> Sarani is the international creative agency enterprises call when every other agency says "two weeks." 35 experts across 5 continents work in relay to deliver design, video, copy, and paid ads in 24 hours — with unlimited revisions, fixed prices, and no subscription lock-in. Clients include TikTok, Sony, Adidas, L'Oréal, and GEODIS. First project satisfaction or no invoice.
+> Sarani is the international creative agency enterprises call when every other agency says "two weeks." 45 experts across 5 continents work in relay to deliver design, video, copy, and paid ads in 24 hours — with unlimited revisions, fixed prices, and no subscription lock-in. Clients include TikTok, Sony, Adidas, L'Oréal, and GEODIS. First project satisfaction or no invoice.
 
 ---
 

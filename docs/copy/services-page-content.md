@@ -187,7 +187,7 @@ Every service. Any combination.
 **Body copy:**
 Sarani works as a full programme — strategy through operational execution — or as a single-service partner. You pick what you need. No retainer. No minimum commitment. Fixed prices, published upfront.
 
-35 experts. 5 continents. 18 languages. 24/7.
+45 experts. 5 continents. 18 languages. 24/7.
 
 **Primary CTA:**
 Start a project
@@ -210,4 +210,4 @@ View pricing
 
 - The four service pillar names (Strategic Marketing, Content Creation, Operational Marketing, On-demand Requests) are taken verbatim from the brief. Confirm these are the final public-facing labels before development.
 - Accent colour associations (Flame, Cerulean, Lemon) are taken from the brief. @design should confirm final colour hex values before @fullstack implements.
-- The closing "35 experts. 5 continents. 18 languages. 24/7." line is the required verbatim unit from brand-voice.md §3.2 (Always say). Do not modify.
+- The closing "45 experts. 5 continents. 18 languages. 24/7." line is the required verbatim unit from brand-voice.md §3.2 (Always say). Do not modify.

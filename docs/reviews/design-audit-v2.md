@@ -254,10 +254,10 @@ Actions concrètes :
 
 ### P8 — Page About : ajouter une représentation visuelle de l'équipe internationale (impact : moyen)
 
-**Problème résolu :** l'absence de preuve humaine sur une page qui parle d'une équipe de 35 experts.
+**Problème résolu :** l'absence de preuve humaine sur une page qui parle d'une équipe de 45 experts.
 
 Actions concrètes :
-1. Une carte du monde SVG simple avec des dots positionnés sur les 5 continents (couleurs brand) aurait plus d'impact qu'un paragraphe texte sur "35 in-house experts across 5 continents".
+1. Une carte du monde SVG simple avec des dots positionnés sur les 5 continents (couleurs brand) aurait plus d'impact qu'un paragraphe texte sur "45 in-house experts across 5 continents".
 2. Alternativement : une grille de photos d'équipe (même anonymisées/stylisées) transmet de l'authenticité.
 3. Les sections texte longues peuvent être interrompues par des "pull quotes" visuellement traités (grande taille, couleur accent) pour créer du rythme.
 

@@ -7,7 +7,7 @@
 
 ## Demande utilisateur
 
-Orchestration complete du back-office interne Sarani : dashboard de suivi projets (ClickUp), facturation (Evoliz), et 3 agents IA internes (traduction, creative strategist, deck generator). Cible : equipe Sarani (35 experts, 5 continents). Scope defini dans roadmap.md Phase 3 (W11-W18) et backlog.md US-301 a US-305.
+Orchestration complete du back-office interne Sarani : dashboard de suivi projets (ClickUp), facturation (Evoliz), et 3 agents IA internes (traduction, creative strategist, deck generator). Cible : equipe Sarani (45 experts, 5 continents). Scope defini dans roadmap.md Phase 3 (W11-W18) et backlog.md US-301 a US-305.
 
 ## Mode detecte
 

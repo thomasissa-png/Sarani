@@ -38,16 +38,16 @@ Le site est solide sur le plan structurel, bien aligne avec le positionnement Sa
 **Criticite** : MAJEUR
 **Fix** : Changer le href dans le footer de `/legal#privacy` a `/legal#privacy-policy`.
 
-### C3 — Incoherence de donnees : "50+ experts" vs "35 experts"
+### C3 — Incoherence de donnees : "50+ experts" vs "45 experts"
 
 **Fichiers** : `src/components/home/faq.tsx` (lignes 22, 57-58) vs tout le reste du site
 **Probleme** : Dans la FAQ, deux reponses mentionnent "50+ experts" et "50+ in-house experts" :
 - "Our structured team of 50+ experts works in a relay model" (question 3)
 - "We have 50+ in-house experts across Paris, London, Dubai, Buenos Aires, Manila" (question 12)
 
-Or, tout le reste du site (hero, about, services, layout metadata) dit "35 experts". Le project-context.md confirme 35.
+Or, tout le reste du site (hero, about, services, layout metadata) dit "45 experts". Le project-context.md confirme 35.
 **Criticite** : BLOQUANT — incoherence factuelle visible par le visiteur, detruit la credibilite.
-**Fix** : Remplacer "50+" par "35" dans les deux reponses FAQ.
+**Fix** : Remplacer "50+" par "45" dans les deux reponses FAQ.
 
 ### C4 — Images placeholder sur les case studies detail
 
@@ -209,7 +209,7 @@ Voir C6 ci-dessus. `/case-studies/[slug]` et `/work/[slug]` generent le meme con
 ### M1 — Hero stats non-wrapping sur petit ecran
 
 **Fichier** : `src/components/home/animated-hero.tsx`, ligne 101
-**Probleme** : `flex items-center gap-8` pour les stats (35+ experts, 5 continents, 18 languages) — sur un ecran tres etroit (<320px), les 3 items risquent de deborder.
+**Probleme** : `flex items-center gap-8` pour les stats (45+ experts, 5 continents, 18 languages) — sur un ecran tres etroit (<320px), les 3 items risquent de deborder.
 **Criticite** : MINEUR — les ecrans <320px sont rares.
 **Fix** : Ajouter `flex-wrap` pour securiser.
 
@@ -225,7 +225,7 @@ Voir C6 ci-dessus. `/case-studies/[slug]` et `/work/[slug]` generent le meme con
 ## Recommandations pour atteindre 9/10
 
 ### Priorite 1 — Bloquants (a corriger avant tout)
-1. **Corriger "50+ experts" → "35 experts"** dans la FAQ (C3)
+1. **Corriger "50+ experts" → "45 experts"** dans la FAQ (C3)
 2. **Ajouter les vraies images** dans les case studies (C4)
 3. **Supprimer le lien `/how-we-work`** du footer ou creer la page (C1)
 4. **Choisir une seule route case study** et rediriger l'autre (C6)
@@ -288,7 +288,7 @@ Voir C6 ci-dessus. `/case-studies/[slug]` et `/work/[slug]` generent le meme con
 
 | Fix | Statut | Preuve |
 |---|---|---|
-| "50+ experts" → "35" dans FAQ | VERIFIE | `faq.tsx` : grep "50+" retourne zero resultats |
+| "50+ experts" → "45" dans FAQ | VERIFIE | `faq.tsx` : grep "50+" retourne zero resultats |
 
 ---
 
@@ -362,7 +362,7 @@ Date : 2026-03-25
 - Score : 8.5 → **9/10**
 
 **About** — Deja valide au re-audit :
-- Section "Sarani by the numbers" avec 6 metrics en cards individuelles (35+, 5, 18, D+1, 60%, 1500+)
+- Section "Sarani by the numbers" avec 6 metrics en cards individuelles (45+, 5, 18, D+1, 60%, 1500+)
 - CTA final sur fond noir "Let's work together" avec Button vers /contact
 - Score confirme : **9/10** (inchange, deja atteint au re-audit precedent via ameliorations indirectes header/footer)
 
@@ -411,7 +411,7 @@ Moyenne des 10 pages : (9 x 10) / 10 = **9.0/10** (vs 7.5/10 initial, vs 8.8/10 
 **GO — Site en etat de production. Score 9.0/10 atteint sur les 10 pages.**
 
 Bilan des corrections depuis l'audit initial :
-- 3 bloquants resolus (C1 lien mort, C3 incoherence 50/35 experts, C6 duplication routes)
+- 3 bloquants resolus (C1 lien mort, C3 incoherence 50/45 experts, C6 duplication routes)
 - 7 majeurs resolus (C2 ancre, C5 nav, C7 tracking, S2 CTA work, WCAG tokens, sidebar back-office, gallery conditionnelle)
 - 4 ameliorations supplementaires dans ce batch final (Contact layout, Legal TOC, Pricing FAQ Schema, About cumul)
 

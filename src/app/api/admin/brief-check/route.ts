@@ -29,7 +29,7 @@ export interface BriefCheckResponse {
 
 // ─── System Prompt ───────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are a senior project manager at Sarani, an international creative agency (35 experts, 5 continents, 24/7).
+const SYSTEM_PROMPT = `You are a senior project manager at Sarani, an international creative agency (45 experts, 5 continents, 24/7).
 Your role is to review a project brief submitted by an internal team member BEFORE it is sent to the creative team.
 
 Sarani's operating constraints:

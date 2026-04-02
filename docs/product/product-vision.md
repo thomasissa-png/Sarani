@@ -16,7 +16,7 @@ Sarani is not a traditional agency. It is a new category: the always-on enterpri
 
 1. **Acquisition**: Sophie (Head of Marketing, enterprise) must find Sarani before she defaults to Publicis — and immediately trust that Sarani can handle her scale.
 2. **Credibility**: Marc (Procurement Director) must validate Sarani in a 15-minute review — price, track record, no lock-in.
-3. **Operations**: The internal team of 35 experts across 5 continents must operate without friction — project tracking, client deliverables, AI-assisted production.
+3. **Operations**: The internal team of 45 experts across 5 continents must operate without friction — project tracking, client deliverables, AI-assisted production.
 
 No subscription lock-in. Fixed prices. 24h delivery. These are product constraints, not just marketing claims. Everything built must reinforce them.
 
@@ -101,7 +101,7 @@ No subscription lock-in. Fixed prices. 24h delivery. These are product constrain
 |---|---|---|
 | Sophie (Head of Marketing, enterprise) | Phase 1 | Trust Sarani instantly, submit a brief without friction |
 | Marc (Procurement Director) | Phase 1 | Validate pricing, track record, contract simplicity |
-| Sarani internal team (35 experts, 5 continents) | Phase 3 | Track projects, generate client materials, AI assistance |
+| Sarani internal team (45 experts, 5 continents) | Phase 3 | Track projects, generate client materials, AI assistance |
 
 ---
 

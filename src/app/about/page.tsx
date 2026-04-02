@@ -25,7 +25,7 @@ type Stat = {
 };
 
 const IMPACT_STATS: Stat[] = [
-  { value: "35", label: "In-house experts" },
+  { value: "45", label: "In-house experts" },
   { value: "5", label: "Continents" },
   { value: "18", label: "Languages" },
   { value: "D+1", label: "Standard delivery" },
@@ -89,7 +89,7 @@ export default function AboutPage() {
             weeks when the brief is ready today?
           </h1>
           <p className="text-lg leading-relaxed text-neutral-600">
-            The answer became Sarani — 35 in-house experts across 5 continents,
+            The answer became Sarani — 45 in-house experts across 5 continents,
             working in time-zone relay, delivering at the speed campaigns
             actually run.
           </p>
@@ -153,7 +153,7 @@ export default function AboutPage() {
               A different architecture
             </h2>
             <p className="mb-6 text-lg leading-relaxed text-neutral-600">
-              35 in-house experts across 5 continents work in time-zone relay, so
+              45 in-house experts across 5 continents work in time-zone relay, so
               your brief never waits for a timezone to wake up. When your brief
               arrives at 6pm Paris time, your team in Asia has already started.
               When you wake up, it&apos;s done.
@@ -204,7 +204,7 @@ export default function AboutPage() {
           </div>
           <div className="mx-auto mt-12 max-w-3xl text-center">
             <p className="mb-6 text-lg leading-relaxed text-neutral-300">
-              Sarani is not a freelance marketplace. These are 35 in-house
+              Sarani is not a freelance marketplace. These are 45 in-house
               experts — designers, video editors, copywriters, motion
               specialists, paid ads strategists — working in a structured relay
               model that makes 24/7 creative production structurally possible,

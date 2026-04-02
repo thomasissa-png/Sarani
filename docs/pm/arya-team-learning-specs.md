@@ -8,7 +8,7 @@
 
 ### Concept
 
-En plus des clients, Arya connaît son ÉQUIPE — les 35 experts @sarani.studio. Pour chaque membre, elle accumule des connaissances sur leur style, forces, axes d'amélioration, et préférences.
+En plus des clients, Arya connaît son ÉQUIPE — les 45 experts @sarani.studio. Pour chaque membre, elle accumule des connaissances sur leur style, forces, axes d'amélioration, et préférences.
 
 **Règle de pertinence** : chaque entrée doit répondre à "est-ce que cette info change la façon dont on assigne ou briefe ce membre ?" Si non, on ne l'enregistre pas.
 

@@ -938,7 +938,7 @@ The `isPreview` boolean prop controls the banner and the feedback bar visibility
 - **Template "Proposal"**: a landing page sub-type for commercial proposals
 - Auto-populated with Sarani data the system already knows:
   - Case studies from `src/data/case-studies.ts` (auto-selected by client industry)
-  - Conditions: unlimited revisions, D+1 delivery, 24/7 operations, 35 experts, 5 continents, 18 languages
+  - Conditions: unlimited revisions, D+1 delivery, 24/7 operations, 45 experts, 5 continents, 18 languages
   - Client references: Sony, TikTok, Adidas, GEODIS, Pernod Ricard, L'Oréal
   - Pricing from existing pricing page data
 - Output = **shareable web link** (not PDF) — per Thomas's explicit request

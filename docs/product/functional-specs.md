@@ -142,7 +142,7 @@ Then a button with the exact text "Start a project" is visible in the viewport
 │                                                              │
 │  3-column icon + stat layout:                                │
 │  [Clock icon]      [Globe icon]      [Star icon]             │
-│  D+1 delivery      35 experts        60% savings             │
+│  D+1 delivery      45 experts        60% savings             │
 │  standard          5 continents      vs agencies             │
 │                    18 languages                              │
 │                    24/7                                       │
@@ -567,7 +567,7 @@ No spinner. No "Loading..." text.
 │                                                             │
 │  404 slug → renders Next.js not-found.tsx:                  │
 │  "This page doesn't exist."                                  │
-│  "But we do. 35 experts ready to work on your next project."│
+│  "But we do. 45 experts ready to work on your next project."│
 │  [Start a project]                                          │
 │  [← Back to homepage]                                       │
 └─────────────────────────────────────────────────────────────┘
@@ -844,7 +844,7 @@ Then Umami fires event "form_view",
 │  "First project satisfaction or no invoice."                 │
 ├─────────────────────────────────────────────────────────────┤
 │  TRUST STRIP (below form)                                    │
-│  [TikTok] [Sony] [GEODIS] — "35 experts, 24/7"              │
+│  [TikTok] [Sony] [GEODIS] — "45 experts, 24/7"              │
 └─────────────────────────────────────────────────────────────┘
 ```
 

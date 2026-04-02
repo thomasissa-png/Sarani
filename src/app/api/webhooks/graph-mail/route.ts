@@ -47,7 +47,7 @@ interface ClassificationResult {
 
 // ─── Classification prompt (shared with classify/route.ts) ────────────────
 
-const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following email into exactly ONE category AND detect its language.
+const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier. Sarani is an international creative agency (45 experts, 5 continents, 18 languages). Classify the following email into exactly ONE category AND detect its language.
 
 Categories:
 - "client_brief": email containing a project brief, request for work, or new deliverable request from an EXISTING or KNOWN client. The sender has worked with Sarani before, the brief is clear and specific (deliverables, timeline, brand mentioned).

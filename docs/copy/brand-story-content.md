@@ -25,7 +25,7 @@ This is not a failure of individual agencies. It is what happens when you build 
 
 ### How we work differently
 
-We built a different architecture. 35 in-house experts across 5 continents work in time-zone relay, so your brief never waits for a timezone to wake up. When your brief arrives at 6pm Paris time, your team in Asia has already started. When you wake up, it's done.
+We built a different architecture. 45 in-house experts across 5 continents work in time-zone relay, so your brief never waits for a timezone to wake up. When your brief arrives at 6pm Paris time, your team in Asia has already started. When you wake up, it's done.
 
 Fixed prices, published on the website. Unlimited revisions, included. D+1 delivery as the default — not a premium add-on. And no subscription lock-in: you start with one project, at 155€, and scale when it makes sense for you.
 
@@ -33,9 +33,9 @@ Fixed prices, published on the website. Unlimited revisions, included. D+1 deliv
 
 ## Our team
 
-### 35 experts, 5 continents, 18 languages
+### 45 experts, 5 continents, 18 languages
 
-Sarani is not a freelance marketplace. These are 35 in-house experts — designers, video editors, copywriters, motion specialists, paid ads strategists — working in a structured relay model that makes 24/7 creative production structurally possible, not just a claim.
+Sarani is not a freelance marketplace. These are 45 in-house experts — designers, video editors, copywriters, motion specialists, paid ads strategists — working in a structured relay model that makes 24/7 creative production structurally possible, not just a claim.
 
 18 languages means one brief, one contact, one invoice — for campaigns running simultaneously in German, Japanese, Arabic, and Spanish. No multi-agency coordination. No briefing three times for three markets.
 
@@ -75,7 +75,7 @@ Every agency they called gave the same answer: "We'll need a brief, a scope revi
 
 We delivered the same day. 155€ per banner.
 
-That's not a case study. It's a proof of concept for a different way of working — one built on a simple structural decision: 35 experts across 5 continents, working in relay, so a brief sent at 6pm Paris time is already in progress before Paris wakes up.
+That's not a case study. It's a proof of concept for a different way of working — one built on a simple structural decision: 45 experts across 5 continents, working in relay, so a brief sent at 6pm Paris time is already in progress before Paris wakes up.
 
 We didn't build Sarani to be cheaper. We built it to be structurally different.
 
@@ -91,7 +91,7 @@ If your brief is ready and your deadline is real — send it tonight.
 
 ### Twitter/X Post (max 280 characters)
 
-Sony needed Black Friday banners same-day. Every other agency said 5–7 days. We delivered in hours. 155€/banner. That's not speed — that's a different structure. 35 experts, 5 continents, 24/7 relay.
+Sony needed Black Friday banners same-day. Every other agency said 5–7 days. We delivered in hours. 155€/banner. That's not speed — that's a different structure. 45 experts, 5 continents, 24/7 relay.
 
 ---
 
@@ -103,7 +103,7 @@ Your deadline is not a negotiating position.
 
 Sony's Black Friday banners — same day. GEODIS's 350 presentations — 3 weeks. TikTok's 1,500 monthly video edits — every month, on time.
 
-35 experts, 5 continents, 18 languages. One brief. One invoice. D+1 delivery.
+45 experts, 5 continents, 18 languages. One brief. One invoice. D+1 delivery.
 
 Send us your brief tonight. See what's ready by morning.
 
@@ -123,7 +123,7 @@ Send us your brief tonight. See what's ready by morning.
 - Fixed prices (transparency claim — "How we work differently")
 - First project satisfaction or no invoice (guarantee — closing line "What we believe")
 - 5 continents relay model (operational architecture — "How we work differently", "Our team")
-- 35 experts / 18 languages / 24/7 creative production (team proof — "Our team")
+- 45 experts / 18 languages / 24/7 creative production (team proof — "Our team")
 - TikTok (H2 "What we believe" — 1,500 video edits/month)
 - Sony (H2 "What we believe" — Black Friday same-day, 155€/banner)
 - GEODIS (H2 "What we believe" — 350 presentations, 5,700 slides, 3 weeks, 8,500€)

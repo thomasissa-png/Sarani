@@ -60,7 +60,7 @@ export default async function Image() {
             textAlign: "center",
           }}
         >
-          35 experts · 5 continents · D+1 delivery
+          45 experts · 5 continents · D+1 delivery
         </div>
       </div>
     ),

@@ -14,7 +14,7 @@
 | Phase 1 | Homepage — proof-point-first layout (logos above fold, D+1 claim, 155€ price) | W2 | @fullstack, @copywriter | Enterprise logos visible without scroll on desktop |
 | Phase 1 | Services page | W2 | @fullstack, @copywriter | All 4 expertise pillars covered |
 | Phase 1 | Work / Case Studies page (Sony, GEODIS, TikTok — minimum 3) | W2 | @fullstack, @copywriter | At least 3 full case studies with quantified results |
-| Phase 1 | About page | W2 | @fullstack, @copywriter | Team + 5 continents + 35 experts visible |
+| Phase 1 | About page | W2 | @fullstack, @copywriter | Team + 5 continents + 45 experts visible |
 | Phase 1 | Contact / brief form (primary CTA) | W2 | @fullstack | Form submits, email notification confirmed, Umami event tracked |
 | Phase 1 | Pricing transparency page | W3 | @fullstack, @copywriter | Fixed price examples visible, no opaque retainers |
 | Phase 1 | Umami self-hosted integration — all pages + form conversion event | W3 | @fullstack, @infrastructure | Pageviews + form submission tracked in Umami dashboard |

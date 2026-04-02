@@ -120,7 +120,7 @@ Le pill 4 utilise `bg-neutral-100` qui vaut `#ffffff` dans `globals.css` (ligne 
 
 ### 8. Absence de stats / proof row au-dessus du fold — MINEUR
 
-**Observation.** Les métriques clés de Sarani (35 experts, 5 continents, 18 langues) sont dans la Section 2 "Our metrics" (fond noir, en-dessous du hero). Le design system prévoit une stats row dans le hero lui-même (section 3.1 point 4). Ces stats sont la principale preuve de taille et de légitimité pour Sophie.
+**Observation.** Les métriques clés de Sarani (45 experts, 5 continents, 18 langues) sont dans la Section 2 "Our metrics" (fond noir, en-dessous du hero). Le design system prévoit une stats row dans le hero lui-même (section 3.1 point 4). Ces stats sont la principale preuve de taille et de légitimité pour Sophie.
 
 **Recommandation.** Ajouter une ligne de 3 stats compactes sous le subtitle, avant les pills. Format : chiffre en Bold Lemon + label en Regular blanc/gris. Cela donne une preuve de scale immédiate sans quitter le hero. Si le split layout (point 1) est retenu, les stats peuvent migrer dans la moitié droite à la place d'une des metric cards.
 
@@ -188,7 +188,7 @@ Ce point a été documenté dans les audits précédents (design-audit-v2.md, cr
   - P3 : Vérifier `button.tsx` variant primary — corriger Lemon → Flame si applicable
   - P5 : Ajouter pre-headline tag au-dessus du H1 dans `animated-hero.tsx`
   - P6 : Déplacer le composant `ClientLogos` sous les CTAs du hero (copie ou déplacement depuis Section 7)
-  - P7 : Ajouter une ligne 3 stats (35 experts / 5 continents / 18 languages) entre subtitle et pills
+  - P7 : Ajouter une ligne 3 stats (45 experts / 5 continents / 18 languages) entre subtitle et pills
   - P1 (dépend de H1 et H2) : Refonte layout split 50/50 avec visuel créatif — attendre validation client
   - P8 : Repositionner les dots flottants uniquement dans la moitié droite (left > 50%)
 - Points d'attention :

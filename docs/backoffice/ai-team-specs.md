@@ -35,7 +35,7 @@
 
 ### Problème métier résolu
 
-Thomas (fondateur) et la responsable des opérations gèrent 15-20 projets clients en parallèle : briefs qui changent, deadlines serrées, clients dans 5 fuseaux horaires, 35 experts à coordonner sur 5 continents. Sans outil centralisé, chaque tâche répétitive (traduction, contrat, brief stratégique, post LinkedIn) mobilise du temps humain senior.
+Thomas (fondateur) et la responsable des opérations gèrent 15-20 projets clients en parallèle : briefs qui changent, deadlines serrées, clients dans 5 fuseaux horaires, 45 experts à coordonner sur 5 continents. Sans outil centralisé, chaque tâche répétitive (traduction, contrat, brief stratégique, post LinkedIn) mobilise du temps humain senior.
 
 **Objectif quantifié** : gagner 2h/jour minimum par utilisateur sur les tâches à faible valeur ajoutée (rédaction de contrats, premières ébauches de traduction, structuration de briefs).
 
@@ -236,7 +236,7 @@ Hypothèses : 20 sessions/jour, mix de tâches (traduction courte, contrat, post
 | QA/Proofreader IA | Claude Sonnet 4.5 | ~$0.01 | 150 req/mois | ~$1.5 |
 | **Total** | — | — | — | **~$23.57/mois** |
 
-[HYPOTHÈSE : ces estimations supposent un usage modéré (usage daily par 2 utilisateurs). Si 35 experts utilisent le back-office quotidiennement, multiplier par ~5-10. Budget reste raisonnable vs valeur produite.]
+[HYPOTHÈSE : ces estimations supposent un usage modéré (usage daily par 2 utilisateurs). Si 45 experts utilisent le back-office quotidiennement, multiplier par ~5-10. Budget reste raisonnable vs valeur produite.]
 
 ---
 
@@ -1634,7 +1634,7 @@ Then : le SEO IA identifie les opportunités d'optimisation (title, density, str
 | H-07 | ClickUp API v2 permet la création de tâches avec le niveau de détail requis par le PM IA | PM IA | Sync ClickUp à respec si API limitée | Thomas (tester avec ses credentials) |
 | H-08 | Data Processing Agreement avec Anthropic suffisant pour traiter des briefs clients potentiellement sensibles | Tous (données client) | Risque juridique -- à valider avec conseil avant go-live | Thomas + legal counsel |
 | H-09 | La keyword-map SEO sera disponible avant le démarrage du SEO IA (docs/seo/keyword-map.md non encore produit) | SEO IA | SEO IA fonctionne en mode dégradé (positionnement Sarani uniquement) | @seo agent |
-| H-10 | 35 experts Sarani utilisent le back-office quotidiennement (vs 2 utilisateurs en v1) | Tous | Coûts IA x5-10 si adoption large | Thomas (décision de rollout) |
+| H-10 | 45 experts Sarani utilisent le back-office quotidiennement (vs 2 utilisateurs en v1) | Tous | Coûts IA x5-10 si adoption large | Thomas (décision de rollout) |
 
 ---
 

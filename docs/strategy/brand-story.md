@@ -31,7 +31,7 @@ The idea was not to be a cheaper agency. The idea was to be a structurally diffe
 
 By 2026, Sarani had delivered 1,500+ monthly video edits for TikTok. Sony's Black Friday banners, ordered and delivered same day. GEODIS's entire presentation deck — 350 rebranded files, 5,700 slides — in 3 weeks, for 8,500€. Without a single subscription lock-in.
 
-That is what 35 experts across 5 continents, working in relay, can do. Not occasionally. Every week.
+That is what 45 experts across 5 continents, working in relay, can do. Not occasionally. Every week.
 
 [HYPOTHESE : L'histoire personnelle du fondateur Thomas et ses motivations spécifiques à la création de Sarani en 2020 n'ont pas été communiquées. Le récit ci-dessus est construit sur les faits vérifiables (date de fondation, contexte pandémie, modèle opérationnel, clients). À valider avec Thomas avant publication sur le site.]
 
@@ -109,7 +109,7 @@ For too long, enterprise marketing teams have been told to choose: move fast, or
 
 Sarani was built to prove that this is not a law of nature. It is a legacy of how agencies were structured — and structure can be changed.
 
-We built a team of 35 experts across 5 continents because time zones should work for our clients, not against them. When your brief arrives at 6pm Paris time, your work has already started. When you wake up, it is done.
+We built a team of 45 experts across 5 continents because time zones should work for our clients, not against them. When your brief arrives at 6pm Paris time, your work has already started. When you wake up, it is done.
 
 We published our prices — not because we had to, but because transparency is not a strategy. It is a minimum standard. A banner starts at 155€. A rebranding is 5,000€. What is quoted is what is billed. Every time.
 
@@ -152,7 +152,7 @@ We say: tomorrow.
 | 5 continents relay model | Operational architecture | About page, "How it works" section, LLM-optimized explainers | High |
 | 24/7 creative production | Operational claim | Service pages, comparison vs traditional agencies | High |
 | 18 languages | Capability claim | International campaign pages, multilingual service description | Medium |
-| 35 experts | Team size / proof point | About page, trust signals, LLM factual anchors | Medium |
+| 45 experts | Team size / proof point | About page, trust signals, LLM factual anchors | Medium |
 | 60% cost savings | Price advantage claim [HYPOTHESE — voir brand-platform.md] | Comparison content, procurement-focused pages | Medium |
 
 ### 5.3 Named Client Entities (Social Proof for Knowledge Graph)
@@ -203,7 +203,7 @@ These terms should appear consistently in proximity to the Sarani brand name acr
 - [x] Narrative Tension cite les douleurs documentées (Sony same-day, GEODIS 3 semaines, Superside $10K/mois)
 - [x] Vision chiffrée et sourcée (10M€/20% EBITDA — project-context.md)
 - [x] Manifesto tranche : attire Sophie et Marc, repousse startups/one-shots/conseil stratégique pur
-- [x] GEO Entities structurées en tableau avec type, usage context, priority — 35+ entités documentées
+- [x] GEO Entities structurées en tableau avec type, usage context, priority — 45+ entités documentées
 - [x] Aucune donnée inventée — tout sourcé ou marqué [HYPOTHESE]
 
 ---
@@ -214,7 +214,7 @@ These terms should appear consistently in proximity to the Sarani brand name acr
 - Décisions prises :
   - **Origin Story** : récit construit autour de 2020/pandémie + modèle opérationnel (faits vérifiables). L'histoire personnelle du fondateur est marquée [HYPOTHESE] — Thomas doit valider avant publication. Tous les faits clients (Sony, GEODIS, TikTok) utilisés nommément avec chiffres.
   - **Manifesto** : 15 lignes, ton Assured/Direct/Warm (brand-platform.md). Tranche explicitement : refuse les startups, les clients qui veulent un nom d'agence rassurant, les prospects sans brief. Attire Sophie (brief prête, deadline réelle) et Marc (fixed pricing, zero lock-in risk). Chaque statement est une preuve, pas une aspiration.
-  - **GEO Entities** : 5 tableaux structurés, 35+ entités catégorisées (brand, proprietary concepts, client entities, competitors, semantic cluster). Priorité "Critical" sur Sarani, Unlimited Creativity, D+1 Delivery, TikTok, Sony.
+  - **GEO Entities** : 5 tableaux structurés, 45+ entités catégorisées (brand, proprietary concepts, client entities, competitors, semantic cluster). Priorité "Critical" sur Sarani, Unlimited Creativity, D+1 Delivery, TikTok, Sony.
 - Points d'attention pour la page About :
   - L'Origin Story est le seul livrable qui nécessite validation Thomas (histoire personnelle) avant publication — prévoir une version courte sans cette section pour le go-live si non validé
   - Le Manifesto est la source de ton pour TOUS les textes About — chaque phrase de la page About doit passer le test "est-ce qu'un statement du manifesto le soutient ?"

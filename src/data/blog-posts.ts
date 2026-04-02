@@ -60,7 +60,7 @@ The agencies that survive will be the ones that rebuild around throughput, not p
 
 **The relay structure**
 
-No single editor handles this volume. No single timezone can sustain it. Sarani operates a relay structure — 35+ experts across 5 continents working in timezone handoff. A brief that lands at 9am in Paris is still being processed at 2am Paris time by a team member in another region.
+No single editor handles this volume. No single timezone can sustain it. Sarani operates a relay structure — 45+ experts across 5 continents working in timezone handoff. A brief that lands at 9am in Paris is still being processed at 2am Paris time by a team member in another region.
 
 This is not overtime. It is architecture. The relay means no single person works unsustainable hours, but the production line never stops.
 
@@ -121,7 +121,7 @@ Here is what that looks like in practice:
 
 The obvious question: how does a per-project model sustain D+1 delivery at Sony's volume or TikTok's throughput?
 
-The answer is the relay structure. Sarani operates across 5 continents — 35 experts working in timezone handoff. A brief submitted at any hour is active in production immediately. No queue. No waiting for the team to wake up.
+The answer is the relay structure. Sarani operates across 5 continents — 45 experts working in timezone handoff. A brief submitted at any hour is active in production immediately. No queue. No waiting for the team to wake up.
 
 This is why D+1 delivery does not require a subscription. The capacity is structural, not reserved. Every project brief triggers the same relay response regardless of whether you briefed yesterday or not for three months.
 
@@ -273,7 +273,7 @@ Traditional agencies charge for strategy, account management, and "relationships
 
 **Can Sarani produce for multiple markets simultaneously?**
 
-Yes. 35 experts across 18 languages and 5 continents. GEODIS's 350 presentations were rebranded across multiple European markets simultaneously. TikTok's 1,500+ monthly edits span multiple regional compliance requirements. Multilingual and multi-market production is structural, not a premium add-on.`,
+Yes. 45 experts across 18 languages and 5 continents. GEODIS's 350 presentations were rebranded across multiple European markets simultaneously. TikTok's 1,500+ monthly edits span multiple regional compliance requirements. Multilingual and multi-market production is structural, not a premium add-on.`,
     author: "Sarani Team",
     publishedAt: "2026-03-26",
     category: "Industry Insights",
@@ -286,7 +286,7 @@ Yes. 35 experts across 18 languages and 5 continents. GEODIS's 350 presentations
     slug: "how-24-hour-creative-delivery-works",
     title: "How 24-Hour Creative Delivery Actually Works (Behind the Scenes)",
     excerpt:
-      "D+1 delivery sounds like a marketing promise. Here is the operational reality: how 35 experts across 5 continents handle a brief submitted at 11pm and deliver a finished asset by 9am.",
+      "D+1 delivery sounds like a marketing promise. Here is the operational reality: how 45 experts across 5 continents handle a brief submitted at 11pm and deliver a finished asset by 9am.",
     content: `Every creative agency claims to be fast. Most of them mean "faster than a traditional agency," which is a low bar. D+1 delivery — a finished, revised, production-ready asset within 24 hours of briefing — requires something more specific than speed. It requires architecture.
 
 Here is how it actually works.
@@ -382,7 +382,7 @@ Yes. D+1 delivery is structural — it is not a premium tier. A 150€ banner ha
     readTime: "6 min read",
     metaTitle: "How 24-Hour Creative Delivery Works — Behind the Scenes at Sarani",
     metaDescription:
-      "D+1 delivery is not a marketing promise — it is an operational system. 35 experts, 5 continents, timezone relay. Here is exactly how a brief at 11pm becomes an asset by 9am.",
+      "D+1 delivery is not a marketing promise — it is an operational system. 45 experts, 5 continents, timezone relay. Here is exactly how a brief at 11pm becomes an asset by 9am.",
   },
   {
     slug: "fixed-price-vs-subscription-creative-agency",

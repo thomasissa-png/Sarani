@@ -60,7 +60,7 @@
 
 | Week | Date | Pillar | Format | Hook / Angle | CTA | Status |
 |------|------|--------|--------|--------------|-----|--------|
-| 4 | Mon 21 Apr | 4 — Team & Culture | Photo + text | "35 experts. 5 continents. 18 languages. Here's who answers your brief at 3am." Introduction of the relay model with a real team member (location + role). | Follow Sarani page | Draft |
+| 4 | Mon 21 Apr | 4 — Team & Culture | Photo + text | "45 experts. 5 continents. 18 languages. Here's who answers your brief at 3am." Introduction of the relay model with a real team member (location + role). | Follow Sarani page | Draft |
 | 4 | Wed 23 Apr | 1 — Proof Point | Text + single image | "L'Oréal. Pernod Ricard. TikTok. Adidas. These clients have the highest brand standards in the world — they trusted us with their creative production. Here's what that looks like in practice." | Link to Work page | Draft |
 | 4 | Fri 25 Apr | 2 — Behind the Process | Native text post | "18 languages means 18 native speakers in market — not a translation tool, not a localization agency. Here's how multi-language production actually works at Sarani." | Comment: how many languages does your current agency cover? | Draft |
 
@@ -174,7 +174,7 @@
 |------|------|--------|--------|--------------|-----|--------|
 | 13 | Mon 22 Jun | 1 — Proof Point | Carousel (full case study) | "From brief to delivery: the Sony Black Friday story. Ordered in the morning. Live the same day. 155€." | Link to Sony case study | Draft |
 | 13 | Wed 24 Jun | 3 — Thought Leadership | Native text post | "90 days of publishing on LinkedIn. Here's what we learned about what enterprise marketing leaders actually engage with — and what they scroll past." [Meta-post about the content itself — builds authenticity and earns engagement from peers.] | Comment: what content do you find most useful on LinkedIn? | Draft |
-| 13 | Fri 26 Jun | 5 — Invitation to Brief | Short text post | "35 experts, 5 continents, 18 languages, 24/7. Your next campaign brief doesn't have to wait until Monday." | Start a project | Draft |
+| 13 | Fri 26 Jun | 5 — Invitation to Brief | Short text post | "45 experts, 5 continents, 18 languages, 24/7. Your next campaign brief doesn't have to wait until Monday." | Start a project | Draft |
 
 ---
 
@@ -188,7 +188,7 @@ These 5 posts are evergreen and can publish at any time without being date-sensi
 | R2 | 3 — Thought Leadership | Native text post | "The best creative brief is the one that takes 10 minutes to write. Here's the format we send to every new client — and why it works." | Share with your team |
 | R3 | 2 — Behind the Process | Carousel | "What 18 languages looks like in practice: the same brief, delivered in French, Arabic, Japanese, German, and Portuguese. Same quality. Same deadline." | Save this |
 | R4 | 1 — Proof Point | Text + single image | "Avenir Actifs. Air Corsica. Smaller names, same rigour. Every brief treated the same way, regardless of company size." | Link to Work page |
-| R5 | 4 — Team & Culture | Photo + text | "The Sarani team in numbers: 35 experts, 5 continents, 18 languages, 6+ years of building enterprise creative from the ground up." | Follow Sarani |
+| R5 | 4 — Team & Culture | Photo + text | "The Sarani team in numbers: 45 experts, 5 continents, 18 languages, 6+ years of building enterprise creative from the ground up." | Follow Sarani |
 
 ---
 

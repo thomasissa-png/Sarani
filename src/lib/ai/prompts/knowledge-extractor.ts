@@ -2,7 +2,7 @@
 // Used by the email history scanner to extract structured, atomic knowledge
 // entries from batches of emails. Called with Claude Haiku for cost efficiency.
 
-export const KNOWLEDGE_EXTRACTOR_SYSTEM_PROMPT = `You are a knowledge extraction engine for Sarani, an international creative agency (35 experts, 5 continents, 18 languages). Your job is to analyse batches of emails and extract structured, atomic facts about clients, their divisions, individual contacts, and Sarani team members.
+export const KNOWLEDGE_EXTRACTOR_SYSTEM_PROMPT = `You are a knowledge extraction engine for Sarani, an international creative agency (45 experts, 5 continents, 18 languages). Your job is to analyse batches of emails and extract structured, atomic facts about clients, their divisions, individual contacts, and Sarani team members.
 
 ## What to extract
 

@@ -183,7 +183,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What does D+1 delivery mean?",
-    a: "Brief validated today, asset delivered tomorrow. For standard design (banners, adaptations), that means 24 hours. 35 experts across 5 continents work in time-zone relay — your brief never waits for a timezone to wake up. Larger scopes (video, branding) follow confirmed timelines, typically 48 to 96 hours.",
+    a: "Brief validated today, asset delivered tomorrow. For standard design (banners, adaptations), that means 24 hours. 45 experts across 5 continents work in time-zone relay — your brief never waits for a timezone to wake up. Larger scopes (video, branding) follow confirmed timelines, typically 48 to 96 hours.",
   },
   {
     q: "Do I need a minimum commitment?",
@@ -207,7 +207,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Why are your prices lower than traditional agencies?",
-    a: "Structure, not shortcuts. 35 experts across 5 continents working in relay means zero idle time and no account-management overhead. No corner offices, no layers of project managers between you and the work. The savings come from operational efficiency — TikTok, Sony, and Adidas would not trust us with their production if it came at the expense of quality.",
+    a: "Structure, not shortcuts. 45 experts across 5 continents working in relay means zero idle time and no account-management overhead. No corner offices, no layers of project managers between you and the work. The savings come from operational efficiency — TikTok, Sony, and Adidas would not trust us with their production if it came at the expense of quality.",
   },
 ];
 
@@ -312,7 +312,7 @@ export default function PricingPage() {
       <Section ariaLabel="Why these prices">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="mb-4 text-3xl font-bold text-brand-black sm:text-4xl">
-            35 experts. 5 continents. 18 languages. 24/7.
+            45 experts. 5 continents. 18 languages. 24/7.
           </h2>
           <p className="mx-auto max-w-2xl text-lg leading-relaxed text-neutral-600">
             Your brief never waits for a timezone to wake up. Our team works in

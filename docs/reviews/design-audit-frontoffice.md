@@ -158,7 +158,7 @@ Chaque page est évaluée sur 5 axes, notés /10 :
 - **Select avec chevron SVG custom** : Wrapper les `<select>` dans un `<div className="relative">` avec un `<svg>` positionné `absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none` — cohérent avec le `appearance-none` déjà appliqué.
 - **Input file remplacé** : Implémenter un composant `DropZone` avec drag & drop (`onDragOver`, `onDrop`) et un bouton custom stylisé. Fallback sur l'input natif caché (`className="sr-only"`) pour l'accessibilité.
 - **Success state brand** : Background `bg-brand-black`, titre en `text-brand-lemon`, icône check custom. Ajouter un lien "View our work" pour rediriger vers `/work` et maintenir l'engagement post-conversion.
-- **Réassurance dans le formulaire** : Ajouter sous le H1 une ligne de stats inline (`35 experts · 18 languages · Reply < 1 hour`) en `text-sm text-neutral-500` pour ancrer la promesse pendant le remplissage.
+- **Réassurance dans le formulaire** : Ajouter sous le H1 une ligne de stats inline (`45 experts · 18 languages · Reply < 1 hour`) en `text-sm text-neutral-500` pour ancrer la promesse pendant le remplissage.
 
 ---
 

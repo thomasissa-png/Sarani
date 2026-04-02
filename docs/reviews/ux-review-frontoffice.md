@@ -26,7 +26,7 @@
 | F3 | **Majeur** | Header mobile | Menu mobile plein écran sans logo visible — pas d'ancrage de marque pendant la navigation | Ajouter le logo Sarani en haut du menu overlay mobile |
 | F4 | **Majeur** | Global | Aucun sticky CTA mobile — Sophie sur mobile doit scroller tout en bas pour trouver "Start a project" | Ajouter un CTA sticky bottom bar sur mobile (visible après scroll 50%) |
 | F5 | **Majeur** | Services | 4 sections avec CTA "Start a project" identiques — fatigue de clic, pas de différenciation | Varier les CTAs par section ou n'en garder qu'un seul en closing |
-| F6 | **Majeur** | About | Duplication de données : `TEAM_STATS` (35, 5, 18) et `KEY_NUMBERS` (35+, 5, 18, D+1, 60%, 1500+) — la page montre les mêmes chiffres deux fois | Fusionner en une seule section ou différencier clairement le contenu |
+| F6 | **Majeur** | About | Duplication de données : `TEAM_STATS` (35, 5, 18) et `KEY_NUMBERS` (45+, 5, 18, D+1, 60%, 1500+) — la page montre les mêmes chiffres deux fois | Fusionner en une seule section ou différencier clairement le contenu |
 | F7 | **Mineur** | Homepage | `ClientLogos` apparait deux fois (hero + section 7 testimonials) — redondant | Garder uniquement dans le hero ou ajouter des logos différents en section 7 |
 | F8 | **Mineur** | Homepage | `ProjectSlider` apparait deux fois (hero + section 5) — même composant, même contenu | Différencier le contenu ou supprimer un des deux |
 | F9 | **Mineur** | Pricing | FAQ utilise `<details>` natif (pas animé) alors que homepage FAQ utilise framer-motion — incohérence d'interaction | Unifier le pattern FAQ (soit natif partout, soit animé partout) |
@@ -41,7 +41,7 @@
 | # | Description | Impact |
 |---|-------------|--------|
 | M1 | Pas de sticky CTA bottom bar — Sophie perd le CTA en scrollant | Conversion |
-| M2 | Hero stats (35+ / 5 / 18) s'affichent en `flex gap-8` — risque de débordement sur petits écrans (<375px) | Layout |
+| M2 | Hero stats (45+ / 5 / 18) s'affichent en `flex gap-8` — risque de débordement sur petits écrans (<375px) | Layout |
 | M3 | Pricing comparison table `min-w-[480px]` force le scroll horizontal — OK mais pas de hint visuel | Usabilite |
 | M4 | Services page — listes de services en grille 3 colonnes qui stack mal sur mobile (items isolés) | Lisibilite |
 | M5 | Contact aside invisible above-the-fold sur mobile — les reassurance points sont sous le form | Conversion |
@@ -79,7 +79,7 @@
 | A5 | **Majeur** | Footer | Le lien "How we work" (colonne About) pointe vers `/services`. Label trompeur — évoque une page process/méthodo, pas une liste de services. | Renommer en "Services" pour correspondre au contenu réel. |
 | A6 | **Mineur** | Home — Proof Cards | TikTok card affiche `price: "300–500/week"` sans devise ni unité. Incohérent avec Sony (155 €) et GEODIS (8,500 €). | Clarifier : "300–500 videos/week" ou "from 20 $/video". Aligner le format sur les 3 cards. |
 | A7 | **Mineur** | Home — Testimonials | Carousel manuel, pas d'autoplay. 6 témoignages nécessitent 5 clics pour tout voir. Sur mobile, les boutons prev/next (h-10 w-10 = 40px) sont à la limite du touch target WCAG (44px minimum). | Ajouter autoplay 8s avec pause au survol/focus. Agrandir les boutons nav à h-11 w-11 (44px). |
-| A8 | **Mineur** | `/about` | `TEAM_STATS` (35, 5, 18) + `KEY_NUMBERS` (35+, 5, 18, D+1, 60%, 1500+) — les 3 premières stats sont identiques sur la même page. | Supprimer TEAM_STATS ou les remplacer par des données distinctes (ex : années d'existence, clients actifs). |
+| A8 | **Mineur** | `/about` | `TEAM_STATS` (35, 5, 18) + `KEY_NUMBERS` (45+, 5, 18, D+1, 60%, 1500+) — les 3 premières stats sont identiques sur la même page. | Supprimer TEAM_STATS ou les remplacer par des données distinctes (ex : années d'existence, clients actifs). |
 | A9 | **Mineur** | `/services` | CTA "Start a project" répété 4x (une fois par ServiceBlock) + 1x en closing = 5 fois sur la même page. Dilution de l'intention et bruit visuel pour Sophie qui scanne. | Supprimer les CTAs des ServiceBlocks. Remplacer par un lien contextuel "→ Get a quote" pointant vers `/contact?service=X`. |
 
 ---

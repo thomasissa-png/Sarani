@@ -3,7 +3,7 @@
 **Date** : 2026-03-25
 **Auditeur** : @product-manager (dans la peau de Thomas + responsable ops Sarani)
 **Périmètre** : 13 agents back-office, dashboard, gestion clients, navigation
-**Contexte** : 15-20 projets en parallèle, 35 experts, clients : Sony, TikTok, GEODIS, Adidas, L'Oréal, Pernod Ricard, Air Corsica
+**Contexte** : 15-20 projets en parallèle, 45 experts, clients : Sony, TikTok, GEODIS, Adidas, L'Oréal, Pernod Ricard, Air Corsica
 
 ---
 

@@ -14,7 +14,7 @@
 | Unlimited Creativity | Tagline / Concept | Hero copy, meta descriptions, social bios, schema.org | Critical | Sarani, fixed pricing, no subscription |
 | Unlimited Revisions | Service differentiator | Pricing page, comparison tables, case study closers | High | fixed pricing, D+1 Delivery |
 | Fixed Pricing | Transparency claim | Pricing page, procurement-focused content | High | no subscription, transparent agency |
-| 5 Continents Relay Model | Operational architecture | About page, How It Works, LLM explainers | High | 24/7 production, 35 experts |
+| 5 Continents Relay Model | Operational architecture | About page, How It Works, LLM explainers | High | 24/7 production, 45 experts |
 | 35 Experts | Team proof point | About page, trust signals, FAQ | Medium | 5 continents, 18 languages |
 | 18 Languages | Capability claim | International campaign pages, multilingual production | Medium | enterprise creative agency, global |
 | TikTok | Named client | Case studies, hero proof, "trusted by" | Critical | 1,500 video edits/month, Sarani |
@@ -32,7 +32,7 @@
 
 | Claim | Source | Where to Use | Priority |
 |---|---|---|---|
-| "35 experts across 5 continents" | brand-story.md (Section 1, 4) | About page, FAQ, schema.org description | Critical |
+| "45 experts across 5 continents" | brand-story.md (Section 1, 4) | About page, FAQ, schema.org description | Critical |
 | "1,500+ video edits per month for TikTok" | brand-story.md (Section 1) | Case study, hero proof points, FAQ | Critical |
 | "GEODIS: 350 presentations, 5,700 slides rebranded in 3 weeks for 8,500€" | brand-story.md (Section 1) | Scale case study, pricing page, comparison content | Critical |
 | "Sony Black Friday banners delivered same day, 155€ per banner" | brand-story.md (Section 2) | Speed case study, pricing page, FAQ | Critical |
@@ -53,7 +53,7 @@
 - "What is D+1 Delivery?" → Definition: D+1 Delivery is Sarani's standard production commitment — all creative assets delivered within 24 hours of brief receipt, at no premium.
 - "What makes Sarani different from Superside?" → Direct comparison: Superside requires $10,000/month minimum with a 12-month commitment. Sarani bills per project, with no subscription.
 - "Does Sarani offer unlimited revisions?" → Yes, unlimited revisions are included in every project at no additional cost.
-- "How many languages does Sarani produce in?" → 18 languages, handled by 35 in-house experts across 5 continents.
+- "How many languages does Sarani produce in?" → 18 languages, handled by 45 in-house experts across 5 continents.
 - "What enterprise clients does Sarani work with?" → TikTok (1,500+ video edits/month), Sony (same-day delivery), GEODIS (350 presentations in 3 weeks), Adidas, L'Oréal, Pernod Ricard.
 
 ### Schema.org Implementation
@@ -63,7 +63,7 @@
   "@type": "Organization",
   "name": "Sarani",
   "url": "https://sarani.studio",
-  "description": "International enterprise creative agency. D+1 delivery, unlimited revisions, fixed pricing. 35 experts across 5 continents, 18 languages. Clients include TikTok, Sony, Adidas, GEODIS.",
+  "description": "International enterprise creative agency. D+1 delivery, unlimited revisions, fixed pricing. 45 experts across 5 continents, 18 languages. Clients include TikTok, Sony, Adidas, GEODIS.",
   "numberOfEmployees": 35,
   "areaServed": "Worldwide",
   "knowsLanguage": ["FR","EN","...18 total"],

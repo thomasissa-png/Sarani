@@ -26,7 +26,7 @@
 | # | Criterion | Score | Comment |
 |---|-----------|-------|---------|
 | 6 | **Visual hierarchy** | 7/10 | The left-border-accent pattern (4px colored bar → H2 → subtitle → service grid → proof block → CTA) is logical and scannable. The problem: all four service sections follow the exact same visual rhythm. Sophie's eye stops being guided after block two — pattern recognition kicks in and she skims. No visual elevation moment (a stat callout in large type, a full-bleed client quote, a metrics strip) re-engages attention between sections. The hero is text-only, flat, and provides no visual entry point beyond the H1. |
-| 7 | **Design system compliance** | 8/10 | Token usage is accurate. `bg-brand-flame/10`, `text-brand-cerulean-dark`, `bg-brand-black` closing section all follow the palette rules. Accent color rotation (Flame → Cerulean → Lemon → Flame) is correct. `bg-surface-warm` alternation on even sections adds cadence. One flag: the closing section uses "35+ experts" with a "+" character — brand-voice.md §3.2 mandates the verbatim unit "35 experts, 5 continents, 18 languages, 24/7" without the "+". Minor, but it deviates from the approved vocabulary. |
+| 7 | **Design system compliance** | 8/10 | Token usage is accurate. `bg-brand-flame/10`, `text-brand-cerulean-dark`, `bg-brand-black` closing section all follow the palette rules. Accent color rotation (Flame → Cerulean → Lemon → Flame) is correct. `bg-surface-warm` alternation on even sections adds cadence. One flag: the closing section uses "45+ experts" with a "+" character — brand-voice.md §3.2 mandates the verbatim unit "45 experts, 5 continents, 18 languages, 24/7" without the "+". Minor, but it deviates from the approved vocabulary. |
 | 8 | **Responsive (320px)** | 7/10 | Service grid collapses correctly (`sm:grid-cols-2 lg:grid-cols-3`). `max-w-3xl` / `max-w-4xl` containers are viewport-safe. Two risk points: (1) The Content Creation section has 7 sub-groups — on mobile, these stack into a very long vertical list with no visual break separating groups from items. (2) The hero H1 uses `text-5xl` at the base breakpoint with no `xs` step — at 320px with a long heading, word-wrapping may produce an awkward single-word orphan on the last line depending on font metrics. |
 | 9 | **Accessibility** | 6/10 | `ariaLabel` passed to `Section` components is correct for landmark labeling. `<ul><li>` for service items is semantically appropriate. Three issues: (1) Five `<Button>` elements with identical text "Start a project" and identical `href="/contact"` are indistinguishable to screen readers — each needs a unique `aria-label` (e.g., `"Start a content creation project"`). (2) Proof point blocks use `.text-neutral-700.italic.text-sm` on tinted backgrounds — the 10% opacity accent backgrounds are near-white but need contrast ratio verification against WCAG AA (4.5:1 minimum for small text). (3) Group headings (`<h3>` with `.text-sm.uppercase`) at accent colors on white backgrounds need contrast verification, particularly `text-brand-lemon-dark`. |
 | 10 | **Visual impact** | 5/10 | The page is clean and professional. It is not memorable. Four blocks of muted-tint proof quotes and grid service lists create a catalog feel, not a brand statement. Sophie, landing from a referral or a LinkedIn ad, should register "enterprise-level, fast, serious" within 3 seconds without reading. Currently she reads a well-structured agency website. No client logo strip, no hero metric in large type, no kinetic element, no single visual moment of elevation. The closing black section is the strongest beat on the page — Sophie has to scroll through the entire catalog to reach it. |
@@ -61,7 +61,7 @@ Enterprise creative. Every format. Delivered in 24 hours.
 
 Subtitle:
 Strategy, content, distribution, on-demand production —
-produced by 35 experts across 5 continents, working in relay.
+produced by 45 experts across 5 continents, working in relay.
 No retainer. Fixed prices. First project satisfaction or no invoice.
 ```
 
@@ -106,7 +106,7 @@ This routes Sophie and Marc through the page by intent stage rather than repeati
 
 Why 24 hours is our default, not our premium.
 
-35 experts across 5 time zones work in relay.
+45 experts across 5 time zones work in relay.
 When Paris signs off, Dubai continues. When Dubai hands off, São Paulo picks up.
 Your brief never waits for a timezone to wake up.
 That is why D+1 delivery is the standard — not an add-on.
@@ -145,7 +145,7 @@ One character. Zero design impact. Apply immediately.
 **Alternative if logos unavailable:** Promote the metrics strip from the closing section to below the hero:
 
 ```
-35 experts   ·   5 continents   ·   18 languages   ·   24/7
+45 experts   ·   5 continents   ·   18 languages   ·   24/7
 Working in relay so your campaigns never stop.
 ```
 

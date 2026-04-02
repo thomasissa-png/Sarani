@@ -145,7 +145,7 @@ Sony needed Black Friday banners for their ULT series — urgently. The brief ar
 
 Two proposals were produced and returned to Sony the same afternoon. One designer worked the day shift, a second took over overnight to apply Sony's final feedback and prepare the delivery files. By morning, the assets were ready.
 
-This is the relay structure that makes Sarani's D+1 commitment structurally possible — not a rush fee, not an exception. It is how the team is built: 35 experts across 5 continents, working in time-zone relay so a brief that lands at 9am in Paris is still being worked on at 2am Paris time in another timezone.
+This is the relay structure that makes Sarani's D+1 commitment structurally possible — not a rush fee, not an exception. It is how the team is built: 45 experts across 5 continents, working in time-zone relay so a brief that lands at 9am in Paris is still being worked on at 2am Paris time in another timezone.
 
 **Results:**
 
@@ -248,7 +248,7 @@ No traditional post-production house could sustain this volume at this frequency
 
 Sarani became TikTok's ongoing video editing partner for this programme. Working at $20 per video, with a consistent weekly output of 300–500 edits, the team processed every file through the same compliance workflow: marks blurred, scenes flagged and removed, music cleared and replaced.
 
-The relay structure — 35 experts across 5 continents, day and night — made weekly volume delivery at this scale operationally sustainable. No single timezone dependence. No production bottleneck on Monday morning.
+The relay structure — 45 experts across 5 continents, day and night — made weekly volume delivery at this scale operationally sustainable. No single timezone dependence. No production bottleneck on Monday morning.
 
 **Results:**
 

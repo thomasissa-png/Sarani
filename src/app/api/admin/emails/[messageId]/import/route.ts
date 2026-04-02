@@ -123,7 +123,7 @@ const ImportBodySchema = z.object({
   existingBriefId: z.string().uuid().optional(),
 }).optional();
 
-const REPLY_SYSTEM_PROMPT = `You are a project manager at Sarani, an international creative agency (35 experts, 5 continents, 24/7 delivery).
+const REPLY_SYSTEM_PROMPT = `You are a project manager at Sarani, an international creative agency (45 experts, 5 continents, 24/7 delivery).
 You are writing a reply to a client email that just came in with a project request.
 
 TONE MIRRORING — CRITICAL:

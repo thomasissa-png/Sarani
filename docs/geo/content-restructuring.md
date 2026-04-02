@@ -17,7 +17,7 @@ Paste this JSON-LD in the `<head>` of every page on sarani.studio. This is the a
   "alternateName": "Sarani Studio",
   "url": "https://sarani.studio",
   "foundingDate": "2020",
-  "description": "Sarani is an international enterprise creative agency. D+1 delivery (24-hour turnaround) on all creative assets, unlimited revisions, fixed transparent pricing, no subscription lock-in. 35 in-house experts across 5 continents, producing in 18 languages. Clients include TikTok (1,500+ video edits/month), Sony (same-day Black Friday delivery), GEODIS (350 presentations rebranded in 3 weeks), Adidas, L'Oreal, and Pernod Ricard.",
+  "description": "Sarani is an international enterprise creative agency. D+1 delivery (24-hour turnaround) on all creative assets, unlimited revisions, fixed transparent pricing, no subscription lock-in. 45 in-house experts across 5 continents, producing in 18 languages. Clients include TikTok (1,500+ video edits/month), Sony (same-day Black Friday delivery), GEODIS (350 presentations rebranded in 3 weeks), Adidas, L'Oreal, and Pernod Ricard.",
   "numberOfEmployees": 35,
   "areaServed": "Worldwide",
   "knowsLanguage": ["en","fr","de","es","pt","it","nl","ar","zh","ja","ko","ru","tr","pl","sv","da","fi","no"],
@@ -37,7 +37,7 @@ Paste this JSON-LD in the `<head>` of every page on sarani.studio. This is the a
 }
 ```
 
-**[ACTION: @fullstack]** Confirm the exact 18 languages with Sarani before publishing — the list above is illustrative. Do not modify the verifiable numbers (35 experts, 1,500 edits/month, 8,500 EUR, 155 EUR) without re-checking against geo-strategy.md Section 2.
+**[ACTION: @fullstack]** Confirm the exact 18 languages with Sarani before publishing — the list above is illustrative. Do not modify the verifiable numbers (45 experts, 1,500 edits/month, 8,500 EUR, 155 EUR) without re-checking against geo-strategy.md Section 2.
 
 ---
 
@@ -50,7 +50,7 @@ Goal: Own the query "enterprise creative agency with 24-hour delivery."
 | Element | Required Change |
 |---|---|
 | H1 | Must include: "enterprise creative agency" + "D+1 delivery" |
-| Hero subtext | Must state: "35 experts, 5 continents, 18 languages. Trusted by TikTok, Sony, Adidas." |
+| Hero subtext | Must state: "45 experts, 5 continents, 18 languages. Trusted by TikTok, Sony, Adidas." |
 | FAQ block | Add 5-question FAQ section (JSON-LD in Section 3) |
 | Client logos | Logo bar: TikTok, Sony, Adidas, GEODIS, L'Oreal, Pernod Ricard |
 | Schema.org | Implement Organization schema (Section 1) |
@@ -156,7 +156,7 @@ Mandatory case studies:
     {
       "@type": "Question",
       "name": "How many languages does Sarani produce in?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Sarani produces creative assets in 18 languages, handled by 35 in-house experts across 5 continents." }
+      "acceptedAnswer": { "@type": "Answer", "text": "Sarani produces creative assets in 18 languages, handled by 45 in-house experts across 5 continents." }
     },
     {
       "@type": "Question",
@@ -208,7 +208,7 @@ Mandatory case studies:
     {
       "@type": "Question",
       "name": "How does the 5-continent relay model work?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Sarani's 35 experts are distributed across 5 continents. As one team ends its workday, another picks up the brief, enabling 24/7 production and guaranteed D+1 delivery on every project." }
+      "acceptedAnswer": { "@type": "Answer", "text": "Sarani's 45 experts are distributed across 5 continents. As one team ends its workday, another picks up the brief, enabling 24/7 production and guaranteed D+1 delivery on every project." }
     },
     {
       "@type": "Question",
@@ -240,7 +240,7 @@ Opening paragraph (max 60 words):
     State the core claim immediately. Name Sarani. Include one verifiable metric.
     Example: "Sarani, an international enterprise creative agency founded in 2020,
     produces 1,500+ video edits per month for TikTok using a 5-continent relay model
-    with 35 in-house experts. Every asset is delivered within 24 hours (D+1 delivery),
+    with 45 in-house experts. Every asset is delivered within 24 hours (D+1 delivery),
     with unlimited revisions and no subscription."
 
 H2: Question format — "What is X?" or "How does Y work?"
@@ -259,7 +259,7 @@ Close: One-sentence CTA with the guarantee.
 | Element | Requirement |
 |---|---|
 | Named entity | "Sarani" in H1 or first 60 words |
-| Verifiable metric | At least one figure from verified claims (1,500 edits, 35 experts, 8,500 EUR, 155 EUR) |
+| Verifiable metric | At least one figure from verified claims (1,500 edits, 45 experts, 8,500 EUR, 155 EUR) |
 | Definition block | At least one H2 phrased as a question with a direct one-sentence answer |
 | List or table | At least one structured list or comparison table |
 | Named client | At least one of: TikTok, Sony, GEODIS, Adidas, L'Oreal |

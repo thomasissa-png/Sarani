@@ -52,7 +52,7 @@ type LarkEvent = z.infer<typeof larkEventSchema>;
 
 // ─── Classification prompt (Lark-specific context) ────────────────────────
 
-const LARK_CLASSIFICATION_PROMPT = `You are Sarani's internal message classifier. Sarani is an international creative agency (35 experts, 5 continents, 18 languages). Classify the following Lark (Feishu) message into exactly ONE category.
+const LARK_CLASSIFICATION_PROMPT = `You are Sarani's internal message classifier. Sarani is an international creative agency (45 experts, 5 continents, 18 languages). Classify the following Lark (Feishu) message into exactly ONE category.
 
 Categories:
 - "enquiry": Question about Sarani's services, request for quote/pricing, general question, first contact. No existing project involved. Can come from internal team relaying a client question.

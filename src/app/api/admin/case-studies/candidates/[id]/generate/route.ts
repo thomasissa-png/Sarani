@@ -8,7 +8,7 @@ import { GenerationOutputSchema, type GenerationOutput } from "@/lib/case-studie
 
 // ─── System prompt ─────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are Sarani's content generation engine. Sarani is an international creative agency (35 experts, 5 continents, 18 languages) that delivers enterprise-quality creative in 24 hours with unlimited revisions and fixed prices.
+const SYSTEM_PROMPT = `You are Sarani's content generation engine. Sarani is an international creative agency (45 experts, 5 continents, 18 languages) that delivers enterprise-quality creative in 24 hours with unlimited revisions and fixed prices.
 
 Brand voice: Assured, Direct, Warm, Evidence-first.
 - Lead with proof, not promises

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s | Sarani",
   },
   description:
-    "35+ experts, 5 continents, 18 languages. Fixed pricing, unlimited revisions. Trusted by TikTok, Sony, Adidas, GEODIS. Brief today, assets tomorrow.",
+    "45+ experts, 5 continents, 18 languages. Fixed pricing, unlimited revisions. Trusted by TikTok, Sony, Adidas, GEODIS. Brief today, assets tomorrow.",
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",
@@ -74,11 +74,11 @@ const organizationJsonLd = {
     height: 80,
   },
   description:
-    "Enterprise creative agency delivering D+1 creative production with unlimited revisions and fixed pricing. 35+ experts across 5 continents, 18 languages, trusted by TikTok, Sony, Adidas, GEODIS, L'Oreal, and Pernod Ricard.",
+    "Enterprise creative agency delivering D+1 creative production with unlimited revisions and fixed pricing. 45+ experts across 5 continents, 18 languages, trusted by TikTok, Sony, Adidas, GEODIS, L'Oreal, and Pernod Ricard.",
   foundingDate: "2020",
   numberOfEmployees: {
     "@type": "QuantitativeValue",
-    value: 35,
+    value: 45,
   },
   areaServed: {
     "@type": "Place",

@@ -86,7 +86,7 @@ const VALUE_PROPS = [
 /* ---------- Hero stats ---------- */
 
 const HERO_STATS = [
-  { value: "35+", label: "experts" },
+  { value: "45+", label: "experts" },
   { value: "5", label: "continents" },
   { value: "18", label: "languages" },
 ] as const;

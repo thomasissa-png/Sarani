@@ -92,7 +92,7 @@ En tant que Thomas, je veux que le système identifie si l'email correspond à u
 **Priorité RICE** : R=10 I=10 C=9 E=1 → Score=90
 
 #### Job-to-be-done
-En tant que Thomas, je veux que le système reformule l'email client en brief Sarani complet (6 sections emoji) traduit en anglais, afin que l'équipe de 35 experts reçoive un briefing structuré et actionnable sans intervention de ma part.
+En tant que Thomas, je veux que le système reformule l'email client en brief Sarani complet (6 sections emoji) traduit en anglais, afin que l'équipe de 45 experts reçoive un briefing structuré et actionnable sans intervention de ma part.
 
 #### Critères d'acceptance
 
@@ -394,7 +394,7 @@ Rules:
 6. Extract exact deliverable quantities and formats. If not specified, write [TO CONFIRM — quantity/formats not specified].
 7. Deadline: extract exact date if mentioned. If "ASAP" → write "ASAP". If none → write "TBC — to confirm with client".
 
-Context about Sarani: international creative agency, 35 experts, 24/7 delivery, clients include Sony, TikTok, Adidas, GEODIS.
+Context about Sarani: international creative agency, 45 experts, 24/7 delivery, clients include Sony, TikTok, Adidas, GEODIS.
 
 Client email:
 ---
@@ -803,7 +803,7 @@ AUTO_BRIEF_CLASSIFIER_MODEL=claude-haiku-3  # classification (latence)
 | Le domaine email client = domaine ClickUp dans 80%+ des cas | Faible | Croiser les clients ClickUp actuels avec les domaines des emails reçus | A valider avec Thomas |
 | Thomas préfère valider chaque réponse avant envoi | Fort (décision explicite) | N/A | Validé |
 | 8 secondes de génération sont acceptables pour l'UX back-office | Moyen | Test utilisateur avec Thomas sur prototype | A valider |
-| Le format 6 sections emoji est compris sans explication par les 35 experts | Fort (format déjà en production) | N/A | Validé |
+| Le format 6 sections emoji est compris sans explication par les 45 experts | Fort (format déjà en production) | N/A | Validé |
 
 ---
 

@@ -22,7 +22,7 @@ Exemples qui fonctionnent exactement comme ils doivent :
 - Hero : "Unlimited Creativity" + 4 value props courtes + "First project satisfaction or no invoice." — 3 lignes qui disent tout.
 - Section footer CTA : "The creative agency enterprises call when every other agency says two weeks." — C'est la phrase-test de la brand platform. Elle est là, in fine, là où elle doit être.
 - About, section "What we believe" : "TikTok trusted us with 1,500+ video edits a month. Sony called us the day their Black Friday banners were needed — not the week before, that day — and we delivered at 155€ per banner." — Ce sont des phrases qui respectent à la lettre la règle "Never praise yourself. Point at the work."
-- 404 : "This page doesn't exist. But we do. 35 experts ready to work on your next project." — Parfait. Zéro "Oops!", zéro humour de startup. Ton d'entreprise qui se permet d'être légèrement humain.
+- 404 : "This page doesn't exist. But we do. 45 experts ready to work on your next project." — Parfait. Zéro "Oops!", zéro humour de startup. Ton d'entreprise qui se permet d'être légèrement humain.
 - Contact form placeholder : `"We need 50 banners in 3 languages by Friday..."` — Sophie se reconnaît immédiatement.
 
 Le copywriter qui a produit ce contenu a compris le persona. Chaque phrase est écrite pour une personne sous pression qui lit vite.
@@ -75,7 +75,7 @@ La question d'attribution ("How did you hear about us?") en champ obligatoire es
 
 ### 1.7 Le 404 : détail révélateur d'une vraie maîtrise de marque
 
-"This page doesn't exist. But we do. 35 experts ready to work on your next project." — C'est la définition d'une marque qui contrôle son ton jusqu'aux extrémités. Pas de jeu de mots creux, pas d'"Oops!", pas de dessin de robot triste. Juste la marque qui parle comme elle parle partout. Un détail — mais les détails sont là où les grandes marques se distinguent des agences qui font du bon boulot.
+"This page doesn't exist. But we do. 45 experts ready to work on your next project." — C'est la définition d'une marque qui contrôle son ton jusqu'aux extrémités. Pas de jeu de mots creux, pas d'"Oops!", pas de dessin de robot triste. Juste la marque qui parle comme elle parle partout. Un détail — mais les détails sont là où les grandes marques se distinguent des agences qui font du bon boulot.
 
 ---
 

@@ -38,7 +38,7 @@ This is not a discount agency. This is not a freelance marketplace. This is a ne
 These are the facts that make the promise credible — verifiable, citable, LLM-ready.
 
 ### Scale & Structure
-- **35 experts** across **5 continents** working in time-zone relay — structurally enabling 24/7 production
+- **45 experts** across **5 continents** working in time-zone relay — structurally enabling 24/7 production
 - **18 languages** — enabling true international execution without translation bottlenecks
 - **Founded 2020** — 5+ years of enterprise delivery track record
 - **100% referral growth** to date — no paid acquisition needed because clients come back and recommend
@@ -104,7 +104,7 @@ Sarani's clients do not need an agency that has one spectacular idea per quarter
 | Describing price | "Fixed prices, published openly. A banner starts at 155€." | "Competitive rates tailored to your budget." |
 | Describing quality | "TikTok trusted us with 1,500+ video edits a month." | "Our world-class team delivers premium content." |
 | Describing guarantee | "Not satisfied with your first project? No invoice." | "We're committed to your satisfaction." |
-| Describing scale | "35 experts, 5 continents, 18 languages, 24/7." | "A global creative powerhouse ready to scale with you." |
+| Describing scale | "45 experts, 5 continents, 18 languages, 24/7." | "A global creative powerhouse ready to scale with you." |
 | Handling objections | "We've rebranded 350 GEODIS presentations in 3 weeks. What's your timeline?" | "We understand your concerns and are flexible." |
 | Introducing Sarani | "The creative agency enterprises call when every other agency says two weeks." | "A leading full-service integrated creative solutions provider." |
 

@@ -20,7 +20,7 @@ Site vitrine agence créative B2B enterprise avec une direction claire et un pos
 - Absence de page Services dédiée : les services sont listés sur la homepage uniquement (AnimatedServicesList), sans profondeur. Pas de page dédiée par type de service pour le SEO et la qualification.
 
 **Recommandations**
-- Ajouter un bloc "About the team" ou "35 experts, 5 continents" entre les métriques et les témoignages sur la homepage, avec lien vers /about.
+- Ajouter un bloc "About the team" ou "45 experts, 5 continents" entre les métriques et les témoignages sur la homepage, avec lien vers /about.
 - Créer des pages services individuelles ou un /services avec ancres par domaine (design, video, presentations), linkées depuis la homepage.
 
 ---

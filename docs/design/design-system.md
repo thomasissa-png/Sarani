@@ -199,7 +199,7 @@ Visual specs for the 6 priority components of the Sarani site. No code — these
 1. Pre-headline tag: small, all-caps, letter-spacing wide, Cerulean or white, e.g. "The always-on enterprise creative partner"
 2. Main headline: Display size (96px desktop / 48px mobile), Bold, White. The headline must contain either a named client OR a speed claim within the first 8 words
 3. Sub-headline: Body Large (18px), Regular, White at 80% opacity — the primary promise in 1 sentence
-4. Stats row: 3 stats side by side — e.g. "35 experts", "5 continents", "18 languages" — H5 size, Bold, Lemon for numbers / white for labels
+4. Stats row: 3 stats side by side — e.g. "45 experts", "5 continents", "18 languages" — H5 size, Bold, Lemon for numbers / white for labels
 5. CTA button: Primary button (see 3.2) — "Start a project" — left-aligned with headline
 6. Trust logos strip: client logos (TikTok, Sony, Adidas, GEODIS, L'Oréal) — white or low-opacity versions, below the CTA
 
@@ -378,7 +378,7 @@ Visual specs for the 6 priority components of the Sarani site. No code — these
 - Container: max-width 1280px, same as nav
 
 **Footer structure (desktop — 4 column grid)**
-- Col 1 (wider): Sarani submark (3 dots) + tagline "Unlimited Creativity" + short descriptor: "35 experts. 5 continents. 18 languages. 24/7." — Body Small, neutral-500
+- Col 1 (wider): Sarani submark (3 dots) + tagline "Unlimited Creativity" + short descriptor: "45 experts. 5 continents. 18 languages. 24/7." — Body Small, neutral-500
 - Col 2: "Services" column — links: Strategic Marketing, Content Creation, Operational Marketing, On-demand Requests
 - Col 3: "Company" column — links: Case Studies, Pricing, About, Contact
 - Col 4: "Social & Legal" — LinkedIn icon link, Instagram icon link + separator + "© 2024 Sarani. All rights reserved." + Privacy Policy + Legal Notice

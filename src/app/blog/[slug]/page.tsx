@@ -210,7 +210,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               If your team is facing this challenge, we can help
             </h2>
             <p className="mx-auto mb-8 max-w-xl leading-relaxed text-neutral-500">
-              35 experts across 5 continents. D+1 delivery. Fixed prices.
+              45 experts across 5 continents. D+1 delivery. Fixed prices.
               First project satisfaction or no invoice.
             </p>
             <Button variant="primary" href="/contact">

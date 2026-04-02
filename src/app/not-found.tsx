@@ -12,7 +12,7 @@ export default function NotFound() {
         This page doesn&apos;t exist.
       </h1>
       <p className="mb-10 text-lg text-neutral-600">
-        But we do. 35+ experts ready to work on your next project.
+        But we do. 45+ experts ready to work on your next project.
       </p>
       <div className="flex flex-col items-center gap-4 sm:flex-row">
         <Button variant="primary" href="/contact">

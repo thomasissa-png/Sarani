@@ -11,7 +11,7 @@ Primary keyword strategy: target "enterprise creative agency", "24-hour delivery
 
 | Page | Meta Title (≤60 chars) | Meta Description (≤155 chars) |
 |------|------------------------|-------------------------------|
-| Homepage | Sarani — Enterprise Creative Agency. D+1 Delivery. | 35 experts, 5 continents, 18 languages. Fixed pricing, unlimited revisions. Trusted by TikTok, Sony, Adidas, GEODIS. Brief today, assets tomorrow. |
+| Homepage | Sarani — Enterprise Creative Agency. D+1 Delivery. | 45 experts, 5 continents, 18 languages. Fixed pricing, unlimited revisions. Trusted by TikTok, Sony, Adidas, GEODIS. Brief today, assets tomorrow. |
 | About | About Sarani — 35 Experts, 5 Continents, Since 2020 | Built in 2020 to do what traditional agencies can't: deliver enterprise-grade creative work in 24 hours, at fixed prices, with unlimited revisions. |
 | Case Studies (index) | Case Studies — Sarani Enterprise Creative Work | TikTok, Sony, GEODIS, Adidas, L'Oréal. Real briefs. Real deadlines. See how Sarani delivers 24-hour creative production for global enterprises. |
 | Case Study — TikTok | TikTok × Sarani: 1,500 Video Edits Per Month | How Sarani delivers 300–500 weekly video edits for TikTok at $20/video. D+1 production at scale, no subscription, no lock-in. |
@@ -46,7 +46,7 @@ Place in `<head>` of every page via a shared layout component. Validates against
     "width": 400,
     "height": 80
   },
-  "description": "Enterprise creative agency delivering D+1 creative production with unlimited revisions and fixed pricing. 35 experts across 5 continents, 18 languages, trusted by TikTok, Sony, Adidas, GEODIS, L'Oréal, and Pernod Ricard.",
+  "description": "Enterprise creative agency delivering D+1 creative production with unlimited revisions and fixed pricing. 45 experts across 5 continents, 18 languages, trusted by TikTok, Sony, Adidas, GEODIS, L'Oréal, and Pernod Ricard.",
   "foundingDate": "2020",
   "numberOfEmployees": {
     "@type": "QuantitativeValue",
@@ -266,7 +266,7 @@ Apply on all pages except Homepage. Inject per-page via `generateMetadata` or a 
 | Page Type | OG Image Content | File Name |
 |-----------|-----------------|-----------|
 | Homepage | Logo + tagline "Unlimited Creativity" + client logos strip (TikTok, Sony, Adidas, GEODIS) | `homepage-og.jpg` |
-| About | Team visual or "35 experts / 5 continents" data visual | `about-og.jpg` |
+| About | Team visual or "45 experts / 5 continents" data visual | `about-og.jpg` |
 | Case Studies index | Grid of 3–4 case study hero images | `case-studies-og.jpg` |
 | Case Study — TikTok | TikTok logo + "1,500 video edits/month" stat | `case-study-tiktok-og.jpg` |
 | Case Study — Sony | Sony logo + "Same-day delivery" proof | `case-study-sony-og.jpg` |
