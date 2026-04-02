@@ -16,12 +16,12 @@
    - Fanny Place : Argentine (fuseau UTC-3)
    - Aurélie Touchard : France (CET)
    - Hiruni : France (CET)
-   - Clara Jaeger : France/Allemagne (CET)
+   - Clara Jaeger : Colombie
    - Mahée Ahouansou : France (CET)
-   - Claire Boussuge : France (CET)
+   - Claire Boussuge : Mexique
    - AnneLaure G. : France (CET)
-   - Carole Eid : France/Liban (CET+1)
-   - Ameena Gorton : UK (GMT)
+   - Carole Eid : Italie
+   - Ameena Gorton : France (CET)
    Tout le monde peut dépanner sur tous les comptes.
 6. **Pas d'exclusions** : aucun membre n'est interdit sur un client.
 7. **Logique d'assignation** : observer les choix des PMs au fil du temps et apprendre la logique. Au cas par cas.
@@ -48,7 +48,6 @@
 > Thomas va compléter cette section avec les specs branding par client.
 > Format attendu : client → brand folder SP, couleurs, fonts, templates standards, specs récurrentes.
 
-- Sony : TODO — Thomas to fill
 - TikTok : TODO — Thomas to fill (inclure "same specs as usual" = ?)
 - PICO XR : TODO — Thomas to fill
 - Aristocrat : TODO — Thomas to fill
@@ -58,3 +57,14 @@
 - Lamarck : TODO — Thomas to fill
 - CMC Markets : TODO — Thomas to fill
 - GEODIS : TODO — Thomas to fill
+
+Sony :
+- Guidelines et assets: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCTQO0L4sJvQpoB3l-hU8BwAbQZUn84k4yu5MzIZjZ0yM8?e=FkZepm
+- Logo: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDz2ywnj3atTJC2AEzlfuokAYVbofZQ4B4t6vRC_DDC1lo?e=gXHyRG
+- Font: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDZ6KVJoYInQK1cxGQRvMoJAYEpi-aH55eaLAOCUZXogEY?e=d2ZVMJ
+- Inspirations : https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBndjYcTj6wSbgVgecq_Cb_AWboH1TbZQsjSDFPSqlFbT8?e=hG8S3V
+- Bibliotheque d'assets : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCGrl6DdC5-Tpz-M68Y8qZHAU7fegA6mxcIIwpsaLCuFUM?e=Dkxt6L
+- Folder projets Sony Europe : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBcCvUgAzMbQ6ep6NU2gwDaAXs0wAKlVuw_jTB3k5Olr8A?e=FhBe5E
+- Folder projets Sony France : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCeSwE3o4J-T4-eIOHQx01DAY78Dc9-8Je9xFxud2aM-eE?e=NsR6ea
+- Folder projets Sony Pro : https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDiBHRNhUD8S7Eb50r9PiRKAX4J2cDov4obkwQ9sifF-LY?e=ux6KxX
+
