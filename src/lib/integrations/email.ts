@@ -64,7 +64,7 @@ export async function getRecentEmails(
   ].join("&");
 
   const data = await graphFetch<{ value: EmailMessage[] }>(
-    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/messages?${query}`
+    `/users/${encodeURIComponent(EMAIL_ADDRESS)}/mailFolders/Inbox/messages?${query}`
   );
 
   // Client-side filter: exclude ALL @sarani.studio senders

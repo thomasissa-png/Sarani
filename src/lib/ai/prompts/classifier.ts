@@ -42,9 +42,9 @@ export const CLASSIFICATION_SYSTEM_PROMPT = `You are Sarani's email classifier a
 
 Categories:
 - "enquiry": Question about Sarani's services, request for quote/pricing, general question, first contact (casual or specific). No existing project involved.
-- "new_project": A brief for a NEW project from an existing OR new client — contains deliverables, timeline, brand info, or a clear project request. Sender may or may not have worked with Sarani before.
-- "project_feedback": Feedback, revision request, follow-up, status question, or any message about an EXISTING ongoing project. The sender references a specific past or ongoing project.
-- "other": Newsletters, automated notifications, system alerts, out-of-office, marketing emails.
+- "new_project": A brief for a NEW project — contains NEW deliverables, NEW timeline, or a clear NEW project request that hasn't been started yet. Key signal: the email describes work that needs to be CREATED from scratch.
+- "project_feedback": ANY message about an EXISTING ongoing project — feedback, revision request, follow-up, status update, file sharing, approval, correction request, or ANY reply in an existing project thread. Key signal: the email REFERENCES something already done or in progress (e.g., "the banners", "slide 14", "the logo", "v2", "corrections", "retours", "relecture"). If in doubt between new_project and project_feedback, choose project_feedback — it's safer.
+- "other": Newsletters, automated notifications, system alerts, out-of-office, marketing emails, AND simple acknowledgments with no actionable content ("merci", "ok", "bien reçu", "thank you", "noted", "perfect", "got it", "thanks!", "super"). If an email is just a thank-you or confirmation with NO new request or feedback, it's "other".
 
 Routing:
 - enquiry → "PROTO-ENQUIRY"

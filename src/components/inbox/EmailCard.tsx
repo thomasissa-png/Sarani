@@ -345,12 +345,24 @@ export function EmailCard({
         {subject}
       </h3>
 
-      {/* Body preview */}
-      {bodyPreview && (
-        <p className="text-sm text-neutral-600 leading-relaxed line-clamp-4 mb-3">
-          {bodyPreview}
-        </p>
-      )}
+      {/* Body preview — strip quoted thread below (De : / From: markers) */}
+      {bodyPreview && (() => {
+        // Cut at the first thread marker to show only the client's actual message
+        const threadMarkers = ["\nDe :", "\nFrom:", "\nEnvoyé :", "\n-----Original", "\nOn ", "\nLe "];
+        let cleanBody = bodyPreview;
+        for (const marker of threadMarkers) {
+          const idx = cleanBody.indexOf(marker);
+          if (idx > 20) { // Keep at least 20 chars — don't cut if marker is at the very start
+            cleanBody = cleanBody.slice(0, idx).trim();
+            break;
+          }
+        }
+        return (
+          <p className="text-sm text-neutral-600 leading-relaxed line-clamp-4 mb-3">
+            {cleanBody}
+          </p>
+        );
+      })()}
 
       {/* Suggested action — hidden in managed view */}
       {!isManagedView && suggestedAction && (
