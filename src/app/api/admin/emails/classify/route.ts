@@ -8,8 +8,10 @@ import {
   CLASSIFICATION_SYSTEM_PROMPT,
   ClassificationResultSchema,
   isNoiseByEmail,
+  isInternalEmail,
   type ClassificationResult,
 } from "@/lib/ai/prompts/classifier";
+import { isSaraniEmail } from "@/lib/inbox/sarani-filter";
 import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
 
 // ─── Validation ────────────────────────────────────────────────────────────
@@ -85,6 +87,11 @@ export async function POST(request: NextRequest) {
       bodyPreview = parsed.bodyPreview.slice(0, 2000);
     }
 
+    // Pre-LLM filter: internal Sarani emails
+    if (isSaraniEmail(from) || isInternalEmail(from)) {
+      return NextResponse.json({ error: "Internal Sarani email — not classifiable." }, { status: 400 });
+    }
+
     // Pre-LLM filter: obvious noise
     if (isNoiseByEmail(from)) {
       const result: ClassificationResult = {
@@ -110,7 +117,7 @@ export async function POST(request: NextRequest) {
       systemPrompt: CLASSIFICATION_SYSTEM_PROMPT,
       userMessage: `Subject: ${subject}\nFrom: ${from}\nBody preview: ${bodyPreview}${clientProfile}`,
       model: "claude-haiku-4-5-20251001",
-      maxTokens: 512,
+      maxTokens: 1024,
       timeout: 10_000,
     });
 

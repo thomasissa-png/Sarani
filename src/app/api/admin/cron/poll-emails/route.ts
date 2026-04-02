@@ -21,6 +21,7 @@ import {
   isNoiseByEmail,
   priorityFromCategory,
   protocolFromCategory,
+  isInternalEmail,
   type ClassificationResult,
   type EmailCategory,
 } from "@/lib/ai/prompts/classifier";
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
         const bodyPreview = stripHtml(fullEmail.body.content).slice(0, 2000);
 
         // Skip internal Sarani emails — they should not appear in the inbox
-        if (isSaraniEmail(from) || isSaraniOutgoingReply(bodyPreview)) {
+        if (isSaraniEmail(from) || isInternalEmail(from) || isSaraniOutgoingReply(bodyPreview)) {
           // Record as processed to avoid re-checking
           await db.insert(processedEmails).values({
             messageId: email.id,
@@ -110,21 +111,30 @@ export async function GET(request: NextRequest) {
             systemPrompt: CLASSIFICATION_SYSTEM_PROMPT,
             userMessage: `Subject: ${subject}\nFrom: ${from}\nBody preview: ${bodyPreview}`,
             model: "claude-haiku-4-5-20251001",
-            maxTokens: 512,
-            timeout: 15_000,
+            maxTokens: 1024,
+            timeout: 20_000,
           });
 
-          // Validate LLM output
+          // Validate LLM output — fallback to enquiry if parse fails (better than losing the email)
           const parsed = ClassificationResultSchema.safeParse(llmResult.data);
           if (!parsed.success) {
-            console.error(
-              `[Cron Poll-Emails] LLM returned invalid classification for ${email.id}:`,
+            console.warn(
+              `[Cron Poll-Emails] LLM returned invalid classification for ${email.id} — using fallback enquiry:`,
               parsed.error.flatten()
             );
-            errors++;
-            continue;
+            classification = {
+              category: "enquiry",
+              confidence: 0.3,
+              reasoning: "LLM output was invalid — fallback to enquiry for human review",
+              suggestedAction: "Review this email manually — automatic classification failed",
+              draftReply: "",
+              clickupProjectHint: null,
+              language: "en",
+              routeTo: "PROTO-ENQUIRY",
+            };
+          } else {
+            classification = parsed.data;
           }
-          classification = parsed.data;
         }
 
         // ClickUp search for project_feedback — resolve project hint to task URL
