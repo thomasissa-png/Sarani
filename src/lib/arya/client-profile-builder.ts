@@ -72,6 +72,33 @@ const CLIENT_BRANDING: Record<string, string> = {
 - Other clients ClickUp: https://app.clickup.com/14389859/v/li/900303492355
 - Projects SharePoint: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCCo4_62lS6RZa42GBKac4SAaW6WgxyxguH3Sl7UGJ798o
 - Air Corsica assets: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A`,
+
+  TikTok: `- TYPE: End client (biggest account). 22 divisions by region/vertical.
+- Branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCLhBQNdaHKQpaviLeO_b39AYXKcD_KVcncmYK_TYi4MZg + https://tiktokbrandhub.com/
+- TVA 20% ONLY for TikTok France. All other divisions = 0%.
+- Divisions: TikTok DE (https://app.clickup.com/14389859/v/li/900502249117), TikTok FR (https://app.clickup.com/14389859/v/li/900502247465), TikTok UK (https://app.clickup.com/14389859/v/li/900303407539), TikTok SMB (https://app.clickup.com/14389859/v/li/900802525893), TikTok Global Accounts (https://app.clickup.com/14389859/v/li/900502263845), TikTok Benelux (https://app.clickup.com/14389859/v/li/900502247464), TikTok Shop SEA (https://app.clickup.com/14389859/v/li/900303407539), TikTok US Branding (https://app.clickup.com/14389859/v/li/900502251376), TikTok METAP (https://app.clickup.com/14389859/v/li/901701490958), TikTok USA (https://app.clickup.com/14389859/v/li/901701757963), TikTok LIVE (https://app.clickup.com/14389859/v/li/901702577214), TikTok Shop EMEA (https://app.clickup.com/14389859/v/li/901702723533), TikTok CEE (https://app.clickup.com/14389859/v/li/901702750815), TikTok P&E SEA (https://app.clickup.com/14389859/v/li/901702879453), TikTok Shop USA (https://app.clickup.com/14389859/v/li/901702899564), TikTok Shop LATAM (https://app.clickup.com/14389859/v/li/901704846947), TikTok CCA (https://app.clickup.com/14389859/v/li/901705458972), TikTok Shop UK (https://app.clickup.com/14389859/v/li/901706876621), TikTok EU Branding (https://app.clickup.com/14389859/v/li/901711816120), TTS Global Ops (https://app.clickup.com/14389859/v/li/901702723533), TikTok Others (https://app.clickup.com/14389859/v/li/901705458972)
+- Route to the correct division based on the email sender, subject, or entity mentioned.`,
+
+  "PICO XR": `- TYPE: End client, part of Bytedance (same parent as TikTok)
+- Branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBbX1jrkGZaSqX40qP4uLA4AUzpGlEatWDexJtlNDb-cOE
+- B2C EMEA: ClickUp https://app.clickup.com/14389859/v/li/900502247535
+- B2B EMEA: ClickUp https://app.clickup.com/14389859/v/li/900502247536`,
+
+  Aristocrat: `- TYPE: End client
+- Branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBCJutkb3MqRJvd0Hu2kNh1AaHtXHxVcdZ8SZTGsOh8Ky8
+- Projects (no zone distinction): https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCuIyrllU6qRaCyZWJy73JmAVPwoquaFsMtCBkMkCghyTU
+- ClickUp USA: https://app.clickup.com/14389859/v/li/901712262709
+- ClickUp Asia: https://app.clickup.com/14389859/v/li/901712262834`,
+
+  GEODIS: `- TYPE: End client (TVA 20%)
+- Branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCC3EZk4-7JQ5xtMxUU4oHvAYLb_CRN_go6XmmjAWl0XRE
+- Projects: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgA0Sve1JhpdTIh3WDBHubSSAewowE4xzQ3ClxX5S_Wa6Ig
+- ClickUp: https://app.clickup.com/14389859/v/li/900303492355`,
+
+  ProcessOut: `- TYPE: End client
+- Branding: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F15%2E%20ProcessOut%2F01%2E%20Branding
+- Projects: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F15%2E%20ProcessOut%2F02%2E%20Projects
+- ClickUp: https://app.clickup.com/14389859/v/li/900303492355`,
 };
 
 // ─── Domain-to-client heuristic ─────────────────────────────────────────────
