@@ -27,6 +27,7 @@ export const KNOWN_CLIENTS = [
   "adidas",
   "lego",
   "bytedance",
+  "tts",
 ] as const;
 
 // ─── Sub-client mapping ────────────────────────────────────────────────────
@@ -62,7 +63,8 @@ export function buildSearchableText(item: InboxItemFilterable): string {
       const clientName = ((parsed.clientName as string) ?? "").toLowerCase();
       const clickupHint =
         ((parsed.classification?.clickupProjectHint as string) ?? "").toLowerCase();
-      text += ` ${from} ${subject} ${body} ${projectName} ${clientName} ${clickupHint}`;
+      const spaceName = ((parsed.spaceName as string) ?? "").toLowerCase();
+      text += ` ${from} ${subject} ${body} ${projectName} ${clientName} ${clickupHint} ${spaceName}`;
     } catch {
       /* keep title-only text */
     }
@@ -92,7 +94,7 @@ export function filterByClient(
     // Special cases — sub-client and alias mappings
     if (
       clientFilter === "TikTok" &&
-      (text.includes("tiktok") || text.includes("bytedance"))
+      (text.includes("tiktok") || text.includes("bytedance") || text.includes("tts ") || text.includes("tts global") || text.startsWith("tts"))
     )
       return true;
 

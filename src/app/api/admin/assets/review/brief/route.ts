@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getTask, getCustomFieldValue } from "@/lib/integrations/clickup";
+import { getMappingBySpaceId, ASSETS_CUSTOMERS_BASE_PATH, SHAREPOINT_ASSETS_DRIVE_ID } from "@/lib/integrations/config";
+import { getDriveItemByPath } from "@/lib/integrations/sharepoint";
 
 export async function GET(request: NextRequest) {
   const session = await getUserFromSession();
@@ -56,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     // Extract SharePoint folder URL from custom fields
     // Common field names: "Folder URL", "Folder", "SharePoint", "SP Link"
-    const folderUrl =
+    let folderUrl =
       getCustomFieldValue(task, "Folder URL") ||
       getCustomFieldValue(task, "Folder") ||
       getCustomFieldValue(task, "SharePoint") ||
@@ -64,11 +66,28 @@ export async function GET(request: NextRequest) {
       getCustomFieldValue(task, "folder url") ||
       null;
 
+    // Fallback: derive SharePoint path from client mapping if no custom field
+    if (!folderUrl && task.space?.id) {
+      const mapping = getMappingBySpaceId(task.space.id);
+      if (mapping?.sharepointCustomerFolder) {
+        // Try to find the project folder in the client's SP directory
+        const clientPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
+        try {
+          const folderItem = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, clientPath);
+          folderUrl = folderItem.webUrl ?? clientPath;
+        } catch {
+          // Client folder not found — use path as hint for manual navigation
+          folderUrl = clientPath;
+        }
+      }
+    }
+
     return NextResponse.json({
       brief: brief || null,
       taskName: task.name,
       taskUrl: task.url,
       folderUrl,
+      clientName: task.space?.id ? getMappingBySpaceId(task.space.id)?.clickupSpaceName ?? null : null,
     });
   } catch (error) {
     console.error("[Asset Review Brief] Error loading ClickUp task:", error);

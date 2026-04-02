@@ -9,6 +9,7 @@ import {
   checkHealth,
   type ClickUpTask,
 } from "@/lib/integrations/clickup";
+import { getMappingBySpaceId } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -197,8 +198,14 @@ async function triggerAryaVerification(task: ClickUpTask): Promise<void> {
 
 /**
  * Create an inbox item for human review.
+ * Resolves clientName from ClickUp space mapping for proper client filtering.
  */
 async function createReviewInboxItem(task: ClickUpTask, spaceName: string): Promise<void> {
+  // Resolve client name from space ID mapping (e.g., ByteDance space → "TikTok")
+  const spaceId = task.space?.id;
+  const mapping = spaceId ? getMappingBySpaceId(spaceId) : undefined;
+  const clientName = mapping?.clickupSpaceName ?? spaceName;
+
   await db.insert(inboxItems).values({
     type: "review_human",
     status: "pending",
@@ -208,6 +215,7 @@ async function createReviewInboxItem(task: ClickUpTask, spaceName: string): Prom
       taskName: task.name,
       taskUrl: task.url,
       spaceName,
+      clientName,
     }),
     sourceId: task.id,
     sourceType: "cron",

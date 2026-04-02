@@ -6,6 +6,42 @@ import { slugify } from "@/lib/slugify";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
+ * GET /api/admin/project-previews
+ * List all active project previews (for hydrating the Share button state on page load).
+ */
+export async function GET() {
+  try {
+    const rows = await db
+      .select({
+        projectId: projectPreviews.projectId,
+        clientSlug: projectPreviews.clientSlug,
+        projectSlug: projectPreviews.projectSlug,
+        isActive: projectPreviews.isActive,
+        id: projectPreviews.id,
+      })
+      .from(projectPreviews)
+      .where(eq(projectPreviews.isActive, true));
+
+    const previews: Record<string, { url: string; previewId: string; isActive: boolean }> = {};
+    for (const row of rows) {
+      previews[row.projectId] = {
+        url: `/project/${row.clientSlug}/${row.projectSlug}`,
+        previewId: row.id,
+        isActive: true,
+      };
+    }
+
+    return NextResponse.json({ previews });
+  } catch (error) {
+    console.error("[project-previews] GET error:", error);
+    return NextResponse.json(
+      { error: "INTERNAL", message: "Failed to list project previews." },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * POST /api/admin/project-previews
  * Create or reactivate a project presentation link.
  * Auth: protected by middleware (admin session cookie).

@@ -348,6 +348,18 @@ export default function TrackerPage() {
     fetchData();
   }, [fetchData]);
 
+  // Hydrate existing preview links from DB on mount
+  useEffect(() => {
+    fetch("/api/admin/project-previews")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.previews) setPreviewLinks(data.previews);
+      })
+      .catch(() => {
+        // Non-critical — previews will be created on demand
+      });
+  }, []);
+
   // Derived data
   const clients = useMemo(() => {
     if (!data) return [];

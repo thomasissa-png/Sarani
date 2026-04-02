@@ -19,7 +19,7 @@ import type { ClickUpTask } from "@/lib/integrations/clickup";
 import type { EvolizInvoice } from "@/lib/integrations/evoliz";
 import type { ExcelProject } from "@/lib/integrations/excel-parser";
 import type { TrackerProject } from "@/types/integrations";
-import { getMappingBySpaceId } from "@/lib/integrations/config";
+import { getMappingBySpaceId, mapClickUpStatus } from "@/lib/integrations/config";
 
 // ─── Debug Logging ──────────────────────────────────────────────────────────
 
@@ -578,11 +578,12 @@ export function mergeData(
           )[0] ?? matchingInvoices[0]
       : undefined;
 
-    const clickupStatus = clickupTask ? clickupTask.status.status : "";
+    const clickupStatusRaw = clickupTask ? clickupTask.status.status : "";
+    const mappedStatus = clickupStatusRaw ? mapClickUpStatus(clickupStatusRaw) : null;
 
     const invoiceStatus = evolizInvoice
       ? mapEvolizStatus(evolizInvoice.status)
-      : ep.invoiceStatus;
+      : mappedStatus?.invoiceStatus ?? ep.invoiceStatus;
 
     const invoiceNumber = evolizInvoice
       ? evolizInvoice.invoiceNumber
@@ -614,7 +615,7 @@ export function mergeData(
       project: ep.project,
       date: ep.date,
       contact: ep.contact,
-      status: clickupStatus || ep.status,
+      status: mappedStatus?.projectStatus || clickupStatusRaw || ep.status,
       category: ep.category,
       sharepointLink: ep.sharepointLink,
       totalValue: ep.totalValue,
@@ -622,7 +623,7 @@ export function mergeData(
       invoiceStatus,
       invoiceNumber,
       clickupTaskUrl: clickupTask?.url ?? "",
-      clickupStatus,
+      clickupStatus: clickupStatusRaw,
       excelTrackerFile: ep.excelTrackerFile,
       excelSheetName: ep.excelSheetName,
       excelTrackerUrl: ep.excelTrackerUrl,
@@ -639,20 +640,23 @@ export function mergeData(
 
     const clientName = resolveTaskClientName(task);
 
+    const rawStatus = task.status?.status ?? "";
+    const mapped = rawStatus ? mapClickUpStatus(rawStatus) : null;
+
     clickupOnly.push({
       client: clientName,
       project: task.name,
       date: getClickUpTaskDate(task),
       contact: task.assignees?.[0]?.username ?? "",
-      status: task.status?.status ?? "",
+      status: mapped?.projectStatus || rawStatus,
       category: "",
       sharepointLink: "",
       totalValue: null,
       poNumber: "",
-      invoiceStatus: "",
+      invoiceStatus: mapped?.invoiceStatus ?? "",
       invoiceNumber: "",
       clickupTaskUrl: task.url ?? "",
-      clickupStatus: task.status?.status ?? "",
+      clickupStatus: rawStatus,
     });
   }
 
