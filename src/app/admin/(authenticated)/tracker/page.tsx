@@ -436,8 +436,9 @@ function TrackerContent() {
       } else if (clientFilter !== "All" && p.client !== clientFilter) {
         return false;
       }
-      if (statusFilter !== "All" && p.status.toLowerCase() !== statusFilter.toLowerCase()) {
-        return false;
+      if (statusFilter !== "All") {
+        const projectStatus = p.status.trim().toLowerCase() || "in progress"; // Empty status = active
+        if (projectStatus !== statusFilter.toLowerCase()) return false;
       }
       if (invoiceFilter !== "All") {
         if (
@@ -763,12 +764,7 @@ function TrackerContent() {
           </select>
           <select
             value={sourceFilter}
-            onChange={(e) => {
-                const val = e.target.value as "All" | "ClickUp" | "Excel Only";
-                setSourceFilter(val);
-                // Excel projects have free-text statuses — reset status filter to avoid empty results
-                if (val === "Excel Only") setStatusFilter("All");
-              }}
+            onChange={(e) => setSourceFilter(e.target.value as "All" | "ClickUp" | "Excel Only")}
             aria-label="Filter by data source"
             className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
           >
@@ -848,12 +844,7 @@ function TrackerContent() {
                 </select>
                 <select
                   value={sourceFilter}
-                  onChange={(e) => {
-                const val = e.target.value as "All" | "ClickUp" | "Excel Only";
-                setSourceFilter(val);
-                // Excel projects have free-text statuses — reset status filter to avoid empty results
-                if (val === "Excel Only") setStatusFilter("All");
-              }}
+                  onChange={(e) => setSourceFilter(e.target.value as "All" | "ClickUp" | "Excel Only")}
                   aria-label="Filter by data source"
                   className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 >
