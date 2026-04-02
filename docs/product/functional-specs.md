@@ -1865,6 +1865,332 @@ All pages must meet these baselines before the W4 go-live milestone:
 
 ---
 
+## US-201 — Share Project Files (Back-office SharePoint Folder Browser)
+
+*Added 2026-04-02 — replaces the deprecated "Project Preview" system (public page auto-generation).*
+
+**Story:** As Arya (PM Sarani), I want to share a client's project folder from SharePoint with a client, so that they can access deliverables via an anonymous link without needing a SharePoint login.
+
+**Linked KPI:** Internal coordination time (Phase 3 operational KPI) — target: zero manual steps to generate a client-facing file link.
+**Priority:** Must Have — Back-office Phase 3
+**North Star link:** Reduces PM friction → faster client delivery → retention → revenue.
+
+**Supersedes:** The previous "Project Preview" feature (public Sarani page at `/project/[client]/[project]` that scanned SharePoint via SSR and stored data in the `projectPreviews` DB table). That system was deprecated due to creation errors, display errors, and DB dependency. Decision owner: Thomas. Decision recorded in project-context.md (Règle SharePoint — Liens "Anyone" obligatoires).
+
+---
+
+### 1. User Stories — Given/When/Then
+
+**AC-201-1: Open the Share modal from the Tracker**
+```
+Given Arya is on the back-office Tracker page and at least one project is listed,
+When she clicks the "Share" button on any project row,
+Then a modal opens within 500ms,
+  AND the modal header displays the client name and project name,
+  AND the modal body shows a loading skeleton while the first folder list is fetched,
+  AND no full-page navigation occurs (modal is inline).
+```
+
+**AC-201-2: Display the top-level folders for a client**
+```
+Given the Share modal is open for a project belonging to client "TikTok",
+When the API call GET /api/admin/integrations/sharepoint/folders?client=TikTok resolves,
+Then the modal displays the list of folders returned by the API,
+  AND each folder is shown with its name and a folder icon,
+  AND files (non-folder items) are displayed below folders, visually distinct (different icon),
+  AND the breadcrumb shows the root level (e.g., "TikTok /"),
+  AND if the API returns an empty array, the empty state reads:
+      "No folders found for this client on SharePoint."
+```
+
+**AC-201-3: Navigate into a subfolder (drill-down)**
+```
+Given the Share modal displays a list of folders,
+When Arya clicks on a folder (e.g., "05. TikTok/"),
+Then the API call GET /api/admin/integrations/sharepoint/folders?client=TikTok&path=05.TikTok/ is triggered,
+  AND the modal content updates to show the subfolder's contents,
+  AND the breadcrumb updates to reflect the new path (e.g., "TikTok / 05. TikTok/"),
+  AND a back button or breadcrumb link allows Arya to navigate up to the previous level,
+  AND the loading skeleton is shown while the API responds.
+```
+
+**AC-201-4: Generate an anonymous shareable link for a folder**
+```
+Given Arya is hovering over a folder item in the modal,
+When she hovers the row,
+Then a "Share" button appears on that row (visible only on hover — not cluttering the default view),
+  AND when she clicks "Share" on that folder row,
+  Then a POST /api/admin/integrations/sharepoint/folders request is sent with the folder's ID,
+  AND a loading indicator replaces the "Share" button during the API call (max duration: 5s),
+  AND on success:
+      - The generated anonymous link is copied to the clipboard automatically,
+      - A green success banner appears inside the modal reading:
+        "Link copied to clipboard — Anyone with this link can view the folder.",
+      - The link is displayed in full inside the banner so Arya can copy it manually if needed,
+      - Two action buttons appear: "Copy again" and "Open link" (opens in a new tab),
+  AND the link uses SharePoint "Anyone" scope (no sign-in required for the recipient).
+```
+
+**AC-201-5: Handle Graph API errors gracefully**
+```
+Given Arya clicks "Share" on a folder,
+When the POST /api/admin/integrations/sharepoint/folders call fails
+  (HTTP 4xx or 5xx, or Graph API permission error),
+Then the modal displays a red error banner reading:
+  "Could not generate link. Check SharePoint permissions or try again.",
+  AND the "Share" button on the folder row is re-enabled so Arya can retry,
+  AND no partial link is displayed,
+  AND the error is logged server-side for debugging.
+```
+
+**AC-201-6: Breadcrumb navigation back to a parent level**
+```
+Given Arya has navigated two levels deep into SharePoint
+  (e.g., "TikTok / 05. TikTok/ / ProjectName/"),
+When she clicks any segment of the breadcrumb (e.g., "TikTok /"),
+Then the modal fetches the contents of that breadcrumb level,
+  AND the content area updates to show the contents of the clicked level,
+  AND the breadcrumb truncates to that level,
+  AND no full modal re-open or flicker occurs.
+```
+
+**AC-201-7: Close the modal**
+```
+Given the Share modal is open (in any state: browsing, loading, success, error),
+When Arya clicks the modal close button (×) or presses the Escape key,
+Then the modal closes immediately,
+  AND no unsaved state warning is shown (no data is being modified),
+  AND focus returns to the "Share" button on the Tracker row that triggered the modal.
+```
+
+**AC-201-8: Access control — authenticated users only**
+```
+Given an unauthenticated request reaches GET or POST /api/admin/integrations/sharepoint/folders,
+When the request is processed by the API route,
+Then the server returns HTTP 401,
+  AND no SharePoint data is returned,
+  AND no anonymous link is generated.
+```
+
+---
+
+### 2. Wireframe — 5 UI States
+
+#### State 1 — Default (folder list loaded)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Share Project Files                              [×] │
+│  TikTok — Campaign Assets Q1                         │
+├─────────────────────────────────────────────────────┤
+│  Breadcrumb: TikTok /                                │
+├─────────────────────────────────────────────────────┤
+│  📁 01. Briefs/                             [Share]  │  ← hover reveals Share
+│  📁 02. Assets/                             [Share]  │
+│  📁 05. TikTok/                             [Share]  │
+│  📁 06. Deliverables/                       [Share]  │
+│  📄 project-overview.pdf                            │
+│  📄 timeline.xlsx                                   │
+└─────────────────────────────────────────────────────┘
+```
+
+#### State 2 — Loading (fetching folder contents)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Share Project Files                              [×] │
+│  TikTok — Campaign Assets Q1                         │
+├─────────────────────────────────────────────────────┤
+│  Breadcrumb: TikTok /                                │
+├─────────────────────────────────────────────────────┤
+│  ░░░░░░░░░░░░░░░░░░░░░  (skeleton row)              │
+│  ░░░░░░░░░░░░░░░░░░░░░  (skeleton row)              │
+│  ░░░░░░░░░░░░░░░░░░░░░  (skeleton row)              │
+└─────────────────────────────────────────────────────┘
+```
+
+#### State 3 — Empty (no folders found)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Share Project Files                              [×] │
+│  TikTok — Campaign Assets Q1                         │
+├─────────────────────────────────────────────────────┤
+│  Breadcrumb: TikTok /                                │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  No folders found for this client on SharePoint.    │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+#### State 4 — Error (Graph API failure)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Share Project Files                              [×] │
+│  TikTok — Campaign Assets Q1                         │
+├─────────────────────────────────────────────────────┤
+│  🔴 Could not generate link. Check SharePoint       │
+│     permissions or try again.              [Retry]   │
+├─────────────────────────────────────────────────────┤
+│  📁 05. TikTok/                             [Share]  │  ← re-enabled
+└─────────────────────────────────────────────────────┘
+```
+
+#### State 5 — Success (link generated)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Share Project Files                              [×] │
+│  TikTok — Campaign Assets Q1                         │
+├─────────────────────────────────────────────────────┤
+│  ✅ Link copied to clipboard — Anyone with this     │
+│     link can view the folder.                        │
+│                                                     │
+│  https://saranistudio.sharepoint.com/...            │
+│                                                     │
+│  [Copy again]          [Open link ↗]               │
+├─────────────────────────────────────────────────────┤
+│  📁 01. Briefs/                             [Share]  │
+│  📁 05. TikTok/                         ✅ Shared   │  ← shared folder marked
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+### 3. Business Rules
+
+**BR-201-1: Anonymous "Anyone" links only**
+All links generated via this modal MUST use `scope: "anonymous"` in the Graph API `createLink` call. Links requiring SharePoint authentication are not acceptable — the client must be able to access files with zero login friction. This is the **non-negotiable standard** documented in project-context.md (Règle SharePoint — Liens "Anyone" obligatoires).
+
+**BR-201-2: Link scope is folder-level, not file-level**
+The share action is scoped to **folders only** (not individual files). If Arya wants to share a single file, she shares its parent folder. This keeps the UX simple and consistent.
+
+**BR-201-3: No DB persistence for generated links**
+Generated links are NOT stored in the database. They are surfaced once in the modal. Rationale: this is the replacement for the `projectPreviews` DB table — the explicit decision was to remove the DB dependency. If Arya needs the link again, she regenerates it (idempotent — SharePoint returns the same link for the same folder/scope combination if the link already exists).
+
+**BR-201-4: Client parameter derived from project record**
+The `client` query parameter sent to the SharePoint API is derived from the project's client name stored in the Tracker (ClickUp / Excel). Arya does not type the client name — it is injected automatically when she clicks "Share" on a specific project row.
+
+**BR-201-5: Clipboard copy is automatic on success**
+On successful link generation, the link is copied to the clipboard automatically (no secondary click required). The manual "Copy again" button in the success banner is a fallback for browsers that block the Clipboard API.
+
+**BR-201-6: Hover interaction for the Share button**
+The "Share" button on each folder row is only visible on hover (desktop) or on tap (mobile). It must not appear by default on all rows simultaneously — this would be visually noisy for folders with 10+ items.
+
+---
+
+### 4. API Endpoints
+
+**GET /api/admin/integrations/sharepoint/folders**
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `client` | string | Yes | Client name (e.g., "TikTok") — used to locate the correct SharePoint site/drive |
+| `path` | string | No | Subfolder path for drill-down (e.g., "05. TikTok/ProjectName/"). If omitted, returns the root level for the client. |
+
+- **Auth:** Session cookie (HMAC) — HTTP 401 if unauthenticated
+- **Response success (200):**
+  ```json
+  {
+    "items": [
+      { "id": "item-id-xxx", "name": "05. TikTok/", "type": "folder" },
+      { "id": "item-id-yyy", "name": "project-overview.pdf", "type": "file" }
+    ],
+    "path": "TikTok /"
+  }
+  ```
+- **Response error (500):** `{ "error": "Failed to list SharePoint folder" }`
+- **Response error (401):** `{ "error": "Unauthorized" }`
+
+**POST /api/admin/integrations/sharepoint/folders**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `folderId` | string | Yes | SharePoint item ID of the folder to share |
+
+- **Auth:** Session cookie (HMAC) — HTTP 401 if unauthenticated
+- **Request body:**
+  ```json
+  { "folderId": "item-id-xxx" }
+  ```
+- **Response success (200):**
+  ```json
+  { "link": "https://saranistudio.sharepoint.com/..." }
+  ```
+- **Response error (500):** `{ "error": "Failed to create sharing link" }`
+- **Response error (401):** `{ "error": "Unauthorized" }`
+
+---
+
+### 5. Edge Cases
+
+**EC-201-1: Client name not found in SharePoint**
+If the `client` parameter does not match any SharePoint site or drive, the API returns an empty `items` array (not an error). The modal displays the empty state (State 3).
+
+**EC-201-2: Graph API token expired during browsing**
+If the SharePoint access token expires while Arya is navigating folders, the next API call will fail. The modal shows the error state (State 4) with the retry option. The token refresh logic is handled server-side (transparent to the UI) — the retry will succeed if the token refresh is successful.
+
+**EC-201-3: Very long folder names**
+Folder names longer than ~60 characters must truncate with an ellipsis in the folder list row. Full name visible on hover (tooltip) or via browser-native title attribute.
+
+**EC-201-4: Folder path with special characters**
+SharePoint folder names can contain spaces, dots, and parentheses (e.g., "05. TikTok (Q1 2025)/"). The `path` query parameter must be URL-encoded by the frontend before sending. The API must decode it before passing to Graph API.
+
+**EC-201-5: Clipboard API blocked by browser**
+If `navigator.clipboard.writeText()` is rejected (browser permission denied), the success banner still displays the link in full — Arya can copy it manually. The "Link copied to clipboard" text changes to "Copy the link below:" to avoid confusion.
+
+**EC-201-6: Modal opened on a project with no client set**
+If the project has no associated client name in the Tracker, the "Share" button on the Tracker row is disabled (greyed out with tooltip: "No client associated with this project"). The modal does not open.
+
+**EC-201-7: Double-click on "Share" folder button**
+If Arya double-clicks the "Share" button on a folder row, only one API call is sent. The button is disabled immediately on first click and re-enabled on API response (success or error).
+
+---
+
+### 6. Tracking Events
+
+| Event | Trigger | Properties |
+|---|---|---|
+| `share_modal_open` | Arya clicks "Share" on a Tracker project row | `{ client, project_name }` |
+| `share_folder_navigate` | Arya drills into a subfolder | `{ client, path }` |
+| `share_link_generated` | POST succeeds, link returned | `{ client, folder_name }` |
+| `share_link_error` | POST fails | `{ client, folder_name, error_status }` |
+| `share_link_opened` | Arya clicks "Open link ↗" | `{ client, folder_name }` |
+
+---
+
+### 7. Definition of Done (checklist for @fullstack)
+
+- [ ] Modal opens from Tracker row "Share" button
+- [ ] GET endpoint lists folders and files for a given client and optional path
+- [ ] POST endpoint generates an "Anyone" anonymous link via Graph API `createLink`
+- [ ] Breadcrumb navigation works (drill-down and back)
+- [ ] All 5 UI states implemented (default, loading skeleton, empty, error, success)
+- [ ] Clipboard auto-copy on success + fallback manual copy
+- [ ] Success banner displays the full link
+- [ ] Hover interaction shows "Share" button on folder rows
+- [ ] EC-201-7 (double-click prevention) implemented via button disable on first click
+- [ ] Auth guard: all API routes return 401 for unauthenticated requests
+- [ ] `tsc --noEmit` passes with 0 errors
+
+### Notes for @qa
+
+- Test E2E: open modal from Tracker → navigate 2 levels deep → generate link → verify clipboard and success banner
+- Test error state: mock POST to return 500 → verify error banner appears and Share button re-enables
+- Test auth: call GET and POST without session cookie → verify 401
+- Test EC-201-7: programmatic double-click on Share button → verify only 1 network request in Playwright
+
+### Notes for @fullstack
+
+- The Graph API `createLink` call should use `{ type: "view", scope: "anonymous" }`. SharePoint returns the same link if it already exists for the same folder/scope — this makes the POST idempotent.
+- The `client` parameter in the GET endpoint maps to the existing SharePoint client folder structure (already documented in phase3-integrations-specs.md, Addendum API exploration).
+- URL-encode the `path` parameter on the frontend before sending (encodeURIComponent). Decode server-side before passing to Graph API.
+- Disable the "Share" folder button on first click. Re-enable on API response. Do not use setTimeout — use the API response as the signal.
+
+---
+
 ## Hypotheses to Validate (consolidated)
 
 All hypotheses explicitly marked in this document:
