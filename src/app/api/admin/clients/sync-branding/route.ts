@@ -115,5 +115,43 @@ export async function POST() {
     }
   }
 
+  // Sync clients that have branding data but are NOT in CLIENT_MAPPINGS
+  // (e.g., GEODIS, ProcessOut — they share the "Other customers" ClickUp space)
+  const mappedNames = new Set(CLIENT_MAPPINGS.map((m) => m.clickupSpaceName));
+  for (const [clientName, branding] of Object.entries(BRANDING_DATA)) {
+    if (mappedNames.has(clientName)) continue; // Already handled above
+
+    try {
+      const [existing] = await db
+        .select({ id: clients.id })
+        .from(clients)
+        .where(eq(clients.name, clientName))
+        .limit(1);
+
+      const updateData = {
+        brandGuidelinesLink: branding.brandGuidelinesLink ?? null,
+        logoFolderLink: branding.logoFolderLink ?? null,
+        fontFolderLink: branding.fontFolderLink ?? null,
+        notes: branding.notes ?? null,
+      };
+
+      if (existing) {
+        await db.update(clients).set(updateData).where(eq(clients.id, existing.id));
+        synced++;
+      } else {
+        await db.insert(clients).values({
+          name: clientName,
+          industry: "other",
+          status: "active",
+          primaryLanguage: "EN",
+          ...updateData,
+        });
+        created++;
+      }
+    } catch (err) {
+      errors.push(`${clientName}: ${err instanceof Error ? err.message : "unknown error"}`);
+    }
+  }
+
   return NextResponse.json({ synced, created, errors });
 }
