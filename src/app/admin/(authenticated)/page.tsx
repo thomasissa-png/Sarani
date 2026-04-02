@@ -3,7 +3,7 @@
 // SSR: false — Client Component for interactive inbox with filters and actions.
 // This replaces the old SSR dashboard. The inbox is the PM's primary workspace.
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { AutoBriefCard, type AutoBriefPayload } from "@/components/inbox/AutoBriefCard";
 import { AutoQuoteCard, type AutoQuotePayload } from "@/components/inbox/AutoQuoteCard";
@@ -634,56 +634,91 @@ export default function InboxPage() {
     }
   };
 
-  // Filter items using new filter logic
-  const filteredItems = filterItems(items, activeFilter).sort((a, b) => {
-    // Managed tab: sort by processedAt DESC
-    if (activeFilter === "done") {
-      const aDate = a.processedAt ? new Date(a.processedAt).getTime() : 0;
-      const bDate = b.processedAt ? new Date(b.processedAt).getTime() : 0;
-      return bDate - aDate;
+  // ─── Memoized: parse JSON summaries once per items change ──────────────
+  // Avoids re-parsing the same JSON on every render / filter pass
+  const parsedSummaryCache = useMemo(() => {
+    const cache = new Map<string, Record<string, unknown> | null>();
+    for (const item of items) {
+      if (!item.summary) {
+        cache.set(item.id, null);
+        continue;
+      }
+      try {
+        cache.set(item.id, typeof item.summary === "string" ? JSON.parse(item.summary) : item.summary as Record<string, unknown>);
+      } catch {
+        cache.set(item.id, null);
+      }
     }
-    // Default: createdAt DESC (already sorted by API, but ensure)
-    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return bTime - aTime;
-  });
+    return cache;
+  }, [items]);
 
-  // Apply client filter
-  const clientFilteredItems = activeClientFilter === "all"
-    ? filteredItems
-    : filteredItems.filter((i) => {
-        // Build searchable text from ALL available fields
-        let text = ((i.title as string) ?? "").toLowerCase();
+  // ─── Memoized: tab counts (avoid calling filterItems per tab per render) ─
+  const tabCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const tab of FILTER_TABS) {
+      counts[tab.key] = filterItems(items, tab.key).length;
+    }
+    return counts;
+  }, [items]);
 
-        if (i.summary) {
-          try {
-            const parsed = typeof i.summary === "string" ? JSON.parse(i.summary) : i.summary;
-            const from = ((parsed.from as string) ?? "").toLowerCase();
-            const subject = ((parsed.subject as string) ?? "").toLowerCase();
-            const body = ((parsed.bodyPreview as string) ?? "").toLowerCase();
-            const projectName = ((parsed.projectName as string) ?? "").toLowerCase();
-            const clientName = ((parsed.clientName as string) ?? "").toLowerCase();
-            const clickupHint = ((parsed.classification?.clickupProjectHint as string) ?? "").toLowerCase();
-            text += ` ${from} ${subject} ${body} ${projectName} ${clientName} ${clickupHint}`;
-          } catch { /* keep title-only text */ }
-        }
+  // ─── Memoized: filtered + sorted items for active tab ────────────────────
+  const filteredItems = useMemo(() => {
+    return filterItems(items, activeFilter).sort((a, b) => {
+      // Managed tab: sort by processedAt DESC
+      if (activeFilter === "done") {
+        const aDate = a.processedAt ? new Date(a.processedAt).getTime() : 0;
+        const bDate = b.processedAt ? new Date(b.processedAt).getTime() : 0;
+        return bDate - aDate;
+      }
+      // Default: createdAt DESC (already sorted by API, but ensure)
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+  }, [items, activeFilter]);
 
-        if (!text.trim()) return activeClientFilter === "Others";
+  // ─── Memoized: pre-computed searchable text per item for client filter ───
+  const itemSearchText = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of filteredItems) {
+      let text = ((item.title as string) ?? "").toLowerCase();
+      const parsed = parsedSummaryCache.get(item.id);
+      if (parsed) {
+        const from = ((parsed.from as string) ?? "").toLowerCase();
+        const subject = ((parsed.subject as string) ?? "").toLowerCase();
+        const body = ((parsed.bodyPreview as string) ?? "").toLowerCase();
+        const projectName = ((parsed.projectName as string) ?? "").toLowerCase();
+        const clientName = ((parsed.clientName as string) ?? "").toLowerCase();
+        const clickupHint = ((parsed.classification as Record<string, unknown>)?.clickupProjectHint as string ?? "").toLowerCase();
+        text += ` ${from} ${subject} ${body} ${projectName} ${clientName} ${clickupHint}`;
+      }
+      map.set(item.id, text);
+    }
+    return map;
+  }, [filteredItems, parsedSummaryCache]);
 
-        const clientLower = activeClientFilter.toLowerCase();
-        // Direct match
-        if (text.includes(clientLower)) return true;
-        // Special cases
-        if (activeClientFilter === "TikTok" && (text.includes("tiktok") || text.includes("bytedance"))) return true;
-        if (activeClientFilter === "Ubi" && (text.includes("ubisoft") || text.includes("@ubi.") || text.includes("adidas") || text.includes("lego") || text.includes("red bull") || text.includes("ikea") || text.includes("perrier") || text.includes("barilla"))) return true;
-        if (activeClientFilter === "PICO XR" && text.includes("pico")) return true;
-        if (activeClientFilter === "CMC Markets" && text.includes("cmc")) return true;
-        if (activeClientFilter === "Others") {
-          const knownClients = ["tiktok", "sony", "bose", "ubi", "ubisoft", "lamarck", "aristocrat", "aujan", "cmc", "pico", "geodis", "adidas", "lego", "bytedance"];
-          return !knownClients.some((c) => text.includes(c));
-        }
-        return false;
-      });
+  // ─── Memoized: client-filtered items ─────────────────────────────────────
+  const clientFilteredItems = useMemo(() => {
+    if (activeClientFilter === "all") return filteredItems;
+    return filteredItems.filter((i) => {
+      const text = itemSearchText.get(i.id) ?? "";
+      if (!text.trim()) return activeClientFilter === "Others";
+
+      const clientLower = activeClientFilter.toLowerCase();
+      // Direct match
+      if (text.includes(clientLower)) return true;
+      // Special cases
+      if (activeClientFilter === "TikTok" && (text.includes("tiktok") || text.includes("bytedance"))) return true;
+      if (activeClientFilter === "Ubi" && (text.includes("ubisoft") || text.includes("@ubi.") || text.includes("adidas") || text.includes("lego") || text.includes("red bull") || text.includes("ikea") || text.includes("perrier") || text.includes("barilla"))) return true;
+      if (activeClientFilter === "PICO XR" && text.includes("pico")) return true;
+      if (activeClientFilter === "CMC Markets" && text.includes("cmc")) return true;
+      if (activeClientFilter === "Others") {
+        const knownClients = ["tiktok", "sony", "bose", "ubi", "ubisoft", "lamarck", "aristocrat", "aujan", "cmc", "pico", "geodis", "adidas", "lego", "bytedance"];
+        return !knownClients.some((c) => text.includes(c));
+      }
+      return false;
+    });
+  }, [filteredItems, activeClientFilter, itemSearchText]);
 
   // Pagination: show 20 items at a time, "Show more" loads 20 more
   const PAGE_SIZE = 20;
@@ -819,7 +854,7 @@ export default function InboxPage() {
       <div className="flex flex-wrap gap-2">
         {FILTER_TABS.map((tab) => {
           const isActive = activeFilter === tab.key;
-          const count = filterItems(items, tab.key).length;
+          const count = tabCounts[tab.key] ?? 0;
 
           return (
             <button

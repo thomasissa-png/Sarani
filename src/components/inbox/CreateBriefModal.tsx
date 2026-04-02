@@ -120,6 +120,9 @@ export function CreateBriefModal({
   const [entityOptions, setEntityOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoadingEntities, setIsLoadingEntities] = useState(false);
 
+  // Track whether user has manually edited the brief textarea
+  const userEditedBriefRef = useRef(false);
+
   // Fetch entities (folders + lists) when client changes
   useEffect(() => {
     if (!selectedSpaceId) {
@@ -140,74 +143,63 @@ export function CreateBriefModal({
     return () => { cancelled = true; };
   }, [selectedSpaceId]);
 
-  // LLM brief extraction on mount — Arya reformulates the email into a professional brief
-  useEffect(() => {
-    let cancelled = false;
-    async function extractBrief() {
-      try {
-        const res = await fetch("/api/admin/brief/extract", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            emailSubject: payload.subject,
-            emailBody: payload.bodyPreview ?? "",
-            senderEmail: payload.from,
-          }),
-        });
-        if (res.ok && !cancelled) {
-          const data = await res.json();
-          // Update all fields with LLM extraction
-          if (data.brief_body) setBrief(data.brief_body);
-          if (data.entity) setEntity(data.entity);
-          if (data.project_type && data.project_type !== "generic") {
-            setProjectType(data.project_type as ProjectType);
-          }
-          if (data.client_name) {
-            // Try to match client from extraction
-            const extracted = clients.find(
-              (c) => c.spaceName.toLowerCase().includes(data.client_name.toLowerCase()) ||
-                data.client_name.toLowerCase().includes(c.spaceName.toLowerCase())
-            );
-            if (extracted) {
-              setSelectedSpaceId(extracted.spaceId);
-              setAddToTracker(true);
-              setCreateSharepointFolder(true);
-            }
-          }
-          if (data.project_title) {
-            const clientName = data.client_name || matchedClient?.spaceName || senderName;
-            setProjectName(`${clientName} - ${data.project_title}`);
-          }
-          // Pre-select recommended assignee if LLM suggested one
-          if (data.recommended_assignee) {
-            const recName = data.recommended_assignee.toLowerCase();
-            const matchedMember = CLICKUP_TEAM_MEMBERS.find(
-              (m) => m.name.toLowerCase() === recName || m.name.toLowerCase().includes(recName)
-            );
-            if (matchedMember) {
-              setAssigneeId(String(matchedMember.id));
-            }
-          }
-          // Set estimated hours
-          if (data.estimated_hours) {
-            setEstimatedHours(data.estimated_hours);
-          }
-        }
-      } catch {
-        // Fallback: keep the default brief (buildDefaultBrief)
-      } finally {
-        if (!cancelled) setIsExtractingBrief(false);
-      }
-    }
-    extractBrief();
-    return () => { cancelled = true; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [dbAssignees, setDbAssignees] = useState<Assignee[]>([]);
 
-  // Fetch assignees from DB (users with ClickUp mapping), fallback to hardcoded
+  // Parallel fetch on mount: LLM brief extraction + assignees
+  // (entities are fetched separately above because they depend on selectedSpaceId)
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/admin/users/assignees")
+
+    const briefPromise = fetch("/api/admin/brief/extract", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        emailSubject: payload.subject,
+        emailBody: payload.bodyPreview ?? "",
+        senderEmail: payload.from,
+      }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        // Only update brief if user hasn't started typing
+        if (data.brief_body && !userEditedBriefRef.current) setBrief(data.brief_body);
+        if (data.entity) setEntity(data.entity);
+        if (data.project_type && data.project_type !== "generic") {
+          setProjectType(data.project_type as ProjectType);
+        }
+        if (data.client_name) {
+          const extracted = clients.find(
+            (c) => c.spaceName.toLowerCase().includes(data.client_name.toLowerCase()) ||
+              data.client_name.toLowerCase().includes(c.spaceName.toLowerCase())
+          );
+          if (extracted) {
+            setSelectedSpaceId(extracted.spaceId);
+            setAddToTracker(true);
+            setCreateSharepointFolder(true);
+          }
+        }
+        if (data.project_title) {
+          const clientName = data.client_name || matchedClient?.spaceName || senderName;
+          setProjectName(`${clientName} - ${data.project_title}`);
+        }
+        if (data.recommended_assignee) {
+          const recName = data.recommended_assignee.toLowerCase();
+          const matchedMember = CLICKUP_TEAM_MEMBERS.find(
+            (m) => m.name.toLowerCase() === recName || m.name.toLowerCase().includes(recName)
+          );
+          if (matchedMember) {
+            setAssigneeId(String(matchedMember.id));
+          }
+        }
+        if (data.estimated_hours) {
+          setEstimatedHours(data.estimated_hours);
+        }
+      })
+      .catch(() => { /* Fallback: keep the default brief */ })
+      .finally(() => { if (!cancelled) setIsExtractingBrief(false); });
+
+    const assigneesPromise = fetch("/api/admin/users/assignees")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!cancelled && data?.assignees?.length > 0) {
@@ -215,8 +207,12 @@ export function CreateBriefModal({
         }
       })
       .catch(() => {});
+
+    // Fire both in parallel — each resolves independently
+    Promise.allSettled([briefPromise, assigneesPromise]);
+
     return () => { cancelled = true; };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Compute final assignee list: DB users if available, else hardcoded fallback
   const assigneeOptions: Array<{ name: string; id: number }> = dbAssignees.length > 0
@@ -585,19 +581,24 @@ export function CreateBriefModal({
                 htmlFor="brief-body"
                 className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5"
               >
-                Brief {isExtractingBrief && <span className="text-brand-cerulean font-normal normal-case">(Arya is preparing the brief...)</span>}
+                Brief
+                {isExtractingBrief && (
+                  <span className="text-brand-cerulean font-normal normal-case ml-1 inline-flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cerulean animate-pulse" />
+                    Arya is drafting...
+                  </span>
+                )}
               </label>
               <textarea
                 id="brief-body"
-                value={isExtractingBrief ? "Arya is analyzing the email and preparing a professional brief for the ops team..." : brief}
-                onChange={(e) => setBrief(e.target.value)}
-                disabled={isExtractingBrief}
+                value={brief}
+                onChange={(e) => {
+                  userEditedBriefRef.current = true;
+                  setBrief(e.target.value);
+                }}
                 rows={10}
-                className={cn(
-                  "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed",
-                  isExtractingBrief && "opacity-60 italic"
-                )}
-                placeholder="Project brief details..."
+                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed"
+                placeholder={isExtractingBrief ? "Arya is drafting a professional brief — you can start typing now..." : "Project brief details..."}
               />
             </div>
 

@@ -5,6 +5,7 @@
 // Shows original email (readonly) + editable reply fields.
 
 import { useState, useEffect, useRef, useCallback } from "react";
+
 import { cn } from "@/lib/utils";
 import type { EmailPayload } from "./EmailCard";
 import { AryaRecommendsBanner } from "./AryaRecommendsBanner";
@@ -39,6 +40,7 @@ export function DraftReplyModal({
 
   const [replyBody, setReplyBody] = useState(draftReply);
   const [isGeneratingReply, setIsGeneratingReply] = useState(!draftReply);
+  const userEditedReplyRef = useRef(false);
   const [subject, setSubject] = useState(
     payload.subject.startsWith("Re:") ? payload.subject : `Re: ${payload.subject}`
   );
@@ -60,7 +62,7 @@ export function DraftReplyModal({
     })
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
-        if (!cancelled && data?.draftReply) {
+        if (!cancelled && data?.draftReply && !userEditedReplyRef.current) {
           setReplyBody(data.draftReply);
         }
       })
@@ -318,16 +320,24 @@ export function DraftReplyModal({
                 className="block text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1.5"
               >
                 Reply
+                {isGeneratingReply && (
+                  <span className="text-brand-cerulean font-normal normal-case ml-1 inline-flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cerulean animate-pulse" />
+                    Arya is drafting...
+                  </span>
+                )}
               </label>
               <textarea
                 ref={replyRef}
                 id="draft-reply-body"
-                value={isGeneratingReply ? "Arya is preparing a reply..." : replyBody}
-                onChange={(e) => setReplyBody(e.target.value)}
-                disabled={isGeneratingReply}
+                value={replyBody}
+                onChange={(e) => {
+                  userEditedReplyRef.current = true;
+                  setReplyBody(e.target.value);
+                }}
                 rows={10}
-                className={`w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed${isGeneratingReply ? " opacity-60 italic" : ""}`}
-                placeholder="Write your reply here..."
+                className="w-full rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean resize-y leading-relaxed"
+                placeholder={isGeneratingReply ? "Arya is drafting a reply — you can start typing now..." : "Write your reply here..."}
               />
               {draftReply && (
                 <p className="text-xs text-neutral-400 mt-1 italic">
