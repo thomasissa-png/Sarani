@@ -123,6 +123,10 @@ export async function buildClientProfileBlock(
       lines.push(`- ClickUp Space ID: ${mapping.clickupSpaceId}`);
       lines.push(`- SharePoint folder: ${mapping.sharepointCustomerFolder}`);
       lines.push(`- Excel tracker: ${mapping.excelTrackerFilename}`);
+      if (mapping.subdivisions && mapping.subdivisions.length > 0) {
+        lines.push(`- Divisions: ${mapping.subdivisions.map((s) => s.name).join(", ")}`);
+        lines.push("  Route the project to the correct division based on the email context (sender, entity mentioned, language).");
+      }
     } else {
       lines.push(`- Client: ${clientName}`);
       lines.push("- No integration mapping found — may be a new or unmapped client");

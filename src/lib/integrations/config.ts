@@ -67,6 +67,15 @@ export const CLICKUP_STATUS_MAPPINGS: readonly ClickUpStatusMapping[] = [
 // ─── Client Integration Mapping ─────────────────────────────────────────────
 // From Addendum A.5: mapping ClickUp Space -> Excel Tracker -> SharePoint folder
 
+export interface ClientSubdivision {
+  /** Division name (e.g., "Sony France", "Sony Pro") */
+  readonly name: string;
+  /** ClickUp List ID for this division */
+  readonly clickupListId: string;
+  /** ClickUp URL for quick access */
+  readonly clickupUrl: string;
+}
+
 export interface ClientIntegrationMapping {
   /** ClickUp Space name (exact match) */
   readonly clickupSpaceName: string;
@@ -76,6 +85,8 @@ export interface ClientIntegrationMapping {
   readonly excelTrackerFilename: string;
   /** Customer folder path relative to ASSETS_CUSTOMERS_BASE_PATH */
   readonly sharepointCustomerFolder: string;
+  /** Subdivisions/entities within the client (e.g., Sony France, Sony Pro) */
+  readonly subdivisions?: readonly ClientSubdivision[];
 }
 
 export const CLIENT_MAPPINGS: readonly ClientIntegrationMapping[] = [
@@ -84,6 +95,11 @@ export const CLIENT_MAPPINGS: readonly ClientIntegrationMapping[] = [
     clickupSpaceId: "90100452675",
     excelTrackerFilename: "01. Sarani_Sony Projects.xlsx",
     sharepointCustomerFolder: "02. Sony",
+    subdivisions: [
+      { name: "Sony France", clickupListId: "900303355039", clickupUrl: "https://app.clickup.com/14389859/v/li/900303355039" },
+      { name: "Sony Europe", clickupListId: "900502245411", clickupUrl: "https://app.clickup.com/14389859/v/li/900502245411" },
+      { name: "Sony Pro", clickupListId: "900502249763", clickupUrl: "https://app.clickup.com/14389859/v/li/900502249763" },
+    ],
   },
   {
     clickupSpaceName: "TikTok",
