@@ -7,7 +7,7 @@ import type {
   TrackerProject,
   TrackerResponse,
 } from "@/types/integrations";
-import { CLICKUP_STATUS_MAPPINGS } from "@/lib/integrations/config";
+// Status mappings are now applied in tracker-merge.ts — dropdown uses dynamic values
 
 // ─── Sorting Types ──────────────────────────────────────────────────────────
 
@@ -37,13 +37,13 @@ interface StatusResponse {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const PROJECT_STATUSES = [
-  "All",
-  "Active",
-  ...CLICKUP_STATUS_MAPPINGS.map((m) => m.clickupStatus),
-] as const;
+// Mapped project statuses (after mapClickUpStatus transformation in tracker-merge.ts)
+// "Open"/"in progress"/"review" → "In progress", "Closed" → "Delivered"
+// Excel projects may have free-text statuses — dynamic extraction handles these
+const STATIC_PROJECT_STATUSES = ["All", "Active", "In progress", "Delivered"] as const;
 
-const ACTIVE_STATUSES = new Set(["open", "in progress"]);
+// "Active" = anything not delivered/closed/cancelled/invoiced
+const ACTIVE_STATUSES = new Set(["in progress", "open", "review", "new", "pending", "active", "to do", "todo"]);
 const INVOICE_STATUSES = ["All", "Open PO", "Invoiced", "Paid", "Overdue"] as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -371,6 +371,20 @@ export default function TrackerPage() {
     if (!data) return [];
     const set = new Set(data.projects.map((p) => p.country ?? "Other"));
     return ["All", ...Array.from(set).sort()];
+  }, [data]);
+
+  // Dynamic status list: static mapped statuses + any extra statuses from Excel data
+  const projectStatuses = useMemo(() => {
+    if (!data) return [...STATIC_PROJECT_STATUSES];
+    const staticSet = new Set(STATIC_PROJECT_STATUSES.map((s) => s.toLowerCase()));
+    const extras = new Set<string>();
+    for (const p of data.projects) {
+      const s = p.status.trim();
+      if (s && !staticSet.has(s.toLowerCase())) {
+        extras.add(s);
+      }
+    }
+    return [...STATIC_PROJECT_STATUSES, ...Array.from(extras).sort()];
   }, [data]);
 
   const filteredProjects = useMemo(() => {
@@ -845,18 +859,11 @@ export default function TrackerPage() {
             aria-label="Filter by project status"
             className="px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
           >
-            {/* Fix #5 — separate quick filters from ClickUp statuses */}
-            <optgroup label="Quick filters">
-              <option value="All">All Statuses</option>
-              <option value="Active">Active (Open + In Progress)</option>
-            </optgroup>
-            <optgroup label="ClickUp statuses">
-              {CLICKUP_STATUS_MAPPINGS.map((m) => (
-                <option key={m.clickupStatus} value={m.clickupStatus}>
-                  {m.clickupStatus}
-                </option>
-              ))}
-            </optgroup>
+            {projectStatuses.map((s) => (
+              <option key={s} value={s}>
+                {s === "All" ? "All Statuses" : s === "Active" ? "Active (In progress)" : s}
+              </option>
+            ))}
           </select>
           <select
             value={invoiceFilter}
@@ -944,17 +951,11 @@ export default function TrackerPage() {
                   aria-label="Filter by project status"
                   className="w-full px-3 py-3 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent"
                 >
-                  <optgroup label="Quick filters">
-                    <option value="All">All Statuses</option>
-                    <option value="Active">Active (Open + In Progress)</option>
-                  </optgroup>
-                  <optgroup label="ClickUp statuses">
-                    {CLICKUP_STATUS_MAPPINGS.map((m) => (
-                      <option key={m.clickupStatus} value={m.clickupStatus}>
-                        {m.clickupStatus}
-                      </option>
-                    ))}
-                  </optgroup>
+                  {projectStatuses.map((s) => (
+                    <option key={s} value={s}>
+                      {s === "All" ? "All Statuses" : s === "Active" ? "Active (In progress)" : s}
+                    </option>
+                  ))}
                 </select>
                 <select
                   value={invoiceFilter}
