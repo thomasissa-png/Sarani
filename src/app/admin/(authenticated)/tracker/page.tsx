@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import type {
@@ -41,10 +42,9 @@ interface StatusResponse {
 // Mapped project statuses (after mapClickUpStatus transformation in tracker-merge.ts)
 // "Open"/"in progress"/"review" → "In progress", "Closed" → "Delivered"
 // Excel projects may have free-text statuses — dynamic extraction handles these
-const STATIC_PROJECT_STATUSES = ["All", "Active", "In progress", "Delivered"] as const;
+const STATIC_PROJECT_STATUSES = ["All", "In progress", "Delivered"] as const;
 
 // "Active" = anything not delivered/closed/cancelled/invoiced
-const ACTIVE_STATUSES = new Set(["in progress", "open", "review", "new", "pending", "active", "to do", "todo"]);
 const INVOICE_STATUSES = ["All", "Open PO", "Invoiced", "Paid", "Overdue"] as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -154,6 +154,17 @@ function parseDateToTimestamp(dateStr: string | null | undefined): number {
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function TrackerPage() {
+  return (
+    <Suspense fallback={null}>
+      <TrackerContent />
+    </Suspense>
+  );
+}
+
+function TrackerContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [data, setData] = useState<TrackerResponse | null>(null);
   const [apiStatus, setApiStatus] = useState<StatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -170,14 +181,29 @@ export default function TrackerPage() {
     type: "success" | "error" | "warning";
   } | null>(null);
 
-  // Filters — default to ClickUp-sourced projects only
-  const [search, setSearch] = useState("");
-  const [clientFilter, setClientFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("Active");
-  const [invoiceFilter, setInvoiceFilter] = useState("All");
-  // Country filter removed per Thomas — no use in practice
-  const [sourceFilter, setSourceFilter] = useState<"All" | "ClickUp" | "Excel Only">("ClickUp");
+  // Filters — restored from URL params on mount, default to ClickUp-sourced projects only
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
+  const [clientFilter, setClientFilter] = useState(() => searchParams.get("client") ?? "All");
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get("status") ?? "In progress");
+  const [invoiceFilter, setInvoiceFilter] = useState(() => searchParams.get("invoice") ?? "All");
+  const [sourceFilter, setSourceFilter] = useState<"All" | "ClickUp" | "Excel Only">(() => {
+    const s = searchParams.get("source");
+    return s === "All" || s === "Excel Only" ? s : "ClickUp";
+  });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Sync filters to URL params (replaceState — no history push)
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (clientFilter !== "All") params.set("client", clientFilter);
+    if (statusFilter !== "In progress") params.set("status", statusFilter);
+    if (invoiceFilter !== "All") params.set("invoice", invoiceFilter);
+    if (sourceFilter !== "ClickUp") params.set("source", sourceFilter);
+    const qs = params.toString();
+    const url = qs ? `/admin/tracker?${qs}` : "/admin/tracker";
+    window.history.replaceState(null, "", url);
+  }, [search, clientFilter, statusFilter, invoiceFilter, sourceFilter]);
 
   // Column visibility — hide non-essential columns by default to prevent horizontal overflow
   type HideableColumn = "contact" | "category" | "po" | "country" | "invoice";
@@ -392,12 +418,7 @@ export default function TrackerPage() {
         return false;
       }
       if (clientFilter !== "All" && p.client !== clientFilter) return false;
-      if (statusFilter === "Active") {
-        if (!ACTIVE_STATUSES.has(p.status.toLowerCase())) return false;
-      } else if (
-        statusFilter !== "All" &&
-        p.status.toLowerCase() !== statusFilter.toLowerCase()
-      ) {
+      if (statusFilter !== "All" && p.status.toLowerCase() !== statusFilter.toLowerCase()) {
         return false;
       }
       if (invoiceFilter !== "All") {
@@ -482,7 +503,7 @@ export default function TrackerPage() {
   }, [filteredProjects.length, currentPage]);
 
   // Stats (Fix #9 — scoped to filtered projects when filters active)
-  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "Active" || invoiceFilter !== "All" || sourceFilter !== "ClickUp";
+  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "In progress" || invoiceFilter !== "All" || sourceFilter !== "ClickUp";
   const stats = useMemo(() => {
     if (!data) return { total: 0, totalValue: 0, open: 0, overdue: 0, globalTotal: 0 };
     const source = filteredProjects;
@@ -503,7 +524,7 @@ export default function TrackerPage() {
   const clearAllFilters = useCallback(() => {
     setSearch("");
     setClientFilter("All");
-    setStatusFilter("All");
+    setStatusFilter("In progress");
     setInvoiceFilter("All");
     setSourceFilter("All");
   }, []);
@@ -706,7 +727,7 @@ export default function TrackerPage() {
           >
             {projectStatuses.map((s) => (
               <option key={s} value={s}>
-                {s === "All" ? "All Statuses" : s === "Active" ? "Active (In progress)" : s}
+                {s === "All" ? "All Statuses" : s}
               </option>
             ))}
           </select>
@@ -786,7 +807,7 @@ export default function TrackerPage() {
                 >
                   {projectStatuses.map((s) => (
                     <option key={s} value={s}>
-                      {s === "All" ? "All Statuses" : s === "Active" ? "Active (In progress)" : s}
+                      {s === "All" ? "All Statuses" : s}
                     </option>
                   ))}
                 </select>
