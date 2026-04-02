@@ -430,7 +430,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
             href="https://sarani.studio"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-white/50 hover:text-white/80 transition-colors"
+            className="text-sm text-white/50 hover:text-white/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
           >
             sarani.studio
           </a>
@@ -449,7 +449,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
         <div className="flex flex-wrap items-center gap-4 text-sm text-white/50 mb-8">
           {(
             <span>
-              {new Date().toLocaleDateString("en-GB", {
+              {new Date(preview.createdAt).toLocaleDateString("en-GB", {
                 day: "numeric",
                 month: "long",
                 year: "numeric",
@@ -485,7 +485,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
             href={preview.sharepointLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors"
+            className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
@@ -579,12 +579,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             Your browser does not support video playback.
                           </video>
                           <div className="px-3 py-2 flex items-center justify-between">
-                            <span className="text-xs text-white/60 truncate">{item.name}</span>
+                            <span className="text-xs text-white/60 truncate">{item.name.replace(/\.[^.]+$/, "")}</span>
                             <a
                               href={item.webUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-white/40 hover:text-white/70 transition-colors shrink-0 ml-2"
+                              aria-label={`Download ${item.name}`}
+                              className="text-xs text-white/40 hover:text-white/70 transition-colors shrink-0 ml-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame rounded"
                             >
                               Download
                             </a>
@@ -656,12 +657,14 @@ export default async function ProjectPreviewPage({ params }: Props) {
 
       {/* Footer */}
       <footer className="border-t border-white/10">
-        <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-center gap-3">
+          <span className="text-xs text-white/30">Sarani Studio — Creative Agency</span>
+          <span className="text-white/10">·</span>
           <a
             href="https://sarani.studio"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-white/20 hover:text-white/40 transition-colors"
+            className="text-xs text-white/40 hover:text-white/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
           >
             sarani.studio
           </a>
