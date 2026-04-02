@@ -53,8 +53,11 @@ export async function getRecentEmails(
   // Build query string manually — URLSearchParams encodes $ as %24 which Graph API rejects
   // Note: filtering @sarani.studio in OData is not supported (Graph rejects nested field filters)
   // So we filter client-side after fetch
+  // Fetch emails from the last 24h (not just unread — team may read emails in Outlook
+  // before the cron runs). Dedup is handled by processedEmails table in the cron.
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const query = [
-    "$filter=isRead eq false",
+    `$filter=receivedDateTime ge ${oneDayAgo}`,
     "$orderby=receivedDateTime desc",
     `$top=${limit}`,
     "$select=id,subject,from,receivedDateTime,bodyPreview,hasAttachments,conversationId",
