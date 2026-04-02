@@ -179,8 +179,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url, created: true, id: inserted.id }, { status: 201 });
   } catch (error) {
     console.error("[project-previews] POST error:", error);
+    const detail = error instanceof Error ? error.message : String(error);
+
+    // Common DB errors with user-friendly messages
+    if (detail.includes("relation") && detail.includes("does not exist")) {
+      return NextResponse.json(
+        { error: "DB_MIGRATION", message: "Database table missing. Run: npm run db:migrate" },
+        { status: 500 }
+      );
+    }
+    if (detail.includes("column") && detail.includes("does not exist")) {
+      return NextResponse.json(
+        { error: "DB_MIGRATION", message: `Database column missing (${detail.split('"')[1] ?? "unknown"}). Run: npm run db:migrate` },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "INTERNAL", message: "Failed to create project preview." },
+      { error: "INTERNAL", message: `Failed to create project preview: ${detail}` },
       { status: 500 }
     );
   }
