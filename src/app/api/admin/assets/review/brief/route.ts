@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getTask } from "@/lib/integrations/clickup";
+import { getTask, getCustomFieldValue } from "@/lib/integrations/clickup";
 
 export async function GET(request: NextRequest) {
   const session = await getUserFromSession();
@@ -54,10 +54,21 @@ export async function GET(request: NextRequest) {
 
     const brief = parts.join("\n").trim();
 
+    // Extract SharePoint folder URL from custom fields
+    // Common field names: "Folder URL", "Folder", "SharePoint", "SP Link"
+    const folderUrl =
+      getCustomFieldValue(task, "Folder URL") ||
+      getCustomFieldValue(task, "Folder") ||
+      getCustomFieldValue(task, "SharePoint") ||
+      getCustomFieldValue(task, "SP Link") ||
+      getCustomFieldValue(task, "folder url") ||
+      null;
+
     return NextResponse.json({
       brief: brief || null,
       taskName: task.name,
       taskUrl: task.url,
+      folderUrl,
     });
   } catch (error) {
     console.error("[Asset Review Brief] Error loading ClickUp task:", error);

@@ -177,6 +177,10 @@ function AssetReviewContent() {
         setBriefLoaded(true);
         setTimeout(() => setBriefLoaded(false), 3000);
       }
+      // Auto-fill SharePoint project path from ClickUp custom field "Folder URL"
+      if (data.folderUrl && !projectPath) {
+        setProjectPath(data.folderUrl);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load brief from ClickUp";
       setErrorMessage(message);
