@@ -152,7 +152,8 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setError(null);
     try {
       // Create/update project preview in DB with the selected SP folder
-      const res = await fetch("/api/admin/project-previews", {
+      const currentDriveId = data?.driveId ?? "";
+      const res: Response = await fetch("/api/admin/project-previews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -160,18 +161,18 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           clientName,
           projectName,
           spFolderId: folderId,
-          spDriveId: data?.driveId ?? "",
+          spDriveId: currentDriveId,
           brief: `Deliverables for ${projectName} — ${folderName}`,
         }),
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to generate presentation link");
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || "Failed to generate presentation link");
       }
 
-      const data = await res.json();
-      const fullUrl = `${window.location.origin}${data.url}`;
+      const result = await res.json();
+      const fullUrl = `${window.location.origin}${result.url}`;
       setSharedLink(fullUrl);
 
       // Copy to clipboard
