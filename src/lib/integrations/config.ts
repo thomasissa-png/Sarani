@@ -196,7 +196,8 @@ export const CLICKUP_TEAM_MEMBERS: readonly ClickUpTeamMember[] = [
   { name: "Lauriane Celton", id: 290479583, skills: ["design"], languages: ["fr", "en"], clients: ["Lamarck"] },
   { name: "Camilla Palermo", id: 49467956, skills: ["design"], languages: ["en", "it"], clients: ["Sony"] },
   { name: "Claire Boutreux", id: 266547441, skills: ["design"], languages: ["fr", "en"], clients: ["Lamarck"] },
-  { name: "Hiruni", id: 95230414, skills: ["pm"], languages: ["en"], clients: ["TikTok", "Sony", "GEODIS", "PICO XR"] },
+  { name: "Hiruni", id: 95230414, skills: ["pm"], languages: ["en"], clients: ["TikTok", "Sony", "GEODIS", "PICO XR"] }, // Departed — replaced by Anastasia
+  { name: "Anastasia", id: 0, skills: ["pm"], languages: ["fr", "en"], clients: ["Bose", "Aristocrat", "CMC Markets"] }, // New PM starting Monday — TODO: get ClickUp ID
   { name: "Claudia Salgueiro", id: 89382349, skills: ["design"], languages: ["pt", "en", "es"], clients: ["TikTok"] },
   { name: "Affan Hakim", id: 60852951, skills: ["video"], languages: ["en"], clients: ["Sony", "TikTok", "Aristocrat", "Bose", "GEODIS", "PICO XR", "Lamarck", "Ubi", "Aujan", "CMC Markets"] },
   { name: "JC", id: 89363031, skills: ["video"], languages: ["en"], clients: ["TikTok", "Sony"] },
@@ -236,6 +237,43 @@ export interface TeamRecommendation {
   member: ClickUpTeamMember;
   score: number;        // 0-100 relevance score
   reasons: string[];    // Why this member is recommended
+}
+
+// ─── PM Assignment by Client + Timezone ────────────────────────────────────
+
+const PM_ASSIGNMENT_CET: Record<string, string[]> = {
+  Sony: ["Aurélie Touchard"],
+  "PICO XR": ["Aurélie Touchard"],
+  Ubi: ["AnneLaure G."],
+  TikTok: ["Mahée Ahouansou", "Carole Eid"],
+  Lamarck: ["AnneLaure G."],
+  Bose: ["Anastasia"],
+  GEODIS: ["Aurélie Touchard"],
+  Aristocrat: ["Anastasia"],
+  Aujan: ["Ameena Gorton"],
+  "CMC Markets": ["Anastasia"],
+};
+
+const PM_ASSIGNMENT_EVENING: Record<string, string[]> = {
+  Sony: ["Fanny Place", "Clara Jaeger"],
+  TikTok: ["Claire Boussuge", "Clara Jaeger"],
+  "CMC Markets": ["Clara Jaeger"],
+  Aristocrat: ["Claire Boussuge"],
+};
+const PM_ASSIGNMENT_EVENING_DEFAULT = ["Clara Jaeger"];
+
+/**
+ * Get recommended PM(s) for a client based on current time.
+ * CET hours (8h-18h) → daytime PMs. Evening → Americas PMs.
+ */
+export function getRecommendedPM(clientName: string): string[] {
+  const hour = new Date().getUTCHours() + 2; // Rough CET approximation
+  const isCET = hour >= 8 && hour < 18;
+
+  if (isCET) {
+    return PM_ASSIGNMENT_CET[clientName] ?? [];
+  }
+  return PM_ASSIGNMENT_EVENING[clientName] ?? PM_ASSIGNMENT_EVENING_DEFAULT;
 }
 
 /**

@@ -13,6 +13,7 @@ import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
 import {
   recommendTeamMembers,
   buildEstimationPromptBlock,
+  getRecommendedPM,
 } from "@/lib/integrations/config";
 
 const RequestSchema = z.object({
@@ -91,7 +92,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Extraction failed" }, { status: 500 });
     }
 
-    return NextResponse.json(parsed.data);
+    // Add recommended PM based on client + timezone
+    const clientName = parsed.data.client_name;
+    const recommendedPMs = clientName ? getRecommendedPM(clientName) : [];
+
+    return NextResponse.json({
+      ...parsed.data,
+      recommended_pm: recommendedPMs.length > 0 ? recommendedPMs[0] : undefined,
+      recommended_pms: recommendedPMs,
+    });
   } catch (error) {
     console.error("[Brief Extract] Error:", error);
     return NextResponse.json({ error: "Extraction failed" }, { status: 500 });

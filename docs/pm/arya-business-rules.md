@@ -69,7 +69,32 @@ Certains "clients" Sarani sont en réalité des **agences partenaires** qui sous
 26. **Sous-clients Ubi en direct** : @redbull.com, @ikea.com, @barilla.com → via Ubi par défaut (pas nouveau client direct).
 27. **ClickUp Ubisoft/Perrier** : mettre dans "Others" chez Ubi sur ClickUp.
 28. **TVA** : 20% si email en français (95% de chances). Confirmé : Lamarck, Ubi, GEODIS, TikTok FR, Air Corsica, ProcessOut, Sony France = TVA 20%. Tous les autres = 0%.
-29. **Assignation PM** : pas de mapping fixe. Arya apprend en observant les assignations au fil du temps. Le PM qui traite choisit.
+29. **Assignation PM** : mapping par client ET par timezone.
+
+**Heures françaises (CET, ~8h-18h) :**
+| Client | PM |
+|--------|-----|
+| Sony | Aurélie |
+| PICO | Aurélie |
+| Ubi | AnneLaure |
+| TikTok | Mahée / Carole |
+| Lamarck | AnneLaure |
+| Bose | Anastasia |
+| GEODIS | Aurélie |
+| Aristocrat | Anastasia |
+| Aujan | Ameena |
+| CMC | Anastasia |
+
+**Heures du soir (après ~18h CET, couverture Amériques) :**
+| Client | PM |
+|--------|-----|
+| Sony | Fanny / Clara |
+| TikTok | Claire / Clara |
+| CMC | Clara |
+| Aristocrat | Claire |
+| Le reste | Clara |
+
+**Note : Anastasia est nouvelle, commence lundi (remplace Hiruni en France).**
 
 ## Branding par client
 
