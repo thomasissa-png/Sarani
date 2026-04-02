@@ -708,12 +708,12 @@ export default function InboxPage() {
       // Direct match
       if (text.includes(clientLower)) return true;
       // Special cases
-      if (activeClientFilter === "TikTok" && (text.includes("tiktok") || text.includes("bytedance"))) return true;
+      if (activeClientFilter === "TikTok" && (text.includes("tiktok") || text.includes("bytedance") || text.includes("tts ") || text.includes("tts global") || text.startsWith("tts"))) return true;
       if (activeClientFilter === "Ubi" && (text.includes("ubisoft") || text.includes("@ubi.") || text.includes("adidas") || text.includes("lego") || text.includes("red bull") || text.includes("ikea") || text.includes("perrier") || text.includes("barilla"))) return true;
       if (activeClientFilter === "PICO XR" && text.includes("pico")) return true;
       if (activeClientFilter === "CMC Markets" && text.includes("cmc")) return true;
       if (activeClientFilter === "Others") {
-        const knownClients = ["tiktok", "sony", "bose", "ubi", "ubisoft", "lamarck", "aristocrat", "aujan", "cmc", "pico", "geodis", "adidas", "lego", "bytedance"];
+        const knownClients = ["tiktok", "sony", "bose", "ubi", "ubisoft", "lamarck", "aristocrat", "aujan", "cmc", "pico", "geodis", "adidas", "lego", "bytedance", "tts"];
         return !knownClients.some((c) => text.includes(c));
       }
       return false;
