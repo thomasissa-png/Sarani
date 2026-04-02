@@ -10,6 +10,7 @@ import type {
 } from "@/types/integrations";
 // Status mappings are now applied in tracker-merge.ts — dropdown uses dynamic values
 import { ShareFolderModal } from "@/components/admin/ShareFolderModal";
+import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── Sorting Types ──────────────────────────────────────────────────────────
 
@@ -377,12 +378,25 @@ function TrackerContent() {
   }, []);
 
   // Derived data
-  // Client filter: show only main clients (ClickUp space names), not divisions
+  // Client filter: show only main clients (from CLIENT_MAPPINGS) + "Others" for the rest
+  const MAIN_CLIENTS = useMemo(() => {
+    const set = new Set(
+      CLIENT_MAPPINGS
+        .filter((m) => m.clickupSpaceName !== "Other customers")
+        .map((m) => m.clickupSpaceName)
+    );
+    return set;
+  }, []);
+
   const clients = useMemo(() => {
     if (!data) return [];
-    const set = new Set(data.projects.map((p) => p.client));
-    return ["All", ...Array.from(set).sort()];
-  }, [data]);
+    // Only show main clients that have at least 1 project in the data
+    const withProjects = new Set(data.projects.map((p) => p.client));
+    const mainClients = Array.from(MAIN_CLIENTS).filter((c) => withProjects.has(c)).sort();
+    // Check if there are any "other" projects (not in MAIN_CLIENTS)
+    const hasOthers = data.projects.some((p) => !MAIN_CLIENTS.has(p.client));
+    return ["All", ...mainClients, ...(hasOthers ? ["Others"] : [])];
+  }, [data, MAIN_CLIENTS]);
 
   // Dynamic status list: static mapped statuses + extra statuses from actual data
   // Recalculates based on source filter (ClickUp vs Excel Only show different statuses)
@@ -417,7 +431,11 @@ function TrackerContent() {
       ) {
         return false;
       }
-      if (clientFilter !== "All" && p.client !== clientFilter) return false;
+      if (clientFilter === "Others") {
+        if (MAIN_CLIENTS.has(p.client)) return false; // exclude main clients
+      } else if (clientFilter !== "All" && p.client !== clientFilter) {
+        return false;
+      }
       if (statusFilter !== "All" && p.status.toLowerCase() !== statusFilter.toLowerCase()) {
         return false;
       }
