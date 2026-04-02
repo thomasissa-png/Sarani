@@ -110,12 +110,18 @@ const DOMAIN_CLIENT_MAP: Record<string, string> = {
   "tiktok.com": "TikTok",
   "bytedance.com": "TikTok",
   "picoxr.com": "PICO XR",
+  "pico-interactive.com": "PICO XR",
   "aristocrat.com": "Aristocrat",
   "ubisoft.com": "Ubi",
+  "ubi.fr": "Ubi",
   "aujan.com": "Aujan",
   "bose.com": "Bose",
   "lamarckgroup.com": "Lamarck",
+  "lamarck.fr": "Lamarck",
   "cmcmarkets.com": "CMC Markets",
+  "geodis.com": "GEODIS",
+  "processout.com": "ProcessOut",
+  "aircorsica.com": "Other customers",
 };
 
 /**
