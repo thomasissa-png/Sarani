@@ -154,6 +154,11 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: "done", label: "Managed" },
 ];
 
+const CLIENT_FILTER_TABS = [
+  "all", "TikTok", "Sony", "Bose", "Ubi", "Lamarck", "Aristocrat",
+  "Aujan", "CMC Markets", "PICO XR", "GEODIS", "Others",
+] as const;
+
 // Filter logic imported from @/lib/inbox/filters
 
 // ─── Action badge for Managed tab (Fix 6) ──────────────────────────────────
@@ -234,6 +239,7 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
+  const [activeClientFilter, setActiveClientFilter] = useState<string>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
@@ -287,6 +293,7 @@ export default function InboxPage() {
         const filtered = allItems.filter((i) => {
           if (i.type === "followup_alert") return false;
           if (i.type === "deadline_alert") return false; // DueTodayBanner already covers this
+          if (i.type === "daily_digest") return false; // Daily digest is a summary, not an inbox item
           // Filter out emails FROM @sarani.studio (internal team emails)
           if (i.type === "email_classified" && i.summary) {
             try {
@@ -641,15 +648,42 @@ export default function InboxPage() {
     return bTime - aTime;
   });
 
+  // Apply client filter
+  const clientFilteredItems = activeClientFilter === "all"
+    ? filteredItems
+    : filteredItems.filter((i) => {
+        if (!i.summary) return activeClientFilter === "Others";
+        try {
+          const parsed = typeof i.summary === "string" ? JSON.parse(i.summary) : i.summary;
+          const from = ((parsed.from as string) ?? "").toLowerCase();
+          const subject = ((parsed.subject as string) ?? "").toLowerCase();
+          const body = ((parsed.bodyPreview as string) ?? "").toLowerCase();
+          const text = `${from} ${subject} ${body}`;
+          const clientLower = activeClientFilter.toLowerCase();
+          // Match client name in from/subject/body
+          if (text.includes(clientLower)) return true;
+          // Special cases
+          if (activeClientFilter === "TikTok" && (text.includes("tiktok") || text.includes("bytedance"))) return true;
+          if (activeClientFilter === "Ubi" && (text.includes("ubisoft") || text.includes("@ubi."))) return true;
+          if (activeClientFilter === "PICO XR" && text.includes("pico")) return true;
+          if (activeClientFilter === "Others") {
+            // Items that don't match any known client
+            const knownClients = ["tiktok", "sony", "bose", "ubi", "ubisoft", "lamarck", "aristocrat", "aujan", "cmc", "pico", "geodis"];
+            return !knownClients.some((c) => text.includes(c));
+          }
+          return false;
+        } catch { return activeClientFilter === "Others"; }
+      });
+
   // Pagination: show 20 items at a time, "Show more" loads 20 more
   const PAGE_SIZE = 20;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // Reset visible count when filter changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [activeFilter]);
-  const visibleItems = filteredItems.slice(0, visibleCount);
-  const hasMore = filteredItems.length > visibleCount;
+  }, [activeFilter, activeClientFilter]);
+  const visibleItems = clientFilteredItems.slice(0, visibleCount);
+  const hasMore = clientFilteredItems.length > visibleCount;
 
   // Counts for each tab
   const isManagedTab = activeFilter === "done";
@@ -801,6 +835,27 @@ export default function InboxPage() {
                   {count}
                 </span>
               )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Client filter row */}
+      <div className="flex flex-wrap gap-1.5">
+        {CLIENT_FILTER_TABS.map((client) => {
+          const isActive = activeClientFilter === client;
+          return (
+            <button
+              key={client}
+              onClick={() => setActiveClientFilter(client)}
+              className={cn(
+                "px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors",
+                isActive
+                  ? "bg-brand-cerulean text-white"
+                  : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200"
+              )}
+            >
+              {client === "all" ? "All clients" : client}
             </button>
           );
         })}
@@ -1016,9 +1071,9 @@ export default function InboxPage() {
           <button
             onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
             className="px-6 py-2.5 min-h-[44px] rounded-lg text-sm font-medium bg-neutral-100 text-neutral-600 hover:bg-neutral-200 transition-colors"
-            aria-label={`Show more items (${filteredItems.length - visibleCount} remaining)`}
+            aria-label={`Show more items (${clientFilteredItems.length - visibleCount} remaining)`}
           >
-            Show more ({filteredItems.length - visibleCount} remaining)
+            Show more ({clientFilteredItems.length - visibleCount} remaining)
           </button>
         </div>
       )}
