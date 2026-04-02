@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { aryaVerificationLog, inboxItems } from "@/lib/db/schema";
 import type { VerificationCriteria } from "@/lib/db/schema";
+import { getTask } from "@/lib/integrations/clickup";
+import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import {
   addTaskComment,
@@ -150,6 +152,17 @@ export async function POST(request: NextRequest) {
 
   const { clickupTaskId, taskName, brief, deliverableLinks } = parsed.data;
 
+  // Resolve client name from ClickUp task space (non-blocking)
+  let clientName = "";
+  try {
+    const task = await getTask(clickupTaskId);
+    const spaceId = task.space?.id;
+    if (spaceId) {
+      const mapping = CLIENT_MAPPINGS.find((m) => m.clickupSpaceId === spaceId);
+      clientName = mapping?.clickupSpaceName ?? "";
+    }
+  } catch { /* non-blocking */ }
+
   try {
     // Determine current attempt number from existing logs
     const existingLogs = await db
@@ -221,6 +234,7 @@ export async function POST(request: NextRequest) {
           title: `AI Review Ready — pre-verified by Arya (${taskName ?? clickupTaskId})`,
           summary: JSON.stringify({
             clickupTaskId,
+            clientName,
             attempt: currentAttempt,
             criteria: verificationResult.criteria,
           }),
@@ -326,6 +340,7 @@ export async function POST(request: NextRequest) {
         title: `AI rework required — verification failed (attempt ${currentAttempt}/${MAX_ATTEMPTS}) (${taskName ?? clickupTaskId})`,
         summary: JSON.stringify({
           clickupTaskId,
+          clientName,
           attempt: currentAttempt,
           failureReasons: verificationResult.failureReasons,
         }),
