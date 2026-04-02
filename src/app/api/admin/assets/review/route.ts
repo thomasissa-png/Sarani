@@ -7,6 +7,7 @@ import {
   listDriveItems,
   graphFetch,
   getDriveItemByPath,
+  resolveSharePointUrl,
   type DriveItem,
 } from "@/lib/integrations/sharepoint";
 import {
@@ -217,40 +218,67 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Resolve the project folder path on SharePoint.
-    // projectId format: either a full path like "02. Sony/ProjectName"
-    // or a ClickUp-style identifier. We try the path directly first.
-    let folderPath: string;
+    // Resolve the project folder on SharePoint.
+    // projectId can be: full SP URL, relative path ("02. Sony/Project"), or ClickUp identifier
+    let folderPath: string | null = null;
+    let folderWebUrl: string | null = null;
+    let resolvedDriveId: string = SHAREPOINT_ASSETS_DRIVE_ID;
+    let resolvedItemId: string | null = null;
 
-    // Check if projectId looks like a SharePoint path (contains /)
-    if (body.projectId.includes("/")) {
-      folderPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${body.projectId}`;
-    } else {
-      // Try to find a client mapping and build the path
-      const mapping = CLIENT_MAPPINGS.find(
-        (m) =>
-          m.clickupSpaceId === body.projectId ||
-          m.clickupSpaceName.toLowerCase() === body.projectId.toLowerCase()
-      );
-      if (mapping) {
-        folderPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
-      } else {
-        // Use as-is under customers base
+    // Case 1: Full SharePoint URL — resolve via Graph sharing API
+    if (body.projectId.startsWith("https://")) {
+      try {
+        const item = await resolveSharePointUrl(body.projectId);
+        if (item?.id && item?.parentReference?.driveId) {
+          resolvedDriveId = item.parentReference.driveId;
+          resolvedItemId = item.id;
+          folderWebUrl = item.webUrl ?? body.projectId;
+          folderPath = "__resolved__"; // Flag to use driveId/itemId instead of path
+        }
+      } catch { /* fallback to path-based */ }
+    }
+
+    // Case 2: Relative path or ClickUp identifier
+    if (!folderPath) {
+      if (body.projectId.includes("/")) {
         folderPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${body.projectId}`;
+      } else {
+        const mapping = CLIENT_MAPPINGS.find(
+          (m) =>
+            m.clickupSpaceId === body.projectId ||
+            m.clickupSpaceName.toLowerCase() === body.projectId.toLowerCase()
+        );
+        if (mapping) {
+          folderPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
+        } else {
+          folderPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${body.projectId}`;
+        }
       }
     }
 
     // Resolve folder webUrl for direct SharePoint link
-    let folderWebUrl: string | null = null;
     try {
-      const folderItem = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
-      folderWebUrl = folderItem.webUrl ?? null;
+      if (folderPath && folderPath !== "__resolved__") {
+        const folderItem = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
+        folderWebUrl = folderItem.webUrl ?? null;
+        resolvedDriveId = SHAREPOINT_ASSETS_DRIVE_ID;
+        resolvedItemId = folderItem.id;
+      }
     } catch {
       // Non-critical — the folder link is a nice-to-have
     }
 
     // List all files in the project folder
-    const files = await listAllFiles(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
+    let files: DriveItemWithThumbnails[];
+    if (resolvedItemId && folderPath === "__resolved__") {
+      // Resolved from full URL — list children by item ID
+      const data = await graphFetch<{ value: DriveItemWithThumbnails[] }>(
+        `/drives/${resolvedDriveId}/items/${resolvedItemId}/children?$expand=thumbnails`
+      );
+      files = data.value ?? [];
+    } else {
+      files = await listAllFiles(resolvedDriveId, folderPath!);
+    }
 
     // Filter out system/hidden files
     const relevantFiles = files.filter(
