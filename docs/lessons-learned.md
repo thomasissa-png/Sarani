@@ -1,5 +1,7 @@
 # Lessons Learned — Sarani
 
+| S12 | 2026-04-02 | insistance | P0 | [INSISTANCE FONDATEUR] Les QA vérifient la structure (imports, types, tsc) mais PAS la logique métier réelle. Thomas a demandé 5+ QA cette session — aucun n'a détecté que les reviews TikTok allaient dans "Others" au lieu de "TikTok", que les emails Sarani passaient le filtre, ou que le feedback copiait-collait le body. Les tests unitaires mockent des données parfaites au lieu de tester les vrais payloads. | Ajout de tests avec payloads réels (review TikTok, email Sony thread, feedback Lamarck). | **RÈGLE : chaque QA DOIT inclure des scénarios end-to-end avec des données réelles** (pas mockées). Simuler les vrais payloads JSON de l'inbox, les vrais summaries des review items, les vrais emails avec threads. Un QA qui dit "PASS" sans avoir testé un seul cas réel est un QA qui ne sert à rien. | règle-globale | CLAUDE.md, .claude/agents/qa.md | fait | non-propagé |
+
 ## Session 12 — 2026-04-01
 
 | Session | Date | Catégorie | Sévérité | Description | Correction appliquée | Recommandation framework | Cible propagation | Fichiers impactés | Statut correction | Statut propagation |
