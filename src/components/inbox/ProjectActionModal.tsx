@@ -509,51 +509,6 @@ export function ProjectActionModal({
                   </button>
                 </div>
               )}
-              {showManualMap && (
-                <div className="bg-neutral-50 rounded-lg p-3 space-y-2">
-                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Search ClickUp project</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={manualSearchQuery}
-                      onChange={(e) => setManualSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-                      placeholder="Type project or client name..."
-                      className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
-                      aria-label="Search ClickUp project by name"
-                    />
-                    <button
-                      onClick={handleManualSearch}
-                      disabled={isManualSearching || !manualSearchQuery.trim()}
-                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
-                    >
-                      {isManualSearching ? "..." : "Search"}
-                    </button>
-                  </div>
-                  {manualSearchResults.length > 0 && (
-                    <div className="space-y-1">
-                      {manualSearchResults.map((r) => (
-                        <button
-                          key={r.taskId}
-                          onClick={() => handleSelectManualResult(r)}
-                          className="w-full text-left px-3 py-2 rounded-lg text-sm bg-white border border-neutral-200 hover:border-brand-cerulean hover:bg-brand-cerulean/5 transition-colors"
-                        >
-                          <span className="font-medium text-brand-black">{r.taskName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {!isManualSearching && manualSearchResults.length === 0 && manualSearchQuery && (
-                    <p className="text-xs text-neutral-400">No results — try a different query</p>
-                  )}
-                  <button
-                    onClick={() => setShowManualMap(false)}
-                    className="text-xs text-neutral-400 hover:text-neutral-600"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -590,62 +545,6 @@ export function ProjectActionModal({
                   Draft Reply
                 </button>
               </div>
-              {!hasClickUpLink && !isSearchingClickUp && !showManualMap && (
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-neutral-400">Project not found in ClickUp</p>
-                  <button
-                    onClick={() => setShowManualMap(true)}
-                    className="text-xs text-brand-cerulean hover:underline font-medium"
-                  >
-                    Map manually
-                  </button>
-                </div>
-              )}
-              {showManualMap && (
-                <div className="bg-neutral-50 rounded-lg p-3 space-y-2">
-                  <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Search ClickUp project</p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={manualSearchQuery}
-                      onChange={(e) => setManualSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-                      placeholder="Type project or client name..."
-                      className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cerulean/40 focus:border-brand-cerulean"
-                      aria-label="Search ClickUp project by name"
-                    />
-                    <button
-                      onClick={handleManualSearch}
-                      disabled={isManualSearching || !manualSearchQuery.trim()}
-                      className="px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium bg-brand-cerulean text-white hover:bg-brand-cerulean-dark transition-colors disabled:opacity-50"
-                    >
-                      {isManualSearching ? "..." : "Search"}
-                    </button>
-                  </div>
-                  {manualSearchResults.length > 0 && (
-                    <div className="space-y-1">
-                      {manualSearchResults.map((r) => (
-                        <button
-                          key={r.taskId}
-                          onClick={() => handleSelectManualResult(r)}
-                          className="w-full text-left px-3 py-2 rounded-lg text-sm bg-white border border-neutral-200 hover:border-brand-cerulean hover:bg-brand-cerulean/5 transition-colors"
-                        >
-                          <span className="font-medium text-brand-black">{r.taskName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {!isManualSearching && manualSearchResults.length === 0 && manualSearchQuery && (
-                    <p className="text-xs text-neutral-400">No results — try a different query</p>
-                  )}
-                  <button
-                    onClick={() => setShowManualMap(false)}
-                    className="text-xs text-neutral-400 hover:text-neutral-600"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
@@ -673,16 +572,8 @@ export function ProjectActionModal({
                   Draft Reply
                 </button>
               </div>
-              {!hasClickUpLink && !isSearchingClickUp && !showManualMap && (
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-neutral-400">Project not found in ClickUp</p>
-                  <button
-                    onClick={() => setShowManualMap(true)}
-                    className="text-xs text-brand-cerulean hover:underline font-medium"
-                  >
-                    Map manually
-                  </button>
-                </div>
+              {!hasClickUpLink && !isSearchingClickUp && (
+                <p className="text-xs text-neutral-400">Project not found in ClickUp — use the search above to map it</p>
               )}
             </div>
           )}
