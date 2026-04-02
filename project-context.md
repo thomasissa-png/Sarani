@@ -392,60 +392,76 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-01 ~12:00 UTC (session 11 — extended)
+**Date et heure de clôture :** 2026-04-02 ~19:00 UTC (session 12)
 
-**Résumé de la session (session 11) :**
-Session massive back-office Arya V2 — ~40 commits, ~6000+ lignes. 3 gaps Arya S10 résolus + 6 nouvelles features majeures (closure+star pipeline, email scan knowledge, review pipeline, webhooks temps réel, auto-brief, auto-quote). 6 specs PM produites (2081 lignes total). Inbox UX overhauled : EmailCard, modals de validation, boutons contextuels, zéro JSON brut. 5 learnings P0 (dont 3 nouveaux : reviews complètes, workflow walkthrough, zéro invention). Cron scheduler interne (plus de dépendance externe). @elon : VALIDATED 7/10 — Star Pipeline 9/10.
+**Résumé de la session (session 12) :**
+Session massive Inbox Arya V3 — ~55 commits. Inbox overhaul complet : 4 catégories email, 7 filtres + filtre client, Create Brief avec LLM extraction, Create Feedback avec LLM extraction, Draft Reply avec LLM, Manual ClickUp mapping, Entity dropdown ClickUp, Assign To avec team profiles + PM par timezone, Health check + alerte, Arya Recommends banner, DueTodayBanner expandable, pagination. Classification centralisée (classifier.ts). 12 clients avec branding complet. 37 team members avec skills/langues/clients. 8 benchmarks estimation charge. Daily digest + deadline alerts crons. 181 tests unitaires (dont 48 scénarios réels). Knowledge base viewer. Client contacts auto-détectés. Formulaire client enrichi. Business rules (29 règles de Thomas). Score Arya 3.4→6.8/10.
 
 **Travaux terminés cette session :**
-- [x] Asset review enhanced (thumbnails, auto-load, reject, confirm modal, SP link)
-- [x] Recherche globale (Cmd+K, API, mobile, WCAG AA)
-- [x] Project closure + star pipeline (DB, star score 5 critères, API, page UI)
-- [x] PM star override (confirm/reject/nominate)
-- [x] Email history scan → knowledge base (Graph API paginé, Haiku extraction, cron 10min)
-- [x] Privacy name encoding (I-xxxx, D-xxxx, T-xxxx codes pour GitHub)
-- [x] Review pipeline (PROTO-REVIEW-INTAKE, verify-deliverables LLM 5 critères, 3 auto-rework tours)
-- [x] Webhooks temps réel (ClickUp HMAC, Lark challenge, setup-webhooks idempotent)
-- [x] Cron scheduler interne (instrumentation.ts, setInterval, localhost)
-- [x] Auto-brief pipeline (LLM extraction, execute API, AutoBriefCard avec modal CreateBrief)
-- [x] Auto-quote pipeline (extractor, finalize, AutoQuoteCard, confirmation modal)
-- [x] Inbox UX overhaul : EmailCard, modals (CreateBrief/DraftReply/ProjectAction), boutons contextuels, JSON parse, "Filtered out" section, protocol labels humains
-- [x] Lark integration (webhook, DM forwarding, setup guide)
-- [x] 6 specs PM : closure+star (1026L), review-pipeline (173L), lark (218L), realtime (139L), auto-brief (277L), auto-quote (248L)
-- [x] QA fixes : missing import, pipeline types, graphFetch guard, alert dedup, edit data loss, mark-noise endpoint
-- [x] 5 learnings P0 propagés dans CLAUDE.md (règles n°2, 16, 17, 18)
-- [x] Seed script mis à jour (migrations 0017-0019, CacheSource "arya", contact_email quotes)
+- [x] Inbox overhaul : 4 catégories (enquiry/new_project/project_feedback/other)
+- [x] 7 filtres (All/New Projects/Project Feedback/Enquiries/Project Reviews/Others/Managed)
+- [x] Filtre client (2e ligne : TikTok/Sony/Bose/Ubi/Lamarck/Aristocrat/Aujan/CMC/PICO/GEODIS/Others)
+- [x] Create Brief : LLM extraction template Arya 7 sections (pas copier-coller email)
+- [x] Create Feedback : LLM extraction + post ClickUp + reopen task
+- [x] Draft Reply : LLM pré-rempli, modal reste ouvert après création draft Outlook
+- [x] Manual ClickUp mapping quand auto-search échoue
+- [x] Entity dropdown dynamique depuis ClickUp folders/lists
+- [x] Assign To avec team profiles (skills/langues/clients) + recommandation PM par timezone
+- [x] Health check /api/admin/health + bandeau alerte rouge
+- [x] Arya Recommends banner dans chaque modal
+- [x] DueTodayBanner expandable groupé par client (inline format)
+- [x] Filtre @sarani.studio (from only, inbox folder only)
+- [x] Classification Lark alignée sur emails (4 catégories)
+- [x] Client knowledge injection dans tous les prompts (12 clients complets)
+- [x] Team profiles : 34 membres avec skills/langues/clients + Anastasia (nouvelle PM)
+- [x] Charge estimation : 8 benchmarks + estimated_hours dans le brief
+- [x] Daily digest + deadline alerts crons
+- [x] Knowledge base viewer dans /admin/arya
+- [x] Client contacts auto-détectés + éditables
+- [x] Formulaire client enrichi (ClickUp/SP/branding/isEndClient)
+- [x] Partner agencies (Ubi/Lamarck) avec règles branding client final
+- [x] Sony complet (3 divisions + branding + subdivisions)
+- [x] 12 clients branding (Sony/TikTok/PICO/Aristocrat/Bose/Aujan/Ubi/Lamarck/CMC/GEODIS/ProcessOut/Others)
+- [x] Business rules 1-29 de Thomas enregistrées
+- [x] PM assignment par client + timezone (CET + evening)
+- [x] 181 tests unitaires (7 suites dont 48 scénarios réels)
+- [x] Sync branding endpoint /api/admin/clients/sync-branding
+- [x] Asset review : auto-fill SP path depuis ClickUp custom field + scan URL complètes
+- [x] SP link conversion privé→public (getPublicSharingLink)
+- [x] Feedback extractor réécrit (ton team-internal, direct, max 5-8 lignes)
+- [x] Classification prompt simplifié avec CRITICAL RULES + fallback enquiry
+- [x] Review items restent dans inbox (in_progress, pas done)
+- [x] Cron fix BASE_URL→INTERNAL_URL + Graph API Inbox folder only
 
-**Travaux en cours / à confirmer :**
-- **Lark bot activation** : app créée et publiée sur Lark, mais Thomas n'a pas encore réussi à ajouter le bot aux groupes TikTok (interface Lark ne montre que "Custom Bot"). Guide step-by-step fourni dans docs/infra/lark-bot-setup-guide.md.
-- **Email scan full run** : le cron scan-knowledge tourne automatiquement (10min) mais le premier scan avait un rate limit Haiku. Le delay 2s entre batches est ajouté.
-- **Outlook webhook** : subscription créée avec succès (expire 48h). Le cron renew-subscriptions renouvelle automatiquement.
-- **Inbox workflow "Prepare Pitch"** : le bouton existe mais pas de vrai pitch builder — juste email draft + create client profile. V2.
-- **AutoQuote purpose-of-work** : pas pré-rempli depuis le brief. V2.
-- **AutoQuote save-draft** : pas implémenté — si la PM ferme, les édits sont perdus. V2.
-- **Fire-and-forget vidéo** : toujours en attente (reporté depuis S10).
+**Travaux en cours / à corriger :**
+- **Tracker statuts** : les statuts ClickUp ne sont pas mappés (affiche "Open" au lieu de "In progress"). Fix identifié : appeler mapClickUpStatus() dans tracker-merge.ts ligne 617.
+- **Tracker Share** : le bouton Share ne charge pas les previews existantes au montage. Fix identifié : ajouter GET /api/admin/project-previews + hydrate dans useEffect.
+- **Emails inbox** : les anciens items mal classifiés sont toujours en BDD. Thomas doit exécuter DELETE FROM processed_emails pour que le cron reclassifie tout.
+- **Knowledge base** : les crons tournent mais la base se remplit progressivement. Quelques erreurs LLM sur les notifications.
+- **Migration DB** : les colonnes clients (clickupSpaceId, sharepointFolder, etc.) nécessitent ALTER TABLE sur la DB Replit. Appeler POST /api/admin/clients/sync-branding après migration.
 
 **Prochaines actions recommandées :**
-1. **Outbound pipeline LinkedIn** (PRIORITÉ 1 — @elon) : automatiser la publication LinkedIn depuis les star pipeline outputs. Specs existent. C'est le levier de croissance #1 pour 3.5M→10M.
-2. **Revenue dashboard / PM capacity** (PRIORITÉ 2 — @elon) : zéro revenue intelligence dans le back-office. Dashboard revenue par PM, capacité, pipeline visibility.
-3. **Lark bot dans les groupes TikTok** (PRIORITÉ 3 — Thomas) : résoudre le problème d'ajout du bot. Peut nécessiter un admin Lark ou une autre approche.
-4. **Auto-brief template Sarani** (PRIORITÉ 4) : le brief dans le CreateBriefModal est du texte brut, pas le template 6 sections avec emojis Sarani (🌟✈️🚚📍💬➡️). Intégrer le template.
-5. **Pitch builder** (PRIORITÉ 5) : "Prepare Pitch" devrait ouvrir un vrai pitch workflow (case studies, pricing, deck) pas juste un email draft.
+1. **Tracker fixes** (PRIORITÉ 1) : status mapping + share button — 2 bugs identifiés, fixes rapides
+2. **Reset processedEmails** (PRIORITÉ 2) : Thomas exécute le SQL pour reclassifier les anciens emails
+3. **Migration DB clients** (PRIORITÉ 3) : ALTER TABLE + sync-branding
+4. **Outbound pipeline LinkedIn** (PRIORITÉ 4 — @elon S11) : automatiser la publication LinkedIn depuis les star pipeline
+5. **Revenue dashboard** (PRIORITÉ 5 — @elon S11) : dashboard revenue par PM, capacité
 
 **Décisions de Thomas cette session :**
-- PM override du star score (confirm/reject/nominate)
-- Clôture auto → star pipeline (case study + LinkedIn + slide + SEO)
-- Arya feeder LinkedIn (@social/@creative-strategy)
-- Lark intégré pour les messages TikTok
-- Tout temps réel (webhooks), zéro cron externe
-- Zéro invention de données (même illustratives)
-- Reviews complètes de l'écran, pas seulement des features
-- Workflow walkthrough obligatoire dans chaque review
-- Boutons d'action → modals de validation (jamais "Done" sans contenu à valider)
+- 4 types d'emails : enquiry, new_project, project_feedback, other
+- Feedback = ton team-internal (pas corporate), max 5-8 lignes
+- Brief = template Arya 7 sections, LLM au mount (pas copier-coller)
+- Filtre client dans l'inbox (2e ligne de boutons)
+- PM assignment par client + timezone (CET + evening)
+- Anastasia remplace Hiruni (commence lundi)
+- Partenaires Ubi/Lamarck : client facturable ≠ client final
+- Tests doivent grandir automatiquement (patrimoine vivant)
+- tsc --noEmit obligatoire avant chaque commit
+- QA doit tester des scénarios réels, pas juste la structure
 
 **Branche de travail :** claude/extract-project-context-FIiND
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 11 extended — ~40 commits. Branche : claude/extract-project-context-FIiND. Back-office Arya V2 complet : closure+star pipeline, email scan, review pipeline, webhooks temps réel, auto-brief+quote avec modals, inbox UX overhaul. Lark config en attente (bot pas encore dans les groupes TikTok). @elon : prochaine priorité = outbound LinkedIn pipeline + revenue dashboard. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 12 — ~55 commits. Branche : claude/extract-project-context-FIiND. Inbox Arya V3 complet : classification centralisée, 12 clients branding, 181 tests, PM par timezone. 2 bugs tracker à corriger (statuts + share). Anciens emails à reclassifier (DELETE FROM processed_emails). Ne lance aucun agent avant mon feu vert.
 ```
