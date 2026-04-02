@@ -10,6 +10,7 @@ import {
   type BriefExtractionResult,
 } from "@/lib/ai/prompts/brief-extractor";
 import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
+import { getPublicSharingLink } from "@/lib/integrations/sharepoint";
 import {
   recommendTeamMembers,
   buildEstimationPromptBlock,
@@ -44,10 +45,19 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Load client profile (non-blocking — empty string if unavailable)
-    const clientProfile = await buildClientProfileBlock({
-      senderEmail: body.senderEmail,
-    });
+    // Load client profile — with strict timeout to avoid blocking the LLM call
+    let clientProfile = "";
+    try {
+      const profilePromise = buildClientProfileBlock({
+        senderEmail: body.senderEmail,
+      });
+      clientProfile = await Promise.race([
+        profilePromise,
+        new Promise<string>((resolve) => setTimeout(() => resolve(""), 3_000)),
+      ]);
+    } catch {
+      // Non-blocking — continue without profile
+    }
 
     // Build estimation reference block (all benchmarks — LLM picks relevant ones)
     const estimationBlock = buildEstimationPromptBlock("all");
@@ -90,6 +100,20 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       console.error("[Brief Extract] LLM returned invalid data:", parsed.error.flatten());
       return NextResponse.json({ error: "Extraction failed" }, { status: 500 });
+    }
+
+    // Convert private SharePoint links to public sharing links in brief body
+    if (parsed.data.brief_body) {
+      const spLinkRegex = /https:\/\/saranistudio\.sharepoint\.com\/[^\s)]+/g;
+      const spLinks = parsed.data.brief_body.match(spLinkRegex) ?? [];
+      for (const link of spLinks) {
+        try {
+          const publicLink = await getPublicSharingLink(link);
+          if (publicLink !== link) {
+            parsed.data.brief_body = parsed.data.brief_body.replace(link, publicLink);
+          }
+        } catch { /* keep original */ }
+      }
     }
 
     // Add recommended PM based on client + timezone

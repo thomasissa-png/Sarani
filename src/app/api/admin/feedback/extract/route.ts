@@ -10,6 +10,7 @@ import {
   type FeedbackExtractionResult,
 } from "@/lib/ai/prompts/feedback-extractor";
 import { buildClientProfileBlock } from "@/lib/arya/client-profile-builder";
+import { getPublicSharingLink } from "@/lib/integrations/sharepoint";
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -57,11 +58,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Load client profile (non-blocking — empty string if unavailable)
-    const clientProfile = await buildClientProfileBlock({
-      senderEmail: parsed.from,
-      clientName: parsed.clientName,
-    });
+    // Load client profile — with strict timeout to avoid blocking the LLM call
+    let clientProfile = "";
+    try {
+      const profilePromise = buildClientProfileBlock({
+        senderEmail: parsed.from,
+        clientName: parsed.clientName,
+      });
+      // 3 second max for profile loading — don't block the main extraction
+      clientProfile = await Promise.race([
+        profilePromise,
+        new Promise<string>((resolve) => setTimeout(() => resolve(""), 3_000)),
+      ]);
+    } catch {
+      // Non-blocking — continue without profile
+    }
 
     const llmResult = await callClaudeJSON<FeedbackExtractionResult>({
       systemPrompt: FEEDBACK_EXTRACTOR_SYSTEM_PROMPT,
@@ -73,7 +84,7 @@ export async function POST(request: NextRequest) {
       }) + clientProfile,
       model: "claude-haiku-4-5-20251001",
       maxTokens: 1024,
-      timeout: 10_000,
+      timeout: 15_000,
     });
 
     // Validate LLM output
@@ -91,8 +102,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Convert private SharePoint links to public sharing links
+    let feedback = parseResult.data.feedbackComment;
+    const spLinkRegex = /https:\/\/saranistudio\.sharepoint\.com\/[^\s)]+/g;
+    const spLinks = feedback.match(spLinkRegex) ?? [];
+    for (const link of spLinks) {
+      try {
+        const publicLink = await getPublicSharingLink(link);
+        if (publicLink !== link) {
+          feedback = feedback.replace(link, publicLink);
+        }
+      } catch {
+        // Keep original link if conversion fails
+      }
+    }
+
     return NextResponse.json({
-      feedbackComment: parseResult.data.feedbackComment,
+      feedbackComment: feedback,
     });
   } catch (error) {
     console.error("[Feedback Extract] Error:", error);
