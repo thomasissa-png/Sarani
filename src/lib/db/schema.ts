@@ -57,6 +57,8 @@ export const clients = pgTable(
     logoFolderLink: text("logo_folder_link"),
     fontFolderLink: text("font_folder_link"),
     notes: text("notes"),
+    /** true = direct end client (Sony), false = partner agency (Ubi, Lamarck) */
+    isEndClient: boolean("is_end_client").default(true),
 
     // Timestamps
     createdAt: timestamp("created_at").notNull().defaultNow(),

@@ -38,6 +38,7 @@ export function ClientForm({
       primaryLanguage: "EN",
       secondaryLanguages: [],
       signedFrameworkAgreement: false,
+      isEndClient: true,
       ...defaultValues,
     },
   });
@@ -157,8 +158,19 @@ export function ClientForm({
         </label>
       </FormSection>
 
-      {/* Bloc 5: Workspace */}
+      {/* Bloc 5: Client type + Workspace */}
       <FormSection title="Workspace" description="ClickUp, SharePoint, and asset links (optional)">
+        <label className="flex items-center gap-3 mb-4 cursor-pointer">
+          <input
+            type="checkbox"
+            {...register("isEndClient")}
+            className="rounded border-neutral-300 text-brand-cerulean focus:ring-brand-cerulean/40 w-5 h-5"
+          />
+          <div>
+            <span className="text-sm font-medium text-brand-black">End client (direct)</span>
+            <span className="block text-xs text-neutral-400">Uncheck if this is a partner agency (e.g., Ubi → works for Adidas/Lego)</span>
+          </div>
+        </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="ClickUp Space ID" error={errors.clickupSpaceId?.message}>
             <input {...register("clickupSpaceId")} className={inputClass} placeholder="e.g. 12345678" />

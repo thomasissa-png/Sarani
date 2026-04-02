@@ -83,6 +83,7 @@ export const clientFormSchema = z.object({
     .optional()
     .or(z.literal("")),
   notes: z.string().max(5000).optional().or(z.literal("")),
+  isEndClient: z.boolean(),
 });
 
 export type ClientFormData = z.infer<typeof clientFormSchema>;
