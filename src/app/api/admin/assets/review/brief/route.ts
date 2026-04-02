@@ -4,7 +4,7 @@ import { getUserFromSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getTask, getCustomFieldValue } from "@/lib/integrations/clickup";
 import { getMappingBySpaceId, ASSETS_CUSTOMERS_BASE_PATH, SHAREPOINT_ASSETS_DRIVE_ID } from "@/lib/integrations/config";
-import { getDriveItemByPath } from "@/lib/integrations/sharepoint";
+import { getDriveItemByPath, listDriveItems } from "@/lib/integrations/sharepoint";
 
 export async function GET(request: NextRequest) {
   const session = await getUserFromSession();
@@ -66,18 +66,28 @@ export async function GET(request: NextRequest) {
       getCustomFieldValue(task, "folder url") ||
       null;
 
-    // Fallback: derive SharePoint path from client mapping if no custom field
-    if (!folderUrl && task.space?.id) {
+    // Fallback: find the project folder inside the client's SP directory
+    if (!folderUrl && task.space?.id && task.name) {
       const mapping = getMappingBySpaceId(task.space.id);
       if (mapping?.sharepointCustomerFolder) {
-        // Try to find the project folder in the client's SP directory
         const clientPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
         try {
-          const folderItem = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, clientPath);
-          folderUrl = folderItem.webUrl ?? clientPath;
+          // List folders in the client directory and find one matching the project name
+          const items = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, clientPath);
+          const projectName = task.name.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+          const projectFolder = items
+            .filter((item) => item.folder)
+            .find((item) => {
+              const folderName = item.name.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+              return folderName.includes(projectName) || projectName.includes(folderName);
+            });
+          if (projectFolder) {
+            folderUrl = projectFolder.webUrl ?? `${clientPath}/${projectFolder.name}`;
+          }
+          // If no project folder found, don't fallback to client folder — leave null
+          // so the PM knows to enter the path manually
         } catch {
-          // Client folder not found — use path as hint for manual navigation
-          folderUrl = clientPath;
+          // SP error — leave folderUrl null
         }
       }
     }
