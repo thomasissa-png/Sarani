@@ -577,35 +577,55 @@ function QuotesPage() {
         <div>
           <label className="block text-sm font-medium text-brand-black mb-1.5">
             Purpose of Work <span className="text-error">*</span>
+            {prefilling && <span className="text-brand-cerulean font-normal text-xs ml-1.5 inline-flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cerulean animate-pulse" />Loading...</span>}
           </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            placeholder="Describe the purpose of the work..."
-            className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
+          {prefilling && !description ? (
+            <div className="w-full h-[82px] rounded-lg border border-neutral-200 bg-neutral-50 animate-pulse" />
+          ) : (
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Describe the purpose of the work..."
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
+            />
+          )}
         </div>
 
         {/* Scope */}
         <div>
           <label className="block text-sm font-medium text-brand-black mb-1.5">
             Scope and Deliverables <span className="text-error">*</span>
+            {prefilling && <span className="text-brand-cerulean font-normal text-xs ml-1.5 inline-flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cerulean animate-pulse" />Loading...</span>}
           </label>
-          <textarea
-            value={scope}
-            onChange={(e) => setScope(e.target.value)}
-            rows={3}
-            placeholder="List of deliverables..."
-            className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
-          />
+          {prefilling && !scope ? (
+            <div className="w-full h-[82px] rounded-lg border border-neutral-200 bg-neutral-50 animate-pulse" />
+          ) : (
+            <textarea
+              value={scope}
+              onChange={(e) => setScope(e.target.value)}
+              rows={3}
+              placeholder="List of deliverables..."
+              className="w-full px-3 py-2.5 rounded-lg border border-neutral-300 bg-white text-sm text-brand-black placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-cerulean focus:border-transparent resize-y"
+            />
+          )}
         </div>
 
         {/* Line Items */}
         <div>
           <label className="block text-sm font-medium text-brand-black mb-3">
             Line Items
+            {prefilling && items.length === 0 && <span className="text-brand-cerulean font-normal text-xs ml-1.5 inline-flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cerulean animate-pulse" />Loading from tracker...</span>}
           </label>
+          {prefilling && items.length === 0 ? (
+            <div className="border border-neutral-200 rounded-lg overflow-hidden">
+              <div className="bg-neutral-100 border-b border-neutral-200 h-10" />
+              <div className="p-4 space-y-3">
+                <div className="h-10 rounded bg-neutral-50 animate-pulse" />
+                <div className="h-10 rounded bg-neutral-50 animate-pulse" />
+              </div>
+            </div>
+          ) : (
           <div className="border border-neutral-300 rounded-lg overflow-hidden">
             {/* Desktop table layout */}
             <div className="hidden sm:block overflow-x-auto">
@@ -764,6 +784,7 @@ function QuotesPage() {
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Error (shown in form when not in preview mode) */}
