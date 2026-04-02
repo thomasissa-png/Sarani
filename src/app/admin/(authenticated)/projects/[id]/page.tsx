@@ -856,7 +856,7 @@ export default function ProjectViewPage() {
               </a>
             )}
             <Link
-              href={`/admin/quotes?client=${encodeURIComponent(clientName)}`}
+              href={`/admin/quotes?client=${encodeURIComponent(clientName)}&project=${encodeURIComponent(projectName)}&amount=${trackerInfo?.totalValue ?? ""}`}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
