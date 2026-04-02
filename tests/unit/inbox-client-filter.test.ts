@@ -582,3 +582,123 @@ describe("Client filter — mixed items, single filter", () => {
     expect(result).toHaveLength(4);
   });
 });
+
+/* ========================================================================== */
+/*  12. TTS alias for TikTok — Session 13 fix                                 */
+/* ========================================================================== */
+
+describe("Client filter — TTS alias maps to TikTok", () => {
+  it('"TTS Global - TTS x Cicciogamer backdrop" title → matches TikTok filter', () => {
+    const ttsItem = makeItem({
+      id: "tts-ciccio",
+      type: "email_classified",
+      status: "pending",
+      protocol: "PROTO-EMAIL-INTAKE",
+      title: "TTS Global - TTS x Cicciogamer backdrop",
+      summary: JSON.stringify({
+        from: "mahee@sarani.studio",
+        subject: "TTS x Cicciogamer backdrop",
+        bodyPreview: "Hi Thomas, here is the backdrop brief for Cicciogamer.",
+      }),
+    });
+    const result = filterByClient([ttsItem], "TikTok");
+    expect(result.map((i) => i.id)).toContain("tts-ciccio");
+  });
+
+  it("TTS item does NOT appear in Others", () => {
+    const ttsItem = makeItem({
+      id: "tts-others-check",
+      type: "email_classified",
+      status: "pending",
+      protocol: "PROTO-EMAIL-INTAKE",
+      title: "TTS Global - Weekly content drop",
+      summary: null,
+    });
+    const result = filterByClient([ttsItem], "Others");
+    expect(result.map((i) => i.id)).not.toContain("tts-others-check");
+  });
+
+  it("item with spaceName TikTok in summary → matches TikTok filter", () => {
+    const spaceItem = makeItem({
+      id: "space-tiktok",
+      type: "email_classified",
+      status: "pending",
+      protocol: "PROTO-EMAIL-INTAKE",
+      title: "New task created in ClickUp",
+      summary: JSON.stringify({
+        from: "notifications@clickup.com",
+        subject: "New task",
+        bodyPreview: "A new task was created",
+        spaceName: "TikTok",
+      }),
+    });
+    const result = filterByClient([spaceItem], "TikTok");
+    expect(result.map((i) => i.id)).toContain("space-tiktok");
+  });
+
+  it("buildSearchableText includes spaceName from summary", () => {
+    const item = makeItem({
+      id: "space-text-check",
+      title: "Some task",
+      summary: JSON.stringify({
+        spaceName: "TikTok",
+        from: "system@clickup.com",
+        subject: "Task update",
+      }),
+    });
+    const text = buildSearchableText(item);
+    expect(text).toContain("tiktok");
+  });
+
+  it("TTS in title does NOT match Sony filter", () => {
+    const ttsItem = makeItem({
+      id: "tts-not-sony",
+      type: "email_classified",
+      status: "pending",
+      title: "TTS Global - New video brief",
+      summary: null,
+    });
+    const result = filterByClient([ttsItem], "Sony");
+    expect(result.map((i) => i.id)).not.toContain("tts-not-sony");
+  });
+});
+
+/* ========================================================================== */
+/*  13. Regression — existing filters still work after TTS fix                 */
+/* ========================================================================== */
+
+describe("Client filter — regression after TTS alias addition", () => {
+  it("Sony email still matches Sony filter", () => {
+    const item = makeItem({
+      id: "reg-sony",
+      type: "email_classified",
+      status: "pending",
+      summary: JSON.stringify({ from: "kenji@sony.com", subject: "Brief Q3" }),
+    });
+    expect(filterByClient([item], "Sony").map((i) => i.id)).toContain("reg-sony");
+  });
+
+  it("PICO email still matches PICO XR filter", () => {
+    const item = makeItem({
+      id: "reg-pico",
+      type: "email_classified",
+      status: "pending",
+      summary: JSON.stringify({ from: "pm@pico.com", subject: "VR launch" }),
+    });
+    expect(filterByClient([item], "PICO XR").map((i) => i.id)).toContain("reg-pico");
+  });
+
+  it("Ubi sub-client (Adidas) still maps to Ubi", () => {
+    const item = makeItem({
+      id: "reg-adidas",
+      type: "email_classified",
+      status: "pending",
+      summary: JSON.stringify({ from: "pm@adidas.com", subject: "Kit launch" }),
+    });
+    expect(filterByClient([item], "Ubi").map((i) => i.id)).toContain("reg-adidas");
+  });
+
+  it("KNOWN_CLIENTS includes tts", () => {
+    expect(KNOWN_CLIENTS).toContain("tts");
+  });
+});
