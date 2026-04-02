@@ -436,8 +436,8 @@ export default function InboxPage() {
         }
         if (editingId === id) setEditingId(null);
 
-        // Protocol-specific redirects on approve
-        if (status === "done" && updatedItem) {
+        // Protocol-specific redirects on approve (or in_progress for review items)
+        if ((status === "done" || status === "in_progress") && updatedItem) {
           if (updatedItem.protocol === "PROTO-EMAIL-INTAKE" && updatedItem.sourceId) {
             // Redirect to Quick Brief with the email messageId for auto-import
             showToast("Approved — redirecting to Quick Brief...", "success");
@@ -541,7 +541,9 @@ export default function InboxPage() {
 
         // Default toast for non-protocol actions
         showToast(
-          status === "done" ? "Done — action completed" : "Archived",
+          status === "done" ? "Done — action completed"
+            : status === "in_progress" ? "In progress"
+            : "Archived",
           "success"
         );
       } else {
