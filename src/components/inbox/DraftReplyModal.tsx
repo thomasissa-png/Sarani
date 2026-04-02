@@ -154,7 +154,8 @@ export function DraftReplyModal({
         }
 
         onDrafted();
-        onClose();
+        // Don't close the modal — Thomas wants to stay on the modal after creating the draft
+        // The draft is created in Outlook (new tab) and the PM can continue editing or close manually
       } else {
         const errData = await res.json().catch(() => ({}));
         const errMsg =
