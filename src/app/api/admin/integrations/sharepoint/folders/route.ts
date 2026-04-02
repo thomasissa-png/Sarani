@@ -47,17 +47,58 @@ export async function GET(request: NextRequest) {
   }
 
   const directUrl = request.nextUrl.searchParams.get("url");
+  const folderId = request.nextUrl.searchParams.get("folderId");
   const client = request.nextUrl.searchParams.get("client");
   const subPath = request.nextUrl.searchParams.get("path");
 
-  if (!directUrl && !client) {
+  if (!directUrl && !folderId && !client) {
     return NextResponse.json(
-      { error: "Missing required query parameter: client or url" },
+      { error: "Missing required query parameter: client, url, or folderId" },
       { status: 400 }
     );
   }
 
   try {
+    // ─── Mode 0: Drill-down by folder ID (for subfolder navigation) ───
+    if (folderId) {
+      const children = await graphFetch<{ value: DriveItemChild[] }>(
+        `/drives/${SHAREPOINT_ASSETS_DRIVE_ID}/items/${folderId}/children`
+      );
+
+      const items = children.value ?? [];
+      const folders = items
+        .filter((i) => i.folder)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((i) => ({
+          name: i.name,
+          id: i.id,
+          childCount: i.folder?.childCount ?? 0,
+          lastModified: i.lastModifiedDateTime,
+          webUrl: i.webUrl,
+        }));
+
+      const files = items
+        .filter((i) => i.file)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((i) => ({
+          name: i.name,
+          id: i.id,
+          size: i.size,
+          mimeType: i.file?.mimeType ?? "",
+          lastModified: i.lastModifiedDateTime,
+          webUrl: i.webUrl,
+        }));
+
+      return NextResponse.json({
+        path: "subfolder",
+        folders,
+        files,
+        totalFolders: folders.length,
+        totalFiles: files.length,
+        resolvedFrom: "folderId",
+      });
+    }
+
     // ─── Mode 1: Direct SharePoint URL (from ClickUp custom field) ────
     if (directUrl) {
       const item = await resolveSharePointUrl(directUrl);

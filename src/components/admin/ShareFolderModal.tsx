@@ -71,13 +71,14 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FoldersResponse | null>(null);
-  const [breadcrumb, setBreadcrumb] = useState<string[]>([]);
-  const [sharing, setSharing] = useState<string | null>(null); // folderId being shared
+  // Breadcrumb: each entry has a name (display) and folderId (for navigation)
+  const [breadcrumb, setBreadcrumb] = useState<Array<{ name: string; folderId: string }>>([]);
+  const [sharing, setSharing] = useState<string | null>(null);
   const [sharedLink, setSharedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Fetch folders — supports both client-based path and direct SP URL
-  const fetchFolders = useCallback(async (pathSegments: string[], directUrl?: string) => {
+  // Fetch folder contents by ID, URL, or client mapping
+  const fetchFolders = useCallback(async (opts: { folderId?: string; url?: string; clientRoot?: boolean }) => {
     setLoading(true);
     setError(null);
     setSharedLink(null);
@@ -85,13 +86,12 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
 
     try {
       const params = new URLSearchParams();
-      if (directUrl) {
-        params.set("url", directUrl);
+      if (opts.folderId) {
+        params.set("folderId", opts.folderId);
+      } else if (opts.url) {
+        params.set("url", opts.url);
       } else {
         params.set("client", clientName);
-        if (pathSegments.length > 0) {
-          params.set("path", pathSegments.join("/"));
-        }
       }
 
       const res = await fetch(`/api/admin/integrations/sharepoint/folders?${params}`);
@@ -115,28 +115,35 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       setSharedLink(null);
       setCopied(false);
       if (sharepointLink) {
-        // Direct SP URL from ClickUp custom field → resolve via Graph API
-        fetchFolders([], sharepointLink);
+        fetchFolders({ url: sharepointLink });
       } else {
-        // Fallback: browse from client root
-        fetchFolders([]);
+        fetchFolders({ clientRoot: true });
       }
     }
   }, [isOpen, fetchFolders, sharepointLink]);
 
-  // Navigate into a subfolder
-  const navigateInto = useCallback((folderName: string) => {
-    const newPath = [...breadcrumb, folderName];
-    setBreadcrumb(newPath);
-    fetchFolders(newPath);
-  }, [breadcrumb, fetchFolders]);
+  // Navigate into a subfolder by its ID
+  const navigateInto = useCallback((folderName: string, folderId: string) => {
+    setBreadcrumb((prev) => [...prev, { name: folderName, folderId }]);
+    fetchFolders({ folderId });
+  }, [fetchFolders]);
 
-  // Navigate up via breadcrumb
+  // Navigate up via breadcrumb click
   const navigateTo = useCallback((index: number) => {
-    const newPath = breadcrumb.slice(0, index);
-    setBreadcrumb(newPath);
-    fetchFolders(newPath);
-  }, [breadcrumb, fetchFolders]);
+    if (index === 0) {
+      // Back to root
+      setBreadcrumb([]);
+      if (sharepointLink) {
+        fetchFolders({ url: sharepointLink });
+      } else {
+        fetchFolders({ clientRoot: true });
+      }
+    } else {
+      const entry = breadcrumb[index - 1];
+      setBreadcrumb((prev) => prev.slice(0, index));
+      fetchFolders({ folderId: entry.folderId });
+    }
+  }, [breadcrumb, fetchFolders, sharepointLink]);
 
   // Share a folder — create anonymous link
   const shareFolder = useCallback(async (folderId: string) => {
@@ -207,17 +214,17 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           >
             {clientName}
           </button>
-          {breadcrumb.map((segment, i) => (
+          {breadcrumb.map((entry, i) => (
             <span key={i} className="flex items-center gap-1">
               <span className="text-neutral-300">/</span>
               {i === breadcrumb.length - 1 ? (
-                <span className="text-brand-black font-medium">{segment}</span>
+                <span className="text-brand-black font-medium">{entry.name}</span>
               ) : (
                 <button
                   onClick={() => navigateTo(i + 1)}
                   className="text-brand-cerulean hover:underline"
                 >
-                  {segment}
+                  {entry.name}
                 </button>
               )}
             </span>
@@ -298,7 +305,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                   className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg hover:bg-neutral-50 transition-colors group"
                 >
                   <button
-                    onClick={() => navigateInto(folder.name)}
+                    onClick={() => navigateInto(folder.name, folder.id)}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left"
                   >
                     <svg className="w-5 h-5 text-brand-cerulean shrink-0" viewBox="0 0 24 24" fill="currentColor">
