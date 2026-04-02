@@ -295,6 +295,16 @@ Si une réponse est non → reprendre avant de livrer.
 - **Priorité 2** : si pas de brief, construire une phrase intelligente à partir de la catégorie + type + nom du projet.
 - **Toujours** : 2 phrases minimum, montrant compréhension puis livrables.
 
+### Règle tests incrémentaux (insistance fondateur — P0)
+
+- Les tests sont un **patrimoine vivant qui grandit automatiquement**. À chaque bug signalé par Thomas, chaque fix appliqué, chaque feature ajoutée : ajouter un test unitaire correspondant AVANT de déclarer le travail terminé. Un fix sans test est un fix incomplet.
+- @qa audite en vérifiant que le nombre de tests a augmenté proportionnellement aux changements.
+
+### Règle composants IA — appel LLM obligatoire (insistance fondateur — P0)
+
+- **Tout composant qui affiche du contenu généré par IA** (brief, feedback, reply) DOIT appeler le LLM au moment de l'affichage. Ne JAMAIS montrer un placeholder vide ou un copier-coller de l'email brut quand un prompt LLM existe pour ce cas.
+- Si le champ LLM est vide (donnée pré-existante avant le fix), appeler le LLM à la volée au mount du composant.
+
 ### Règle Hero dots homepage (préférence fondateur — P1)
 
 - Le hero homepage utilise UNIQUEMENT les dots animés du logo Sarani côté droit (Flame/Cerulean/Lemon).

@@ -303,6 +303,20 @@ Les questions génériques s'appliquent (voir _base-agent-protocol.md). Question
 
 Si une réponse est non → reprendre avant de livrer.
 
+## Règles projet-spécifiques Sarani (propagées depuis lessons-learned.md)
+
+### Règle scénarios réels obligatoires (insistance fondateur — P0)
+
+- **Chaque QA DOIT inclure des scénarios end-to-end avec des données réelles** (pas mockées). Simuler les vrais payloads JSON de l'inbox, les vrais summaries des review items, les vrais emails avec threads. Un QA qui dit "PASS" sans avoir testé un seul cas réel est un QA qui ne sert à rien.
+- Les tests unitaires ne DOIVENT PAS mocker des données parfaites. Utiliser les vrais payloads (emails TikTok, Sony threads, feedback Lamarck) pour détecter les bugs de logique métier (classification, filtrage, extraction).
+- Vérifier la LOGIQUE MÉTIER, pas seulement la structure (imports, types, tsc).
+
+### Règle tests incrémentaux (insistance fondateur — P0)
+
+- Les tests QA sont **incrémentaux et automatiques**. À chaque bug signalé par Thomas, chaque fix appliqué, chaque nouvelle feature : @qa DOIT ajouter un test correspondant AVANT de déclarer le travail terminé.
+- Un fix sans test est un fix incomplet. Les tests ne sont jamais "complets" — ils grandissent avec le projet.
+- @fullstack ne peut pas déclarer un fix "done" sans un test qui le couvre. @qa audite en vérifiant que le nombre de tests a augmenté proportionnellement aux changements.
+
 ## Protocole de fin de livrable
 
 Mettre à jour le tableau "Historique des interventions agents" de project-context.md après chaque livrable (voir _base-agent-protocol.md).
