@@ -28,6 +28,8 @@ interface BatchItem {
   webUrl: string;
   mimeType: string;
   size: number;
+  width?: number;
+  height?: number;
 }
 
 interface BatchGroup {
@@ -139,6 +141,7 @@ async function fetchBatchesByFolderId(
       name: string;
       size: number;
       file?: { mimeType: string };
+      image?: { width: number; height: number };
       folder?: { childCount: number };
       webUrl: string;
       "@microsoft.graph.downloadUrl"?: string;
@@ -158,6 +161,8 @@ async function fetchBatchesByFolderId(
         webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
         mimeType: item.file!.mimeType,
         size: item.size,
+        width: item.image?.width,
+        height: item.image?.height,
       }));
 
     const batches: BatchGroup[] = [];
@@ -169,6 +174,7 @@ async function fetchBatchesByFolderId(
           name: string;
           size: number;
           file?: { mimeType: string };
+          image?: { width: number; height: number };
           webUrl: string;
           "@microsoft.graph.downloadUrl"?: string;
         }> }>(`/drives/${driveId}/items/${folder.id}/children`);
@@ -187,6 +193,8 @@ async function fetchBatchesByFolderId(
             webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
             mimeType: item.file!.mimeType,
             size: item.size,
+            width: item.image?.width,
+            height: item.image?.height,
           }));
 
         if (batchFiles.length > 0) {
@@ -541,9 +549,12 @@ export default async function ProjectPreviewPage({ params }: Props) {
                                 className="max-w-full max-h-full object-contain"
                               />
                             </div>
-                            <div className="px-3 py-2 bg-white/5">
-                              <span className="text-xs text-white/50 truncate block">
+                            <div className="px-3 py-2 bg-white/5 flex items-center justify-between gap-2">
+                              <span className="text-xs text-white/50 truncate">
                                 {item.name.replace(/\.[^.]+$/, "")}
+                              </span>
+                              <span className="text-[10px] text-white/25 shrink-0 tabular-nums">
+                                {item.width && item.height ? `${item.width}×${item.height}` : item.name.split(".").pop()?.toUpperCase()}
                               </span>
                             </div>
                           </div>

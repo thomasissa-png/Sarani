@@ -77,13 +77,18 @@ export default function ImageLightbox({
             </svg>
           </button>
 
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={src}
-            alt={alt}
-            className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="flex flex-col items-center gap-3 max-w-full" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={alt}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            />
+            {/* File name caption */}
+            <p className="text-sm text-white/40 text-center max-w-lg truncate">
+              {alt}
+            </p>
+          </div>
         </div>
       )}
     </>
