@@ -503,20 +503,44 @@ export default function ClosuresPage() {
     [fetchClosures]
   );
 
-  // ─── PM Star Override ──────────────────────────────────────────────────────
+  // ─── Star actions (confirm/reject/generate) ────────────────────────────────
 
   const handleStarOverride = useCallback(
-    async (closureId: string, action: "confirm_star" | "reject_star" | "nominate_star") => {
+    async (closureId: string, action: "confirm_star" | "reject_star" | "nominate_star", source?: string) => {
       const loadingKey = `override-${closureId}`;
       setActionLoading((prev) => new Set(prev).add(loadingKey));
       try {
+        // For candidates: "Create Case Study" triggers generation pipeline
+        if (source === "candidate" && (action === "confirm_star" || action === "nominate_star")) {
+          // 1. Update status via PATCH
+          const patchRes = await fetch("/api/admin/closures", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ closureId, action }),
+          });
+          if (!patchRes.ok) {
+            throw new Error(`Failed to update status (${patchRes.status})`);
+          }
+          // 2. Trigger content generation pipeline
+          const genRes = await fetch(`/api/admin/case-studies/candidates/${closureId}/generate`, {
+            method: "POST",
+          });
+          if (!genRes.ok) {
+            const errData = await genRes.json().catch(() => ({}));
+            console.error("[Generate] Error:", errData);
+            // Don't throw — status was already updated, generation can be retried
+          }
+          await fetchClosures();
+          return;
+        }
+
         const res = await fetch("/api/admin/closures", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ closureId, action }),
         });
         if (!res.ok) {
-          throw new Error(`Failed to update star status (${res.status})`);
+          throw new Error(`Failed to update status (${res.status})`);
         }
         await fetchClosures();
       } catch (err) {
@@ -782,9 +806,8 @@ export default function ClosuresPage() {
                       </p>
                     )}
 
-                    {/* PM Star Override */}
+                    {/* Actions */}
                     <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center gap-2">
-                      <span className="text-xs text-neutral-500 mr-2">PM Override:</span>
                       {closure.starStatus !== "STAR" && (
                         <button
                           type="button"
@@ -801,22 +824,22 @@ export default function ClosuresPage() {
                             type="button"
                             onClick={() => handleStarOverride(closure.id, "confirm_star")}
                             disabled={actionLoading.has(`override-${closure.id}`)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-success bg-success-light border border-success/20 rounded-lg hover:bg-success-light/80 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-success"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-400"
                           >
-                            Confirm Star
+                            Create Case Study
                           </button>
                           <button
                             type="button"
                             onClick={() => handleStarOverride(closure.id, "reject_star")}
                             disabled={actionLoading.has(`override-${closure.id}`)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-error bg-error-light border border-error/20 rounded-lg hover:bg-error-light/80 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-error"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300"
                           >
-                            Not a Star
+                            Remove
                           </button>
                         </>
                       )}
                       {closure.closedBy?.startsWith("pm_confirmed") && (
-                        <span className="text-xs text-success font-medium">PM Confirmed ✓</span>
+                        <span className="text-xs text-success font-medium">Case study in progress ✓</span>
                       )}
                     </div>
 

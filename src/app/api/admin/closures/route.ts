@@ -422,19 +422,57 @@ export async function PATCH(request: NextRequest) {
     const rawBody = await request.json();
     const body = patchSchema.parse(rawBody);
 
-    // Fetch the closure
+    // Try projectClosures first, then case_study_candidates
     const [closure] = await db
       .select()
       .from(projectClosures)
       .where(eq(projectClosures.id, body.closureId))
       .limit(1);
 
-    if (!closure) {
-      return NextResponse.json({ error: "Closure not found" }, { status: 404 });
+    // If not found in projectClosures, check case_study_candidates
+    const [candidate] = !closure
+      ? await db
+          .select()
+          .from(caseStudyCandidates)
+          .where(eq(caseStudyCandidates.id, body.closureId))
+          .limit(1)
+      : [undefined];
+
+    if (!closure && !candidate) {
+      return NextResponse.json({ error: "Record not found" }, { status: 404 });
     }
 
+    // Handle candidate (from tracker star) — update case_study_candidates
+    if (candidate) {
+      if (body.action === "confirm_star" || body.action === "nominate_star") {
+        await db
+          .update(caseStudyCandidates)
+          .set({
+            status: "generating",
+            pipelineStatus: "step_1_creative",
+            updatedAt: new Date(),
+          })
+          .where(eq(caseStudyCandidates.id, body.closureId));
+
+        return NextResponse.json({ success: true, action: "confirmed", starStatus: "STAR", source: "candidate" });
+
+      } else if (body.action === "reject_star") {
+        await db
+          .update(caseStudyCandidates)
+          .set({
+            status: "excluded",
+            excludedReason: "pm_rejected",
+            excludedBy: authCheck.userId,
+            updatedAt: new Date(),
+          })
+          .where(eq(caseStudyCandidates.id, body.closureId));
+
+        return NextResponse.json({ success: true, action: "rejected", starStatus: "STANDARD", source: "candidate" });
+      }
+    }
+
+    // Handle projectClosures records (original flow)
     if (body.action === "confirm_star") {
-      // PM confirms Arya's star assessment — keep star status, mark as PM-validated
       await db
         .update(projectClosures)
         .set({
@@ -465,7 +503,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true, action: "confirmed", starStatus: "STAR" });
 
     } else if (body.action === "reject_star") {
-      // PM overrides — project is NOT star despite Arya's score
       await db
         .update(projectClosures)
         .set({
@@ -475,7 +512,6 @@ export async function PATCH(request: NextRequest) {
         })
         .where(eq(projectClosures.id, body.closureId));
 
-      // Remove pending pipeline items (keep published ones)
       await db
         .delete(starPipelineItems)
         .where(
@@ -488,7 +524,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: true, action: "rejected", starStatus: "STANDARD" });
 
     } else if (body.action === "nominate_star") {
-      // PM nominates a non-star project as star (manual override upward)
       await db
         .update(projectClosures)
         .set({
@@ -498,7 +533,6 @@ export async function PATCH(request: NextRequest) {
         })
         .where(eq(projectClosures.id, body.closureId));
 
-      // Create pipeline items
       const existingItems = await db
         .select({ id: starPipelineItems.id })
         .from(starPipelineItems)
