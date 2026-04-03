@@ -228,88 +228,46 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     }
   }, [clientName]);
 
-  // Helper: navigate to client root and auto-find matching subfolder
-  // PRIMARY: use clickupListId → config lookup → direct SP folder navigation
-  // FALLBACK: fuzzy match clickupListName against SP folder names
+  // Navigate to the correct SP subfolder using config mapping.
+  // PRIMARY: clickupListId/clickupListName → config lookup → direct SP path navigation
+  // FALLBACK: browse client root if no mapping found
   const loadClientRoot = useCallback(async () => {
-    const result = await fetchFolders({ clientRoot: true });
-    if (!result) return;
-
-    // ── PRIMARY: config-based lookup via ClickUp list ID, then by list name ──
-    // The config has all ClickUp list IDs mapped to SP subfolder names.
-    // This is deterministic — no fuzzy matching needed.
+    // ── PRIMARY: config-based lookup → direct SP path ──
+    // We know the ClickUp list → we know the division → we know the exact SP path.
+    // No scanning, no fuzzy matching. Just build the path and navigate.
     const configMatch = (clickupListId ? getSubdivisionByListId(clickupListId) : undefined)
       ?? (clickupListName ? getSubdivisionByName(clickupListName) : undefined);
 
     if (configMatch?.subdivision.sharepointSubfolder) {
-      const targetFolder = configMatch.subdivision.sharepointSubfolder;
-      console.log(`[ShareFolderModal] Config lookup: listId=${clickupListId ?? "n/a"}, listName=${clickupListName ?? "n/a"} → "${configMatch.subdivision.name}" → SP folder "${targetFolder}"`);
+      const { mapping, subdivision } = configMatch;
+      const spSubfolder = subdivision.sharepointSubfolder!;
+      // Use the "path" parameter of the folders API: ?client={client}&path={subPath}
+      // This resolves to ASSETS_CUSTOMERS_BASE_PATH/{subPath} on the server
+      const subPath = `${mapping.sharepointCustomerFolder}/03. Projects/${spSubfolder}`;
+      console.log(`[ShareFolderModal] Direct path: listId=${clickupListId ?? "n/a"}, listName=${clickupListName ?? "n/a"} → "${subdivision.name}" → path="${subPath}"`);
 
-      // Helper: navigate into a matched folder
-      const navigateToFolder = (match: FolderItem, breadcrumbPrefix: Array<{ name: string; folderId: string; webUrl?: string }>) => {
-        setBreadcrumb([...breadcrumbPrefix, { name: match.name, folderId: match.id, webUrl: match.webUrl }]);
-        fetchFolders({ folderId: match.id });
-      };
-
-      // The subfolder may be at root level or inside a "Projects" folder
-      // Try root first
-      let match = result.folders.find((f) => f.name === targetFolder);
-      if (match) {
-        console.log(`[ShareFolderModal] Found "${targetFolder}" at root`);
-        navigateToFolder(match, []);
-        return;
-      }
-
-      // Try inside "Projects" subfolder (common pattern: "03. Projects/{divisions}")
-      const projectsFolder = result.folders.find((f) =>
-        /projects?$/i.test(f.name.replace(/^\d+\.\s*/, "").trim())
-      );
-      if (projectsFolder) {
-        const projectsResult = await fetchFolders({ folderId: projectsFolder.id });
-        if (projectsResult) {
-          match = projectsResult.folders.find((f) => f.name === targetFolder);
-          if (match) {
-            console.log(`[ShareFolderModal] Found "${targetFolder}" inside "${projectsFolder.name}"`);
-            navigateToFolder(match, [{ name: projectsFolder.name, folderId: projectsFolder.id, webUrl: projectsFolder.webUrl }]);
-            return;
-          }
-        }
-      }
-      console.warn(`[ShareFolderModal] Config says folder "${targetFolder}" but not found in SP. Falling back to fuzzy match.`);
-    }
-
-    // ── FALLBACK: fuzzy match using clickupListName ──
-    if (!clickupListName) return;
-    console.log(`[ShareFolderModal] Fallback: fuzzy matching "${clickupListName}" against ${result.folders.length} SP folders`);
-
-    let match = findMatchingFolder(result.folders, clickupListName, clientName);
-    if (match) {
-      console.log(`[ShareFolderModal] Fuzzy matched at root: "${clickupListName}" → "${match.name}"`);
-      setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
-      fetchFolders({ folderId: match.id });
-      return;
-    }
-
-    const projectsFolder = result.folders.find((f) =>
-      /projects?$/i.test(f.name.replace(/^\d+\.\s*/, "").trim())
-    );
-    if (projectsFolder) {
-      const projectsResult = await fetchFolders({ folderId: projectsFolder.id });
-      if (projectsResult) {
-        match = findMatchingFolder(projectsResult.folders, clickupListName, clientName);
-        if (match) {
-          console.log(`[ShareFolderModal] Fuzzy matched inside Projects: "${clickupListName}" → "${match.name}"`);
-          setBreadcrumb([
-            { name: projectsFolder.name, folderId: projectsFolder.id, webUrl: projectsFolder.webUrl },
-            { name: match.name, folderId: match.id, webUrl: match.webUrl },
-          ]);
-          fetchFolders({ folderId: match.id });
+      try {
+        const params = new URLSearchParams();
+        params.set("client", clientName);
+        params.set("path", subPath);
+        const res = await fetch(`/api/admin/integrations/sharepoint/folders?${params}`);
+        if (res.ok) {
+          const result: FoldersResponse = await res.json();
+          setData(result);
+          setBreadcrumb([{ name: spSubfolder, folderId: "", webUrl: "" }]);
+          setLoading(false);
           return;
         }
+        console.warn(`[ShareFolderModal] Direct path returned ${res.status}. Falling back to client root.`);
+      } catch (err) {
+        console.warn(`[ShareFolderModal] Direct path fetch failed:`, err);
       }
     }
 
-    console.warn(`[ShareFolderModal] No match found for "${clickupListName}" (listId=${clickupListId ?? "n/a"}) in SP folders`);
+    // ── FALLBACK: browse client root ──
+    const result = await fetchFolders({ clientRoot: true });
+    if (!result) return;
+    console.log(`[ShareFolderModal] Browsing client root: ${result.folders.length} folders`);
   }, [fetchFolders, clickupListId, clickupListName, clientName]);
 
   // Helper: try to resolve a SP link, with fallback to client root browsing
