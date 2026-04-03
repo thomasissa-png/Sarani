@@ -121,7 +121,9 @@ function QuotesPage() {
   const [prefilling, setPrefilling] = useState(false);
   const [prefillSource, setPrefillSource] = useState<PrefillResponse["sources"] | null>(null);
 
-  // Preview state removed — generate directly
+  // Draft state
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   // Filter for past quotes
   const [quoteClientFilter, setQuoteClientFilter] = useState("");
@@ -388,6 +390,9 @@ function QuotesPage() {
           : `Quote ${quoteNum} generated. SharePoint upload skipped (check logs).`
       );
 
+      // Clear draft state — the quote has been finalized
+      setCurrentDraftId(null);
+
       // Refresh quotes list
       fetchQuotes();
     } catch (err) {
@@ -395,6 +400,103 @@ function QuotesPage() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  // ─── Save Draft ──────────────────────────────────────────────────────────
+
+  const handleSaveDraft = async () => {
+    setError(null);
+    setSuccess(null);
+
+    const hasClient = isNewClient ? customClientName.trim().length > 0 : !!selectedClientId;
+    if (!hasClient || !projectName) {
+      setError("Client and Project name are required to save a draft.");
+      return;
+    }
+
+    setSavingDraft(true);
+    try {
+      const validItems = items.filter((i) => i.description.trim());
+      const res = await fetch("/api/admin/quotes/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draftId: currentDraftId ?? undefined,
+          clientName,
+          contactName,
+          projectName,
+          description,
+          scope,
+          items: validItems.map(({ description: desc, quantity, unitPrice, total }) => ({
+            description: desc,
+            quantity,
+            unitPrice,
+            total,
+          })),
+          currency,
+          vatRate,
+          validUntil,
+          language,
+          paymentTermsDays: parseInt(paymentTermsDays) || 45,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.error ?? `Failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      setCurrentDraftId(data.draftId);
+      setSuccess(`Draft ${data.quoteNumber} saved successfully.`);
+      fetchQuotes();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save draft");
+    } finally {
+      setSavingDraft(false);
+    }
+  };
+
+  // ─── Resume Draft ──────────────────────────────────────────────────────
+
+  const handleResumeDraft = (quote: QuoteRecord) => {
+    setCurrentDraftId(quote.id);
+    // Find client by name — try to match to existing client list
+    const matched = clients.find(
+      (c) => c.name.toLowerCase() === quote.clientName.toLowerCase()
+    );
+    if (matched) {
+      setIsNewClient(false);
+      setSelectedClientId(matched.id);
+      setCustomClientName("");
+    } else {
+      setIsNewClient(true);
+      setCustomClientName(quote.clientName);
+      setSelectedClientId("");
+    }
+    setContactName("");
+    setProjectName(quote.projectName);
+    setDescription(quote.purposeOfWork ?? "");
+    setCurrency(quote.currency);
+    setLanguage((quote.lang?.toLowerCase() ?? "en") as "en" | "fr");
+    setPaymentTermsDays(String(quote.paymentTermsDays ?? 45));
+    if (quote.items && quote.items.length > 0) {
+      setItems(
+        quote.items.map((item) => ({
+          id: generateId(),
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+        }))
+      );
+    } else {
+      setItems([createEmptyItem()]);
+    }
+    setError(null);
+    setSuccess(null);
+    // Scroll to top of form
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ─── Render ─────────────────────────────────────────────────────────────
@@ -803,19 +905,34 @@ function QuotesPage() {
           </div>
         )}
 
-        {/* Generate directly — no preview step */}
-        {(
-          <div className="flex justify-end">
+        {/* Action buttons */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {currentDraftId && (
+              <span className="text-xs text-neutral-400 font-mono">
+                Editing draft
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={savingDraft || generating}
+              className="inline-flex items-center gap-2 px-5 py-2.5 border border-neutral-300 text-sm font-medium text-brand-black rounded-lg hover:bg-neutral-50 transition-colors disabled:opacity-50"
+            >
+              {savingDraft ? "Saving..." : "Save Draft"}
+            </button>
             <button
               type="button"
               onClick={handleConfirmGenerate}
-              disabled={generating}
+              disabled={generating || savingDraft}
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
             >
               {generating ? "Generating..." : "Generate Quote"}
             </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Past Quotes */}
@@ -873,6 +990,9 @@ function QuotesPage() {
                         Total
                       </th>
                       <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -899,6 +1019,26 @@ function QuotesPage() {
                           {formatCurrency(q.total, q.currency)}
                         </td>
                         <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                            q.status === "draft"
+                              ? "bg-amber-100 text-amber-700"
+                              : q.status === "sent"
+                                ? "bg-success/10 text-success"
+                                : "bg-neutral-100 text-neutral-500"
+                          }`}>
+                            {q.status === "draft" ? "Draft" : q.status === "sent" ? "Sent" : q.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 flex items-center gap-2">
+                          {q.status === "draft" && (
+                            <button
+                              type="button"
+                              onClick={() => handleResumeDraft(q)}
+                              className="text-sm font-medium text-brand-cerulean hover:underline"
+                            >
+                              Resume
+                            </button>
+                          )}
                           {q.pdfUrl ? (
                             <a
                               href={q.pdfUrl}
@@ -906,11 +1046,11 @@ function QuotesPage() {
                               rel="noopener noreferrer"
                               className="text-sm font-medium text-brand-cerulean hover:underline"
                             >
-                              View on SharePoint
+                              View PDF
                             </a>
-                          ) : (
+                          ) : q.status !== "draft" ? (
                             <span className="text-neutral-400 text-xs">No link</span>
-                          )}
+                          ) : null}
                         </td>
                       </tr>
                     ))}
@@ -938,19 +1078,41 @@ function QuotesPage() {
                       {formatCurrency(q.total, q.currency)}
                     </p>
                   </div>
-                  <p className="text-sm text-neutral-600 truncate">{q.projectName}</p>
-                  {q.pdfUrl ? (
-                    <a
-                      href={q.pdfUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block text-sm font-medium text-brand-cerulean hover:underline"
-                    >
-                      View on SharePoint
-                    </a>
-                  ) : (
-                    <span className="text-neutral-400 text-xs">No link</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-neutral-600 truncate flex-1">{q.projectName}</p>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${
+                      q.status === "draft"
+                        ? "bg-amber-100 text-amber-700"
+                        : q.status === "sent"
+                          ? "bg-success/10 text-success"
+                          : "bg-neutral-100 text-neutral-500"
+                    }`}>
+                      {q.status === "draft" ? "Draft" : q.status === "sent" ? "Sent" : q.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {q.status === "draft" && (
+                      <button
+                        type="button"
+                        onClick={() => handleResumeDraft(q)}
+                        className="text-sm font-medium text-brand-cerulean hover:underline"
+                      >
+                        Resume
+                      </button>
+                    )}
+                    {q.pdfUrl ? (
+                      <a
+                        href={q.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-sm font-medium text-brand-cerulean hover:underline"
+                      >
+                        View PDF
+                      </a>
+                    ) : q.status !== "draft" ? (
+                      <span className="text-neutral-400 text-xs">No link</span>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>

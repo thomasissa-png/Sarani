@@ -15,6 +15,28 @@ interface CaseStudyOutput {
   generatedAt: string;
 }
 
+interface PipelineStep {
+  step: number;
+  agent: string;
+  output: unknown;
+  completedAt: string;
+}
+
+type PipelineStatus =
+  | "idle"
+  | "step_1_creative"
+  | "step_2_copywriter"
+  | "step_3_social"
+  | "complete"
+  | "failed";
+
+interface VisualItem {
+  id: string;
+  name: string;
+  thumbnailUrl: string;
+  downloadUrl: string;
+}
+
 interface CandidateDetail {
   id: string;
   clientName: string;
@@ -34,6 +56,8 @@ interface CandidateDetail {
     diversity: number;
   } | null;
   status: string;
+  pipelineStatus: PipelineStatus;
+  pipelineSteps: PipelineStep[];
   outputs: {
     caseStudy: CaseStudyOutput | null;
     linkedInPost: CaseStudyOutput | null;
@@ -76,6 +100,10 @@ export default function CandidateDetailPage() {
   const [regenerateInstruction, setRegenerateInstruction] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [visuals, setVisuals] = useState<VisualItem[]>([]);
+  const [selectedVisuals, setSelectedVisuals] = useState<Set<string>>(new Set());
+  const [visualsLoading, setVisualsLoading] = useState(false);
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
   // ─── Fetch candidate ──────────────────────────────────────────────────
 
@@ -95,6 +123,44 @@ export default function CandidateDetailPage() {
   useEffect(() => {
     fetchCandidate();
   }, [fetchCandidate]);
+
+  // ─── Fetch visuals from SharePoint ────────────────────────────────────
+
+  const fetchVisuals = useCallback(async () => {
+    setVisualsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/case-studies/candidates/${id}/visuals`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setVisuals(data.visuals ?? []);
+    } catch {
+      // Silently fail — visuals are optional
+    } finally {
+      setVisualsLoading(false);
+    }
+  }, [id]);
+
+  // Fetch visuals when pipeline is complete or candidate has outputs
+  useEffect(() => {
+    if (
+      candidate?.pipelineStatus === "complete" ||
+      candidate?.outputs.caseStudy
+    ) {
+      fetchVisuals();
+    }
+  }, [candidate?.pipelineStatus, candidate?.outputs.caseStudy, fetchVisuals]);
+
+  const toggleVisualSelection = (visualId: string) => {
+    setSelectedVisuals((prev) => {
+      const next = new Set(prev);
+      if (next.has(visualId)) {
+        next.delete(visualId);
+      } else {
+        next.add(visualId);
+      }
+      return next;
+    });
+  };
 
   // ─── Actions ──────────────────────────────────────────────────────────
 
@@ -189,10 +255,16 @@ export default function CandidateDetailPage() {
     }
   };
 
-  const handleCopy = (text: string) => {
+  const [copyLabel, setCopyLabel] = useState("");
+
+  const handleCopy = (text: string, label?: string) => {
     navigator.clipboard.writeText(text);
+    setCopyLabel(label ?? "Copied!");
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => {
+      setCopied(false);
+      setCopyLabel("");
+    }, 2500);
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -274,6 +346,39 @@ export default function CandidateDetailPage() {
         <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
           {error}
           <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+        </div>
+      )}
+
+      {/* Pipeline Progress Bar */}
+      {candidate.pipelineStatus !== "idle" && (
+        <PipelineProgressBar
+          status={candidate.pipelineStatus}
+          steps={candidate.pipelineSteps}
+          expandedStep={expandedStep}
+          onToggleStep={(step) =>
+            setExpandedStep(expandedStep === step ? null : step)
+          }
+        />
+      )}
+
+      {/* Visual Suggestions Panel */}
+      {(candidate.pipelineStatus === "complete" ||
+        candidate.outputs.caseStudy) &&
+        !visualsLoading &&
+        visuals.length > 0 && (
+          <VisualSuggestionsPanel
+            visuals={visuals}
+            selectedVisuals={selectedVisuals}
+            onToggle={toggleVisualSelection}
+            sharePointUrl={candidate.sharePointFolderUrl}
+          />
+        )}
+      {visualsLoading && (
+        <div className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl border border-neutral-300">
+          <svg className="w-4 h-4 animate-spin text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+          </svg>
+          <span className="text-sm text-neutral-500">Loading visual assets from SharePoint...</span>
         </div>
       )}
 
@@ -407,12 +512,14 @@ export default function CandidateDetailPage() {
                     output={currentOutput}
                     onCopy={handleCopy}
                     copied={copied}
+                    copyLabel={copyLabel}
                   />
                 ) : (
                   <EmailPreview
                     output={currentOutput}
                     onCopy={handleCopy}
                     copied={copied}
+                    copyLabel={copyLabel}
                   />
                 )}
 
@@ -554,10 +661,12 @@ function LinkedInPreview({
   output,
   onCopy,
   copied,
+  copyLabel,
 }: {
   output: CaseStudyOutput;
-  onCopy: (text: string) => void;
+  onCopy: (text: string, label?: string) => void;
   copied: boolean;
+  copyLabel: string;
 }) {
   const post = output.content as Record<string, unknown>;
   const fullText = `${post.hook}\n\n${post.body}\n\n${post.proofPoints}\n\n${post.hashtags}`;
@@ -579,10 +688,19 @@ function LinkedInPreview({
           {charCount} / 1,300 characters
         </span>
         <button
-          onClick={() => onCopy(fullText)}
-          className="px-3 py-1.5 border border-neutral-300 text-sm rounded-lg hover:bg-neutral-100 transition-colors"
+          onClick={() => onCopy(fullText, "Copied! Paste it on LinkedIn.")}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A66C2] text-white text-sm font-medium rounded-lg hover:bg-[#004182] transition-colors"
         >
-          {copied ? "Copied!" : "Copy to Clipboard"}
+          {copied ? (
+            copyLabel
+          ) : (
+            <>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+              Copy to LinkedIn Buffer
+            </>
+          )}
         </button>
       </div>
     </div>
