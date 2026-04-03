@@ -97,6 +97,8 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
         params.set("folderId", opts.folderId);
       } else if (opts.url) {
         params.set("url", opts.url);
+        // Also pass client for folder-name resolution (sp-folder: prefix)
+        if (clientName) params.set("client", clientName);
       } else {
         params.set("client", clientName);
       }

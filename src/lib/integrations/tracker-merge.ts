@@ -27,6 +27,8 @@ import type { TrackerProject } from "@/types/integrations";
  */
 function extractSharePointLink(task: ClickUpTask): string {
   if (!task.custom_fields) return "";
+
+  // Phase 1: Look for a URL containing sharepoint.com or 1drv.ms in any field value
   for (const field of task.custom_fields) {
     if (!field.value) continue;
 
@@ -62,6 +64,34 @@ function extractSharePointLink(task: ClickUpTask): string {
       if (urlMatch) return urlMatch[1];
     }
   }
+
+  // Phase 2: Look for a field named "sharepoint" (case-insensitive) with a non-empty string value.
+  // This handles cases where the field contains a folder path/name instead of a full URL.
+  const SP_FIELD_NAMES = /sharepoint|sp[\s_-]?link|sp[\s_-]?folder|sp[\s_-]?url/i;
+  for (const field of task.custom_fields) {
+    if (!field.value || !field.name) continue;
+    if (!SP_FIELD_NAMES.test(field.name)) continue;
+
+    // Extract a string value (direct or nested in object)
+    let val: string | undefined;
+    if (typeof field.value === "string") {
+      val = field.value.trim();
+    } else if (typeof field.value === "object" && !Array.isArray(field.value)) {
+      const obj = field.value as Record<string, unknown>;
+      for (const key of ["url", "value", "link", "href"]) {
+        if (typeof obj[key] === "string") {
+          val = (obj[key] as string).trim();
+          break;
+        }
+      }
+    }
+    if (val && val.length > 0) {
+      // If it's a full URL, return it. Otherwise prefix with sp-folder: to signal it's a folder name.
+      if (val.startsWith("http")) return val;
+      return `sp-folder:${val}`;
+    }
+  }
+
   return "";
 }
 import { getMappingBySpaceId, mapClickUpStatus } from "@/lib/integrations/config";
