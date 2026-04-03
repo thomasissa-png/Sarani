@@ -41,14 +41,20 @@ interface ClosureRecord {
 interface CaseStudyOutputData {
   id: string;
   outputType: string;
+  publishedAt?: string | null;
+  caseStudySlug?: string | null;
   content: {
     title?: string;
     slug?: string;
     subtitle?: string;
     heroHeadline?: string;
+    headline?: string;
     challenge?: string;
     approach?: string;
     results?: string;
+    solution?: string;
+    resultsDetail?: string;
+    metaDescription?: string;
     stats?: Array<{ value: string; label: string }>;
     category?: string;
     [key: string]: unknown;
@@ -438,6 +444,169 @@ export default function ClosuresPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
   const [outputs, setOutputs] = useState<Record<string, { caseStudy: CaseStudyOutputData | null; linkedInPost: LinkedInOutputData | null; nurturingEmail: NurturingEmailOutputData | null }>>({});
+  const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
+  const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, unknown>>>({});
+  const [savingOutput, setSavingOutput] = useState<Set<string>>(new Set());
+  const [publishingOutput, setPublishingOutput] = useState<Set<string>>(new Set());
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // ─── Output editing helpers ────────────────────────────────────────────────
+
+  const startEditing = useCallback((closureId: string) => {
+    const o = outputs[closureId];
+    if (!o) return;
+    const drafts: Record<string, Record<string, unknown>> = {};
+    if (o.caseStudy) {
+      drafts[o.caseStudy.id] = { ...o.caseStudy.content };
+    }
+    if (o.linkedInPost) {
+      drafts[o.linkedInPost.id] = { ...o.linkedInPost.content };
+    }
+    if (o.nurturingEmail) {
+      drafts[o.nurturingEmail.id] = { ...o.nurturingEmail.content };
+    }
+    setEditDrafts(drafts);
+    setEditingOutputId(closureId);
+  }, [outputs]);
+
+  const cancelEditing = useCallback(() => {
+    setEditingOutputId(null);
+    setEditDrafts({});
+  }, []);
+
+  const updateDraft = useCallback((outputId: string, field: string, value: unknown) => {
+    setEditDrafts((prev) => ({
+      ...prev,
+      [outputId]: { ...prev[outputId], [field]: value },
+    }));
+  }, []);
+
+  const updateStatDraft = useCallback((outputId: string, statIndex: number, field: "label" | "value", val: string) => {
+    setEditDrafts((prev) => {
+      const draft = prev[outputId];
+      if (!draft) return prev;
+      const stats = Array.isArray(draft.stats) ? [...(draft.stats as Array<{ label: string; value: string }>)] : [];
+      stats[statIndex] = { ...stats[statIndex], [field]: val };
+      return { ...prev, [outputId]: { ...draft, stats } };
+    });
+  }, []);
+
+  const saveDraft = useCallback(async (outputId: string, closureId: string, outputType: "caseStudy" | "linkedInPost" | "nurturingEmail") => {
+    const content = editDrafts[outputId];
+    if (!content) return;
+    setSavingOutput((prev) => new Set(prev).add(outputId));
+    try {
+      const res = await fetch(`/api/admin/case-studies/outputs/${outputId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Save failed" }));
+        alert(`Save failed: ${err.error || res.statusText}`);
+        return;
+      }
+      const updated = await res.json();
+      // Update outputs state with saved content
+      setOutputs((prev) => ({
+        ...prev,
+        [closureId]: {
+          ...prev[closureId],
+          [outputType]: { ...prev[closureId][outputType]!, content: updated.content },
+        },
+      }));
+    } catch {
+      alert("Network error while saving draft.");
+    } finally {
+      setSavingOutput((prev) => {
+        const next = new Set(prev);
+        next.delete(outputId);
+        return next;
+      });
+    }
+  }, [editDrafts]);
+
+  const publishOutput = useCallback(async (outputId: string, closureId: string) => {
+    setPublishingOutput((prev) => new Set(prev).add(outputId));
+    try {
+      const res = await fetch(`/api/admin/case-studies/outputs/${outputId}/publish`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Publish failed" }));
+        alert(`Publish failed: ${err.error || res.statusText}`);
+        return;
+      }
+      const data = await res.json();
+      // Update local state with published info
+      setOutputs((prev) => ({
+        ...prev,
+        [closureId]: {
+          ...prev[closureId],
+          caseStudy: prev[closureId].caseStudy
+            ? { ...prev[closureId].caseStudy!, publishedAt: new Date().toISOString(), caseStudySlug: data.slug }
+            : null,
+        },
+      }));
+    } catch {
+      alert("Network error while publishing.");
+    } finally {
+      setPublishingOutput((prev) => {
+        const next = new Set(prev);
+        next.delete(outputId);
+        return next;
+      });
+    }
+  }, []);
+
+  const unpublishOutput = useCallback(async (outputId: string, closureId: string) => {
+    setPublishingOutput((prev) => new Set(prev).add(outputId));
+    try {
+      const res = await fetch(`/api/admin/case-studies/outputs/${outputId}/publish`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unpublish failed" }));
+        alert(`Unpublish failed: ${err.error || res.statusText}`);
+        return;
+      }
+      setOutputs((prev) => ({
+        ...prev,
+        [closureId]: {
+          ...prev[closureId],
+          caseStudy: prev[closureId].caseStudy
+            ? { ...prev[closureId].caseStudy!, publishedAt: null, caseStudySlug: null }
+            : null,
+        },
+      }));
+    } catch {
+      alert("Network error while unpublishing.");
+    } finally {
+      setPublishingOutput((prev) => {
+        const next = new Set(prev);
+        next.delete(outputId);
+        return next;
+      });
+    }
+  }, []);
+
+  const copyToClipboard = useCallback(async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // Fallback
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  }, []);
 
   // ─── Fetch closures ──────────────────────────────────────────────────────
 
@@ -914,91 +1083,329 @@ export default function ClosuresPage() {
                     )}
 
                     {/* Generated content outputs */}
-                    {closure.source === "candidate" && outputs[closure.id] && (
+                    {closure.source === "candidate" && outputs[closure.id] && (() => {
+                      const closureOutputs = outputs[closure.id];
+                      const isEditing = editingOutputId === closure.id;
+                      const cs = closureOutputs.caseStudy;
+                      const li = closureOutputs.linkedInPost;
+                      const ne = closureOutputs.nurturingEmail;
+                      return (
                       <div className="space-y-4 mb-4">
+                        {/* Edit / Cancel toggle */}
+                        <div className="flex items-center gap-2">
+                          {!isEditing ? (
+                            <button
+                              type="button"
+                              onClick={() => startEditing(closure.id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                            >
+                              Edit outputs
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={cancelEditing}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                            >
+                              Cancel editing
+                            </button>
+                          )}
+                        </div>
+
                         {/* Case Study */}
-                        {outputs[closure.id].caseStudy?.content && (
+                        {cs?.content && (() => {
+                          const draft = isEditing ? editDrafts[cs.id] : null;
+                          const isPublished = !!cs.publishedAt;
+                          return (
                           <div className="border border-neutral-200 rounded-lg p-4">
-                            <h3 className="text-sm font-semibold text-neutral-800 mb-2">
-                              Case Study (Website)
-                            </h3>
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-sm font-semibold text-neutral-800">
+                                Case Study (Website)
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {isEditing && (
+                                  <button
+                                    type="button"
+                                    onClick={() => saveDraft(cs.id, closure.id, "caseStudy")}
+                                    disabled={savingOutput.has(cs.id)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+                                  >
+                                    {savingOutput.has(cs.id) ? "Saving..." : "Save Draft"}
+                                  </button>
+                                )}
+                                {isPublished ? (
+                                  <>
+                                    <span className="text-xs text-green-600 font-medium">Published</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => unpublishOutput(cs.id, closure.id)}
+                                      disabled={publishingOutput.has(cs.id)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
+                                    >
+                                      {publishingOutput.has(cs.id) ? "..." : "Unpublish"}
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => publishOutput(cs.id, closure.id)}
+                                    disabled={publishingOutput.has(cs.id)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+                                  >
+                                    {publishingOutput.has(cs.id) ? "Publishing..." : "Publish to Website"}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                             <div className="space-y-2 text-sm text-neutral-700">
-                              {outputs[closure.id].caseStudy!.content.title && (
-                                <p><span className="font-medium text-neutral-900">Titre :</span> {outputs[closure.id].caseStudy!.content.title}</p>
+                              {(cs.content.headline || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Headline :</span>
+                                  {draft ? (
+                                    <input type="text" value={(draft.headline as string) ?? ""} onChange={(e) => updateDraft(cs.id, "headline", e.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1">{cs.content.headline}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].caseStudy!.content.subtitle && (
-                                <p><span className="font-medium text-neutral-900">Sous-titre :</span> {outputs[closure.id].caseStudy!.content.subtitle}</p>
+                              {(cs.content.subtitle || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Sous-titre :</span>
+                                  {draft ? (
+                                    <input type="text" value={(draft.subtitle as string) ?? ""} onChange={(e) => updateDraft(cs.id, "subtitle", e.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1">{cs.content.subtitle}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].caseStudy!.content.heroHeadline && (
-                                <p><span className="font-medium text-neutral-900">Hero :</span> {outputs[closure.id].caseStudy!.content.heroHeadline}</p>
+                              {(cs.content.heroHeadline || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Hero :</span>
+                                  {draft ? (
+                                    <input type="text" value={(draft.heroHeadline as string) ?? ""} onChange={(e) => updateDraft(cs.id, "heroHeadline", e.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1">{cs.content.heroHeadline}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].caseStudy!.content.challenge && (
-                                <div><span className="font-medium text-neutral-900">Challenge :</span><p className="mt-1 text-neutral-600">{outputs[closure.id].caseStudy!.content.challenge}</p></div>
+                              {(cs.content.challenge || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Challenge :</span>
+                                  {draft ? (
+                                    <textarea value={(draft.challenge as string) ?? ""} onChange={(e) => updateDraft(cs.id, "challenge", e.target.value)} rows={3} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1 text-neutral-600">{cs.content.challenge}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].caseStudy!.content.approach && (
-                                <div><span className="font-medium text-neutral-900">Approche :</span><p className="mt-1 text-neutral-600">{outputs[closure.id].caseStudy!.content.approach}</p></div>
+                              {(cs.content.approach || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Approche :</span>
+                                  {draft ? (
+                                    <textarea value={(draft.approach as string) ?? ""} onChange={(e) => updateDraft(cs.id, "approach", e.target.value)} rows={3} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1 text-neutral-600">{cs.content.approach}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].caseStudy!.content.results && (
-                                <div><span className="font-medium text-neutral-900">Résultats :</span><p className="mt-1 text-neutral-600">{outputs[closure.id].caseStudy!.content.results}</p></div>
+                              {(cs.content.solution || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Solution :</span>
+                                  {draft ? (
+                                    <textarea value={(draft.solution as string) ?? ""} onChange={(e) => updateDraft(cs.id, "solution", e.target.value)} rows={3} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1 text-neutral-600">{cs.content.solution}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].caseStudy!.content.stats && outputs[closure.id].caseStudy!.content.stats!.length > 0 && (
+                              {(cs.content.results || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Résultats :</span>
+                                  {draft ? (
+                                    <textarea value={(draft.results as string) ?? ""} onChange={(e) => updateDraft(cs.id, "results", e.target.value)} rows={3} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1 text-neutral-600">{cs.content.results}</p>
+                                  )}
+                                </div>
+                              )}
+                              {(cs.content.metaDescription || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Meta description :</span>
+                                  {draft ? (
+                                    <div>
+                                      <textarea value={(draft.metaDescription as string) ?? ""} onChange={(e) => updateDraft(cs.id, "metaDescription", e.target.value)} rows={2} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                      <span className={`text-xs ${((draft.metaDescription as string) ?? "").length < 50 || ((draft.metaDescription as string) ?? "").length > 160 ? "text-red-500" : "text-neutral-400"}`}>
+                                        {((draft.metaDescription as string) ?? "").length}/160 (min 50)
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <p className="mt-1 text-neutral-600">{cs.content.metaDescription}</p>
+                                  )}
+                                </div>
+                              )}
+                              {(cs.content.stats && cs.content.stats.length > 0) && (
                                 <div className="flex gap-4 mt-2">
-                                  {outputs[closure.id].caseStudy!.content.stats!.map((stat, i) => (
+                                  {(draft ? (draft.stats as Array<{ value: string; label: string }>) ?? cs.content.stats! : cs.content.stats!).map((stat, i) => (
                                     <div key={i} className="bg-neutral-50 rounded-lg px-3 py-2 text-center">
-                                      <div className="text-lg font-bold text-neutral-900">{stat.value}</div>
-                                      <div className="text-xs text-neutral-500">{stat.label}</div>
+                                      {draft ? (
+                                        <>
+                                          <input type="text" value={stat.value} onChange={(e) => updateStatDraft(cs.id, i, "value", e.target.value)} className="w-full text-center text-lg font-bold text-neutral-900 bg-transparent border-b border-neutral-300 focus:border-neutral-500 focus:outline-none mb-1" />
+                                          <input type="text" value={stat.label} onChange={(e) => updateStatDraft(cs.id, i, "label", e.target.value)} className="w-full text-center text-xs text-neutral-500 bg-transparent border-b border-neutral-300 focus:border-neutral-500 focus:outline-none" />
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div className="text-lg font-bold text-neutral-900">{stat.value}</div>
+                                          <div className="text-xs text-neutral-500">{stat.label}</div>
+                                        </>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
                               )}
                             </div>
                           </div>
-                        )}
+                          );
+                        })()}
 
                         {/* LinkedIn Post */}
-                        {outputs[closure.id].linkedInPost?.content && (
+                        {li?.content && (() => {
+                          const draft = isEditing ? editDrafts[li.id] : null;
+                          const liContent = li.content;
+                          return (
                           <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/30">
-                            <h3 className="text-sm font-semibold text-blue-800 mb-2">
-                              LinkedIn Post
-                            </h3>
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-sm font-semibold text-blue-800">
+                                LinkedIn Post
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {isEditing && (
+                                  <button
+                                    type="button"
+                                    onClick={() => saveDraft(li.id, closure.id, "linkedInPost")}
+                                    disabled={savingOutput.has(li.id)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                                  >
+                                    {savingOutput.has(li.id) ? "Saving..." : "Save Draft"}
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const c = liContent;
+                                    const text = [c.hook, c.body, c.proofPoints, c.hashtags].filter(Boolean).join("\n\n");
+                                    copyToClipboard(text, `li-${li.id}`);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                                >
+                                  {copiedId === `li-${li.id}` ? "Copied!" : "Copy to clipboard"}
+                                </button>
+                              </div>
+                            </div>
                             <div className="text-sm text-neutral-700 whitespace-pre-wrap">
-                              {outputs[closure.id].linkedInPost!.content.hook && (
-                                <p className="font-medium mb-1">{outputs[closure.id].linkedInPost!.content.hook}</p>
+                              {(liContent.hook || draft) && (
+                                <div className="mb-2">
+                                  {draft ? (
+                                    <textarea value={(draft.hook as string) ?? ""} onChange={(e) => updateDraft(li.id, "hook", e.target.value)} rows={2} className="w-full rounded-md border border-blue-200 px-3 py-1.5 text-sm font-medium focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Hook" />
+                                  ) : (
+                                    <p className="font-medium mb-1">{liContent.hook}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].linkedInPost!.content.body && (
-                                <p className="mb-1">{outputs[closure.id].linkedInPost!.content.body}</p>
+                              {(liContent.body || draft) && (
+                                <div className="mb-2">
+                                  {draft ? (
+                                    <textarea value={(draft.body as string) ?? ""} onChange={(e) => updateDraft(li.id, "body", e.target.value)} rows={4} className="w-full rounded-md border border-blue-200 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Body" />
+                                  ) : (
+                                    <p className="mb-1">{liContent.body}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].linkedInPost!.content.proofPoints && (
-                                <p className="mb-1">{outputs[closure.id].linkedInPost!.content.proofPoints}</p>
+                              {(liContent.proofPoints || draft) && (
+                                <div className="mb-2">
+                                  {draft ? (
+                                    <textarea value={(draft.proofPoints as string) ?? ""} onChange={(e) => updateDraft(li.id, "proofPoints", e.target.value)} rows={2} className="w-full rounded-md border border-blue-200 px-3 py-1.5 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Proof points" />
+                                  ) : (
+                                    <p className="mb-1">{liContent.proofPoints}</p>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].linkedInPost!.content.hashtags && (
-                                <p className="text-blue-600 text-xs mt-2">{outputs[closure.id].linkedInPost!.content.hashtags}</p>
+                              {(liContent.hashtags || draft) && (
+                                <div>
+                                  {draft ? (
+                                    <input type="text" value={(draft.hashtags as string) ?? ""} onChange={(e) => updateDraft(li.id, "hashtags", e.target.value)} className="w-full rounded-md border border-blue-200 px-3 py-1.5 text-xs text-blue-600 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="Hashtags" />
+                                  ) : (
+                                    <p className="text-blue-600 text-xs mt-2">{liContent.hashtags}</p>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
-                        )}
+                          );
+                        })()}
 
                         {/* Nurturing Email */}
-                        {outputs[closure.id].nurturingEmail?.content && (
+                        {ne?.content && (() => {
+                          const draft = isEditing ? editDrafts[ne.id] : null;
+                          const neContent = ne.content;
+                          return (
                           <div className="border border-green-100 rounded-lg p-4 bg-green-50/30">
-                            <h3 className="text-sm font-semibold text-green-800 mb-2">
-                              Email de nurturing
-                            </h3>
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-sm font-semibold text-green-800">
+                                Email de nurturing
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {isEditing && (
+                                  <button
+                                    type="button"
+                                    onClick={() => saveDraft(ne.id, closure.id, "nurturingEmail")}
+                                    disabled={savingOutput.has(ne.id)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+                                  >
+                                    {savingOutput.has(ne.id) ? "Saving..." : "Save Draft"}
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const text = [neContent.subject ? `Subject: ${neContent.subject}` : "", neContent.body].filter(Boolean).join("\n\n");
+                                    copyToClipboard(text, `ne-${ne.id}`);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
+                                >
+                                  {copiedId === `ne-${ne.id}` ? "Copied!" : "Copy as text"}
+                                </button>
+                              </div>
+                            </div>
                             <div className="text-sm text-neutral-700">
-                              {outputs[closure.id].nurturingEmail!.content.subject && (
-                                <p className="mb-1"><span className="font-medium text-neutral-900">Sujet :</span> {outputs[closure.id].nurturingEmail!.content.subject}</p>
+                              {(neContent.subject || draft) && (
+                                <div className="mb-1">
+                                  <span className="font-medium text-neutral-900">Sujet :</span>
+                                  {draft ? (
+                                    <input type="text" value={(draft.subject as string) ?? ""} onChange={(e) => updateDraft(ne.id, "subject", e.target.value)} className="mt-1 w-full rounded-md border border-green-200 px-3 py-1.5 text-sm focus:border-green-400 focus:outline-none focus:ring-1 focus:ring-green-400" />
+                                  ) : (
+                                    <span className="ml-1">{neContent.subject}</span>
+                                  )}
+                                </div>
                               )}
-                              {outputs[closure.id].nurturingEmail!.content.preview && (
-                                <p className="mb-2 text-xs text-neutral-500">Aperçu : {outputs[closure.id].nurturingEmail!.content.preview}</p>
+                              {neContent.preview && !draft && (
+                                <p className="mb-2 text-xs text-neutral-500">Aperçu : {neContent.preview}</p>
                               )}
-                              {outputs[closure.id].nurturingEmail!.content.body && (
-                                <div className="whitespace-pre-wrap mt-2">{outputs[closure.id].nurturingEmail!.content.body}</div>
+                              {(neContent.body || draft) && (
+                                <div className="mt-2">
+                                  {draft ? (
+                                    <textarea value={(draft.body as string) ?? ""} onChange={(e) => updateDraft(ne.id, "body", e.target.value)} rows={6} className="w-full rounded-md border border-green-200 px-3 py-1.5 text-sm focus:border-green-400 focus:outline-none focus:ring-1 focus:ring-green-400 whitespace-pre-wrap" />
+                                  ) : (
+                                    <div className="whitespace-pre-wrap">{neContent.body}</div>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
-                        )}
+                          );
+                        })()}
                       </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Actions */}
                     <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center gap-2">
