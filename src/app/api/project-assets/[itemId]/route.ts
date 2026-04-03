@@ -101,6 +101,9 @@ export async function GET(
       });
     }
 
+    console.log(`[Asset Proxy] Streaming video ${itemId} (${item.name}), mimeType=${mimeType}, size=${item.size}`);
+
+
     // For video: stream through the proxy to support Range requests.
     // Forward the Range header from the client to SharePoint.
     const fetchHeaders: Record<string, string> = {};
@@ -111,10 +114,11 @@ export async function GET(
 
     const upstream = await fetch(downloadUrl, {
       headers: fetchHeaders,
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!upstream.ok && upstream.status !== 206) {
+      console.error(`[Asset Proxy] Upstream returned ${upstream.status} for item ${itemId} (${item.name})`);
       return NextResponse.json({ error: "Upstream fetch failed" }, { status: 502 });
     }
 

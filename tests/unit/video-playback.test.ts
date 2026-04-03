@@ -15,16 +15,6 @@
  * filter and the proxy route handler.
  *
  * REGRESSION: Video playback broken 4 iterations — fixed 2026-04-03
- *
- * Tests cover:
- *   1. Proxy mimeType detection (known type, octet-stream fallback, unknown)
- *   2. Proxy Range request forwarding and 206 responses
- *   3. Proxy timeout handling
- *   4. Proxy CORS headers on ALL video responses
- *   5. Proxy Content-Type correctness
- *   6. Non-video files get 302 redirect
- *   7. CSP media-src directive
- *   8. Share page isAllowedFile logic (tested via extracted logic)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -47,18 +37,28 @@ vi.mock("@/lib/integrations/config", () => ({
 
 const { GET } = await import("@/app/api/project-assets/[itemId]/route");
 
+// ─── Global mock management ────────────────────────────────────────────────
+// We mock globalThis.fetch at file level with a safe default that returns 200.
+// Tests that need specific upstream responses use fetchSpy.mockResolvedValueOnce().
+// This prevents any real network calls during tests.
+
+let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+beforeEach(() => {
+  mockGraphFetch.mockReset();
+  // Ensure fetch is always mocked — no real network calls
+  fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    new Response(new ReadableStream(), { status: 200 })
+  );
+});
+
+afterEach(() => {
+  fetchSpy.mockRestore();
+});
+
 /* ========================================================================== */
 /*  Helpers                                                                    */
 /* ========================================================================== */
-
-/**
- * Setup mock for globalThis.fetch that prevents real network calls.
- * Call this at the start of any test that triggers the video streaming path.
- * Returns the spy for assertions on call arguments.
- */
-function mockFetchUpstream(response: Response) {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(response);
-}
 
 function makeRequest(
   itemId: string,
@@ -84,14 +84,12 @@ function mockUpstreamVideo(options?: {
   status?: number;
   contentLength?: string;
   contentRange?: string;
-  contentType?: string;
 }): Response {
   return new Response(new ReadableStream(), {
     status: options?.status ?? 200,
     headers: {
       ...(options?.contentLength && { "Content-Length": options.contentLength }),
       ...(options?.contentRange && { "Content-Range": options.contentRange }),
-      ...(options?.contentType && { "Content-Type": options.contentType }),
     },
   });
 }
@@ -114,19 +112,12 @@ function graphItem(overrides: {
 
 /* ========================================================================== */
 /*  1. REGRESSION: mimeType detection — application/octet-stream fallback      */
+/*     This is THE critical test section. These tests would have caught the     */
+/*     root cause that persisted through 4 fix iterations.                     */
 /* ========================================================================== */
 
 describe("Video proxy — REGRESSION: application/octet-stream fallback", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("streams .mp4 file with application/octet-stream mimeType (root cause of 4-iteration bug)", async () => {
-    // This is THE test that would have caught the original bug.
     // SharePoint returned application/octet-stream for the GEODIS video.
     // Without extension fallback, proxy returned 302 redirect → broken playback.
     mockGraphFetch.mockResolvedValueOnce(
@@ -135,10 +126,7 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
         name: "geodis-video-sante-securite.mp4",
       })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "52428800" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "52428800" }));
 
     const { request, params } = makeRequest("geodisVideoItem");
     const response = await GET(request, { params });
@@ -150,17 +138,13 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
   });
 
   it("streams .mov file with empty mimeType", async () => {
-    // SharePoint sometimes returns no mimeType at all (file.mimeType undefined)
     mockGraphFetch.mockResolvedValueOnce({
       "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/clip.mov",
       file: { mimeType: "" },
       name: "behind-the-scenes.mov",
       size: 30000000,
     });
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "30000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "30000000" }));
 
     const { request, params } = makeRequest("movFileItem");
     const response = await GET(request, { params });
@@ -171,15 +155,9 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
 
   it("streams .webm file with application/octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "animation.webm",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "animation.webm" })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "5000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "5000000" }));
 
     const { request, params } = makeRequest("webmItem");
     const response = await GET(request, { params });
@@ -190,15 +168,9 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
 
   it("streams .avi file with application/octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "legacy-footage.avi",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "legacy-footage.avi" })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "8000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "8000000" }));
 
     const { request, params } = makeRequest("aviItem");
     const response = await GET(request, { params });
@@ -209,15 +181,9 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
 
   it("streams .wmv file with application/octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "corporate-video.wmv",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "corporate-video.wmv" })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "15000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "15000000" }));
 
     const { request, params } = makeRequest("wmvItem");
     const response = await GET(request, { params });
@@ -228,15 +194,9 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
 
   it("streams .mkv file with application/octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "raw-edit.mkv",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "raw-edit.mkv" })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "100000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "100000000" }));
 
     const { request, params } = makeRequest("mkvItem");
     const response = await GET(request, { params });
@@ -247,15 +207,9 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
 
   it("streams .m4v file with application/octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "iphone-clip.m4v",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "iphone-clip.m4v" })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "12000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "12000000" }));
 
     const { request, params } = makeRequest("m4vItem");
     const response = await GET(request, { params });
@@ -265,27 +219,19 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
   });
 
   it("redirects unknown extension + application/octet-stream (not a video)", async () => {
-    // A .zip file with octet-stream should NOT be treated as video
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "archive.zip",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "archive.zip" })
     );
 
     const { request, params } = makeRequest("zipItem");
     const response = await GET(request, { params });
 
-    // Should fall through to 302 redirect since .zip is not in VIDEO_EXT_TO_MIME
     expect(response.status).toBe(302);
   });
 
   it("redirects file with no extension and application/octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "mystery-file",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "mystery-file" })
     );
 
     const { request, params } = makeRequest("noExtItem");
@@ -296,15 +242,9 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
 
   it("handles case-insensitive extensions (.MP4 uppercase)", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "CORPORATE_VIDEO.MP4",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "CORPORATE_VIDEO.MP4" })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "25000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "25000000" }));
 
     const { request, params } = makeRequest("uppercaseItem");
     const response = await GET(request, { params });
@@ -313,19 +253,18 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
     expect(response.headers.get("Content-Type")).toBe("video/mp4");
   });
 
-  it("handles file with no name field gracefully", async () => {
-    // If item.name is missing, extension fallback should not crash
+  it("handles file with no name field gracefully (does not crash)", async () => {
     mockGraphFetch.mockResolvedValueOnce({
       "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/file",
       file: { mimeType: "application/octet-stream" },
-      // no name field
+      // no name field — extension fallback cannot run
       size: 5000000,
     });
 
     const { request, params } = makeRequest("noNameItem");
     const response = await GET(request, { params });
 
-    // Should not crash — should 302 redirect since we can't detect video
+    // Should not crash — should 302 redirect since we cannot detect video type
     expect(response.status).toBe(302);
   });
 });
@@ -335,14 +274,6 @@ describe("Video proxy — REGRESSION: application/octet-stream fallback", () => 
 /* ========================================================================== */
 
 describe("Video proxy — known video mimeTypes stream correctly", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   const videoTypes = [
     { mime: "video/mp4", ext: "mp4" },
     { mime: "video/quicktime", ext: "mov" },
@@ -355,14 +286,11 @@ describe("Video proxy — known video mimeTypes stream correctly", () => {
   ];
 
   for (const { mime, ext } of videoTypes) {
-    it(`streams ${mime} (.${ext}) with correct Content-Type`, async () => {
+    it(`streams ${mime} (.${ext}) with correct Content-Type and headers`, async () => {
       mockGraphFetch.mockResolvedValueOnce(
         graphItem({ mimeType: mime, name: `test.${ext}` })
       );
-
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-        mockUpstreamVideo({ contentLength: "1000000" })
-      );
+      fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "1000000" }));
 
       const { request, params } = makeRequest(`item-${ext}`);
       const response = await GET(request, { params });
@@ -370,9 +298,7 @@ describe("Video proxy — known video mimeTypes stream correctly", () => {
       expect(response.status).toBe(200);
       expect(response.headers.get("Content-Type")).toBe(mime);
       expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-      expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe(
-        "cross-origin"
-      );
+      expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
       expect(response.headers.get("Accept-Ranges")).toBe("bytes");
     });
   }
@@ -383,14 +309,6 @@ describe("Video proxy — known video mimeTypes stream correctly", () => {
 /* ========================================================================== */
 
 describe("Video proxy — non-video files get 302 redirect", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   const nonVideoTypes = [
     { mime: "image/png", name: "logo.png", id: "pngItem" },
     { mime: "image/jpeg", name: "photo.jpg", id: "jpgItem" },
@@ -402,9 +320,7 @@ describe("Video proxy — non-video files get 302 redirect", () => {
 
   for (const { mime, name, id } of nonVideoTypes) {
     it(`redirects ${mime} (${name}) with 302`, async () => {
-      mockGraphFetch.mockResolvedValueOnce(
-        graphItem({ mimeType: mime, name })
-      );
+      mockGraphFetch.mockResolvedValueOnce(graphItem({ mimeType: mime, name }));
 
       // Use clean alphanumeric IDs — dots in URL path fail the SAFE_ID regex
       const { request, params } = makeRequest(id);
@@ -420,20 +336,11 @@ describe("Video proxy — non-video files get 302 redirect", () => {
 /* ========================================================================== */
 
 describe("Video proxy — Range request forwarding", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("forwards Range header to upstream and returns 206 with Content-Range", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "big-video.mp4", size: 50000000 })
     );
-
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    fetchSpy.mockResolvedValueOnce(
       mockUpstreamVideo({
         status: 206,
         contentLength: "1000000",
@@ -441,34 +348,27 @@ describe("Video proxy — Range request forwarding", () => {
       })
     );
 
-    const { request, params } = makeRequest("rangeItem", {
-      range: "bytes=0-999999",
-    });
+    const { request, params } = makeRequest("rangeItem", { range: "bytes=0-999999" });
     const response = await GET(request, { params });
 
-    // Verify Range was forwarded
+    // Verify Range was forwarded to upstream
     expect(fetchSpy).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         headers: expect.objectContaining({ Range: "bytes=0-999999" }),
       })
     );
-
     expect(response.status).toBe(206);
-    expect(response.headers.get("Content-Range")).toBe(
-      "bytes 0-999999/50000000"
-    );
+    expect(response.headers.get("Content-Range")).toBe("bytes 0-999999/50000000");
     expect(response.headers.get("Content-Length")).toBe("1000000");
-    // CORS headers must also be present on 206 responses
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
   });
 
-  it("forwards mid-file Range request correctly", async () => {
+  it("forwards mid-file Range request correctly (seek behavior)", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "seekable.mp4", size: 10000000 })
     );
-
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    fetchSpy.mockResolvedValueOnce(
       mockUpstreamVideo({
         status: 206,
         contentLength: "500000",
@@ -488,34 +388,25 @@ describe("Video proxy — Range request forwarding", () => {
       })
     );
     expect(response.status).toBe(206);
-    expect(response.headers.get("Content-Range")).toBe(
-      "bytes 5000000-5499999/10000000"
-    );
+    expect(response.headers.get("Content-Range")).toBe("bytes 5000000-5499999/10000000");
   });
 
   it("does not send Range header when client does not request it", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "full.mp4" })
     );
-
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "2000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "2000000" }));
 
     const { request, params } = makeRequest("noRangeItem");
     const response = await GET(request, { params });
 
-    // Should not have Range in upstream request
-    const upstreamHeaders = fetchSpy.mock.calls[0][1]?.headers as Record<
-      string,
-      string
-    >;
+    const upstreamHeaders = fetchSpy.mock.calls[0][1]?.headers as Record<string, string>;
     expect(upstreamHeaders).not.toHaveProperty("Range");
     expect(response.status).toBe(200);
   });
 
-  it("returns CORS headers on Range requests for octet-stream video", async () => {
-    // Regression combo: octet-stream + Range request
+  it("returns CORS headers on Range requests for octet-stream video (regression combo)", async () => {
+    // Combines two bug vectors: octet-stream mimeType + Range request
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({
         mimeType: "application/octet-stream",
@@ -523,8 +414,7 @@ describe("Video proxy — Range request forwarding", () => {
         size: 80000000,
       })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    fetchSpy.mockResolvedValueOnce(
       mockUpstreamVideo({
         status: 206,
         contentLength: "2000000",
@@ -532,9 +422,7 @@ describe("Video proxy — Range request forwarding", () => {
       })
     );
 
-    const { request, params } = makeRequest("octetRangeItem", {
-      range: "bytes=0-1999999",
-    });
+    const { request, params } = makeRequest("octetRangeItem", { range: "bytes=0-1999999" });
     const response = await GET(request, { params });
 
     expect(response.status).toBe(206);
@@ -544,25 +432,15 @@ describe("Video proxy — Range request forwarding", () => {
 });
 
 /* ========================================================================== */
-/*  5. Timeout handling                                                        */
+/*  5. Error handling and timeouts                                             */
 /* ========================================================================== */
 
-describe("Video proxy — timeout handling", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it("returns 502 when upstream fetch times out", async () => {
+describe("Video proxy — error handling", () => {
+  it("returns 502 when upstream fetch times out (AbortError)", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "huge-video.mp4", size: 500000000 })
     );
-
-    // Simulate a timeout / abort error
-    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+    fetchSpy.mockRejectedValueOnce(
       new DOMException("The operation was aborted", "AbortError")
     );
 
@@ -589,10 +467,7 @@ describe("Video proxy — timeout handling", () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "forbidden.mp4" })
     );
-
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response("Forbidden", { status: 403 })
-    );
+    fetchSpy.mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
 
     const { request, params } = makeRequest("forbiddenItem");
     const response = await GET(request, { params });
@@ -604,7 +479,7 @@ describe("Video proxy — timeout handling", () => {
     mockGraphFetch.mockResolvedValueOnce({
       file: { mimeType: "video/mp4" },
       name: "no-url.mp4",
-      // no @microsoft.graph.downloadUrl
+      // no @microsoft.graph.downloadUrl — Graph didn't return one
     });
 
     const { request, params } = makeRequest("noUrlItem");
@@ -617,40 +492,28 @@ describe("Video proxy — timeout handling", () => {
 });
 
 /* ========================================================================== */
-/*  6. CORS headers present on ALL video responses                             */
+/*  6. CORS headers present on ALL video response types                        */
 /* ========================================================================== */
 
 describe("Video proxy — CORS headers on all video response types", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("has CORS headers on 200 response (full video)", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "full.mp4" })
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "5000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "5000000" }));
 
     const { request, params } = makeRequest("cors200");
     const response = await GET(request, { params });
 
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe(
-      "cross-origin"
-    );
+    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
   });
 
   it("has CORS headers on 206 response (partial content)", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "partial.mp4" })
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+    fetchSpy.mockResolvedValueOnce(
       mockUpstreamVideo({
         status: 206,
         contentLength: "1000000",
@@ -658,35 +521,24 @@ describe("Video proxy — CORS headers on all video response types", () => {
       })
     );
 
-    const { request, params } = makeRequest("cors206", {
-      range: "bytes=0-999999",
-    });
+    const { request, params } = makeRequest("cors206", { range: "bytes=0-999999" });
     const response = await GET(request, { params });
 
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe(
-      "cross-origin"
-    );
+    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
   });
 
   it("has CORS headers on octet-stream fallback video", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "client-upload.mp4",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "client-upload.mp4" })
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "10000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "10000000" }));
 
     const { request, params } = makeRequest("corsOctet");
     const response = await GET(request, { params });
 
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe(
-      "cross-origin"
-    );
+    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
   });
 });
 
@@ -695,21 +547,11 @@ describe("Video proxy — CORS headers on all video response types", () => {
 /* ========================================================================== */
 
 describe("Video proxy — Content-Type is correct", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("uses Graph API mimeType when it is a known video type", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/quicktime", name: "clip.mov" })
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "3000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "3000000" }));
 
     const { request, params } = makeRequest("ctKnown");
     const response = await GET(request, { params });
@@ -719,37 +561,26 @@ describe("Video proxy — Content-Type is correct", () => {
 
   it("uses extension-derived mimeType when Graph returns octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "presentation.webm",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "presentation.webm" })
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "7000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "7000000" }));
 
     const { request, params } = makeRequest("ctFallback");
     const response = await GET(request, { params });
 
-    // Should use the extension-derived type, NOT the Graph API's octet-stream
     expect(response.headers.get("Content-Type")).toBe("video/webm");
-    expect(response.headers.get("Content-Type")).not.toBe(
-      "application/octet-stream"
-    );
+    expect(response.headers.get("Content-Type")).not.toBe("application/octet-stream");
   });
 
   it("does NOT set wrong Content-Type for non-video octet-stream", async () => {
     mockGraphFetch.mockResolvedValueOnce(
-      graphItem({
-        mimeType: "application/octet-stream",
-        name: "data.bin",
-      })
+      graphItem({ mimeType: "application/octet-stream", name: "data.bin" })
     );
 
     const { request, params } = makeRequest("ctNonVideo");
     const response = await GET(request, { params });
 
-    // Should 302 redirect — we don't know the real type
+    // .bin is not in VIDEO_EXT_TO_MIME, so it falls through to 302 redirect
     expect(response.status).toBe(302);
   });
 });
@@ -759,14 +590,6 @@ describe("Video proxy — Content-Type is correct", () => {
 /* ========================================================================== */
 
 describe("Video proxy — input validation", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("rejects path traversal in itemId", async () => {
     const { request, params } = makeRequest("../../../etc/passwd");
     const response = await GET(request, { params });
@@ -794,12 +617,14 @@ describe("Video proxy — input validation", () => {
 
     const { request, params } = makeRequest("01J8K_abc-XYZ!");
     const response = await GET(request, { params });
+
+    // Should not be 400 — the ID passes validation (302 redirect for image)
     expect(response.status).not.toBe(400);
   });
 });
 
 /* ========================================================================== */
-/*  9. CSP media-src configuration                                             */
+/*  9. CSP media-src configuration (static analysis)                           */
 /* ========================================================================== */
 
 describe("CSP configuration — media-src", () => {
@@ -816,7 +641,6 @@ describe("CSP configuration — media-src", () => {
       "/home/user/Sarani/next.config.ts",
       "utf-8"
     );
-    // Ensure blob: is present, not just 'self'
     const mediaSrcMatch = configContent.match(/media-src[^"]+/);
     expect(mediaSrcMatch).toBeTruthy();
     expect(mediaSrcMatch![0]).toContain("blob:");
@@ -825,13 +649,10 @@ describe("CSP configuration — media-src", () => {
 
 /* ========================================================================== */
 /*  10. Share page: extension fallback in ALLOWED_MIMETYPES filter             */
+/*      Static verification that the share page has the same fix as proxy      */
 /* ========================================================================== */
 
 describe("Share page — isAllowedFile extension fallback (static verification)", () => {
-  // We verify the share page code contains the same VIDEO_EXT_TO_MIME fallback
-  // as the proxy. This is a static analysis test — the isAllowedFile function
-  // is not exported, so we verify the source code directly.
-
   const pageSource = fs.readFileSync(
     "/home/user/Sarani/src/app/project/[clientSlug]/[projectSlug]/page.tsx",
     "utf-8"
@@ -842,19 +663,12 @@ describe("Share page — isAllowedFile extension fallback (static verification)"
   });
 
   it("share page isAllowedFile checks extension when MIME is not in ALLOWED_MIMETYPES", () => {
-    // The function must check VIDEO_EXT_TO_MIME as fallback
     expect(pageSource).toContain("VIDEO_EXT_TO_MIME[ext]");
   });
 
   it("share page VIDEO_EXT_TO_MIME includes all critical video extensions", () => {
     const criticalExtensions = [
-      '".mp4"',
-      '".mov"',
-      '".webm"',
-      '".avi"',
-      '".wmv"',
-      '".mkv"',
-      '".m4v"',
+      '".mp4"', '".mov"', '".webm"', '".avi"', '".wmv"', '".mkv"', '".m4v"',
     ];
     for (const ext of criticalExtensions) {
       expect(pageSource).toContain(ext);
@@ -862,46 +676,29 @@ describe("Share page — isAllowedFile extension fallback (static verification)"
   });
 
   it("share page assigns corrected mimeType from isAllowedFile to BatchItem", () => {
-    // The mimeType from isAllowedFile (which may be extension-derived) must be
-    // used when building the BatchItem, so that batchVideos.filter(startsWith('video/'))
-    // correctly includes the file.
+    // The corrected mimeType (from extension fallback) must be used when building
+    // the BatchItem, so that batchVideos.filter(startsWith('video/')) includes it.
     expect(pageSource).toContain("mimeType: check.mimeType");
   });
 
   it("share page video filter uses mimeType.startsWith('video/')", () => {
-    // This is how batchVideos are filtered — extension-derived mimeTypes
-    // will start with "video/" and be correctly included
     expect(pageSource).toContain('i.mimeType.startsWith("video/")');
   });
 
-  it("proxy route.ts has the same VIDEO_EXT_TO_MIME entries as share page", () => {
+  it("proxy route.ts and share page have identical VIDEO_EXT_TO_MIME entries", () => {
     const proxySource = fs.readFileSync(
       "/home/user/Sarani/src/app/api/project-assets/[itemId]/route.ts",
       "utf-8"
     );
 
-    // Extract extensions from both files
-    const extPattern = /"\.\w+"/g;
-    const pageExts = new Set(pageSource.match(extPattern) || []);
-    const proxyExts = new Set(proxySource.match(extPattern) || []);
-
-    // All video extensions in the proxy must also be in the page
-    // (the page may have more, like image extensions, but it must have all video ones)
     const criticalExts = [
-      '".mp4"',
-      '".m4v"',
-      '".mov"',
-      '".webm"',
-      '".avi"',
-      '".wmv"',
-      '".mkv"',
-      '".mpeg"',
-      '".mpg"',
-      '".3gp"',
+      '".mp4"', '".m4v"', '".mov"', '".webm"', '".avi"',
+      '".wmv"', '".mkv"', '".mpeg"', '".mpg"', '".3gp"',
     ];
+
     for (const ext of criticalExts) {
-      expect(pageExts.has(ext)).toBe(true);
-      expect(proxyExts.has(ext)).toBe(true);
+      expect(pageSource).toContain(ext);
+      expect(proxySource).toContain(ext);
     }
   });
 });
@@ -916,18 +713,16 @@ describe("Share page — video element keys use itemId", () => {
     "utf-8"
   );
 
-  it("video div uses item.itemId as key (not item.name)", () => {
-    // Prevents React reconciliation issues when two videos have the same filename
-    // in different batches/folders
+  it("video div uses item.itemId as key (prevents React reconciliation issues)", () => {
     expect(pageSource).toContain("key={item.itemId}");
   });
 });
 
 /* ========================================================================== */
-/*  12. Proxy route — fetch uses AbortSignal.timeout                           */
+/*  12. Proxy route — timeout configuration                                    */
 /* ========================================================================== */
 
-describe("Video proxy — timeout configuration", () => {
+describe("Video proxy — timeout configuration (static verification)", () => {
   const proxySource = fs.readFileSync(
     "/home/user/Sarani/src/app/api/project-assets/[itemId]/route.ts",
     "utf-8"
@@ -938,10 +733,9 @@ describe("Video proxy — timeout configuration", () => {
   });
 
   it("timeout is at least 30 seconds (large video files need time)", () => {
-    // Match AbortSignal.timeout(30_000) — numeric separators use underscores
+    // Match AbortSignal.timeout(30_000) — JS numeric separators use underscores
     const match = proxySource.match(/AbortSignal\.timeout\(([0-9_]+)\)/);
     expect(match).toBeTruthy();
-    // Remove underscores (JS numeric separators) before parsing
     const timeoutMs = parseInt(match![1].replace(/_/g, ""), 10);
     expect(timeoutMs).toBeGreaterThanOrEqual(30000);
   });
@@ -952,21 +746,11 @@ describe("Video proxy — timeout configuration", () => {
 /* ========================================================================== */
 
 describe("Video proxy — cache headers", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("sets Cache-Control on video streaming responses", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "video/mp4", name: "cached.mp4" })
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      mockUpstreamVideo({ contentLength: "1000000" })
-    );
+    fetchSpy.mockResolvedValueOnce(mockUpstreamVideo({ contentLength: "1000000" }));
 
     const { request, params } = makeRequest("cacheItem");
     const response = await GET(request, { params });

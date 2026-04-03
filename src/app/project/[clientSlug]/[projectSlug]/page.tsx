@@ -740,10 +740,10 @@ export default async function ProjectPreviewPage({ params }: Props) {
                           <video
                             controls
                             preload="metadata"
-                            src={item.proxyUrl}
                             className="w-full aspect-video bg-black"
                             playsInline
                           >
+                            <source src={item.proxyUrl} type={item.mimeType} />
                             Your browser does not support video playback.
                           </video>
                           <div className="px-3 py-2 flex items-center justify-between">

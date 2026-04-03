@@ -84,28 +84,40 @@ function findMatchingFolder(folders: FolderItem[], clickupList: string, clientNa
   const stripNumberPrefix = (name: string): string =>
     name.replace(/^\d+\.\s*/, "").trim();
 
+  // Normalize for matching: remove all special chars, collapse spaces
+  // This makes "P&E SEA" match "P&SEA" or "P & E SEA"
+  const normalize = (s: string): string =>
+    s.replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
   // Pre-compute normalized folder names (stripped of number prefixes)
   const normalizedFolders = folders.map((f) => ({
     folder: f,
     raw: f.name.toLowerCase().trim(),
     stripped: stripNumberPrefix(f.name.toLowerCase().trim()),
+    normalized: normalize(stripNumberPrefix(f.name.toLowerCase().trim())),
   }));
 
-  // Strategy 1: exact match — try both raw name and stripped name
-  const exact = normalizedFolders.find((nf) => nf.raw === listLower || nf.stripped === listLower);
+  const listNormalized = normalize(listLower);
+
+  // Strategy 1: exact match — try both raw name, stripped name, and normalized
+  const exact = normalizedFolders.find((nf) =>
+    nf.raw === listLower || nf.stripped === listLower || nf.normalized === listNormalized
+  );
   if (exact) return exact.folder;
 
-  // Strategy 2: mutual includes — try stripped folder names
+  // Strategy 2: mutual includes — try stripped AND normalized folder names
   const byIncludes = normalizedFolders.find((nf) => {
-    return nf.stripped.includes(listLower) || listLower.includes(nf.stripped);
+    return nf.stripped.includes(listLower) || listLower.includes(nf.stripped)
+      || nf.normalized.includes(listNormalized) || listNormalized.includes(nf.normalized);
   });
   if (byIncludes) return byIncludes.folder;
 
   // Strategy 3: strip client prefix from ClickUp list name and retry
   // e.g. "TikTok P&E SEA" → "P&E SEA", then match against folder "P&E SEA"
   let stripped = listLower;
+  // Remove client name at the start (with optional separator like " — ", " - ", etc.)
   if (stripped.startsWith(clientLower)) {
-    stripped = stripped.slice(clientLower.length).trim();
+    stripped = stripped.slice(clientLower.length).replace(/^[\s\-—]+/, "").trim();
   }
   // Also handle abbreviations: strip first word if it doesn't match client
   const words = listLower.split(/\s+/);
@@ -113,17 +125,19 @@ function findMatchingFolder(folders: FolderItem[], clickupList: string, clientNa
 
   for (const candidate of [stripped, strippedFirstWord]) {
     if (candidate.length < 2) continue;
+    const candidateNorm = normalize(candidate);
     const match = normalizedFolders.find((nf) => {
-      return nf.stripped.includes(candidate) || candidate.includes(nf.stripped);
+      return nf.stripped.includes(candidate) || candidate.includes(nf.stripped)
+        || nf.normalized.includes(candidateNorm) || candidateNorm.includes(nf.normalized);
     });
     if (match) return match.folder;
   }
 
-  // Strategy 4: tokenize and find best word-overlap match (min 2 shared tokens)
+  // Strategy 4: tokenize and find best word-overlap match
   // Exclude generic client name tokens + "others" to prevent false matches
   const genericTokens = new Set([...clientLower.split(/\s+/), "others", "other", "tiktok"]);
   const listTokens = new Set(
-    listLower.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2 && !genericTokens.has(t))
+    listNormalized.split(/\s+/).filter((t) => t.length >= 2 && !genericTokens.has(t))
   );
   if (listTokens.size === 0) return null; // No meaningful tokens to match
 
@@ -131,18 +145,29 @@ function findMatchingFolder(folders: FolderItem[], clickupList: string, clientNa
   let bestScore = 0;
   for (const nf of normalizedFolders) {
     const folderTokens = new Set(
-      nf.stripped.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2 && !genericTokens.has(t))
+      nf.normalized.split(/\s+/).filter((t) => t.length >= 2 && !genericTokens.has(t))
     );
+    // Skip if the folder has no meaningful tokens (e.g. "Others" → empty after filtering)
+    if (folderTokens.size === 0) continue;
     let overlap = 0;
     for (const t of listTokens) {
       if (folderTokens.has(t)) overlap++;
     }
-    const score = listTokens.size > 0 ? overlap / listTokens.size : 0;
+    // Score = max of:
+    // - overlap/listTokens (what % of the ClickUp name matches the folder)
+    // - overlap/folderTokens (what % of the folder name matches the ClickUp name)
+    // The second metric is critical: if a folder is "TTS P&E SEA" (tokens: tts, sea)
+    // and ALL its tokens are in the ClickUp name, it's a strong match even if the
+    // ClickUp name has 8 other tokens.
+    const listCoverage = listTokens.size > 0 ? overlap / listTokens.size : 0;
+    const folderCoverage = folderTokens.size > 0 ? overlap / folderTokens.size : 0;
+    const score = Math.max(listCoverage, folderCoverage);
     if (overlap >= 1 && score > bestScore) {
       bestScore = score;
       bestMatch = nf.folder;
     }
   }
+  // Accept match if at least 50% of either side's tokens overlap
   if (bestMatch && bestScore >= 0.5) return bestMatch;
 
   return null;
