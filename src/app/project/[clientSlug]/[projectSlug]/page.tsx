@@ -33,6 +33,14 @@ interface BatchItem {
   webUrl: string;
   /** Proxy URL that never expires (redirects to fresh SP download URL) */
   proxyUrl: string;
+  /**
+   * Pre-authenticated direct download URL from SharePoint Graph API.
+   * Valid for ~1 hour. Used for video src instead of proxy streaming,
+   * because proxying large video files through Next.js API routes is
+   * unreliable on Replit (timeouts, body size limits, worker killed mid-stream).
+   * The page is SSR with 300s revalidation, so URLs refresh well before expiry.
+   */
+  directUrl?: string;
   mimeType: string;
   size: number;
   width?: number;
@@ -152,12 +160,14 @@ async function fetchAssetsByIds(
       if (!check.allowed) continue;
 
       const folderName = item.parentReference?.name || "Assets";
+      const isVideo = check.mimeType.startsWith("video/");
       if (!grouped.has(folderName)) grouped.set(folderName, []);
       grouped.get(folderName)!.push({
         name: item.name,
         itemId: item.id,
         webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
         proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
+        directUrl: isVideo ? item["@microsoft.graph.downloadUrl"] : undefined,
         mimeType: check.mimeType,
         size: item.size,
         width: item.image?.width,
@@ -287,11 +297,13 @@ async function collectFilesRecursive(
     for (const child of children) {
       const check = child.file ? isAllowedFile(child) : null;
       if (check?.allowed) {
+        const isVideo = check.mimeType.startsWith("video/");
         files.push({
           name: child.name,
           itemId: child.id,
           webUrl: child["@microsoft.graph.downloadUrl"] ?? child.webUrl,
           proxyUrl: `/api/project-assets/${child.id}?driveId=${encodeURIComponent(driveId)}`,
+          directUrl: isVideo ? child["@microsoft.graph.downloadUrl"] : undefined,
           mimeType: check.mimeType,
           size: child.size,
           width: child.image?.width,
@@ -349,11 +361,13 @@ async function fetchBatchesByFolderId(
       .filter((item) => item.file && isAllowedFile(item).allowed)
       .map((item) => {
         const { mimeType } = isAllowedFile(item);
+        const isVideo = mimeType.startsWith("video/");
         return {
           name: item.name,
           itemId: item.id,
           webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
           proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
+          directUrl: isVideo ? item["@microsoft.graph.downloadUrl"] : undefined,
           mimeType,
           size: item.size,
           width: item.image?.width,
@@ -490,11 +504,13 @@ async function fetchBatches(
         .filter((item) => item.file && isAllowedFile(item).allowed)
         .map((item) => {
           const { mimeType } = isAllowedFile(item);
+          const isVideo = mimeType.startsWith("video/");
           return {
             name: item.name,
             itemId: item.id,
             webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
             proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(SHAREPOINT_ASSETS_DRIVE_ID)}`,
+            directUrl: isVideo ? item["@microsoft.graph.downloadUrl"] : undefined,
             mimeType,
             size: item.size,
           };
@@ -828,24 +844,40 @@ export default async function ProjectPreviewPage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* Video Players */}
+                  {/* Video Players — use directUrl (pre-signed SharePoint URL) instead of proxy.
+                      Proxying video through Next.js API routes is unreliable on Replit:
+                      timeouts on large files, worker killed mid-stream, body size limits.
+                      The directUrl expires after ~1h but the page SSR revalidates every 300s. */}
                   {batchVideos.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       {batchVideos.map((item) => (
                         <div key={item.itemId} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-                          <video
-                            controls
-                            preload="metadata"
-                            className="w-full aspect-video bg-black"
-                            playsInline
-                          >
-                            <source src={item.proxyUrl} type={item.mimeType} />
-                            Your browser does not support video playback.
-                          </video>
+                          {item.directUrl ? (
+                            <video
+                              controls
+                              preload="metadata"
+                              className="w-full aspect-video bg-black"
+                              playsInline
+                              src={item.directUrl}
+                            >
+                              Your browser does not support video playback.
+                            </video>
+                          ) : (
+                            /* Fallback to proxy if directUrl is missing (shouldn't happen but safe) */
+                            <video
+                              controls
+                              preload="metadata"
+                              className="w-full aspect-video bg-black"
+                              playsInline
+                            >
+                              <source src={item.proxyUrl} type={item.mimeType} />
+                              Your browser does not support video playback.
+                            </video>
+                          )}
                           <div className="px-3 py-2 flex items-center justify-between">
                             <span className="text-xs text-white/60 truncate">{item.name.replace(/\.[^.]+$/, "")}</span>
                             <a
-                              href={item.proxyUrl}
+                              href={item.directUrl || item.proxyUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               aria-label={`Download ${item.name}`}
