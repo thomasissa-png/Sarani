@@ -162,6 +162,41 @@
       "when": 1775213200000,
       "tag": "0022_client_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1775213300000,
+      "tag": "0023_project_previews_sp_folder",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1775213400000,
+      "tag": "0024_presentation_versioning",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1775213500000,
+      "tag": "0025_presentation_comments",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1775213600000,
+      "tag": "0026_fix_project_previews_unique_constraint",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1775213700000,
+      "tag": "0027_add_candidate_pipeline_columns",
+      "breakpoints": true
     }
   ]
 }

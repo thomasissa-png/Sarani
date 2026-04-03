@@ -248,7 +248,7 @@ export async function DELETE(
 const ALLOWED_CASE_STUDY_KEYS = new Set([
   "slug", "client", "deliverable", "volume", "turnaround", "outcome",
   "brief", "result", "headline", "keyMetric", "stats", "metaDescription",
-  "category", "subtitle", "challenge", "solution", "resultsDetail", "tags", "image",
+  "category", "subtitle", "challenge", "solution", "resultsDetail", "tags", "image", "testimonial",
 ]);
 
 function buildTsObject(obj: Record<string, unknown>): string {
