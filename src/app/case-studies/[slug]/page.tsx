@@ -182,6 +182,18 @@ export default async function CaseStudyPage({ params }: PageProps) {
             </p>
           )}
 
+          {/* Hero image from VisualSelector */}
+          {cs.heroImage && (
+            <div className="mb-8 overflow-hidden rounded-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cs.heroImage}
+                alt={`${cs.client} — ${cs.headline}`}
+                className="w-full object-cover"
+              />
+            </div>
+          )}
+
           {/* Key metric badge */}
           {cs.keyMetric && (
             <div className="mb-8">

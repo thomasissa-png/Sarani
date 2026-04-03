@@ -668,8 +668,8 @@ export default function ClosuresPage() {
 
   // ─── Fetch generated outputs for a candidate ──────────────────────────────
 
-  const fetchOutputs = useCallback(async (candidateId: string) => {
-    if (outputs[candidateId]) return; // Already loaded
+  const fetchOutputs = useCallback(async (candidateId: string, force?: boolean) => {
+    if (!force && outputs[candidateId]) return; // Already loaded
     try {
       const res = await fetch(`/api/admin/case-studies/candidates/${candidateId}`);
       if (!res.ok) return;
@@ -1301,7 +1301,7 @@ export default function ClosuresPage() {
                               )}
                             </div>
                             <div className="mt-2">
-                              <RegenerateButton outputId={cs.id} outputType="case_study" onRegenerated={() => { delete outputs[closure.id]; fetchOutputs(closure.id); }} />
+                              <RegenerateButton outputId={cs.id} outputType="case_study" onRegenerated={() => { fetchOutputs(closure.id, true); }} />
                             </div>
                           </div>
                           );
@@ -1396,7 +1396,7 @@ export default function ClosuresPage() {
                             <LinkedInCharCounter text={[draft?.hook ?? liContent.hook, draft?.body ?? liContent.body, draft?.proofPoints ?? liContent.proofPoints, draft?.hashtags ?? liContent.hashtags].filter(Boolean).join("\n")} />
                             <div className="mt-2 flex items-center gap-2">
                               <OutputStatusBadge outputId={li.id} outputType="linkedin_post" />
-                              <RegenerateButton outputId={li.id} outputType="linkedin_post" onRegenerated={() => { delete outputs[closure.id]; fetchOutputs(closure.id); }} />
+                              <RegenerateButton outputId={li.id} outputType="linkedin_post" onRegenerated={() => { fetchOutputs(closure.id, true); }} />
                             </div>
                           </div>
                           );
@@ -1461,7 +1461,7 @@ export default function ClosuresPage() {
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                               <OutputStatusBadge outputId={ne.id} outputType="nurturing_email" />
-                              <RegenerateButton outputId={ne.id} outputType="nurturing_email" onRegenerated={() => { delete outputs[closure.id]; fetchOutputs(closure.id); }} />
+                              <RegenerateButton outputId={ne.id} outputType="nurturing_email" onRegenerated={() => { fetchOutputs(closure.id, true); }} />
                             </div>
                           </div>
                           );

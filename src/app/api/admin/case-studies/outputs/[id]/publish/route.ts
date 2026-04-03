@@ -127,7 +127,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       slug: caseStudy.slug,
-      message: `Case study published at /work/${caseStudy.slug}`,
+      message: `Case study published at /case-studies/${caseStudy.slug}`,
     });
   } catch (error) {
     console.error("Error publishing case study:", error);
