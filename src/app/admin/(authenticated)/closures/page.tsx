@@ -34,6 +34,49 @@ interface ClosureRecord {
   createdAt: string;
   clientNameResolved: string | null;
   pipelineItems: PipelineItem[];
+  source?: "closure" | "candidate";
+  pipelineStatus?: string;
+}
+
+interface CaseStudyOutputData {
+  id: string;
+  outputType: string;
+  content: {
+    title?: string;
+    slug?: string;
+    subtitle?: string;
+    heroHeadline?: string;
+    challenge?: string;
+    approach?: string;
+    results?: string;
+    stats?: Array<{ value: string; label: string }>;
+    category?: string;
+    [key: string]: unknown;
+  };
+}
+
+interface LinkedInOutputData {
+  id: string;
+  outputType: string;
+  content: {
+    hook?: string;
+    body?: string;
+    proofPoints?: string;
+    hashtags?: string;
+    charCount?: number;
+    [key: string]: unknown;
+  };
+}
+
+interface NurturingEmailOutputData {
+  id: string;
+  outputType: string;
+  content: {
+    subject?: string;
+    preview?: string;
+    body?: string;
+    [key: string]: unknown;
+  };
 }
 
 type ClosureFormData = {
@@ -394,6 +437,7 @@ export default function ClosuresPage() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
+  const [outputs, setOutputs] = useState<Record<string, { caseStudy: CaseStudyOutputData | null; linkedInPost: LinkedInOutputData | null; nurturingEmail: NurturingEmailOutputData | null }>>({});
 
   // ─── Fetch closures ──────────────────────────────────────────────────────
 
@@ -416,6 +460,27 @@ export default function ClosuresPage() {
   useEffect(() => {
     fetchClosures();
   }, [fetchClosures]);
+
+  // ─── Fetch generated outputs for a candidate ──────────────────────────────
+
+  const fetchOutputs = useCallback(async (candidateId: string) => {
+    if (outputs[candidateId]) return; // Already loaded
+    try {
+      const res = await fetch(`/api/admin/case-studies/candidates/${candidateId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setOutputs((prev) => ({
+        ...prev,
+        [candidateId]: {
+          caseStudy: data.outputs?.caseStudy ?? null,
+          linkedInPost: data.outputs?.linkedInPost ?? null,
+          nurturingEmail: data.outputs?.nurturingEmail ?? null,
+        },
+      }));
+    } catch {
+      // Silent fail — outputs just won't show
+    }
+  }, [outputs]);
 
   // ─── Submit closure ──────────────────────────────────────────────────────
 
@@ -510,30 +575,38 @@ export default function ClosuresPage() {
       const loadingKey = `override-${closureId}`;
       setActionLoading((prev) => new Set(prev).add(loadingKey));
       try {
-        // For candidates: "Create Case Study" triggers generation pipeline
+        // For candidates: "Create Case Study" → call generate directly (no PATCH first)
+        // The generate endpoint handles setting status to "generating" internally.
+        // Calling PATCH first would set status="generating" → POST sees it → 409 race condition.
         if (source === "candidate" && (action === "confirm_star" || action === "nominate_star")) {
-          // 1. Update status via PATCH
-          const patchRes = await fetch("/api/admin/closures", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ closureId, action }),
-          });
-          if (!patchRes.ok) {
-            throw new Error(`Failed to update status (${patchRes.status})`);
-          }
-          // 2. Trigger content generation pipeline
           const genRes = await fetch(`/api/admin/case-studies/candidates/${closureId}/generate`, {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ force: true }),
           });
           if (!genRes.ok) {
             const errData = await genRes.json().catch(() => ({}));
-            console.error("[Generate] Error:", errData);
-            // Don't throw — status was already updated, generation can be retried
+            throw new Error(errData?.error ?? `Generation failed (${genRes.status})`);
           }
           await fetchClosures();
           return;
         }
 
+        // For candidates: reject → use PATCH
+        if (source === "candidate" && action === "reject_star") {
+          const res = await fetch("/api/admin/closures", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ closureId, action }),
+          });
+          if (!res.ok) {
+            throw new Error(`Failed to update star status (${res.status})`);
+          }
+          await fetchClosures();
+          return;
+        }
+
+        // For closures (original flow): PATCH as usual
         const res = await fetch("/api/admin/closures", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -631,9 +704,14 @@ export default function ClosuresPage() {
                 {/* Row header */}
                 <button
                   type="button"
-                  onClick={() =>
-                    setExpandedId(isExpanded ? null : closure.id)
-                  }
+                  onClick={() => {
+                    const newId = isExpanded ? null : closure.id;
+                    setExpandedId(newId);
+                    // Load outputs when expanding a generated candidate
+                    if (newId && closure.source === "candidate" && (closure.status === "generated" || closure.status === "reviewed" || closure.status === "published")) {
+                      fetchOutputs(closure.id);
+                    }
+                  }}
                   className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-neutral-50 transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-neutral-400"
                   aria-expanded={isExpanded}
                 >
@@ -799,11 +877,108 @@ export default function ClosuresPage() {
                     )}
 
                     {/* No pipeline */}
-                    {!hasPipeline && (
+                    {!hasPipeline && closure.source !== "candidate" && (
                       <p className="text-xs text-neutral-500">
                         No content pipeline for this project (score below star
                         threshold or pipeline was skipped).
                       </p>
+                    )}
+
+                    {/* Pipeline status for candidates */}
+                    {closure.source === "candidate" && closure.pipelineStatus && closure.pipelineStatus !== "idle" && closure.pipelineStatus !== "complete" && (
+                      <div className="mb-3">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-700">
+                          <span className="animate-spin h-3 w-3 border border-yellow-400 border-t-yellow-700 rounded-full" />
+                          Pipeline: {closure.pipelineStatus.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Generated content outputs */}
+                    {closure.source === "candidate" && outputs[closure.id] && (
+                      <div className="space-y-4 mb-4">
+                        {/* Case Study */}
+                        {outputs[closure.id].caseStudy?.content && (
+                          <div className="border border-neutral-200 rounded-lg p-4">
+                            <h3 className="text-sm font-semibold text-neutral-800 mb-2">
+                              Case Study (Website)
+                            </h3>
+                            <div className="space-y-2 text-sm text-neutral-700">
+                              {outputs[closure.id].caseStudy!.content.title && (
+                                <p><span className="font-medium text-neutral-900">Titre :</span> {outputs[closure.id].caseStudy!.content.title}</p>
+                              )}
+                              {outputs[closure.id].caseStudy!.content.subtitle && (
+                                <p><span className="font-medium text-neutral-900">Sous-titre :</span> {outputs[closure.id].caseStudy!.content.subtitle}</p>
+                              )}
+                              {outputs[closure.id].caseStudy!.content.heroHeadline && (
+                                <p><span className="font-medium text-neutral-900">Hero :</span> {outputs[closure.id].caseStudy!.content.heroHeadline}</p>
+                              )}
+                              {outputs[closure.id].caseStudy!.content.challenge && (
+                                <div><span className="font-medium text-neutral-900">Challenge :</span><p className="mt-1 text-neutral-600">{outputs[closure.id].caseStudy!.content.challenge}</p></div>
+                              )}
+                              {outputs[closure.id].caseStudy!.content.approach && (
+                                <div><span className="font-medium text-neutral-900">Approche :</span><p className="mt-1 text-neutral-600">{outputs[closure.id].caseStudy!.content.approach}</p></div>
+                              )}
+                              {outputs[closure.id].caseStudy!.content.results && (
+                                <div><span className="font-medium text-neutral-900">Résultats :</span><p className="mt-1 text-neutral-600">{outputs[closure.id].caseStudy!.content.results}</p></div>
+                              )}
+                              {outputs[closure.id].caseStudy!.content.stats && outputs[closure.id].caseStudy!.content.stats!.length > 0 && (
+                                <div className="flex gap-4 mt-2">
+                                  {outputs[closure.id].caseStudy!.content.stats!.map((stat, i) => (
+                                    <div key={i} className="bg-neutral-50 rounded-lg px-3 py-2 text-center">
+                                      <div className="text-lg font-bold text-neutral-900">{stat.value}</div>
+                                      <div className="text-xs text-neutral-500">{stat.label}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* LinkedIn Post */}
+                        {outputs[closure.id].linkedInPost?.content && (
+                          <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/30">
+                            <h3 className="text-sm font-semibold text-blue-800 mb-2">
+                              LinkedIn Post
+                            </h3>
+                            <div className="text-sm text-neutral-700 whitespace-pre-wrap">
+                              {outputs[closure.id].linkedInPost!.content.hook && (
+                                <p className="font-medium mb-1">{outputs[closure.id].linkedInPost!.content.hook}</p>
+                              )}
+                              {outputs[closure.id].linkedInPost!.content.body && (
+                                <p className="mb-1">{outputs[closure.id].linkedInPost!.content.body}</p>
+                              )}
+                              {outputs[closure.id].linkedInPost!.content.proofPoints && (
+                                <p className="mb-1">{outputs[closure.id].linkedInPost!.content.proofPoints}</p>
+                              )}
+                              {outputs[closure.id].linkedInPost!.content.hashtags && (
+                                <p className="text-blue-600 text-xs mt-2">{outputs[closure.id].linkedInPost!.content.hashtags}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Nurturing Email */}
+                        {outputs[closure.id].nurturingEmail?.content && (
+                          <div className="border border-green-100 rounded-lg p-4 bg-green-50/30">
+                            <h3 className="text-sm font-semibold text-green-800 mb-2">
+                              Email de nurturing
+                            </h3>
+                            <div className="text-sm text-neutral-700">
+                              {outputs[closure.id].nurturingEmail!.content.subject && (
+                                <p className="mb-1"><span className="font-medium text-neutral-900">Sujet :</span> {outputs[closure.id].nurturingEmail!.content.subject}</p>
+                              )}
+                              {outputs[closure.id].nurturingEmail!.content.preview && (
+                                <p className="mb-2 text-xs text-neutral-500">Aperçu : {outputs[closure.id].nurturingEmail!.content.preview}</p>
+                              )}
+                              {outputs[closure.id].nurturingEmail!.content.body && (
+                                <div className="whitespace-pre-wrap mt-2">{outputs[closure.id].nurturingEmail!.content.body}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
 
                     {/* Actions */}
@@ -811,7 +986,7 @@ export default function ClosuresPage() {
                       {closure.starStatus !== "STAR" && (
                         <button
                           type="button"
-                          onClick={() => handleStarOverride(closure.id, "nominate_star")}
+                          onClick={() => handleStarOverride(closure.id, "nominate_star", closure.source)}
                           disabled={actionLoading.has(`override-${closure.id}`)}
                           className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400"
                         >
@@ -822,15 +997,15 @@ export default function ClosuresPage() {
                         <>
                           <button
                             type="button"
-                            onClick={() => handleStarOverride(closure.id, "confirm_star")}
+                            onClick={() => handleStarOverride(closure.id, "confirm_star", closure.source)}
                             disabled={actionLoading.has(`override-${closure.id}`)}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-400"
                           >
-                            Create Case Study
+                            {actionLoading.has(`override-${closure.id}`) ? "Generating..." : "Create Case Study"}
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleStarOverride(closure.id, "reject_star")}
+                            onClick={() => handleStarOverride(closure.id, "reject_star", closure.source)}
                             disabled={actionLoading.has(`override-${closure.id}`)}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300"
                           >
@@ -839,7 +1014,16 @@ export default function ClosuresPage() {
                         </>
                       )}
                       {closure.closedBy?.startsWith("pm_confirmed") && (
-                        <span className="text-xs text-success font-medium">Case study in progress ✓</span>
+                        <span className="text-xs text-green-600 font-medium">Case study in progress ✓</span>
+                      )}
+                      {closure.source === "candidate" && (closure.status === "generated" || closure.status === "reviewed") && (
+                        <span className="text-xs text-green-600 font-medium">Content generated ✓</span>
+                      )}
+                      {closure.source === "candidate" && closure.status === "generating" && (
+                        <span className="text-xs text-yellow-600 font-medium flex items-center gap-1">
+                          <span className="animate-spin h-3 w-3 border border-yellow-400 border-t-yellow-700 rounded-full" />
+                          Generating...
+                        </span>
                       )}
                     </div>
 
