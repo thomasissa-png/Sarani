@@ -216,8 +216,8 @@ LinkedIn post requirements:
   → Delivery turnaround (e.g., "Delivered in [X] days") — Sophie's #1 metric. Use [X] if unknown.
   → Fixed price WITH volume context (e.g., "€1,080 for [X] banner formats") — never price alone. Use [X] if unknown.
   → A verifiable quality fact: "Approved on first submission", "Zero revision disputes", or a real client quote. NEVER unsourced scores like "100/100".
-- hashtags: 3-5 relevant hashtags
-- charCount: actual character count of hook + body + proofPoints + hashtags combined
+- hashtags: leave EMPTY string — Sarani does not use hashtags on LinkedIn posts
+- charCount: actual character count of hook + body + proofPoints combined
 - Written from Sarani's perspective ("We delivered...")
 
 POST CLOSING RULE — choose based on content type, NEVER default to a commercial CTA:
@@ -276,5 +276,5 @@ ${JSON.stringify(strategy, null, 2)}
 CASE STUDY:
 ${JSON.stringify(copyOutput.caseStudy, null, 2)}
 
-Output a single JSON object with keys: linkedInPost (containing hook, body, proofPoints, hashtags, charCount).`;
+Output a single JSON object with keys: linkedInPost (containing hook, body, proofPoints, hashtags (empty string), charCount).`;
 }

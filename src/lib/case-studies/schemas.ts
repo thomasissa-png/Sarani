@@ -53,7 +53,7 @@ export const LinkedInPostSchema = z.object({
   hook: z.string().min(1),
   body: z.string().min(10),
   proofPoints: z.string().min(1),
-  hashtags: z.string().min(1),
+  hashtags: z.string().default(""),
   charCount: z.number(),
 });
 
