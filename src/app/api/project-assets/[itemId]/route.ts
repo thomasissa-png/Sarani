@@ -83,6 +83,8 @@ export async function GET(
     responseHeaders.set("Content-Type", mimeType);
     responseHeaders.set("Accept-Ranges", "bytes");
     responseHeaders.set("Cache-Control", "public, max-age=300, s-maxage=300");
+    responseHeaders.set("Access-Control-Allow-Origin", "*");
+    responseHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
 
     // Forward content-length and content-range from upstream
     const contentLength = upstream.headers.get("Content-Length");

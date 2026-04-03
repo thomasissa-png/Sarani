@@ -448,6 +448,15 @@ function TrackerContent() {
     setShareModalProject(p);
   }, []);
 
+  // Stable unique ID for a tracker row — always includes project name to avoid
+  // two different projects sharing the same star when they match the same ClickUp task.
+  const getStarId = useCallback((p: TrackerProject): string => {
+    const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
+    const clickupId = taskIdMatch?.[1];
+    // Include project name in the key to guarantee uniqueness per row
+    return clickupId ? `${clickupId}::${p.project}` : `${p.client}::${p.project}`;
+  }, []);
+
   // Toggle star (case study candidate) — only one star operation at a time
   const handleStar = useCallback(async (e: React.MouseEvent, p: TrackerProject) => {
     e.stopPropagation();
@@ -456,11 +465,12 @@ function TrackerContent() {
     // Prevent any concurrent star operation
     if (starringId) return;
 
-    // Need a ClickUp task URL to extract the task ID
+    const starId = getStarId(p);
+    // ClickUp task ID for the DB record (may be shared across projects)
     const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
     const clickupTaskId = taskIdMatch?.[1] ?? `${p.client}::${p.project}`;
 
-    setStarringId(clickupTaskId);
+    setStarringId(starId);
     try {
       const res = await fetch("/api/admin/tracker/star", {
         method: "POST",
@@ -477,8 +487,8 @@ function TrackerContent() {
         const data = await res.json();
         setStarredIds((prev) => {
           const next = new Set(prev);
-          if (data.starred) next.add(clickupTaskId);
-          else next.delete(clickupTaskId);
+          if (data.starred) next.add(starId);
+          else next.delete(starId);
           return next;
         });
       } else {
@@ -487,7 +497,7 @@ function TrackerContent() {
       }
     } catch (err) { console.error("[handleStar] Error:", err); }
     finally { setStarringId(null); }
-  }, [starringId]);
+  }, [starringId, getStarId]);
 
   // Derived data
   // Client filter: show only main clients (from CLIENT_MAPPINGS) + "Others" for the rest
@@ -565,8 +575,7 @@ function TrackerContent() {
       if (sourceFilter === "Excel Only" && p.clickupTaskUrl) return false;
       // Starred filter
       if (showStarredOnly) {
-        const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
-        const tid = taskIdMatch?.[1] ?? `${p.client}::${p.project}`;
+        const tid = getStarId(p);
         if (!starredIds.has(tid)) return false;
       }
       return true;
@@ -598,7 +607,7 @@ function TrackerContent() {
     }
 
     return filtered;
-  }, [data, search, clientFilter, statusFilter, invoiceFilter, sourceFilter, showStarredOnly, starredIds, sort]);
+  }, [data, search, clientFilter, statusFilter, invoiceFilter, sourceFilter, showStarredOnly, starredIds, sort, getStarId]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -1217,8 +1226,7 @@ function TrackerContent() {
                       <td className="px-3 py-3.5">
                         <div className="flex items-center gap-1">
                           {(() => {
-                            const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
-                            const tid = taskIdMatch?.[1] ?? `${p.client}::${p.project}`;
+                            const tid = getStarId(p);
                             const isStarred = starredIds.has(tid);
                             return (
                               <button

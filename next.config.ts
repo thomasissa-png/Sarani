@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
+              "media-src 'self' blob:",
               "font-src 'self'",
               "connect-src 'self' https://cloud.umami.is",
               "frame-ancestors 'none'",

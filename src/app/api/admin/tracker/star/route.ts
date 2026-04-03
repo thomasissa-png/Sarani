@@ -122,17 +122,29 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get all non-excluded candidates
+    // Get all non-excluded candidates — return both clickupTaskId and projectName
+    // so the frontend can build the unique star ID (clickupTaskId::projectName)
     const candidates = await db
       .select({
         clickupTaskId: caseStudyCandidates.clickupTaskId,
-        status: caseStudyCandidates.status,
+        projectName: caseStudyCandidates.projectName,
+        clientName: caseStudyCandidates.clientName,
       })
       .from(caseStudyCandidates)
       .where(eq(caseStudyCandidates.status, "suggested"));
 
-    const starredIds = new Set(candidates.map((c) => c.clickupTaskId));
-    return NextResponse.json({ starredIds: Array.from(starredIds) });
+    // Build star IDs matching the frontend's getStarId format:
+    // If clickupTaskId contains a real ClickUp ID: "clickupId::projectName"
+    // If synthetic: "client::project" (already in that format)
+    const starredIds = candidates.map((c) => {
+      if (c.clickupTaskId.includes("::")) {
+        // Synthetic ID — already in client::project format
+        return c.clickupTaskId;
+      }
+      // Real ClickUp ID — append project name
+      return `${c.clickupTaskId}::${c.projectName ?? ""}`;
+    });
+    return NextResponse.json({ starredIds });
   } catch (error) {
     console.error("[Tracker Star] GET error:", error);
     return NextResponse.json({ error: "Failed to load stars" }, { status: 500 });

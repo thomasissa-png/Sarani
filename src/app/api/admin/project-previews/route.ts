@@ -135,7 +135,8 @@ export async function POST(request: NextRequest) {
     let resultVersion: number;
 
     if (existing) {
-      // Update the existing preview row (handles legacy UNIQUE on project_id)
+      // Create a NEW row for the new version so each version has its own previewId
+      // (comments are tied to previewId — reusing the same row carries old comments over)
       const newVersion = existing.version + 1;
       if (newVersion > 20) {
         return NextResponse.json(
@@ -146,9 +147,16 @@ export async function POST(request: NextRequest) {
 
       const projectSlug = `${baseProjectSlug}-v${newVersion}`;
 
-      const [updated] = await db
+      // Deactivate previous versions (so the latest is the active one)
+      await db
         .update(projectPreviews)
-        .set({
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(projectPreviews.projectId, projectId));
+
+      try {
+        // Try inserting a new row (works if no legacy UNIQUE on project_id alone)
+        const [inserted] = await db.insert(projectPreviews).values({
+          projectId,
           version: newVersion,
           clientSlug,
           projectSlug,
@@ -160,13 +168,41 @@ export async function POST(request: NextRequest) {
           spDriveId: spDriveIdValue,
           selectedAssets: selectedAssetsValue,
           isActive: true,
-          updatedAt: new Date(),
-        })
-        .where(eq(projectPreviews.id, existing.id))
-        .returning({ id: projectPreviews.id });
+        }).returning({ id: projectPreviews.id });
 
-      resultId = updated.id;
-      resultVersion = newVersion;
+        resultId = inserted.id;
+        resultVersion = newVersion;
+      } catch (insertErr) {
+        // Fallback: if legacy UNIQUE constraint on project_id alone prevents insert,
+        // update the existing row (comments will carry over — legacy limitation)
+        const pgErr = (insertErr as { cause?: { code?: string } })?.cause;
+        if (pgErr?.code === "23505") {
+          // Unique violation — update in place
+          const [updated] = await db
+            .update(projectPreviews)
+            .set({
+              version: newVersion,
+              clientSlug,
+              projectSlug,
+              clientName,
+              projectName,
+              brief: briefValue,
+              sharepointLink: sharepointLinkValue,
+              spFolderId: spFolderIdValue,
+              spDriveId: spDriveIdValue,
+              selectedAssets: selectedAssetsValue,
+              isActive: true,
+              updatedAt: new Date(),
+            })
+            .where(eq(projectPreviews.id, existing.id))
+            .returning({ id: projectPreviews.id });
+
+          resultId = updated.id;
+          resultVersion = newVersion;
+        } else {
+          throw insertErr;
+        }
+      }
     } else {
       // No existing preview — insert a new row (version 1)
       const projectSlug = baseProjectSlug;
