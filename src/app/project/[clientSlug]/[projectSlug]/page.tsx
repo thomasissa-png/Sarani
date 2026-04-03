@@ -129,6 +129,78 @@ function formatBatchName(name: string): string {
 
 // ─── SharePoint Batch Fetching ─────────────────────────────────────────────
 
+/** Shape returned by Graph API for drive item children. */
+interface GraphDriveChild {
+  id: string;
+  name: string;
+  size: number;
+  file?: { mimeType: string };
+  image?: { width: number; height: number };
+  folder?: { childCount: number };
+  webUrl: string;
+  "@microsoft.graph.downloadUrl"?: string;
+}
+
+/** Maximum depth when recursing into subfolders inside a batch. */
+const MAX_FOLDER_DEPTH = 4;
+
+/**
+ * Recursively collect all allowed files from a Graph folder item.
+ * Traverses subfolders up to MAX_FOLDER_DEPTH, skipping folders in SKIP_FOLDER_NAMES.
+ */
+async function collectFilesRecursive(
+  driveId: string,
+  folderId: string,
+  depth: number
+): Promise<BatchItem[]> {
+  if (depth > MAX_FOLDER_DEPTH) return [];
+
+  try {
+    const data = await graphFetch<{ value: GraphDriveChild[] }>(
+      `/drives/${driveId}/items/${folderId}/children`
+    );
+    const children = data.value ?? [];
+
+    const files: BatchItem[] = [];
+    const nestedFolders: GraphDriveChild[] = [];
+
+    for (const child of children) {
+      if (child.file && ALLOWED_MIMETYPES.has(child.file.mimeType)) {
+        files.push({
+          name: child.name,
+          webUrl: child["@microsoft.graph.downloadUrl"] ?? child.webUrl,
+          proxyUrl: `/api/project-assets/${child.id}?driveId=${encodeURIComponent(driveId)}`,
+          mimeType: child.file.mimeType,
+          size: child.size,
+          width: child.image?.width,
+          height: child.image?.height,
+        });
+      } else if (
+        child.folder &&
+        !SKIP_FOLDER_NAMES.has(child.name.toLowerCase().trim())
+      ) {
+        nestedFolders.push(child);
+      }
+    }
+
+    // Recurse into nested subfolders in parallel
+    if (nestedFolders.length > 0) {
+      const nestedResults = await Promise.all(
+        nestedFolders.map((f) =>
+          collectFilesRecursive(driveId, f.id, depth + 1)
+        )
+      );
+      for (const nested of nestedResults) {
+        files.push(...nested);
+      }
+    }
+
+    return files;
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Fetch batches directly from a known SP folder ID (Graph API item ID).
  * Used when the PM selected the exact folder via the Share modal.
@@ -140,16 +212,9 @@ async function fetchBatchesByFolderId(
 ): Promise<{ batches: BatchGroup[]; error?: string }> {
   try {
     // List direct children of the selected folder
-    const data = await graphFetch<{ value: Array<{
-      id: string;
-      name: string;
-      size: number;
-      file?: { mimeType: string };
-      image?: { width: number; height: number };
-      folder?: { childCount: number };
-      webUrl: string;
-      "@microsoft.graph.downloadUrl"?: string;
-    }> }>(`/drives/${driveId}/items/${folderId}/children`);
+    const data = await graphFetch<{ value: GraphDriveChild[] }>(
+      `/drives/${driveId}/items/${folderId}/children`
+    );
 
     const items = data.value ?? [];
 
@@ -172,43 +237,21 @@ async function fetchBatchesByFolderId(
 
     const batches: BatchGroup[] = [];
 
-    // If there are subfolders, treat each as a batch and list its files
+    // If there are subfolders, treat each as a batch and recursively collect its files
     for (const folder of subfolders) {
-      try {
-        const subData = await graphFetch<{ value: Array<{
-          id: string;
-          name: string;
-          size: number;
-          file?: { mimeType: string };
-          image?: { width: number; height: number };
-          webUrl: string;
-          "@microsoft.graph.downloadUrl"?: string;
-        }> }>(`/drives/${driveId}/items/${folder.id}/children`);
+      const batchFiles = await collectFilesRecursive(driveId, folder.id, 1);
 
-        const batchFiles = (subData.value ?? [])
-          .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
-          .sort((a, b) => {
-            const aIsImage = a.file!.mimeType.startsWith("image/");
-            const bIsImage = b.file!.mimeType.startsWith("image/");
-            if (aIsImage && !bIsImage) return -1;
-            if (!aIsImage && bIsImage) return 1;
-            return a.name.localeCompare(b.name);
-          })
-          .map((item) => ({
-            name: item.name,
-            webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
-            proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
-            mimeType: item.file!.mimeType,
-            size: item.size,
-            width: item.image?.width,
-            height: item.image?.height,
-          }));
+      // Sort: images first, then videos, then PDFs — alphabetical within each group
+      batchFiles.sort((a, b) => {
+        const aIsImage = a.mimeType.startsWith("image/");
+        const bIsImage = b.mimeType.startsWith("image/");
+        if (aIsImage && !bIsImage) return -1;
+        if (!aIsImage && bIsImage) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
-        if (batchFiles.length > 0) {
-          batches.push({ name: folder.name, items: batchFiles });
-        }
-      } catch {
-        // Skip unreadable subfolders
+      if (batchFiles.length > 0) {
+        batches.push({ name: folder.name, items: batchFiles });
       }
     }
 
