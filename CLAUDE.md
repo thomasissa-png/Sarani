@@ -268,6 +268,10 @@ Si un agent a été interrompu par un timeout :
 
 23. **`tsc --noEmit` obligatoire avant CHAQUE commit.** Lancer `npx tsc --noEmit` et vérifier **0 erreurs** AVANT de `git commit`. Les tests vitest ne suffisent PAS — ils ne vérifient pas la cohérence des types entre fichiers. Quand on ajoute un type union member (ex: `"daily_digest"` à `InboxItemType`), vérifier TOUS les endroits qui utilisent ce type (Record<Type, ...>, switch/case, enum Zod). Un commit qui casse le build sur Replit = un commit qui n'aurait jamais dû être pushé. Signalé comme P0 sur 1 projet — 7 erreurs de build consécutives, 30+ minutes perdues par Thomas.
 
+24. **Ne JAMAIS confirmer un fix sans test live.** Si un test live est impossible (pas de .env, pas d'accès aux APIs externes), le dire EXPLICITEMENT à Thomas : "fix appliqué, tests unitaires OK, MAIS non testé en live". Ne JAMAIS laisser entendre qu'un fix fonctionne en production quand seul un test statique (code review, tests unitaires mockés) a été fait. Signalé comme P0 sur 1 projet — Thomas a découvert que les 4 "fixes" de S15 ne marchaient pas en production, aucun n'avait été testé en live.
+
+25. **Identifiant unique > fuzzy matching.** Quand un identifiant unique existe dans les données (ClickUp list ID, SharePoint item ID, etc.), TOUJOURS l'utiliser pour le mapping au lieu de fuzzy-matcher des noms. Le fuzzy matching est un pis-aller en fallback, pas une solution. Avant de coder un algorithme de matching, vérifier : (1) existe-t-il un ID unique dans les données ? (2) existe-t-il déjà un mapping dans la config/business rules ? (3) seulement si non → fuzzy matching. Signalé comme P0 sur 1 projet — le fuzzy matching de dossiers SharePoint échouait sur les caractères spéciaux et les séparateurs, alors que le ClickUp list ID était déjà disponible.
+
 ## Protocole de test du framework
 
 Pour valider que les agents fonctionnent correctement ensemble, utiliser ce protocole sur un projet fictif ou réel :
