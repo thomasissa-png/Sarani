@@ -7,6 +7,7 @@ import { emailProjectLinks } from "@/lib/db/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getSpaces, getTasksForList, getListsForSpace } from "@/lib/integrations/clickup";
 import type { ClickUpTask } from "@/lib/integrations/clickup";
+import { cleanEmailSubject } from "@/lib/inbox/sarani-filter";
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -113,9 +114,11 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Strategy 2: Fallback — domain + subject similarity via ClickUp ──
+    // Clean Re:/Tr:/Fwd: prefixes — they tank similarity scores
+    const cleanedSubject = cleanEmailSubject(input.subject);
     const matchResult = await matchByDomainAndSubject(
       input.clientDomain,
-      input.subject
+      cleanedSubject
     );
 
     return NextResponse.json(matchResult);

@@ -9,6 +9,7 @@ import { describe, it, expect } from "vitest";
 import {
   isSaraniEmail,
   isSaraniOutgoingReply,
+  cleanEmailSubject,
 } from "@/lib/inbox/sarani-filter";
 
 /* ---------- isSaraniEmail ---------- */
@@ -71,5 +72,65 @@ describe("isSaraniOutgoingReply — DEPRECATED (always false)", () => {
     expect(isSaraniOutgoingReply("De : fanny@sarani.studio\ntest")).toBe(false);
     expect(isSaraniOutgoingReply("From: thomas@sarani.studio\ntest")).toBe(false);
     expect(isSaraniOutgoingReply("")).toBe(false);
+  });
+});
+
+/* ---------- cleanEmailSubject ---------- */
+
+describe("cleanEmailSubject — strips Re:/Tr:/Fwd: prefixes from subjects", () => {
+  it("strips single Re:", () => {
+    expect(cleanEmailSubject("Re: TikTok Banners Q2")).toBe("TikTok Banners Q2");
+  });
+
+  it("strips repeated Re: Re: Re:", () => {
+    expect(cleanEmailSubject("Re: Re: Re: TikTok Banners Q2")).toBe("TikTok Banners Q2");
+  });
+
+  it("strips French Tr: (transféré)", () => {
+    expect(cleanEmailSubject("Tr: Boulanger Key Visuals")).toBe("Boulanger Key Visuals");
+  });
+
+  it("strips mixed Re: Tr: Re: Fwd:", () => {
+    expect(cleanEmailSubject("Re: Tr: Re: Fwd: Project Delivery")).toBe("Project Delivery");
+  });
+
+  it("strips case-insensitive RE: and FW:", () => {
+    expect(cleanEmailSubject("RE: FW: RE: Budget Approval")).toBe("Budget Approval");
+  });
+
+  it("strips Fwd:", () => {
+    expect(cleanEmailSubject("Fwd: New Brief from Client")).toBe("New Brief from Client");
+  });
+
+  it("strips German AW: and WG:", () => {
+    expect(cleanEmailSubject("AW: WG: Kampagne Herbst")).toBe("Kampagne Herbst");
+  });
+
+  it("strips French Rép:", () => {
+    expect(cleanEmailSubject("Rép: Devis Création")).toBe("Devis Création");
+  });
+
+  it("handles extra whitespace", () => {
+    expect(cleanEmailSubject("  Re:   Re:  Subject  ")).toBe("Subject");
+  });
+
+  it("returns clean subject unchanged", () => {
+    expect(cleanEmailSubject("TikTok P&E SEA Campaign")).toBe("TikTok P&E SEA Campaign");
+  });
+
+  it("handles empty string", () => {
+    expect(cleanEmailSubject("")).toBe("");
+  });
+
+  it("does not strip Re from middle of subject", () => {
+    expect(cleanEmailSubject("Project Review Meeting")).toBe("Project Review Meeting");
+  });
+
+  it("preserves [EXT] tags in subject", () => {
+    expect(cleanEmailSubject("Re: [EXT] Feedback on Visuals")).toBe("[EXT] Feedback on Visuals");
+  });
+
+  it("handles Re: with no space after colon", () => {
+    expect(cleanEmailSubject("Re:Quick Question")).toBe("Quick Question");
   });
 });

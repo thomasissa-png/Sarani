@@ -4,7 +4,7 @@ import { callClaudeJSON } from "@/lib/ai/claude";
 import { db } from "@/lib/db";
 import { inboxItems, processedEmails } from "@/lib/db/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
-import { isSaraniEmail } from "@/lib/inbox/sarani-filter";
+import { isSaraniEmail, cleanEmailSubject } from "@/lib/inbox/sarani-filter";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -212,7 +212,7 @@ async function processEmailNotification(messageId: string): Promise<void> {
     // Fetch full email from Graph API
     const email = await getEmailById(messageId);
     const from = email.from.emailAddress.address;
-    const subject = email.subject;
+    const subject = cleanEmailSubject(email.subject);
     const bodyPreview = stripHtml(email.body.content).slice(0, 2000);
     const conversationId = email.conversationId;
 

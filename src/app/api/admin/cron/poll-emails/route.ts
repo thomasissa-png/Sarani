@@ -26,7 +26,7 @@ import {
   type EmailCategory,
 } from "@/lib/ai/prompts/classifier";
 import { getMappingBySpaceName } from "@/lib/integrations/config";
-import { isSaraniEmail, isSaraniOutgoingReply } from "@/lib/inbox/sarani-filter";
+import { isSaraniEmail, isSaraniOutgoingReply, cleanEmailSubject } from "@/lib/inbox/sarani-filter";
 
 // ─── Auth helper ────────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
         // Fetch full email body
         const fullEmail = await getEmailById(email.id);
         const from = fullEmail.from.emailAddress.address;
-        const subject = fullEmail.subject;
+        const subject = cleanEmailSubject(fullEmail.subject);
         const bodyPreview = stripHtml(fullEmail.body.content).slice(0, 2000);
 
         // Skip internal Sarani emails — they should not appear in the inbox
