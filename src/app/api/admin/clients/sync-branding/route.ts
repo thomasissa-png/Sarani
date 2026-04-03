@@ -31,6 +31,7 @@ const BUSINESS_RULES_DATA: Record<string, BusinessRuleEntry> = {
     primaryLanguage: "EN",
     paymentTermsDays: 45,
     businessNotes: [
+      "TVA 20% ONLY for Sony France.",
       "PM (CET): Aurélie. PM (evening): Fanny / Clara.",
     ],
   },
@@ -126,6 +127,7 @@ const BUSINESS_RULES_DATA: Record<string, BusinessRuleEntry> = {
     primaryLanguage: "EN",
     paymentTermsDays: 45,
     businessNotes: [
+      "TVA 20%.",
       "checkout.com = ProcessOut (parent company).",
       "Small revenue — shares ClickUp space with Other customers.",
     ],
