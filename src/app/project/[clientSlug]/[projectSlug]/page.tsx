@@ -537,7 +537,9 @@ export default async function ProjectPreviewPage({ params }: Props) {
                         <ImageLightbox
                           key={item.webUrl}
                           src={item.webUrl}
-                          alt={item.name}
+                          alt={item.name.replace(/\.[^.]+$/, "")}
+                          previewId={preview.id}
+                          assetName={item.name}
                         >
                           <div className="group rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors">
                             <div className="aspect-[4/3] flex items-center justify-center bg-neutral-900 p-2">

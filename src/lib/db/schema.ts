@@ -10,6 +10,7 @@ import {
   varchar,
   integer,
   numeric,
+  real,
 } from "drizzle-orm/pg-core";
 
 // ─── Client ─────────────────────────────────────────────────────────────────
@@ -661,6 +662,33 @@ export const projectPreviews = pgTable(
     index("idx_project_previews_project_id").on(table.projectId),
   ]
 );
+
+// ─── Presentation Comments (positional annotations on images) ─────────────
+
+export const presentationComments = pgTable(
+  "presentation_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    previewId: uuid("preview_id").notNull().references(() => projectPreviews.id, { onDelete: "cascade" }),
+    positionX: real("position_x"),     // 0.0–1.0 (% of image width) — null = general comment
+    positionY: real("position_y"),     // 0.0–1.0 (% of image height)
+    assetName: text("asset_name"),     // File name the comment is on — null = page-level comment
+    authorName: text("author_name").default("Anonymous"),
+    content: text("content").notNull(),
+    parentId: uuid("parent_id"),       // Reply thread — references own table
+    attachmentUrl: text("attachment_url"),
+    attachmentName: text("attachment_name"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_comments_preview").on(table.previewId),
+    index("idx_comments_parent").on(table.parentId),
+  ]
+);
+
+export type PresentationComment = typeof presentationComments.$inferSelect;
+export type NewPresentationComment = typeof presentationComments.$inferInsert;
 
 // ─── Video Previews ───────────────────────────────────────────────────────
 
