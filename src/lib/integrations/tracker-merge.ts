@@ -640,6 +640,7 @@ export function mergeData(
       division,
       country,
       clickupListName: clickupTask?.list?.name ?? undefined,
+      clickupListId: clickupTask?.list?.id ?? undefined,
     };
   });
 
@@ -668,6 +669,7 @@ export function mergeData(
       clickupTaskUrl: task.url ?? "",
       clickupStatus: rawStatus,
       clickupListName: task.list?.name ?? undefined,
+      clickupListId: task.list?.id ?? undefined,
     });
   }
 
@@ -700,6 +702,7 @@ export function mergeData(
         division: existing.division || p.division,
         country: existing.country || p.country,
         clickupListName: existing.clickupListName || p.clickupListName,
+        clickupListId: existing.clickupListId || p.clickupListId,
       });
     }
   }

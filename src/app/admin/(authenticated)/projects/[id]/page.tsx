@@ -134,6 +134,8 @@ interface TrackerInfo {
   poNumber: string;
   sharepointLink: string;
   clickupTaskUrl: string;
+  clickupListId?: string;
+  clickupListName?: string;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -752,6 +754,8 @@ export default function ProjectViewPage() {
       poNumber: searchParams.get("po") || "",
       sharepointLink: searchParams.get("sharepoint") || "",
       clickupTaskUrl: searchParams.get("clickup") || "",
+      clickupListId: searchParams.get("listId") || undefined,
+      clickupListName: searchParams.get("listName") || undefined,
     };
   })();
 
@@ -1057,6 +1061,8 @@ export default function ProjectViewPage() {
           projectName={trackerInfo.project}
           sharepointLink={trackerInfo.sharepointLink}
           clickupTaskUrl={trackerInfo.clickupTaskUrl}
+          clickupListId={trackerInfo.clickupListId}
+          clickupListName={trackerInfo.clickupListName}
           onLinkCreated={fetchData}
         />
       )}

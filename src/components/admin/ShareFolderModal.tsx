@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { getSubdivisionByListId, ASSETS_CUSTOMERS_BASE_PATH } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -50,8 +51,10 @@ interface ShareFolderModalProps {
   projectName: string;
   clickupTaskUrl?: string;
   sharepointLink?: string;
-  /** ClickUp list name — used to auto-navigate to the right SP subfolder */
+  /** ClickUp list name — used as FALLBACK to auto-navigate to the right SP subfolder */
   clickupListName?: string;
+  /** ClickUp list ID — PRIMARY key to look up SP subfolder directly from config */
+  clickupListId?: string;
   /** Called after a share link is successfully created — use to refresh the parent's link list */
   onLinkCreated?: () => void;
 }
@@ -175,7 +178,7 @@ function findMatchingFolder(folders: FolderItem[], clickupList: string, clientNa
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink, clickupListName, onLinkCreated }: ShareFolderModalProps) {
+export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink, clickupListName, clickupListId, onLinkCreated }: ShareFolderModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FoldersResponse | null>(null);
@@ -226,34 +229,75 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   }, [clientName]);
 
   // Helper: navigate to client root and auto-find matching subfolder
-  // For clients like TikTok, the structure is: 05. TikTok / 03. Projects / {divisions}
-  // So we may need to go one level deeper into "Projects" before matching
+  // PRIMARY: use clickupListId → config lookup → direct SP folder navigation
+  // FALLBACK: fuzzy match clickupListName against SP folder names
   const loadClientRoot = useCallback(async () => {
     const result = await fetchFolders({ clientRoot: true });
-    if (!result || !clickupListName) return;
-    console.log(`[ShareFolderModal] Auto-matching ClickUp list "${clickupListName}" against ${result.folders.length} SP folders:`, result.folders.map((f) => f.name));
+    if (!result) return;
 
-    // First try matching at the client root level
+    // ── PRIMARY: config-based lookup via ClickUp list ID ──
+    // The config has all ClickUp list IDs mapped to SP subfolder names.
+    // This is deterministic — no fuzzy matching needed.
+    if (clickupListId) {
+      const configMatch = getSubdivisionByListId(clickupListId);
+      if (configMatch?.subdivision.sharepointSubfolder) {
+        const targetFolder = configMatch.subdivision.sharepointSubfolder;
+        console.log(`[ShareFolderModal] Config lookup: listId=${clickupListId} → "${configMatch.subdivision.name}" → SP folder "${targetFolder}"`);
+
+        // The subfolder may be at root level or inside a "Projects" folder
+        // Try root first
+        let match = result.folders.find((f) => f.name === targetFolder);
+        if (match) {
+          console.log(`[ShareFolderModal] Found "${targetFolder}" at root`);
+          setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
+          fetchFolders({ folderId: match.id });
+          return;
+        }
+
+        // Try inside "Projects" subfolder (common pattern: "03. Projects/{divisions}")
+        const projectsFolder = result.folders.find((f) =>
+          /projects?$/i.test(f.name.replace(/^\d+\.\s*/, "").trim())
+        );
+        if (projectsFolder) {
+          const projectsResult = await fetchFolders({ folderId: projectsFolder.id });
+          if (projectsResult) {
+            match = projectsResult.folders.find((f) => f.name === targetFolder);
+            if (match) {
+              console.log(`[ShareFolderModal] Found "${targetFolder}" inside "${projectsFolder.name}"`);
+              setBreadcrumb([
+                { name: projectsFolder.name, folderId: projectsFolder.id, webUrl: projectsFolder.webUrl },
+                { name: match.name, folderId: match.id, webUrl: match.webUrl },
+              ]);
+              fetchFolders({ folderId: match.id });
+              return;
+            }
+          }
+        }
+        console.warn(`[ShareFolderModal] Config says folder "${targetFolder}" but not found in SP. Falling back to fuzzy match.`);
+      }
+    }
+
+    // ── FALLBACK: fuzzy match using clickupListName ──
+    if (!clickupListName) return;
+    console.log(`[ShareFolderModal] Fallback: fuzzy matching "${clickupListName}" against ${result.folders.length} SP folders`);
+
     let match = findMatchingFolder(result.folders, clickupListName, clientName);
     if (match) {
-      console.log(`[ShareFolderModal] Matched at root: "${clickupListName}" → "${match.name}"`);
+      console.log(`[ShareFolderModal] Fuzzy matched at root: "${clickupListName}" → "${match.name}"`);
       setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
       fetchFolders({ folderId: match.id });
       return;
     }
 
-    // If no match at root, look for a "Projects" subfolder and try matching inside it
-    // Common pattern: "03. Projects" contains division-specific subfolders
     const projectsFolder = result.folders.find((f) =>
       /projects?$/i.test(f.name.replace(/^\d+\.\s*/, "").trim())
     );
     if (projectsFolder) {
-      console.log(`[ShareFolderModal] No root match, navigating into "${projectsFolder.name}" to find subdivisions`);
       const projectsResult = await fetchFolders({ folderId: projectsFolder.id });
       if (projectsResult) {
         match = findMatchingFolder(projectsResult.folders, clickupListName, clientName);
         if (match) {
-          console.log(`[ShareFolderModal] Matched inside Projects: "${clickupListName}" → "${match.name}"`);
+          console.log(`[ShareFolderModal] Fuzzy matched inside Projects: "${clickupListName}" → "${match.name}"`);
           setBreadcrumb([
             { name: projectsFolder.name, folderId: projectsFolder.id, webUrl: projectsFolder.webUrl },
             { name: match.name, folderId: match.id, webUrl: match.webUrl },
@@ -264,8 +308,8 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       }
     }
 
-    console.warn(`[ShareFolderModal] No match found for ClickUp list "${clickupListName}" in SP folders`);
-  }, [fetchFolders, clickupListName, clientName]);
+    console.warn(`[ShareFolderModal] No match found for "${clickupListName}" (listId=${clickupListId ?? "n/a"}) in SP folders`);
+  }, [fetchFolders, clickupListId, clickupListName, clientName]);
 
   // Helper: try to resolve a SP link, with fallback to client root browsing
   const resolveSpLink = useCallback(async (spLink: string) => {

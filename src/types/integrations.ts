@@ -27,8 +27,10 @@ export interface TrackerProject {
   division?: string;
   /** Country/market extracted from sheet name (e.g. "France", "Germany", "Global") */
   country?: string;
-  /** ClickUp list name (e.g. "TikTok Shop UK") — used to find the right SP subfolder */
+  /** ClickUp list name (e.g. "TikTok Shop UK") — used as fallback to find the right SP subfolder */
   clickupListName?: string;
+  /** ClickUp list ID — PRIMARY key to map directly to SP subfolder via config subdivisions */
+  clickupListId?: string;
 }
 
 export interface SourceMeta {

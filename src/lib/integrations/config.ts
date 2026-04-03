@@ -74,6 +74,8 @@ export interface ClientSubdivision {
   readonly clickupListId: string;
   /** ClickUp URL for quick access */
   readonly clickupUrl: string;
+  /** SharePoint subfolder name within the client's Projects folder (e.g., "15. TikTok P&E SEA") */
+  readonly sharepointSubfolder?: string;
 }
 
 export interface ClientIntegrationMapping {
@@ -106,12 +108,39 @@ export const CLIENT_MAPPINGS: readonly ClientIntegrationMapping[] = [
     clickupSpaceId: "90050434316",
     excelTrackerFilename: "02. Sarani_Bytedance Projects.xlsx",
     sharepointCustomerFolder: "05. TikTok",
+    subdivisions: [
+      { name: "TikTok Germany", clickupListId: "900502249117", clickupUrl: "https://app.clickup.com/14389859/v/li/900502249117", sharepointSubfolder: "02. Germany" },
+      { name: "TikTok France", clickupListId: "900502247465", clickupUrl: "https://app.clickup.com/14389859/v/li/900502247465", sharepointSubfolder: "03. France" },
+      { name: "TikTok UK", clickupListId: "900303407539", clickupUrl: "https://app.clickup.com/14389859/v/li/900303407539", sharepointSubfolder: "03. UK" },
+      { name: "TikTok SMB", clickupListId: "900802525893", clickupUrl: "https://app.clickup.com/14389859/v/li/900802525893", sharepointSubfolder: "04. SMB" },
+      { name: "TikTok Global Accounts", clickupListId: "900502263845", clickupUrl: "https://app.clickup.com/14389859/v/li/900502263845", sharepointSubfolder: "05. Global Accounts" },
+      { name: "TikTok Benelux", clickupListId: "900502247464", clickupUrl: "https://app.clickup.com/14389859/v/li/900502247464", sharepointSubfolder: "06. Benelux" },
+      { name: "TikTok Shop SEA", clickupListId: "901701490958", clickupUrl: "https://app.clickup.com/14389859/v/li/901701490958", sharepointSubfolder: "07. SEA" },
+      { name: "TikTok US Branding", clickupListId: "900502251376", clickupUrl: "https://app.clickup.com/14389859/v/li/900502251376", sharepointSubfolder: "08. US Branding" },
+      { name: "TikTok USA", clickupListId: "901701757963", clickupUrl: "https://app.clickup.com/14389859/v/li/901701757963", sharepointSubfolder: "09. USA" },
+      { name: "TikTok METAP", clickupListId: "901701490958", clickupUrl: "https://app.clickup.com/14389859/v/li/901701490958", sharepointSubfolder: "10. METAP" },
+      { name: "TikTok LIVE", clickupListId: "901702577214", clickupUrl: "https://app.clickup.com/14389859/v/li/901702577214", sharepointSubfolder: "12. TikTok LIVE" },
+      { name: "TikTok Shop EMEA", clickupListId: "901702723533", clickupUrl: "https://app.clickup.com/14389859/v/li/901702723533", sharepointSubfolder: "13. TikTok Shop EMEA" },
+      { name: "TikTok CEE", clickupListId: "901702750815", clickupUrl: "https://app.clickup.com/14389859/v/li/901702750815", sharepointSubfolder: "14. TikTok CEE" },
+      { name: "TikTok P&E SEA", clickupListId: "901702879453", clickupUrl: "https://app.clickup.com/14389859/v/li/901702879453", sharepointSubfolder: "15. TikTok P&E SEA" },
+      { name: "TikTok Shop USA", clickupListId: "901702899564", clickupUrl: "https://app.clickup.com/14389859/v/li/901702899564", sharepointSubfolder: "16. TikTok Shop USA" },
+      { name: "TikTok Others", clickupListId: "901705458972", clickupUrl: "https://app.clickup.com/14389859/v/li/901705458972", sharepointSubfolder: "17. Others" },
+      { name: "TikTok Shop LATAM", clickupListId: "901704846947", clickupUrl: "https://app.clickup.com/14389859/v/li/901704846947", sharepointSubfolder: "18. TikTok Shop LATAM" },
+      { name: "TikTok CCA", clickupListId: "901705458972", clickupUrl: "https://app.clickup.com/14389859/v/li/901705458972", sharepointSubfolder: "19. TikTok CCA" },
+      { name: "TikTok Shop UK", clickupListId: "901706876621", clickupUrl: "https://app.clickup.com/14389859/v/li/901706876621", sharepointSubfolder: "20. TikTok Shop UK" },
+      { name: "TikTok EU Branding", clickupListId: "901711816120", clickupUrl: "https://app.clickup.com/14389859/v/li/901711816120", sharepointSubfolder: "21. TikTok EU Branding" },
+      { name: "TTS Global Ops", clickupListId: "901702723533", clickupUrl: "https://app.clickup.com/14389859/v/li/901702723533", sharepointSubfolder: "22. TTS Global Ops" },
+    ],
   },
   {
     clickupSpaceName: "PICO XR",
     clickupSpaceId: "90050434327",
     excelTrackerFilename: "02. Sarani_Bytedance Projects.xlsx",
-    sharepointCustomerFolder: "05. TikTok",
+    sharepointCustomerFolder: "04. PICO XR",
+    subdivisions: [
+      { name: "PICO B2C EMEA", clickupListId: "900502247535", clickupUrl: "https://app.clickup.com/14389859/v/li/900502247535" },
+      { name: "PICO B2B EMEA", clickupListId: "900502247536", clickupUrl: "https://app.clickup.com/14389859/v/li/900502247536" },
+    ],
   },
   {
     clickupSpaceName: "Other customers",
@@ -124,36 +153,63 @@ export const CLIENT_MAPPINGS: readonly ClientIntegrationMapping[] = [
     clickupSpaceId: "90174878459",
     excelTrackerFilename: "04. Sarani_Aristocrat Projects.xlsx",
     sharepointCustomerFolder: "11. Aristocrat",
+    subdivisions: [
+      { name: "Aristocrat USA", clickupListId: "901712262709", clickupUrl: "https://app.clickup.com/14389859/v/li/901712262709" },
+      { name: "Aristocrat Asia", clickupListId: "901712262834", clickupUrl: "https://app.clickup.com/14389859/v/li/901712262834" },
+    ],
   },
   {
     clickupSpaceName: "Ubi",
     clickupSpaceId: "90171040997",
     excelTrackerFilename: "09. Sarani_Projets Ubi.xlsx",
     sharepointCustomerFolder: "17. Ubi",
+    subdivisions: [
+      { name: "Adidas", clickupListId: "901704341200", clickupUrl: "https://app.clickup.com/14389859/v/li/901704341200" },
+      { name: "Ubi Internal", clickupListId: "901704345673", clickupUrl: "https://app.clickup.com/14389859/v/li/901704345673" },
+      { name: "Red Bull", clickupListId: "901707332168", clickupUrl: "https://app.clickup.com/14389859/v/li/901707332168" },
+      { name: "LEGO", clickupListId: "901704345855", clickupUrl: "https://app.clickup.com/14389859/v/li/901704345855" },
+      { name: "IKEA", clickupListId: "901704970300", clickupUrl: "https://app.clickup.com/14389859/v/li/901704970300" },
+      { name: "TikTok via Ubi", clickupListId: "901706944747", clickupUrl: "https://app.clickup.com/14389859/v/li/901706944747" },
+      { name: "Barilla", clickupListId: "901712149614", clickupUrl: "https://app.clickup.com/14389859/v/li/901712149614" },
+    ],
   },
   {
     clickupSpaceName: "Aujan",
     clickupSpaceId: "90171121804",
     excelTrackerFilename: "10. Sarani_Aujan Projects.xlsx",
     sharepointCustomerFolder: "18. Aujan",
+    subdivisions: [
+      { name: "Aujan Corporate", clickupListId: "901705328640", clickupUrl: "https://app.clickup.com/14389859/v/li/901705328640" },
+      { name: "Rani", clickupListId: "901704818470", clickupUrl: "https://app.clickup.com/14389859/v/li/901704818470" },
+      { name: "Barbican", clickupListId: "901705328468", clickupUrl: "https://app.clickup.com/14389859/v/li/901705328468" },
+    ],
   },
   {
     clickupSpaceName: "Bose",
     clickupSpaceId: "90171343766",
     excelTrackerFilename: "11. Sarani_Bose Projects.xlsx",
     sharepointCustomerFolder: "19. Bose",
+    subdivisions: [
+      { name: "Bose", clickupListId: "901705794806", clickupUrl: "https://app.clickup.com/14389859/v/li/901705794806" },
+    ],
   },
   {
     clickupSpaceName: "Lamarck",
     clickupSpaceId: "90172906076",
     excelTrackerFilename: "12. Sarani_Lamarck Projects.xlsx",
     sharepointCustomerFolder: "21.Lamarck",
+    subdivisions: [
+      { name: "Lamarck", clickupListId: "901708730218", clickupUrl: "https://app.clickup.com/14389859/v/li/901708730218" },
+    ],
   },
   {
     clickupSpaceName: "CMC Markets",
     clickupSpaceId: "90172572190",
     excelTrackerFilename: "13. Sarani_CMC Markets Project.xlsx",
     sharepointCustomerFolder: "20. CMC Markets",
+    subdivisions: [
+      { name: "CMC Markets", clickupListId: "901708074740", clickupUrl: "https://app.clickup.com/14389859/v/li/901708074740" },
+    ],
   },
 ] as const;
 
@@ -461,6 +517,22 @@ export function getMappingBySpaceName(
     });
   });
   if (bySubdivision) return bySubdivision;
+  return undefined;
+}
+
+/**
+ * Find a subdivision by its ClickUp List ID.
+ * Returns the parent mapping + the matched subdivision, or undefined.
+ * This is the PRIMARY lookup for ShareFolderModal — no fuzzy matching needed.
+ */
+export function getSubdivisionByListId(
+  listId: string
+): { mapping: ClientIntegrationMapping; subdivision: ClientSubdivision } | undefined {
+  for (const m of CLIENT_MAPPINGS) {
+    if (!m.subdivisions) continue;
+    const sub = m.subdivisions.find((s) => s.clickupListId === listId);
+    if (sub) return { mapping: m, subdivision: sub };
+  }
   return undefined;
 }
 
