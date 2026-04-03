@@ -336,50 +336,41 @@ async function fetchBatches(
     const batches: BatchGroup[] = [];
 
     for (const batchFolder of batchFolders) {
-      const batchPath = `${assetRoot}/${batchFolder.name}`;
-      const batchItems = await listDriveItems(
+      // Use recursive collection via Graph item ID to find files in nested subfolders
+      const batchFiles = await collectFilesRecursive(
         SHAREPOINT_ASSETS_DRIVE_ID,
-        batchPath
+        batchFolder.id,
+        1
       );
 
-      const filteredItems: BatchItem[] = batchItems
-        .filter(
-          (item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType)
-        )
-        .sort((a, b) => {
-          const aIsImage = a.file!.mimeType.startsWith("image/");
-          const bIsImage = b.file!.mimeType.startsWith("image/");
-          if (aIsImage && !bIsImage) return -1;
-          if (!aIsImage && bIsImage) return 1;
-          return a.name.localeCompare(b.name);
-        })
-        .map((item) => ({
-          name: item.name,
-          webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
-          proxyUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl, // Legacy: no item ID, use direct URL
-          mimeType: item.file!.mimeType,
-          size: item.size,
-        }));
+      // Sort: images first, then videos, then PDFs — alphabetical within each group
+      batchFiles.sort((a, b) => {
+        const aIsImage = a.mimeType.startsWith("image/");
+        const bIsImage = b.mimeType.startsWith("image/");
+        if (aIsImage && !bIsImage) return -1;
+        if (!aIsImage && bIsImage) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
-      if (filteredItems.length > 0) {
-        batches.push({ name: batchFolder.name, items: filteredItems });
+      if (batchFiles.length > 0) {
+        batches.push({ name: batchFolder.name, items: batchFiles });
       }
     }
 
-    // If no batch subfolders found, scan the asset root directly for images
+    // If no batch subfolders found, scan the asset root directly for files
     if (batches.length === 0) {
       console.log(`[share-page] No subfolders with images found, scanning root for direct files`);
-      const rootImages = assetRootItems
+      const rootFiles = assetRootItems
         .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
         .map((item) => ({
           name: item.name,
           webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
-          proxyUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+          proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(SHAREPOINT_ASSETS_DRIVE_ID)}`,
           mimeType: item.file!.mimeType,
           size: item.size,
         }));
-      if (rootImages.length > 0) {
-        batches.push({ name: "Assets", items: rootImages });
+      if (rootFiles.length > 0) {
+        batches.push({ name: "Assets", items: rootFiles });
       }
     }
 
