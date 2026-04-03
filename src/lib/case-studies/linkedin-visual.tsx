@@ -19,16 +19,25 @@ export interface LinkedInVisualParams {
   accentWord?: string;
   /** Absolute URL to client logo PNG. Null = show Sarani logo only. */
   clientLogoUrl?: string | null;
+  /** Override client logo with a proxy URL (e.g. from SharePoint). Takes priority over clientLogoUrl. */
+  clientLogoOverride?: string;
   /** 1-3 image URLs (SharePoint direct URLs or data URIs). */
   projectImages: string[];
+  /** Optional secondary line: client name + key stat. Displayed below title. */
+  secondaryText?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VISUAL_SIZE = { width: 1200, height: 1200 };
 const FLAME = "#DA5126";
-const BG_DARK = "#0d0d0d";
-const BG_GRADIENT_START = "#1a1a1a";
+const CERULEAN = "#2D7DD2";
+const LEMON = "#F0C808";
+const BG_DARK = "#000000"; // token: surface.dark
+const BG_GRADIENT_START = "#1d1d1d"; // token: surface.dark-elevated
+const PHOTO_RADIUS = 16;
+/** Pixel height reserved for images (canvas 1200 - padding 100 - pill ~64 - margins ~96 - title ~132 - subtitle ~36 - bar 6) */
+const IMAGE_AREA_HEIGHT = 676;
 
 // ─── Font loader ─────────────────────────────────────────────────────────────
 // Loads Outfit Bold from public/fonts/ (already in the repo).
@@ -149,11 +158,23 @@ export async function generateLinkedInVisual(
 ): Promise<Buffer> {
   const {
     clientName,
-    projectTitle,
+    projectTitle: rawTitle,
     accentWord = clientName,
     clientLogoUrl,
+    clientLogoOverride,
     projectImages,
+    secondaryText,
   } = params;
+
+  // Dynamic title sizing for long titles
+  let titleFontSize = 60; // token: 6xl
+  let displayTitle = rawTitle;
+  if (rawTitle.length > 120) {
+    titleFontSize = 36;
+    displayTitle = rawTitle.length > 150 ? rawTitle.slice(0, 147) + "..." : rawTitle;
+  } else if (rawTitle.length > 80) {
+    titleFontSize = 44;
+  }
 
   // Load fonts
   const [outfitBold, outfitRegular] = await Promise.all([
@@ -166,10 +187,11 @@ export async function generateLinkedInVisual(
     "/images/logo-sarani-white.png"
   );
 
-  // Fetch client logo as data URI (if available)
+  // Fetch client logo as data URI — override takes priority
   let clientLogoDataUri: string | null = null;
-  if (clientLogoUrl) {
-    clientLogoDataUri = await fetchImageAsDataUri(clientLogoUrl);
+  const logoSource = clientLogoOverride ?? clientLogoUrl;
+  if (logoSource) {
+    clientLogoDataUri = await fetchImageAsDataUri(logoSource);
   }
 
   // Fetch project images as data URIs (parallel, with fallback)
