@@ -35,7 +35,7 @@ const CERULEAN = "#2D7DD2";
 const LEMON = "#F0C808";
 const BG_DARK = "#000000"; // token: surface.dark
 const BG_GRADIENT_START = "#1d1d1d"; // token: surface.dark-elevated
-const PHOTO_RADIUS = 16;
+const PHOTO_RADIUS = 32; // token: 2xl — pronounced rounded corners per Thomas template
 /** Pixel height reserved for images (canvas 1200 - padding 100 - pill ~64 - margins ~96 - title ~132 - subtitle ~36 - bar 6) */
 const IMAGE_AREA_HEIGHT = 676;
 
@@ -166,10 +166,14 @@ export async function generateLinkedInVisual(
     secondaryText,
   } = params;
 
-  // Dynamic title sizing for long titles
-  let titleFontSize = 60; // token: 6xl
+  // Dynamic title sizing — scale UP for short titles (poster impact), DOWN for long ones
+  let titleFontSize = 60; // token: 6xl — default
   let displayTitle = rawTitle;
-  if (rawTitle.length > 120) {
+  if (rawTitle.length <= 15) {
+    titleFontSize = 96; // 2-3 word poster headline like "I RUN STORE"
+  } else if (rawTitle.length <= 25) {
+    titleFontSize = 80; // short title, still big impact
+  } else if (rawTitle.length > 120) {
     titleFontSize = 36;
     displayTitle = rawTitle.length > 150 ? rawTitle.slice(0, 147) + "..." : rawTitle;
   } else if (rawTitle.length > 80) {
@@ -201,12 +205,9 @@ export async function generateLinkedInVisual(
 
   // ─── Build the visual JSX ──────────────────────────────────────────────
 
-  // Build secondary line: clientName + optional key stat
-  const secondaryLine =
-    secondaryText ??
-    (clientName
-      ? clientName
-      : undefined);
+  // Secondary line: only shown if explicitly provided (e.g. LLM-generated visualTitle).
+  // No fallback to clientName — the model template is clean: pill + title + photos only.
+  const secondaryLine = secondaryText || undefined;
 
   const imageResponse = new ImageResponse(
     (
@@ -336,7 +337,7 @@ export async function generateLinkedInVisual(
                   src={imageDataUris[1]}
                   style={{
                     width: "100%",
-                    height: imageDataUris.length >= 3 ? Math.floor(IMAGE_AREA_HEIGHT * 0.48) : IMAGE_AREA_HEIGHT,
+                    height: imageDataUris.length >= 3 ? Math.floor(IMAGE_AREA_HEIGHT * 0.33) : IMAGE_AREA_HEIGHT,
                     objectFit: "cover",
                     borderRadius: PHOTO_RADIUS,
                   }}
@@ -346,7 +347,7 @@ export async function generateLinkedInVisual(
                     src={imageDataUris[2]}
                     style={{
                       width: "100%",
-                      height: Math.floor(IMAGE_AREA_HEIGHT * 0.48),
+                      height: Math.floor(IMAGE_AREA_HEIGHT * 0.63),
                       objectFit: "cover",
                       borderRadius: PHOTO_RADIUS,
                       marginTop: Math.floor(IMAGE_AREA_HEIGHT * 0.04),
