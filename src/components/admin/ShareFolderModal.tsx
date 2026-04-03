@@ -80,18 +80,28 @@ function findMatchingFolder(folders: FolderItem[], clickupList: string, clientNa
   const listLower = clickupList.toLowerCase().trim();
   const clientLower = clientName.toLowerCase().trim();
 
-  // Strategy 1: exact match (case-insensitive)
-  const exact = folders.find((f) => f.name.toLowerCase().trim() === listLower);
-  if (exact) return exact;
+  // Helper: strip SharePoint numbered prefixes like "15. ", "03. ", "17. " from folder names
+  const stripNumberPrefix = (name: string): string =>
+    name.replace(/^\d+\.\s*/, "").trim();
 
-  // Strategy 2: mutual includes (original logic)
-  const byIncludes = folders.find((f) => {
-    const folderLower = f.name.toLowerCase();
-    return folderLower.includes(listLower) || listLower.includes(folderLower);
+  // Pre-compute normalized folder names (stripped of number prefixes)
+  const normalizedFolders = folders.map((f) => ({
+    folder: f,
+    raw: f.name.toLowerCase().trim(),
+    stripped: stripNumberPrefix(f.name.toLowerCase().trim()),
+  }));
+
+  // Strategy 1: exact match — try both raw name and stripped name
+  const exact = normalizedFolders.find((nf) => nf.raw === listLower || nf.stripped === listLower);
+  if (exact) return exact.folder;
+
+  // Strategy 2: mutual includes — try stripped folder names
+  const byIncludes = normalizedFolders.find((nf) => {
+    return nf.stripped.includes(listLower) || listLower.includes(nf.stripped);
   });
-  if (byIncludes) return byIncludes;
+  if (byIncludes) return byIncludes.folder;
 
-  // Strategy 3: strip client prefix from list name and try again
+  // Strategy 3: strip client prefix from ClickUp list name and retry
   // e.g. "TikTok P&E SEA" → "P&E SEA", then match against folder "P&E SEA"
   let stripped = listLower;
   if (stripped.startsWith(clientLower)) {
@@ -103,30 +113,37 @@ function findMatchingFolder(folders: FolderItem[], clickupList: string, clientNa
 
   for (const candidate of [stripped, strippedFirstWord]) {
     if (candidate.length < 2) continue;
-    const match = folders.find((f) => {
-      const folderLower = f.name.toLowerCase().trim();
-      return folderLower.includes(candidate) || candidate.includes(folderLower);
+    const match = normalizedFolders.find((nf) => {
+      return nf.stripped.includes(candidate) || candidate.includes(nf.stripped);
     });
-    if (match) return match;
+    if (match) return match.folder;
   }
 
   // Strategy 4: tokenize and find best word-overlap match (min 2 shared tokens)
-  const listTokens = new Set(listLower.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2));
+  // Exclude generic client name tokens + "others" to prevent false matches
+  const genericTokens = new Set([...clientLower.split(/\s+/), "others", "other", "tiktok"]);
+  const listTokens = new Set(
+    listLower.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2 && !genericTokens.has(t))
+  );
+  if (listTokens.size === 0) return null; // No meaningful tokens to match
+
   let bestMatch: FolderItem | null = null;
   let bestScore = 0;
-  for (const folder of folders) {
-    const folderTokens = new Set(folder.name.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2));
+  for (const nf of normalizedFolders) {
+    const folderTokens = new Set(
+      nf.stripped.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2 && !genericTokens.has(t))
+    );
     let overlap = 0;
     for (const t of listTokens) {
       if (folderTokens.has(t)) overlap++;
     }
-    const score = overlap / Math.max(listTokens.size, folderTokens.size);
-    if (overlap >= 2 && score > bestScore) {
+    const score = listTokens.size > 0 ? overlap / listTokens.size : 0;
+    if (overlap >= 1 && score > bestScore) {
       bestScore = score;
-      bestMatch = folder;
+      bestMatch = nf.folder;
     }
   }
-  if (bestMatch && bestScore >= 0.3) return bestMatch;
+  if (bestMatch && bestScore >= 0.5) return bestMatch;
 
   return null;
 }
@@ -183,35 +200,56 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     }
   }, [clientName]);
 
-  // Helper: try to resolve a SP link, with fallback to client root browsing
-  const resolveSpLink = useCallback(async (spLink: string) => {
-    const result = await fetchFolders({ url: spLink });
-    if (result) return; // Success
-    // Fallback to client root browsing
-    setError(null);
-    const fallbackResult = await fetchFolders({ clientRoot: true });
-    if (!fallbackResult || !clickupListName) return;
-    const match = findMatchingFolder(fallbackResult.folders, clickupListName, clientName);
-    if (match) {
-      setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
-      fetchFolders({ folderId: match.id });
-    }
-  }, [fetchFolders, clickupListName, clientName]);
-
   // Helper: navigate to client root and auto-find matching subfolder
+  // For clients like TikTok, the structure is: 05. TikTok / 03. Projects / {divisions}
+  // So we may need to go one level deeper into "Projects" before matching
   const loadClientRoot = useCallback(async () => {
     const result = await fetchFolders({ clientRoot: true });
     if (!result || !clickupListName) return;
     console.log(`[ShareFolderModal] Auto-matching ClickUp list "${clickupListName}" against ${result.folders.length} SP folders:`, result.folders.map((f) => f.name));
-    const match = findMatchingFolder(result.folders, clickupListName, clientName);
+
+    // First try matching at the client root level
+    let match = findMatchingFolder(result.folders, clickupListName, clientName);
     if (match) {
-      console.log(`[ShareFolderModal] Matched: "${clickupListName}" → "${match.name}"`);
+      console.log(`[ShareFolderModal] Matched at root: "${clickupListName}" → "${match.name}"`);
       setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
       fetchFolders({ folderId: match.id });
-    } else {
-      console.warn(`[ShareFolderModal] No match found for ClickUp list "${clickupListName}" in SP folders`);
+      return;
     }
+
+    // If no match at root, look for a "Projects" subfolder and try matching inside it
+    // Common pattern: "03. Projects" contains division-specific subfolders
+    const projectsFolder = result.folders.find((f) =>
+      /projects?$/i.test(f.name.replace(/^\d+\.\s*/, "").trim())
+    );
+    if (projectsFolder) {
+      console.log(`[ShareFolderModal] No root match, navigating into "${projectsFolder.name}" to find subdivisions`);
+      const projectsResult = await fetchFolders({ folderId: projectsFolder.id });
+      if (projectsResult) {
+        match = findMatchingFolder(projectsResult.folders, clickupListName, clientName);
+        if (match) {
+          console.log(`[ShareFolderModal] Matched inside Projects: "${clickupListName}" → "${match.name}"`);
+          setBreadcrumb([
+            { name: projectsFolder.name, folderId: projectsFolder.id, webUrl: projectsFolder.webUrl },
+            { name: match.name, folderId: match.id, webUrl: match.webUrl },
+          ]);
+          fetchFolders({ folderId: match.id });
+          return;
+        }
+      }
+    }
+
+    console.warn(`[ShareFolderModal] No match found for ClickUp list "${clickupListName}" in SP folders`);
   }, [fetchFolders, clickupListName, clientName]);
+
+  // Helper: try to resolve a SP link, with fallback to client root browsing
+  const resolveSpLink = useCallback(async (spLink: string) => {
+    const result = await fetchFolders({ url: spLink });
+    if (result) return; // Success
+    // Fallback to client root browsing — delegates to loadClientRoot which handles Projects subfolder
+    setError(null);
+    await loadClientRoot();
+  }, [fetchFolders, loadClientRoot]);
 
   // Load folders on open
   useEffect(() => {

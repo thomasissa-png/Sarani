@@ -8,6 +8,10 @@ const STREAM_MIMETYPES = new Set([
   "video/quicktime",
   "video/webm",
   "video/x-msvideo",
+  "video/x-ms-wmv",
+  "video/x-matroska",
+  "video/mpeg",
+  "video/3gpp",
 ]);
 
 /**

@@ -885,7 +885,22 @@ export default function ClosuresPage() {
                     )}
 
                     {/* Pipeline status for candidates */}
-                    {closure.source === "candidate" && closure.pipelineStatus && closure.pipelineStatus !== "idle" && closure.pipelineStatus !== "complete" && (
+                    {closure.source === "candidate" && closure.pipelineStatus === "failed" && (
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+                          Pipeline failed
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleStarOverride(closure.id, "confirm_star", closure.source)}
+                          disabled={actionLoading.has(`override-${closure.id}`)}
+                          className="px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50"
+                        >
+                          {actionLoading.has(`override-${closure.id}`) ? "Retrying..." : "Retry"}
+                        </button>
+                      </div>
+                    )}
+                    {closure.source === "candidate" && closure.pipelineStatus && !["idle", "complete", "failed"].includes(closure.pipelineStatus) && (
                       <div className="mb-3">
                         <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-700">
                           <span className="animate-spin h-3 w-3 border border-yellow-400 border-t-yellow-700 rounded-full" />

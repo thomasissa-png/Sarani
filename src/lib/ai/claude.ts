@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const DEFAULT_MODEL = "claude-sonnet-4-5-20241022";
+const DEFAULT_MODEL = "claude-sonnet-4-6-latest";
 const DEFAULT_MAX_TOKENS = 4096;
 const REQUEST_TIMEOUT_MS = 60_000;
 

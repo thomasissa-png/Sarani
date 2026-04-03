@@ -28,6 +28,8 @@ import {
 
 interface BatchItem {
   name: string;
+  /** SharePoint Graph item ID — unique across all folders */
+  itemId: string;
   webUrl: string;
   /** Proxy URL that never expires (redirects to fresh SP download URL) */
   proxyUrl: string;
@@ -58,6 +60,10 @@ const ALLOWED_MIMETYPES = new Set([
   "video/quicktime",
   "video/webm",
   "video/x-msvideo",
+  "video/x-ms-wmv",
+  "video/x-matroska",
+  "video/mpeg",
+  "video/3gpp",
 ]);
 
 // Folders to SKIP when scanning for deliverables
@@ -184,6 +190,7 @@ async function collectFilesRecursive(
       if (child.file && ALLOWED_MIMETYPES.has(child.file.mimeType)) {
         files.push({
           name: child.name,
+          itemId: child.id,
           webUrl: child["@microsoft.graph.downloadUrl"] ?? child.webUrl,
           proxyUrl: `/api/project-assets/${child.id}?driveId=${encodeURIComponent(driveId)}`,
           mimeType: child.file.mimeType,
@@ -243,6 +250,7 @@ async function fetchBatchesByFolderId(
       .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
       .map((item) => ({
         name: item.name,
+        itemId: item.id,
         webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
         proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
         mimeType: item.file!.mimeType,
@@ -380,6 +388,7 @@ async function fetchBatches(
         .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
         .map((item) => ({
           name: item.name,
+          itemId: item.id,
           webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
           proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(SHAREPOINT_ASSETS_DRIVE_ID)}`,
           mimeType: item.file!.mimeType,
@@ -459,14 +468,27 @@ export default async function ProjectPreviewPage({ params }: Props) {
   // If PM selected specific assets, filter batches to only show those
   if (preview.selectedAssets) {
     try {
-      const selected: Array<{ name: string }> = JSON.parse(preview.selectedAssets);
-      const selectedNames = new Set(selected.map((s) => s.name.toLowerCase()));
-      batches = batches
-        .map((b) => ({
-          ...b,
-          items: b.items.filter((item) => selectedNames.has(item.name.toLowerCase())),
-        }))
-        .filter((b) => b.items.length > 0);
+      const selected: Array<{ id?: string; name: string }> = JSON.parse(preview.selectedAssets);
+      // Prefer filtering by ID (unique across folders), fallback to name for legacy data
+      const hasIds = selected.some((s) => s.id);
+      if (hasIds) {
+        const selectedIds = new Set(selected.map((s) => s.id).filter(Boolean));
+        batches = batches
+          .map((b) => ({
+            ...b,
+            items: b.items.filter((item) => selectedIds.has(item.itemId)),
+          }))
+          .filter((b) => b.items.length > 0);
+      } else {
+        // Legacy fallback: filter by name
+        const selectedNames = new Set(selected.map((s) => s.name.toLowerCase()));
+        batches = batches
+          .map((b) => ({
+            ...b,
+            items: b.items.filter((item) => selectedNames.has(item.name.toLowerCase())),
+          }))
+          .filter((b) => b.items.length > 0);
+      }
     } catch {
       // Invalid JSON — show all assets
     }
@@ -620,19 +642,26 @@ export default async function ProjectPreviewPage({ params }: Props) {
                   {batchImages.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                       {batchImages.map((item, imgIdx) => {
-                        const assetCommentCount = commentCountMap.get(item.name) ?? 0;
+                        // Use itemId as unique comment key to prevent same-name files
+                        // in different folders from sharing comments
+                        const commentKey = item.itemId || `${batch.name}::${item.name}`;
+                        const assetCommentCount = commentCountMap.get(commentKey) ?? commentCountMap.get(item.name) ?? 0;
                         return (
                         <ImageLightbox
-                          key={item.name}
+                          key={item.itemId || `${batch.name}-${item.name}`}
                           src={item.proxyUrl}
                           alt={item.name.replace(/\.[^.]+$/, "")}
                           previewId={preview.id}
-                          assetName={item.name}
-                          allImages={batchImages.map((bi) => ({ src: bi.proxyUrl, alt: bi.name.replace(/\.[^.]+$/, ""), assetName: bi.name }))}
+                          assetName={commentKey}
+                          allImages={batchImages.map((bi) => ({
+                            src: bi.proxyUrl,
+                            alt: bi.name.replace(/\.[^.]+$/, ""),
+                            assetName: bi.itemId || `${batch.name}::${bi.name}`,
+                          }))}
                           currentIndex={imgIdx}
                         >
                           <div className="group relative rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors">
-                            <CommentCountBadge previewId={preview.id} assetName={item.name} initialCount={assetCommentCount} />
+                            <CommentCountBadge previewId={preview.id} assetName={commentKey} initialCount={assetCommentCount} />
                             <div className="aspect-[4/3] flex items-center justify-center bg-neutral-900 p-2">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
@@ -645,7 +674,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             <div className="px-3 py-2 bg-white/5 flex items-center justify-between gap-2">
                               <span className="text-xs text-white/50 truncate flex items-center gap-1.5">
                                 {item.name.replace(/\.[^.]+$/, "")}
-                                <CommentCountInline previewId={preview.id} assetName={item.name} initialCount={assetCommentCount} />
+                                <CommentCountInline previewId={preview.id} assetName={commentKey} initialCount={assetCommentCount} />
                               </span>
                               <span className="text-[10px] text-white/25 shrink-0 tabular-nums">
                                 {item.width && item.height ? `${item.width}×${item.height}` : item.name.split(".").pop()?.toUpperCase()}
@@ -669,7 +698,6 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             src={item.proxyUrl}
                             className="w-full aspect-video bg-black"
                             playsInline
-                            crossOrigin="anonymous"
                           >
                             Your browser does not support video playback.
                           </video>
