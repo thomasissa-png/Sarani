@@ -345,7 +345,7 @@ export async function POST(request: NextRequest) {
       .from(clients);
 
     clientRecords = allClients.filter(
-      (c) => c.brandGuidelinesLink && !c.primaryColor,
+      (c) => c.brandGuidelinesLink,
     );
   }
 
