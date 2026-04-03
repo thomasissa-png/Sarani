@@ -121,54 +121,75 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     }
   }, [clientName]);
 
-  // Load folders on open — use SP link from ClickUp if available
-  // If no SP link but we have a clickupListName, auto-navigate to the matching subfolder
+  // Helper: try to resolve a SP link, with fallback to client root browsing
+  const resolveSpLink = useCallback(async (spLink: string) => {
+    const result = await fetchFolders({ url: spLink });
+    if (result) return; // Success
+    // Fallback to client root browsing
+    setError(null);
+    const fallbackResult = await fetchFolders({ clientRoot: true });
+    if (!fallbackResult || !clickupListName) return;
+    const listLower = clickupListName.toLowerCase();
+    const match = fallbackResult.folders.find((f) => {
+      const folderLower = f.name.toLowerCase();
+      return folderLower.includes(listLower) || listLower.includes(folderLower);
+    });
+    if (match) {
+      setBreadcrumb([{ name: match.name, folderId: match.id }]);
+      fetchFolders({ folderId: match.id });
+    }
+  }, [fetchFolders, clickupListName]);
+
+  // Helper: navigate to client root and auto-find matching subfolder
+  const loadClientRoot = useCallback(async () => {
+    const result = await fetchFolders({ clientRoot: true });
+    if (!result || !clickupListName) return;
+    const listLower = clickupListName.toLowerCase();
+    const match = result.folders.find((f) => {
+      const folderLower = f.name.toLowerCase();
+      return folderLower.includes(listLower) || listLower.includes(folderLower);
+    });
+    if (match) {
+      setBreadcrumb([{ name: match.name, folderId: match.id }]);
+      fetchFolders({ folderId: match.id });
+    }
+  }, [fetchFolders, clickupListName]);
+
+  // Load folders on open
   useEffect(() => {
     if (!isOpen) return;
     setBreadcrumb([]);
     setSharedLink(null);
     setCopied(false);
 
+    // 1. If we already have a SharePoint link, use it directly
     if (sharepointLink) {
-      // Try URL resolution first; fall back to client root if it fails
-      fetchFolders({ url: sharepointLink }).then((result) => {
-        if (result) return; // URL resolved successfully
-        // URL resolution failed — fall back to client-based folder browsing
-        setError(null);
-        fetchFolders({ clientRoot: true }).then((fallbackResult) => {
-          if (!fallbackResult || !clickupListName) return;
-          const listLower = clickupListName.toLowerCase();
-          const match = fallbackResult.folders.find((f) => {
-            const folderLower = f.name.toLowerCase();
-            return folderLower.includes(listLower) || listLower.includes(folderLower);
-          });
-          if (match) {
-            setBreadcrumb([{ name: match.name, folderId: match.id }]);
-            fetchFolders({ folderId: match.id });
-          }
-        });
-      });
+      resolveSpLink(sharepointLink);
       return;
     }
 
-    // No SP link — load client root, then try to auto-navigate to the right subfolder
-    fetchFolders({ clientRoot: true }).then((result) => {
-      if (!result || !clickupListName) return;
-
-      // Find a subfolder matching the ClickUp list name (fuzzy: contains match)
-      const listLower = clickupListName.toLowerCase();
-      const match = result.folders.find((f) => {
-        const folderLower = f.name.toLowerCase();
-        return folderLower.includes(listLower) || listLower.includes(folderLower);
-      });
-
-      if (match) {
-        // Auto-navigate into the matching subfolder
-        setBreadcrumb([{ name: match.name, folderId: match.id }]);
-        fetchFolders({ folderId: match.id });
+    // 2. No SP link cached — try to fetch it from ClickUp task's custom fields
+    if (clickupTaskUrl) {
+      const taskIdMatch = clickupTaskUrl.match(/\/t\/([a-zA-Z0-9]+)/);
+      if (taskIdMatch) {
+        fetch(`/api/admin/integrations/clickup/sharepoint-link?taskId=${taskIdMatch[1]}`)
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (data?.url) {
+              resolveSpLink(data.url);
+            } else {
+              // No SP URL in ClickUp either — fall back to client root
+              loadClientRoot();
+            }
+          })
+          .catch(() => loadClientRoot());
+        return;
       }
-    });
-  }, [isOpen, fetchFolders, sharepointLink, clickupListName]);
+    }
+
+    // 3. No ClickUp task — load client root directly
+    loadClientRoot();
+  }, [isOpen, sharepointLink, clickupTaskUrl, resolveSpLink, loadClientRoot]);
 
   // Navigate into a subfolder by its ID
   const navigateInto = useCallback((folderName: string, folderId: string) => {

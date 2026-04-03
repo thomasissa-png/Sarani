@@ -31,7 +31,8 @@ export interface ClickUpCustomField {
   id: string;
   name: string;
   type: string;
-  value?: string | number | string[] | ClickUpUserField[] | null;
+  // ClickUp URL fields can return { url: "..." } objects — allow Record<string, unknown>
+  value?: string | number | string[] | ClickUpUserField[] | Record<string, unknown> | null;
 }
 
 export interface ClickUpUserField {
@@ -370,6 +371,65 @@ export function getCustomFieldValue(
   }
 
   return String(field.value);
+}
+
+/**
+ * Extract a SharePoint URL from a ClickUp task's custom fields.
+ * Searches all fields for URLs containing sharepoint.com or 1drv.ms.
+ * Also checks fields named "sharepoint" (case-insensitive) for any URL value.
+ */
+export function extractSharePointUrlFromTask(task: ClickUpTask): string | null {
+  if (!task.custom_fields) return null;
+
+  for (const field of task.custom_fields) {
+    if (!field.value) continue;
+
+    // String value — check if it's a SharePoint URL
+    if (typeof field.value === "string") {
+      const val = field.value.trim();
+      if (val.includes("sharepoint.com") || val.includes("1drv.ms")) return val;
+      continue;
+    }
+
+    // Object value — ClickUp URL fields return { url: "..." }
+    if (typeof field.value === "object" && !Array.isArray(field.value) && field.value !== null) {
+      const obj = field.value as Record<string, unknown>;
+      for (const key of ["url", "value", "link", "href"]) {
+        const nested = obj[key];
+        if (typeof nested === "string") {
+          const val = nested.trim();
+          if (val.includes("sharepoint.com") || val.includes("1drv.ms")) return val;
+        }
+      }
+    }
+
+    // Stringify as last resort
+    const str = JSON.stringify(field.value);
+    if (str.includes("sharepoint.com") || str.includes("1drv.ms")) {
+      const urlMatch = str.match(/(https?:\/\/[^\s"',}]+(?:sharepoint\.com|1drv\.ms)[^\s"',}]*)/i);
+      if (urlMatch) return urlMatch[1];
+    }
+  }
+
+  // Phase 2: Check fields named "sharepoint" for any URL-like value
+  const SP_FIELD_RE = /sharepoint|sp[\s_-]?link|sp[\s_-]?folder|sp[\s_-]?url/i;
+  for (const field of task.custom_fields) {
+    if (!field.value || !field.name || !SP_FIELD_RE.test(field.name)) continue;
+
+    if (typeof field.value === "string" && field.value.trim().startsWith("http")) {
+      return field.value.trim();
+    }
+    if (typeof field.value === "object" && !Array.isArray(field.value) && field.value !== null) {
+      const obj = field.value as Record<string, unknown>;
+      for (const key of ["url", "value", "link", "href"]) {
+        if (typeof obj[key] === "string" && (obj[key] as string).startsWith("http")) {
+          return (obj[key] as string).trim();
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 /**

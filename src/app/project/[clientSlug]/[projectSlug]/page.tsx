@@ -475,6 +475,17 @@ export default async function ProjectPreviewPage({ params }: Props) {
   );
   const totalAssets = batches.reduce((sum, b) => sum + b.items.length, 0);
 
+  // If no sharepointLink but we have a folderId, fetch the folder's webUrl for the download section
+  let folderDownloadUrl = preview.sharepointLink ?? null;
+  if (!folderDownloadUrl && preview.spFolderId) {
+    try {
+      const folderInfo = await graphFetch<{ webUrl?: string }>(
+        `/drives/${preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID}/items/${preview.spFolderId}?$select=webUrl`
+      );
+      folderDownloadUrl = folderInfo?.webUrl ?? null;
+    } catch { /* non-critical */ }
+  }
+
   // Fetch comment counts per asset for badge display
   const commentCountRows = await db
     .select({
@@ -759,14 +770,14 @@ export default async function ProjectPreviewPage({ params }: Props) {
       </section>
 
       {/* Download section */}
-      {preview.sharepointLink && (
+      {folderDownloadUrl && (
         <section className="max-w-6xl mx-auto px-6 pb-16">
           <div className="rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
             <p className="text-sm text-white/50 mb-4">
               Need to download all files or access the full project folder?
             </p>
             <a
-              href={preview.sharepointLink}
+              href={folderDownloadUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-lg bg-white text-black text-sm font-semibold hover:bg-white/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame focus-visible:ring-offset-2 focus-visible:ring-offset-black"
