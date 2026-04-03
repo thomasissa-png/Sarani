@@ -393,10 +393,10 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-03 ~23:00 UTC (session 13)
+**Date et heure de clôture :** 2026-04-03 (session 14 — en cours)
 
-**Résumé de la session (session 13) :**
-Session massive ~50 commits. Tracker : statuts mappés (mapClickUpStatus), filtres dynamiques + URL persistence, clients principaux + Others, étoiles case study. Share modal complet : browse SP folders par ID, thumbnails grid/list, sélection d'assets, auto-navigation via clickupListName, extraction SP link depuis ClickUp custom fields (string + object + stringify fallback). Page présentation projet : versioning V1/V2/V3, images ratio respecté (grille 4:3 + object-contain), player vidéo HTML5, proxy endpoint (fix expiration URLs SP 1h), commentaires positionnels type Figma (pins x%/y%, threads, polling 5s), boutons Approve/Request changes, badge Final delivery, footer simplifié, navigation prev/next lightbox, bottom-sheet mobile. Performance inbox : modals parallélisés, UI optimiste, filtres memoizés, skeletons quotes. 35→45 experts (68 fichiers). Specs versioning + commentaires documentées.
+**Résumé de la session (session 14) :**
+Pipeline case study multi-agents : refactorisé la génération mono-LLM en pipeline 3 étapes séquentielles (creative-strategy → copywriter → social). Migration DB 0006 (pipeline_status, pipeline_steps, visual_suggestions). Route visuals SharePoint (thumbnails). Page publique /case-studies/[slug] SSR + DB fallback (SEO, JSON-LD CreativeWork). Pipeline UI : progress bar 3 étapes, visual suggestions grid, per-channel publish (LinkedIn buffer copy, email copy), badges pipeline sur le listing. Save Draft quotes + Resume Draft. LinkedIn = buffer par décision Thomas (pas d'API directe). Phase 3k finalisée (purpose-of-work déjà OK, email scan déjà OK, save-draft implémenté).
 
 **Travaux terminés cette session :**
 - [x] Tracker : mapClickUpStatus (Open→In progress, Closed→Delivered)
