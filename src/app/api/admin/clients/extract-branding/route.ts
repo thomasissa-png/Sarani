@@ -314,39 +314,55 @@ export async function POST(request: NextRequest) {
     // Empty body is fine — means process all clients
   }
 
-  // Build client list
+  // Build client list — check DB first, then enrich with BRANDING_DATA links if missing
+  // This handles the case where sync-branding hasn't been called yet
+  const FALLBACK_GUIDELINES: Record<string, string> = {
+    Sony: "https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCTQO0L4sJvQpoB3l-hU8BwAbQZUn84k4yu5MzIZjZ0yM8",
+    TikTok: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMrKMBePVfQY-z0u2iwAa_AadlAU9eOtOqcZy8jQiD2Cg",
+    "PICO XR": "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCLhBQNdaHKQpaviLeO_b39AYXKcD_KVcncmYK_TYi4MZg",
+    Aristocrat: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBbX1jrkGZaSqX40qP4uLA4AUzpGlEatWDexJtlNDb-cOE",
+    Bose: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBCJutkb3MqRJvd0Hu2kNh1AaHtXHxVcdZ8SZTGsOh8Ky8",
+    Aujan: "https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCnEmhVukvISL7fxouW_sPnAVdS8Y3dQjd8YtzbkQTELhs",
+    GEODIS: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCC3EZk4-7JQ5xtMxUU4oHvAYLb_CRN_go6XmmjAWl0XRE",
+    Lamarck: "https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQDfXwOvZseyTJP5rq6C1TRUAUAc5dcmwgPvRzNBPfQXI2c",
+    "CMC Markets": "https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBPylSuEyrcTLERDaOf5P9aAU8ISsUfKlHHdEr0N1qaagQ",
+    ProcessOut: "https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F15%2E%20ProcessOut%2F01%2E%20Branding&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204",
+    Ubi: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBL8zzafFOASphGhuGJLY19AfSX9UBxan6jy0cICZX4QUA",
+    "Air Corsica": "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A",
+  };
+
   let clientRecords: { id: string; name: string; brandGuidelinesLink: string | null }[];
 
   if (clientId) {
-    // Single client mode
     const [record] = await db
-      .select({
-        id: clients.id,
-        name: clients.name,
-        brandGuidelinesLink: clients.brandGuidelinesLink,
-      })
+      .select({ id: clients.id, name: clients.name, brandGuidelinesLink: clients.brandGuidelinesLink })
       .from(clients)
       .where(eq(clients.id, clientId))
       .limit(1);
-
     if (!record) {
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
+    // Use DB link, or fallback to hardcoded link
+    if (!record.brandGuidelinesLink && FALLBACK_GUIDELINES[record.name]) {
+      record.brandGuidelinesLink = FALLBACK_GUIDELINES[record.name];
+      // Also update DB so next time it's there
+      await db.update(clients).set({ brandGuidelinesLink: FALLBACK_GUIDELINES[record.name] }).where(eq(clients.id, record.id));
+    }
     clientRecords = [record];
   } else {
-    // All clients with brandGuidelinesLink and no primaryColor yet
     const allClients = await db
-      .select({
-        id: clients.id,
-        name: clients.name,
-        brandGuidelinesLink: clients.brandGuidelinesLink,
-        primaryColor: clients.primaryColor,
-      })
+      .select({ id: clients.id, name: clients.name, brandGuidelinesLink: clients.brandGuidelinesLink })
       .from(clients);
 
-    clientRecords = allClients.filter(
-      (c) => c.brandGuidelinesLink,
-    );
+    // Enrich with fallback links and update DB
+    for (const c of allClients) {
+      if (!c.brandGuidelinesLink && FALLBACK_GUIDELINES[c.name]) {
+        c.brandGuidelinesLink = FALLBACK_GUIDELINES[c.name];
+        await db.update(clients).set({ brandGuidelinesLink: FALLBACK_GUIDELINES[c.name] }).where(eq(clients.id, c.id));
+      }
+    }
+
+    clientRecords = allClients.filter((c) => c.brandGuidelinesLink);
   }
 
   if (clientRecords.length === 0) {
