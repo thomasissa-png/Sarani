@@ -542,11 +542,40 @@ export default function CaseStudiesPage() {
 
                     {/* Status */}
                     <td className="px-5 py-3.5">
-                      <span
-                        className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(c.status)}`}
-                      >
-                        {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(c.status)}`}
+                        >
+                          {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                        </span>
+                        {c.pipelineStatus && c.pipelineStatus !== "idle" && (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              c.pipelineStatus === "complete"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : c.pipelineStatus === "failed"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-blue-100 text-blue-700"
+                            }`}
+                          >
+                            {c.pipelineStatus === "complete" ? (
+                              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : c.pipelineStatus === "failed" ? (
+                              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            ) : (
+                              <svg className="w-2.5 h-2.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                              </svg>
+                            )}
+                            Pipeline
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Scanned date */}
