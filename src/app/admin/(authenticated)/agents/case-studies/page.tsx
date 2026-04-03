@@ -77,9 +77,9 @@ function formatScore(score: number): string {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return "text-green-700";
-  if (score >= 40) return "text-yellow-700";
-  return "text-red-700";
+  if (score >= 70) return "text-brand-cerulean";
+  if (score >= 40) return "text-brand-lemon";
+  return "text-brand-flame";
 }
 
 // ─── Page Component ─────────────────────────────────────────────────────────

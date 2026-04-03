@@ -81,9 +81,9 @@ function formatDate(date: string | null | undefined): string {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 70) return "text-green-700";
-  if (score >= 40) return "text-yellow-700";
-  return "text-red-700";
+  if (score >= 70) return "text-brand-cerulean";
+  if (score >= 40) return "text-brand-lemon";
+  return "text-brand-flame";
 }
 
 // ─── Page Component ─────────────────────────────────────────────────────────
@@ -448,13 +448,20 @@ export default function CandidateDetailPage() {
           {/* Status actions */}
           <div className="bg-white rounded-xl border border-neutral-300 p-5 space-y-2">
             {!hasOutputs && (
-              <button
-                onClick={handleGenerate}
-                disabled={generating}
-                className="w-full px-4 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
-              >
-                {generating ? "Generating..." : "Generate All Outputs"}
-              </button>
+              <div>
+                <button
+                  onClick={handleGenerate}
+                  disabled={generating}
+                  className="w-full px-4 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
+                >
+                  {generating ? "Generating..." : "Generate All Outputs"}
+                </button>
+                {generating && (
+                  <p className="text-xs text-neutral-500 mt-1.5 text-center">
+                    Generating 3 outputs... This usually takes 30–60 seconds.
+                  </p>
+                )}
+              </div>
             )}
             {candidate.status === "generated" && (
               <button
@@ -489,9 +496,9 @@ export default function CandidateDetailPage() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2 ${
+                    className={`flex-1 px-4 py-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2 ${
                       activeTab === tab.key
-                        ? "text-brand-black border-b-2 border-brand-black"
+                        ? "bg-brand-black text-white rounded-t-lg font-semibold"
                         : "text-neutral-500 hover:text-neutral-700"
                     }`}
                   >
@@ -510,6 +517,7 @@ export default function CandidateDetailPage() {
                     onPublish={() => handlePublish(currentOutput.id)}
                     onUnpublish={() => handleUnpublish(currentOutput.id)}
                     publishing={publishing}
+                    candidateStatus={candidate.status}
                   />
                 ) : activeTab === "linkedin_post" ? (
                   <LinkedInPreview
@@ -567,11 +575,13 @@ function CaseStudyPreview({
   onPublish,
   onUnpublish,
   publishing,
+  candidateStatus,
 }: {
   output: CaseStudyOutput;
   onPublish: () => void;
   onUnpublish: () => void;
   publishing: boolean;
+  candidateStatus: string;
 }) {
   const cs = output.content as Record<string, unknown>;
   const stats = cs.stats as Array<{ label: string; value: string }> | undefined;
@@ -635,26 +645,37 @@ function CaseStudyPreview({
               href={`/case-studies/${output.caseStudySlug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-lg"
+              className="px-4 py-2 bg-brand-cerulean text-white text-sm font-medium rounded-lg"
             >
               View on Website
             </a>
             <button
               onClick={onUnpublish}
               disabled={publishing}
-              className="px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
+              className="px-4 py-2 border border-brand-flame/30 text-brand-flame text-sm font-medium rounded-lg hover:bg-brand-flame/5 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
             >
               {publishing ? "Unpublishing..." : "Unpublish"}
             </button>
           </>
         ) : (
-          <button
-            onClick={onPublish}
-            disabled={publishing}
-            className="px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
-          >
-            {publishing ? "Publishing..." : "Publish to Website"}
-          </button>
+          <div>
+            <button
+              onClick={onPublish}
+              disabled={publishing || candidateStatus === "generated"}
+              className={`px-4 py-2 bg-brand-cerulean text-white text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2 ${
+                candidateStatus === "generated"
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-brand-cerulean/90 disabled:opacity-50"
+              }`}
+            >
+              {publishing ? "Publishing..." : "Publish to Website"}
+            </button>
+            {candidateStatus === "generated" && (
+              <p className="text-xs text-amber-600 mt-1.5">
+                Review required before publishing
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>
