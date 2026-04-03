@@ -92,6 +92,8 @@ function getClosureReasonLabel(reason: string): string {
       return "14-Day Timeout";
     case "manual":
       return "Manual";
+    case "starred":
+      return "Starred from Tracker";
     default:
       return reason;
   }
@@ -584,7 +586,7 @@ export default function ClosuresPage() {
       {!loading && closures.length === 0 && (
         <div className="text-center py-12">
           <p className="text-neutral-500 text-sm">
-            No project closures yet. Close a project to get started.
+            No case studies yet. Star a project from the Tracker or close a project to get started.
           </p>
         </div>
       )}

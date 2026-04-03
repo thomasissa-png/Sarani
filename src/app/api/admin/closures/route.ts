@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   projectClosures,
   starPipelineItems,
   clients,
+  caseStudyCandidates,
 } from "@/lib/db/schema";
 import { isAuthenticatedFromCookie } from "@/lib/auth";
 import {
@@ -342,11 +343,50 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const response = results.map((r) => ({
+    const closureResponse = results.map((r) => ({
       ...r.closure,
       clientNameResolved: r.clientName,
       pipelineItems: pipelineItemsByClosureId[r.closure.id] ?? [],
+      source: "closure" as const,
     }));
+
+    // Also fetch case_study_candidates (starred from tracker)
+    // These are projects starred by PM that haven't been formally closed yet
+    const candidates = await db
+      .select()
+      .from(caseStudyCandidates)
+      .where(ne(caseStudyCandidates.status, "excluded"))
+      .orderBy(desc(caseStudyCandidates.createdAt))
+      .limit(limit);
+
+    // Don't duplicate: exclude candidates whose clickupTaskId already appears in closures
+    const closureTaskIds = new Set(results.map((r) => r.closure.clickupTaskId));
+    const uniqueCandidates = candidates.filter(
+      (c) => !closureTaskIds.has(c.clickupTaskId)
+    );
+
+    const candidateResponse = uniqueCandidates.map((c) => ({
+      id: c.id,
+      clickupTaskId: c.clickupTaskId,
+      clientId: c.clientId,
+      projectName: c.projectName ?? c.clientName,
+      status: c.status,
+      closureReason: "starred",
+      starScore: c.scoreTotal,
+      starDetails: null,
+      starStatus: "STAR",
+      closedAt: null,
+      closedBy: null,
+      createdAt: c.createdAt?.toISOString() ?? new Date().toISOString(),
+      updatedAt: c.updatedAt?.toISOString() ?? new Date().toISOString(),
+      clientNameResolved: c.clientName,
+      pipelineItems: [],
+      pipelineStatus: c.pipelineStatus ?? "idle",
+      source: "candidate" as const,
+    }));
+
+    // Merge: candidates first (newest starred), then closures
+    const response = [...candidateResponse, ...closureResponse];
 
     return NextResponse.json(response);
   } catch (error) {
