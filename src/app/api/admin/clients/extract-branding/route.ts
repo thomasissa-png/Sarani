@@ -27,8 +27,8 @@ import {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const MAX_PDF_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-const CLAUDE_TIMEOUT_MS = 60_000;
+const MAX_PDF_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB — brand guidelines PDFs are often 10-25MB
+const CLAUDE_TIMEOUT_MS = 120_000; // 2 min — large PDFs take longer to process
 const CLAUDE_MODEL = "claude-sonnet-4-6";
 const MAX_CONCURRENT_EXTRACTIONS = 3;
 
