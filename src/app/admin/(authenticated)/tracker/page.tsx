@@ -9,7 +9,11 @@ import type {
   TrackerResponse,
 } from "@/types/integrations";
 // Status mappings are now applied in tracker-merge.ts — dropdown uses dynamic values
-import { ShareFolderModal } from "@/components/admin/ShareFolderModal";
+import dynamic from "next/dynamic";
+const ShareFolderModal = dynamic(
+  () => import("@/components/admin/ShareFolderModal").then((m) => m.ShareFolderModal),
+  { ssr: false }
+);
 import { CLIENT_MAPPINGS } from "@/lib/integrations/config";
 
 // ─── Sorting Types ──────────────────────────────────────────────────────────

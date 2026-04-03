@@ -464,10 +464,10 @@ export function buildEstimationPromptBlock(projectType: string): string {
 // ─── Cache TTL Configuration (seconds) ──────────────────────────────────────
 
 export const CACHE_TTL = {
-  /** ClickUp API responses */
-  clickup: 600, // 10 minutes
-  /** Evoliz API responses */
-  evoliz: 600, // 10 minutes
+  /** ClickUp API responses — 30 min (data doesn't change every 10 min, force-refresh via "Sync now") */
+  clickup: 1800,
+  /** Evoliz API responses — 30 min */
+  evoliz: 1800,
   /** SharePoint Excel reads (very expensive — 50+ sheets across 9 files) */
   sharepoint: 3600, // 1 hour (force-refresh via "Sync now" button)
 } as const;

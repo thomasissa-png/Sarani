@@ -432,7 +432,11 @@ export async function GET(request: Request) {
       },
     };
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        "Cache-Control": "private, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Tracker API error:", error);
     return NextResponse.json(
