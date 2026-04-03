@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";

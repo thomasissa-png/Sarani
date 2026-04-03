@@ -711,10 +711,12 @@ function EmailPreview({
   output,
   onCopy,
   copied,
+  copyLabel,
 }: {
   output: CaseStudyOutput;
   onCopy: (text: string, label?: string) => void;
   copied: boolean;
+  copyLabel: string;
 }) {
   const email = output.content as Record<string, unknown>;
 
@@ -741,7 +743,7 @@ function EmailPreview({
           onClick={() => onCopy(`Subject: ${email.subject}\n\n${email.body}`, "Copied!")}
           className="px-3 py-1.5 border border-neutral-300 text-sm rounded-lg hover:bg-neutral-100 transition-colors"
         >
-          {copied ? "Copied!" : "Copy Email"}
+          {copied ? (copyLabel || "Copied!") : "Copy Email"}
         </button>
       </div>
     </div>
