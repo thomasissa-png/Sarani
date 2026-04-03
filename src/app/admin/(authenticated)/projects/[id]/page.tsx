@@ -114,6 +114,7 @@ interface QuoteItem {
 interface ProjectDetails {
   client: ClientInfo | null;
   projectName: string | null;
+  brief: string | null;
   agentOutputs: AgentOutput[];
   caseStudyCandidates: CaseStudyCandidate[];
   landingPages: LandingPageItem[];
@@ -535,6 +536,32 @@ function PreviewLinksSection({
   );
 }
 
+// ─── Section: Project Brief ─────────────────────────────────────────────────
+
+function ProjectBriefSection({ brief }: { brief: string | null }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <section className="bg-white border border-neutral-200 rounded-lg p-6">
+      <h2 className="text-base font-semibold text-brand-black mb-3">Project Brief</h2>
+      {brief ? (
+        <div>
+          <p className={`text-sm text-neutral-600 leading-relaxed whitespace-pre-wrap ${!expanded ? 'line-clamp-4' : ''}`}>
+            {brief}
+          </p>
+          {brief.length > 300 && (
+            <button onClick={() => setExpanded(!expanded)} className="mt-2 text-sm text-brand-flame hover:underline">
+              {expanded ? 'Show less' : 'Show more'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-neutral-400">No brief available</p>
+      )}
+    </section>
+  );
+}
+
 // ─── Section: Related Items ─────────────────────────────────────────────────
 
 function RelatedSection({
@@ -705,6 +732,8 @@ export default function ProjectViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [nominated, setNominated] = useState(false);
+  const [nominating, setNominating] = useState(false);
 
   // Tracker info is passed via query params (optional enrichment)
   const trackerInfo: TrackerInfo | null = (() => {
@@ -747,6 +776,9 @@ export default function ProjectViewPage() {
         if (trackerInfo.project) {
           url.searchParams.set("project", trackerInfo.project);
         }
+        if (trackerInfo.clickupTaskUrl) {
+          url.searchParams.set("clickup", trackerInfo.clickupTaskUrl);
+        }
       }
 
       const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
@@ -768,6 +800,47 @@ export default function ProjectViewPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Derive ClickUp task ID for star/nominate
+  const clickupTaskId = (() => {
+    if (!trackerInfo?.clickupTaskUrl) return `${clientName}::${projectName}`;
+    const match = trackerInfo.clickupTaskUrl.match(/\/t\/([a-z0-9]+)/i);
+    return match?.[1] ?? `${clientName}::${projectName}`;
+  })();
+
+  // Hydrate nominated state
+  useEffect(() => {
+    fetch("/api/admin/tracker/star")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (d?.starredIds && d.starredIds.includes(clickupTaskId)) {
+          setNominated(true);
+        }
+      })
+      .catch(() => {});
+  }, [clickupTaskId]);
+
+  const handleNominate = useCallback(async () => {
+    setNominating(true);
+    try {
+      const res = await fetch("/api/admin/tracker/star", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clickupTaskId,
+          clientName,
+          projectName,
+          projectAmount: trackerInfo?.totalValue ?? null,
+          sharepointFolderUrl: trackerInfo?.sharepointLink || undefined,
+        }),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setNominated(result.starred);
+      }
+    } catch { /* ignore */ }
+    finally { setNominating(false); }
+  }, [clickupTaskId, clientName, projectName, trackerInfo?.totalValue, trackerInfo?.sharepointLink]);
 
   // ─── Loading State ──────────────────────────────────────────────────────
 
@@ -894,6 +967,20 @@ export default function ProjectViewPage() {
               </svg>
               Generate Quote
             </Link>
+            <button
+              onClick={handleNominate}
+              disabled={nominating}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                nominated
+                  ? "bg-brand-lemon/20 text-brand-lemon border border-brand-lemon/40"
+                  : "border border-neutral-300 hover:bg-neutral-50"
+              } ${nominating ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={nominated ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              {nominated ? "Nominated \u2605" : "Nominate as Case Study"}
+            </button>
           </div>
         </div>
       </div>
@@ -904,6 +991,9 @@ export default function ProjectViewPage() {
         client={data?.client ?? null}
         quotes={data?.quotes ?? []}
       />
+
+      {/* ─── Section 1b: Project Brief ───────────────────────────────── */}
+      <ProjectBriefSection brief={data?.brief ?? null} />
 
       {/* ─── Section 2: AI Outputs — hidden when empty ────────────────── */}
       {outputCount > 0 && (

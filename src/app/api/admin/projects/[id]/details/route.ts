@@ -11,6 +11,7 @@ import {
   quotes,
 } from "@/lib/db/schema";
 import { eq, and, like, desc } from "drizzle-orm";
+import { getTask } from "@/lib/integrations/clickup";
 
 // SSR — Server rendering, data aggregation endpoint for one project.
 // Projects don't have a DB table; they come from the tracker (ClickUp/Excel merge).
@@ -214,6 +215,22 @@ export async function GET(
       console.error("[project-details] Failed to query quotes:", err);
     }
 
+    // 9. Fetch ClickUp task description (brief) if clickupTaskUrl is provided
+    let brief: string | null = null;
+    const clickupUrl = searchParams.get("clickup");
+    if (clickupUrl) {
+      const taskIdMatch = clickupUrl.match(/\/t\/([a-zA-Z0-9]+)/);
+      const taskId = taskIdMatch?.[1];
+      if (taskId) {
+        try {
+          const task = await getTask(taskId);
+          brief = task.description || null;
+        } catch (err) {
+          console.error("[project-details] Failed to fetch ClickUp task description:", err);
+        }
+      }
+    }
+
     return NextResponse.json({
       client: client
         ? {
@@ -227,6 +244,7 @@ export async function GET(
           }
         : null,
       projectName: projectName ?? null,
+      brief,
       agentOutputs: outputs,
       caseStudyCandidates: caseStudies,
       landingPages: pages,

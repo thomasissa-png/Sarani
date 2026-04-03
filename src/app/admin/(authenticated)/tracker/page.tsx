@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, Suspense } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -196,6 +196,7 @@ function TrackerContent() {
     return s === "All" || s === "Excel Only" ? s : "ClickUp";
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
 
   // Sync filters to URL params (replaceState — no history push)
   useEffect(() => {
@@ -492,6 +493,12 @@ function TrackerContent() {
       // Source filter: ClickUp = has clickupTaskUrl, Excel Only = no clickupTaskUrl
       if (sourceFilter === "ClickUp" && !p.clickupTaskUrl) return false;
       if (sourceFilter === "Excel Only" && p.clickupTaskUrl) return false;
+      // Starred filter
+      if (showStarredOnly) {
+        const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
+        const tid = taskIdMatch?.[1] ?? `${p.client}::${p.project}`;
+        if (!starredIds.has(tid)) return false;
+      }
       return true;
     });
 
@@ -521,13 +528,13 @@ function TrackerContent() {
     }
 
     return filtered;
-  }, [data, search, clientFilter, statusFilter, invoiceFilter, sourceFilter, sort]);
+  }, [data, search, clientFilter, statusFilter, invoiceFilter, sourceFilter, showStarredOnly, starredIds, sort]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
     setPageInputValue("1");
-  }, [search, clientFilter, statusFilter, invoiceFilter, sourceFilter]);
+  }, [search, clientFilter, statusFilter, invoiceFilter, sourceFilter, showStarredOnly]);
 
   // Sync page input with currentPage
   useEffect(() => {
@@ -563,7 +570,7 @@ function TrackerContent() {
   }, [filteredProjects.length, currentPage]);
 
   // Stats (Fix #9 — scoped to filtered projects when filters active)
-  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "In progress" || invoiceFilter !== "All" || sourceFilter !== "ClickUp";
+  const hasActiveFilters = search !== "" || clientFilter !== "All" || statusFilter !== "In progress" || invoiceFilter !== "All" || sourceFilter !== "ClickUp" || showStarredOnly;
   const stats = useMemo(() => {
     if (!data) return { total: 0, totalValue: 0, open: 0, overdue: 0, globalTotal: 0 };
     const source = filteredProjects;
@@ -587,6 +594,7 @@ function TrackerContent() {
     setStatusFilter("In progress");
     setInvoiceFilter("All");
     setSourceFilter("ClickUp");
+    setShowStarredOnly(false);
   }, []);
 
   // Toast auto-dismiss
@@ -611,17 +619,22 @@ function TrackerContent() {
     if (invoiceFilter !== "All") count++;
     // Country filter removed
     if (sourceFilter !== "All") count++;
+    if (showStarredOnly) count++;
     return count;
-  }, [clientFilter, statusFilter, invoiceFilter, sourceFilter]);
+  }, [clientFilter, statusFilter, invoiceFilter, sourceFilter, showStarredOnly]);
 
-  // Close dropdowns on outside click
+  // Close columns dropdown on outside click (ref-based to avoid stopPropagation race)
+  const columnsDropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handleClickOutside = () => {
-      setColumnsDropdownOpen(false);
+    if (!columnsDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (columnsDropdownRef.current && !columnsDropdownRef.current.contains(e.target as Node)) {
+        setColumnsDropdownOpen(false);
+      }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [columnsDropdownOpen]);
 
   // Oldest fetch timestamp for "cached X min ago"
   const oldestFetch = useMemo(() => {
@@ -813,6 +826,18 @@ function TrackerContent() {
             <option value="ClickUp">ClickUp</option>
             <option value="Excel Only">Excel Only</option>
           </select>
+          {/* Starred filter toggle */}
+          <button
+            type="button"
+            onClick={() => setShowStarredOnly((prev) => !prev)}
+            title={showStarredOnly ? "Show all projects" : "Show starred (case study candidates) only"}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap ${showStarredOnly ? "border-brand-lemon bg-brand-lemon/10 text-brand-black" : "border-neutral-300 bg-white text-neutral-500 hover:border-brand-lemon hover:text-brand-black"}`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showStarredOnly ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            Starred
+          </button>
           {/* Fix #11 — Clear all filters link */}
           {(activeFilterCount > 0 || search !== "") && (
             <button
@@ -893,6 +918,17 @@ function TrackerContent() {
                   <option value="ClickUp">ClickUp</option>
                   <option value="Excel Only">Excel Only</option>
                 </select>
+                {/* Starred filter toggle — mobile */}
+                <button
+                  type="button"
+                  onClick={() => setShowStarredOnly((prev) => !prev)}
+                  className={`w-full inline-flex items-center justify-center gap-2 min-h-[44px] px-3 py-3 rounded-lg border text-sm font-medium transition-colors ${showStarredOnly ? "border-brand-lemon bg-brand-lemon/10 text-brand-black" : "border-neutral-300 bg-white text-neutral-500"}`}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill={showStarredOnly ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  Starred only
+                </button>
               </div>
               <div className="flex gap-3 pt-2">
                 <button
@@ -978,12 +1014,12 @@ function TrackerContent() {
       {/* Desktop Table */}
       {!loading && !error && filteredProjects.length > 0 && (
         <div className="hidden md:block bg-white rounded-xl border border-neutral-300 overflow-hidden">
-          {/* Fix #1 — Columns toggle dropdown */}
+          {/* Columns toggle dropdown */}
           <div className="flex items-center justify-end px-5 py-2 border-b border-neutral-100">
-            <div className="relative">
+            <div className="relative" ref={columnsDropdownRef}>
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setColumnsDropdownOpen((prev) => !prev); }}
+                onClick={() => setColumnsDropdownOpen((prev) => !prev)}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-600 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1000,7 +1036,7 @@ function TrackerContent() {
                     <button
                       key={col}
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); toggleColumn(col); }}
+                      onClick={() => toggleColumn(col)}
                       className="flex items-center gap-2 w-full px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
                     >
                       <span className={`w-4 h-4 rounded border flex items-center justify-center text-xs ${!hiddenColumns.has(col) ? "bg-brand-cerulean border-brand-cerulean text-white" : "border-neutral-300"}`}>
@@ -1119,9 +1155,9 @@ function TrackerContent() {
                                 onClick={() => handleStar(p)}
                                 disabled={starringId === tid}
                                 title={isStarred ? "Remove from case studies" : "Add to case studies"}
-                                className={`p-1 rounded transition-colors ${isStarred ? "text-brand-lemon" : "text-neutral-300 hover:text-brand-lemon/70"}`}
+                                className={`p-1 rounded transition-colors ${isStarred ? "text-brand-lemon" : "text-neutral-400 hover:text-brand-lemon"}`}
                               >
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill={isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                                 </svg>
                               </button>
