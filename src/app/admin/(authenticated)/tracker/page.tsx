@@ -1364,7 +1364,7 @@ function TrackerContent() {
       <ShareFolderModal
         isOpen={!!shareModalProject}
         onClose={() => setShareModalProject(null)}
-        clientName={shareModalProject?.client ?? ""}
+        clientName={shareModalProject?.displayClient ?? shareModalProject?.client ?? ""}
         projectName={shareModalProject?.project ?? ""}
         sharepointLink={shareModalProject?.sharepointLink ?? ""}
         clickupTaskUrl={shareModalProject?.clickupTaskUrl ?? ""}

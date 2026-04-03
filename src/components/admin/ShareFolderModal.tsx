@@ -128,7 +128,24 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setCopied(false);
 
     if (sharepointLink) {
-      fetchFolders({ url: sharepointLink });
+      // Try URL resolution first; fall back to client root if it fails
+      fetchFolders({ url: sharepointLink }).then((result) => {
+        if (result) return; // URL resolved successfully
+        // URL resolution failed — fall back to client-based folder browsing
+        setError(null);
+        fetchFolders({ clientRoot: true }).then((fallbackResult) => {
+          if (!fallbackResult || !clickupListName) return;
+          const listLower = clickupListName.toLowerCase();
+          const match = fallbackResult.folders.find((f) => {
+            const folderLower = f.name.toLowerCase();
+            return folderLower.includes(listLower) || listLower.includes(folderLower);
+          });
+          if (match) {
+            setBreadcrumb([{ name: match.name, folderId: match.id }]);
+            fetchFolders({ folderId: match.id });
+          }
+        });
+      });
       return;
     }
 

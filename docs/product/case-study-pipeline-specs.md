@@ -99,19 +99,21 @@ interface Step1Input {
 > You are Sarani's Creative Strategist. Sarani is an international creative agency (45 experts, 5 continents, 18 languages) delivering enterprise-quality work in 24 hours with unlimited revisions and fixed prices. Your role is to identify the single most compelling strategic angle for this case study — the angle that will make Sophie (Head of Marketing at a large international group) stop scrolling and think "I need this agency." Always prioritise speed + scale + quantified results over aesthetic claims.
 
 **Output (Step 1):**
+
+> **Implementation note:** The actual code uses `StrategyOutputSchema` (Zod) in `src/lib/case-studies/pipeline-prompts.ts`. The schema below matches the implemented version.
+
 ```typescript
 interface Step1Output {
-  strategicAngle: string;           // e.g. "Speed as competitive advantage — same-day Black Friday delivery"
-  primaryMessage: string;           // 1-sentence core claim
+  angle: string;                    // the storytelling angle — the "why this matters" for Sophie
+  keyMessages: string[];            // 2-5 key messages that support the angle with evidence
+  visualDirection: string;          // guidance for visual assets (photo style, mood, composition)
+  emotionalHook: string;            // the emotional trigger that makes Sophie stop scrolling
   targetAudience: string;           // e.g. "CMOs managing multi-market campaigns under time pressure"
-  proofPoints: string[];            // 2-4 specific facts to emphasise (from ClickUp data)
-  toneGuidance: string;             // contextual tone notes for this specific project
-  headlineCandidates: string[];     // 3 headline options (Problem → Result formula)
-  category: CaseStudyCategory;      // one of: "Video & Social" | "Graphic Design" | "Event" | "Multilingual" | "Out-of-Home"
+  differentiators: string[];        // 1-5 aspects that make this project uniquely Sarani
 }
 ```
 
-**Stored in DB:** `pipeline_steps` JSONB column, `step_number: 1`, `step_type: "creative_strategy"`.
+**Stored in DB:** `pipelineSteps` JSONB array column on `case_study_candidates`, element with `step: 1`, `agent: "creative-strategy"`.
 
 ---
 
@@ -152,7 +154,7 @@ interface Step2Output {
 }
 ```
 
-**Stored in DB:** `pipeline_steps` JSONB column, `step_number: 2`, `step_type: "copywriter"`.
+**Stored in DB:** `pipelineSteps` JSONB array on `case_study_candidates`, element with `step: 2`, `agent: "copywriter"`.
 
 ---
 
@@ -166,31 +168,20 @@ interface Step2Output {
 > You are Sarani's LinkedIn Content Strategist. You write LinkedIn posts that generate engagement from CMOs and Marketing Directors at large international groups. Your posts follow this structure: Hook (1 line — the unexpected fact), Story (3-4 lines — what happened and why it matters), Proof (2-3 bullet stats), CTA (1 line — soft, not salesy). Maximum 1300 characters. Use line breaks aggressively — no paragraph blocks. The first line must make Sophie stop scrolling.
 
 **Output (Step 3):**
+
+> **Implementation note:** The actual code uses `LinkedInPostSchema` (Zod) in `src/lib/case-studies/schemas.ts`. The schema below matches the implemented version. Visual suggestions are handled separately via the SharePoint visuals API (`GET /api/admin/case-studies/candidates/[id]/visuals`), not as part of the LLM output.
+
 ```typescript
 interface Step3Output {
   linkedinPost: {
     hook: string;                  // 1 line, < 140 chars — THE opening line
-    story: string;                 // 3-4 lines narrative
-    proofPoints: string[];         // 2-3 stat bullets (e.g. "→ 94M views")
-    cta: string;                   // 1 soft CTA line
-    hashtags: string[];            // 3-5 relevant hashtags
-    fullText: string;              // assembled final post, max 1300 chars
+    body: string;                  // narrative text (replaces "story" from original spec)
+    proofPoints: string;           // stat bullets as a single formatted string (not array)
+    hashtags: string;              // hashtags as a single string (not array)
     charCount: number;
   };
-  visualSuggestions: {
-    caseStudyHero: VisualSuggestion[];    // from SharePoint — for /case-studies/[slug]
-    linkedinImage: VisualSuggestion[];    // from SharePoint — for LinkedIn post
-    emailHeader: VisualSuggestion[];      // from SharePoint — for nurturing email
-  };
-}
-
-interface VisualSuggestion {
-  sharePointFileId: string;
-  sharePointFileName: string;
-  sharePointPreviewUrl: string;   // anonymous share link (Graph API — "Anyone" scope)
-  thumbnailUrl: string;           // 400x300 thumbnail via Graph API
-  suggestedFor: "hero" | "linkedin" | "email";
-  rationale: string;              // 1 sentence: why this image works for this channel
+  // Note: visualSuggestions are NOT part of the LLM output.
+  // Visuals are fetched from SharePoint via a separate API route and selected manually by PM.
 }
 ```
 
@@ -200,7 +191,7 @@ interface VisualSuggestion {
 - Selects up to 6 images per channel (maximum 18 total suggestions)
 - Rationale generated by LLM: "This image shows the volume of work delivered — ideal for the scale proof story"
 
-**Stored in DB:** `pipeline_steps` JSONB column, `step_number: 3`, `step_type: "social"`.
+**Stored in DB:** `pipelineSteps` JSONB array on `case_study_candidates`, element with `step: 3`, `agent: "social"`.
 
 ---
 
@@ -242,6 +233,8 @@ PM notified: "Generation complete — review required"
 ### Principle
 
 The existing tables (`case_study_candidates`, `case_study_outputs`, `scoring_config`) are NOT modified in their existing columns. This delta adds new columns and one new table.
+
+> **Implementation note (code-reality delta):** The actual implementation uses a simplified storage approach compared to the spec below. Pipeline steps are stored as a JSONB array in `case_study_candidates.pipelineSteps` (migration `0006_add_pipeline_tracking.sql`), not in separate `pipeline_runs` / `pipeline_steps` tables. Each array element has the shape `{step: number, agent: string, output: object, completedAt: string}`. There is no `pipeline_runs` table — pipeline status is tracked via the existing `status` field on the candidate row. The separate-table design below is retained as the target architecture for future scaling (audit trail, cost tracking per run).
 
 ---
 

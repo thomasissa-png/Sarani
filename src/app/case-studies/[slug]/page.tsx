@@ -388,6 +388,13 @@ export default async function CaseStudyPage({ params }: PageProps) {
         </div>
       </Section>
 
+      {/* Back to all case studies */}
+      <div className="mb-8 text-center">
+        <a href="/work" className="text-sm font-medium text-brand-flame hover:underline">
+          &larr; View all case studies
+        </a>
+      </div>
+
       {/* Related case studies */}
       {related.length > 0 && (
         <Section ariaLabel="Related case studies" tight>

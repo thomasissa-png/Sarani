@@ -299,7 +299,7 @@ export default function CandidateDetailPage() {
     return (
       <div className="text-center py-16">
         <p className="text-sm text-neutral-500">Candidate not found.</p>
-        <button onClick={() => router.push("/admin/agents/case-studies")} className="mt-4 text-sm text-brand-black underline">
+        <button onClick={() => router.push("/admin/agents/case-studies")} className="mt-4 text-sm text-brand-black underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2">
           Back to pipeline
         </button>
       </div>
@@ -324,7 +324,7 @@ export default function CandidateDetailPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push("/admin/agents/case-studies")}
-          className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-neutral-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
           aria-label="Back to pipeline"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -346,7 +346,7 @@ export default function CandidateDetailPage() {
       {error && (
         <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+          <button onClick={() => setError(null)} className="ml-2 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2">Dismiss</button>
         </div>
       )}
 
@@ -451,7 +451,7 @@ export default function CandidateDetailPage() {
               <button
                 onClick={handleGenerate}
                 disabled={generating}
-                className="w-full px-4 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50"
+                className="w-full px-4 py-2.5 bg-brand-black text-white text-sm font-semibold rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
               >
                 {generating ? "Generating..." : "Generate All Outputs"}
               </button>
@@ -459,7 +459,7 @@ export default function CandidateDetailPage() {
             {candidate.status === "generated" && (
               <button
                 onClick={() => handleStatusChange("reviewed")}
-                className="w-full px-4 py-2 border border-brand-cerulean/30 text-brand-cerulean text-sm font-medium rounded-lg hover:bg-brand-cerulean/10 transition-colors"
+                className="w-full px-4 py-2 border border-brand-cerulean/30 text-brand-cerulean text-sm font-medium rounded-lg hover:bg-brand-cerulean/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
               >
                 Mark as Reviewed
               </button>
@@ -489,7 +489,7 @@ export default function CandidateDetailPage() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2 ${
                       activeTab === tab.key
                         ? "text-brand-black border-b-2 border-brand-black"
                         : "text-neutral-500 hover:text-neutral-700"
@@ -541,7 +541,7 @@ export default function CandidateDetailPage() {
                       <button
                         onClick={() => handleRegenerate(currentOutput.id)}
                         disabled={regenerating || !regenerateInstruction.trim()}
-                        className="px-4 py-2 bg-neutral-800 text-white text-sm font-medium rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50"
+                        className="px-4 py-2 bg-neutral-800 text-white text-sm font-medium rounded-lg hover:bg-neutral-700 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
                       >
                         {regenerating ? "Regenerating..." : "Regenerate"}
                       </button>
@@ -642,7 +642,7 @@ function CaseStudyPreview({
             <button
               onClick={onUnpublish}
               disabled={publishing}
-              className="px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+              className="px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
             >
               {publishing ? "Unpublishing..." : "Unpublish"}
             </button>
@@ -651,7 +651,7 @@ function CaseStudyPreview({
           <button
             onClick={onPublish}
             disabled={publishing}
-            className="px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-800 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
           >
             {publishing ? "Publishing..." : "Publish to Website"}
           </button>
@@ -693,7 +693,7 @@ function LinkedInPreview({
         </span>
         <button
           onClick={() => onCopy(fullText, "Copied! Paste on LinkedIn.")}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A66C2] text-white text-sm font-medium rounded-lg hover:bg-[#004182] transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A66C2] text-white text-sm font-medium rounded-lg hover:bg-[#004182] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
         >
           {copied ? (
             copyLabel
@@ -745,7 +745,7 @@ function EmailPreview({
       <div className="flex gap-2">
         <button
           onClick={() => onCopy(`Subject: ${email.subject}\n\n${email.body}`, "Copied!")}
-          className="px-3 py-1.5 border border-neutral-300 text-sm rounded-lg hover:bg-neutral-100 transition-colors"
+          className="px-3 py-1.5 border border-neutral-300 text-sm rounded-lg hover:bg-neutral-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
         >
           {copied ? (copyLabel || "Copied!") : "Copy Email"}
         </button>
@@ -821,7 +821,7 @@ function PipelineProgressBar({
                   }
                 }}
                 disabled={state !== "complete"}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2 ${
                   state === "complete"
                     ? "bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/30 cursor-pointer hover:bg-brand-cerulean/20"
                     : state === "active"
@@ -870,7 +870,7 @@ function PipelineProgressBar({
             </h3>
             <button
               onClick={() => onToggleStep(expandedStep)}
-              className="text-neutral-400 hover:text-neutral-600"
+              className="text-neutral-400 hover:text-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2"
               aria-label="Close step details"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -949,7 +949,7 @@ function VisualSuggestionsPanel({
             <button
               key={v.id}
               onClick={() => onToggle(v.id)}
-              className={`relative group aspect-video rounded-lg overflow-hidden border-2 transition-all ${
+              className={`relative group aspect-video rounded-lg overflow-hidden border-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-black focus-visible:ring-offset-2 ${
                 isSelected
                   ? "border-brand-cerulean ring-2 ring-brand-cerulean/20"
                   : "border-transparent hover:border-neutral-300"

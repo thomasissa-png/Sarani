@@ -8,13 +8,9 @@ interface StatCardProps {
  */
 export function StatCard({ label, value }: StatCardProps) {
   return (
-    <div className="rounded-2xl bg-surface-elevated p-8 text-center">
-      <p className="mb-2 text-4xl font-bold text-brand-flame sm:text-5xl">
-        {value}
-      </p>
-      <p className="text-sm font-medium uppercase tracking-wider text-neutral-500">
-        {label}
-      </p>
+    <div className="rounded-2xl bg-brand-black p-6 text-center">
+      <p className="text-3xl font-bold text-brand-lemon">{value}</p>
+      <p className="mt-2 text-sm text-white/70 uppercase tracking-wider">{label}</p>
     </div>
   );
 }

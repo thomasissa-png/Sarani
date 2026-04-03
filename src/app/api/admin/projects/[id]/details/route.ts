@@ -181,26 +181,15 @@ export async function GET(
       }
     }
 
-    // 7. Project previews — use the composite projectId pattern "client::project"
+    // 7. Project previews — match by exact projectId (composite "client::project")
     let allPreviews: Array<typeof projectPreviews.$inferSelect> = [];
     try {
       const projectId = `${clientName}::${projectName ?? ""}`;
-      const previews = await db
+      allPreviews = await db
         .select()
         .from(projectPreviews)
         .where(eq(projectPreviews.projectId, projectId))
         .orderBy(desc(projectPreviews.version));
-
-      // Also try matching by clientName if no exact projectId match
-      const previewsByClient = previews.length === 0
-        ? await db
-            .select()
-            .from(projectPreviews)
-            .where(like(projectPreviews.clientName, `%${clientName}%`))
-            .limit(10)
-        : [];
-
-      allPreviews = previews.length > 0 ? previews : previewsByClient;
     } catch (err) {
       console.error("[project-details] Failed to query project_previews:", err);
     }

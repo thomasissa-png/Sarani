@@ -452,6 +452,15 @@ export function getMappingBySpaceName(
     });
     if (byFirstWord) return byFirstWord;
   }
+  // 4. Subdivision name match (e.g. "Sony Professional" matches Sony's "Sony Pro" subdivision)
+  const bySubdivision = CLIENT_MAPPINGS.find((m) => {
+    if (!m.subdivisions) return false;
+    return m.subdivisions.some((sub) => {
+      const sl = sub.name.toLowerCase();
+      return lower.includes(sl) || sl.includes(lower);
+    });
+  });
+  if (bySubdivision) return bySubdivision;
   return undefined;
 }
 

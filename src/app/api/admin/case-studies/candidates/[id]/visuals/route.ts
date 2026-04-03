@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { caseStudyCandidates } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { UUID_REGEX } from "@/lib/rate-limit";
+import { UUID_REGEX, checkRateLimit } from "@/lib/rate-limit";
 import {
   graphFetch,
   resolveSharePointUrl,
@@ -53,6 +53,15 @@ export async function GET(
     const { id } = await params;
     if (!UUID_REGEX.test(id)) {
       return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
+
+    // Rate limit: 30 requests per 60s to protect Microsoft Graph API
+    const allowed = checkRateLimit("sharepoint-visuals", 30, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Try again shortly." },
+        { status: 429 }
+      );
     }
 
     // 1. Fetch candidate to get SharePoint folder URL
