@@ -537,6 +537,22 @@ export function getSubdivisionByListId(
 }
 
 /**
+ * Find a subdivision by its name (e.g. "TikTok P&E SEA").
+ * Used as fallback when list ID lookup fails.
+ */
+export function getSubdivisionByName(
+  name: string
+): { mapping: ClientIntegrationMapping; subdivision: ClientSubdivision } | undefined {
+  const normalized = name.toLowerCase().trim();
+  for (const m of CLIENT_MAPPINGS) {
+    if (!m.subdivisions) continue;
+    const sub = m.subdivisions.find((s) => s.name.toLowerCase().trim() === normalized);
+    if (sub) return { mapping: m, subdivision: sub };
+  }
+  return undefined;
+}
+
+/**
  * Find the client mapping for a given ClickUp Space ID.
  */
 export function getMappingBySpaceId(

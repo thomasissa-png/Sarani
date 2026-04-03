@@ -13,7 +13,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { getSubdivisionByListId, ASSETS_CUSTOMERS_BASE_PATH } from "@/lib/integrations/config";
+import { getSubdivisionByListId, getSubdivisionByName, ASSETS_CUSTOMERS_BASE_PATH } from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -235,46 +235,47 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     const result = await fetchFolders({ clientRoot: true });
     if (!result) return;
 
-    // ── PRIMARY: config-based lookup via ClickUp list ID ──
+    // ── PRIMARY: config-based lookup via ClickUp list ID, then by list name ──
     // The config has all ClickUp list IDs mapped to SP subfolder names.
     // This is deterministic — no fuzzy matching needed.
-    if (clickupListId) {
-      const configMatch = getSubdivisionByListId(clickupListId);
-      if (configMatch?.subdivision.sharepointSubfolder) {
-        const targetFolder = configMatch.subdivision.sharepointSubfolder;
-        console.log(`[ShareFolderModal] Config lookup: listId=${clickupListId} → "${configMatch.subdivision.name}" → SP folder "${targetFolder}"`);
+    const configMatch = (clickupListId ? getSubdivisionByListId(clickupListId) : undefined)
+      ?? (clickupListName ? getSubdivisionByName(clickupListName) : undefined);
 
-        // The subfolder may be at root level or inside a "Projects" folder
-        // Try root first
-        let match = result.folders.find((f) => f.name === targetFolder);
-        if (match) {
-          console.log(`[ShareFolderModal] Found "${targetFolder}" at root`);
-          setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
-          fetchFolders({ folderId: match.id });
-          return;
-        }
+    if (configMatch?.subdivision.sharepointSubfolder) {
+      const targetFolder = configMatch.subdivision.sharepointSubfolder;
+      console.log(`[ShareFolderModal] Config lookup: listId=${clickupListId ?? "n/a"}, listName=${clickupListName ?? "n/a"} → "${configMatch.subdivision.name}" → SP folder "${targetFolder}"`);
 
-        // Try inside "Projects" subfolder (common pattern: "03. Projects/{divisions}")
-        const projectsFolder = result.folders.find((f) =>
-          /projects?$/i.test(f.name.replace(/^\d+\.\s*/, "").trim())
-        );
-        if (projectsFolder) {
-          const projectsResult = await fetchFolders({ folderId: projectsFolder.id });
-          if (projectsResult) {
-            match = projectsResult.folders.find((f) => f.name === targetFolder);
-            if (match) {
-              console.log(`[ShareFolderModal] Found "${targetFolder}" inside "${projectsFolder.name}"`);
-              setBreadcrumb([
-                { name: projectsFolder.name, folderId: projectsFolder.id, webUrl: projectsFolder.webUrl },
-                { name: match.name, folderId: match.id, webUrl: match.webUrl },
-              ]);
-              fetchFolders({ folderId: match.id });
-              return;
-            }
+      // Helper: navigate into a matched folder
+      const navigateToFolder = (match: FolderItem, breadcrumbPrefix: Array<{ name: string; folderId: string; webUrl?: string }>) => {
+        setBreadcrumb([...breadcrumbPrefix, { name: match.name, folderId: match.id, webUrl: match.webUrl }]);
+        fetchFolders({ folderId: match.id });
+      };
+
+      // The subfolder may be at root level or inside a "Projects" folder
+      // Try root first
+      let match = result.folders.find((f) => f.name === targetFolder);
+      if (match) {
+        console.log(`[ShareFolderModal] Found "${targetFolder}" at root`);
+        navigateToFolder(match, []);
+        return;
+      }
+
+      // Try inside "Projects" subfolder (common pattern: "03. Projects/{divisions}")
+      const projectsFolder = result.folders.find((f) =>
+        /projects?$/i.test(f.name.replace(/^\d+\.\s*/, "").trim())
+      );
+      if (projectsFolder) {
+        const projectsResult = await fetchFolders({ folderId: projectsFolder.id });
+        if (projectsResult) {
+          match = projectsResult.folders.find((f) => f.name === targetFolder);
+          if (match) {
+            console.log(`[ShareFolderModal] Found "${targetFolder}" inside "${projectsFolder.name}"`);
+            navigateToFolder(match, [{ name: projectsFolder.name, folderId: projectsFolder.id, webUrl: projectsFolder.webUrl }]);
+            return;
           }
         }
-        console.warn(`[ShareFolderModal] Config says folder "${targetFolder}" but not found in SP. Falling back to fuzzy match.`);
       }
+      console.warn(`[ShareFolderModal] Config says folder "${targetFolder}" but not found in SP. Falling back to fuzzy match.`);
     }
 
     // ── FALLBACK: fuzzy match using clickupListName ──

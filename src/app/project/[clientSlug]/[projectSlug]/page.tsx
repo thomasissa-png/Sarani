@@ -120,6 +120,55 @@ const SKIP_FOLDER_NAMES = new Set([
   "templates",
 ]);
 
+/**
+ * Fetch individual files by their Graph API item IDs.
+ * Used when selectedAssets contains IDs from multiple folders —
+ * scanning a single folder would miss files from other folders.
+ */
+async function fetchAssetsByIds(
+  assetIds: string[],
+  driveId: string
+): Promise<{ batches: BatchGroup[]; error?: string }> {
+  try {
+    const items: BatchItem[] = [];
+    // Fetch each item individually (Graph API batch would be better but this is simpler)
+    const results = await Promise.allSettled(
+      assetIds.map(async (id) => {
+        const item = await graphFetch<GraphDriveChild>(
+          `/drives/${driveId}/items/${id}`
+        );
+        return item;
+      })
+    );
+
+    for (const result of results) {
+      if (result.status !== "fulfilled") continue;
+      const item = result.value;
+      if (!item.file) continue;
+      const check = isAllowedFile(item);
+      if (!check.allowed) continue;
+      items.push({
+        name: item.name,
+        itemId: item.id,
+        webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+        proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
+        mimeType: check.mimeType,
+        size: item.size,
+        width: item.image?.width,
+        height: item.image?.height,
+      });
+    }
+
+    if (items.length === 0) return { batches: [] };
+
+    // Group by parent folder for display
+    return { batches: [{ name: "Selected Assets", items }] };
+  } catch (err) {
+    console.error("[share-page] Error fetching assets by IDs:", err);
+    return { batches: [], error: "Failed to load selected assets" };
+  }
+}
+
 function normalizeForMatch(input: string): string {
   return input
     .toLowerCase()
@@ -501,31 +550,32 @@ export default async function ProjectPreviewPage({ params }: Props) {
     notFound();
   }
 
-  // If the PM selected a specific SP folder (spFolderId), load assets directly from it.
-  // Otherwise, fall back to the old fuzzy-match approach.
-  let { batches, error: spError } = preview.spFolderId
-    ? await fetchBatchesByFolderId(
-        preview.spFolderId,
-        preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID
-      )
-    : await fetchBatches(preview.clientName, preview.projectName);
+  // If specific assets were selected (with IDs), load them directly by ID.
+  // This handles cross-folder selections correctly — scanning a single folder
+  // would miss files from other folders.
+  // Otherwise, load from the SP folder (or fuzzy-match).
+  let batches: BatchGroup[] = [];
+  let spError: string | undefined;
 
-  // If PM selected specific assets, filter batches to only show those
   if (preview.selectedAssets) {
     try {
       const selected: Array<{ id?: string; name: string }> = JSON.parse(preview.selectedAssets);
-      // Prefer filtering by ID (unique across folders), fallback to name for legacy data
-      const hasIds = selected.some((s) => s.id);
-      if (hasIds) {
-        const selectedIds = new Set(selected.map((s) => s.id).filter(Boolean));
-        batches = batches
-          .map((b) => ({
-            ...b,
-            items: b.items.filter((item) => selectedIds.has(item.itemId)),
-          }))
-          .filter((b) => b.items.length > 0);
+      const selectedIds = selected.map((s) => s.id).filter(Boolean) as string[];
+
+      if (selectedIds.length > 0) {
+        // Direct fetch by ID — works across multiple folders
+        const driveId = preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID;
+        const result = await fetchAssetsByIds(selectedIds, driveId);
+        batches = result.batches;
+        spError = result.error;
       } else {
-        // Legacy fallback: filter by name
+        // Legacy: no IDs, fall back to folder scan + name filter
+        const folderResult = preview.spFolderId
+          ? await fetchBatchesByFolderId(preview.spFolderId, preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID)
+          : await fetchBatches(preview.clientName, preview.projectName);
+        batches = folderResult.batches;
+        spError = folderResult.error;
+
         const selectedNames = new Set(selected.map((s) => s.name.toLowerCase()));
         batches = batches
           .map((b) => ({
@@ -535,8 +585,20 @@ export default async function ProjectPreviewPage({ params }: Props) {
           .filter((b) => b.items.length > 0);
       }
     } catch {
-      // Invalid JSON — show all assets
+      // Invalid JSON — fall through to folder scan
+      const folderResult = preview.spFolderId
+        ? await fetchBatchesByFolderId(preview.spFolderId, preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID)
+        : await fetchBatches(preview.clientName, preview.projectName);
+      batches = folderResult.batches;
+      spError = folderResult.error;
     }
+  } else {
+    // No selection — show all assets from the folder
+    const folderResult = preview.spFolderId
+      ? await fetchBatchesByFolderId(preview.spFolderId, preview.spDriveId || SHAREPOINT_ASSETS_DRIVE_ID)
+      : await fetchBatches(preview.clientName, preview.projectName);
+    batches = folderResult.batches;
+    spError = folderResult.error;
   }
 
   const images = batches.flatMap((b) =>
