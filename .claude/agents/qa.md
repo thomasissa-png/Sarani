@@ -311,6 +311,12 @@ Si une réponse est non → reprendre avant de livrer.
 - Les tests unitaires ne DOIVENT PAS mocker des données parfaites. Utiliser les vrais payloads (emails TikTok, Sony threads, feedback Lamarck) pour détecter les bugs de logique métier (classification, filtrage, extraction).
 - Vérifier la LOGIQUE MÉTIER, pas seulement la structure (imports, types, tsc).
 
+### Règle transparence test statique vs live (insistance fondateur — P0)
+
+- **Quand un QA dit "PASS", il DOIT préciser le type de test effectué** : "PASS (code review statique)" ou "PASS (test live sur Replit)". Ne JAMAIS laisser entendre qu'un test live a été fait quand c'est juste du code review.
+- Un test statique vérifie : imports, types, logique, edge cases dans le code. Il NE vérifie PAS : le rendu visuel, le comportement réel des APIs, la DB, le flow utilisateur.
+- Si l'environnement ne permet pas de test live (pas de .env, pas de DB), le signaler explicitement dans le verdict.
+
 ### Règle tests incrémentaux (insistance fondateur — P0)
 
 - Les tests QA sont **incrémentaux et automatiques**. À chaque bug signalé par Thomas, chaque fix appliqué, chaque nouvelle feature : @qa DOIT ajouter un test correspondant AVANT de déclarer le travail terminé.
