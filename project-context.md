@@ -288,6 +288,10 @@
 | @fullstack | 2026-04-03 | src/app/admin/(authenticated)/closures/page.tsx | Pipeline status affiché (failed → rouge + Retry), source candidate prise en compte dans handleStarOverride (POST direct sans PATCH pour éviter 409), outputs affichés en cards stylisées. | Le bouton "Create Case Study" échouait avec 409 (race condition PATCH→POST) pour les candidats. Le statut pipeline n'était pas visible. |
 | @qa | 2026-04-03 | src/app/api/project-assets/[itemId]/route.ts | ROOT CAUSE vidéo trouvée : SharePoint retourne application/octet-stream pour les vidéos uploadées → proxy faisait 302 redirect → cross-origin SP sans CORS → playback cassé. Fix : VIDEO_EXT_TO_MIME fallback par extension de fichier + ajout `name` dans la requête Graph API. | 4 itérations précédentes ciblaient les symptômes (CSP, CORS headers, crossOrigin attr). La vraie cause était le mimeType erroné de SharePoint. L'extension du fichier est un signal fiable. |
 | @orchestrator | 2026-04-03 | src/lib/ai/claude.ts | DEFAULT_MODEL changé de claude-sonnet-4-6-latest → claude-sonnet-4-latest pour auto-update cross-versions mineures. | Thomas voulait éviter le breakage quand Claude évolue (erreur 404 avec l'ancien modèle daté). L'alias -latest suit les mises à jour Sonnet 4.x automatiquement. |
+| @fullstack | 2026-04-03 (S16) | src/lib/ai/claude.ts | REVERT : DEFAULT_MODEL revenu à claude-sonnet-4-6-latest. claude-sonnet-4-latest n'est PAS un alias Anthropic valide → 404. | L'alias "-latest" ne fonctionne QUE dans une famille mineure (claude-sonnet-4-6-latest OK, claude-sonnet-4-latest KO). Erreur de S15 corrigée. |
+| @fullstack | 2026-04-03 (S16) | src/app/api/project-assets/[itemId]/route.ts, src/app/project/[clientSlug]/[projectSlug]/page.tsx | Video : `<source type={mimeType}>` au lieu de `<video src>`, timeout proxy 60s, logging debug. | Le type hint dans `<source>` aide le browser à savoir le format avant de requêter. Le timeout 30s était trop court pour les grosses vidéos. |
+| @fullstack | 2026-04-03 (S16) | src/lib/integrations/config.ts, src/components/admin/ShareFolderModal.tsx, src/types/integrations.ts, src/lib/integrations/tracker-merge.ts, tracker/page.tsx, projects/[id]/page.tsx | **REFONTE folder matching** : lookup direct par ClickUp list ID → config subdivisions → dossier SP exact. Subdivisions ajoutées pour 9 clients (TikTok 21 divisions, Sony 3, Ubi 7, Aujan 3, PICO 2, Aristocrat 2, Bose, Lamarck, CMC). getSubdivisionByListId() helper. clickupListId propagé dans tout le flow. Fuzzy matching conservé en fallback uniquement. | Thomas a pointé que le fuzzy matching était une mauvaise approche : le projet ClickUp est DÉJÀ dans le bon espace/liste, il suffit de mapper list ID → dossier SP via la config. arya-business-rules.md contient tous les mappings. Approche déterministe vs probabiliste. |
+| @qa | 2026-04-03 (S16) | tests/unit/folder-matching.test.ts, tests/unit/integration-qa-fixes.test.ts, tests/unit/config-subdivision-lookup.test.ts | 56 nouveaux tests : 16 folder matching (scénario TikTok réel), 17 integration QA (vérification code source), 23 config lookup (toutes subdivisions). 594 tests total, 0 erreurs tsc. | Thomas a exigé "une vraie QA" avant confirmation. Tests écrits avec données production réelles (noms de listes ClickUp et dossiers SP exacts). |
 
 ---
 
@@ -407,50 +411,50 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-03 (session 15)
+**Date et heure de clôture :** 2026-04-03 (session 16)
 
-**Résumé de la session (session 15) :**
-Session de bugfix intensive — 6 bugs corrigés en batch + 3 améliorations. (1) Comment badges affichés sur 4 assets au lieu d'1 → fix itemId unique. (2) Asset selection dedup → fix itemId. (3) TikTok folder matching → stripNumberPrefix + auto-navigate "Projects" subfolder. (4) Video playback ROOT CAUSE trouvée après 4 itérations : SharePoint retourne application/octet-stream pour les vidéos → proxy 302 redirect → cross-origin SP sans CORS. Fix : VIDEO_EXT_TO_MIME fallback par extension. (5) Model name 404 → claude-sonnet-4-latest. (6) Pipeline 409 race condition + status display. Aussi : cleanEmailSubject() pour matching, multi-folder selection, auto-refresh share links.
+**Résumé de la session (session 16) :**
+Session de correction des 4 bugs non fonctionnels en production identifiés par Thomas en fin de S15, suivie d'une refonte architecturale du folder matching. (1) Model name 404 : claude-sonnet-4-latest n'est PAS un alias Anthropic valide → revert à claude-sonnet-4-6-latest. (2) Video playback : ajout `<source type={mimeType}>` + timeout 60s + logging. (3) Folder matching : ajout normalize() + scoring bidirectionnel. (4) Thomas a pointé la vraie solution : utiliser le ClickUp list ID (déjà connu) pour lookup direct dans la config au lieu de fuzzy matching. Refonte complète : ajout subdivisions pour TOUS les clients (TikTok 21 divisions, Sony 3, Ubi 7, Aujan 3, PICO 2, Aristocrat 2, Bose, Lamarck, CMC) + getSubdivisionByListId() + clickupListId propagé dans tout le flow.
 
-**Travaux terminés cette session (S15) :**
-- [x] cleanEmailSubject() — strip Re:/Tr:/Fwd:/AW:/WG:/Rép: + 14 tests unitaires
-- [x] Multi-folder file selection dans ShareFolderModal (Map<id, metadata>)
-- [x] Auto-refresh liste de liens après création share link (onLinkCreated callback)
-- [x] Comment badges par itemId (plus de badge sur 4 assets même nom)
-- [x] Asset selection par itemId avec fallback legacy
-- [x] TikTok folder matching : stripNumberPrefix + auto-navigate "Projects" subfolder
-- [x] Video playback ROOT CAUSE : VIDEO_EXT_TO_MIME fallback proxy + share page
-- [x] Model name : claude-sonnet-4-latest (future-proof auto-update)
-- [x] Case study pipeline : source param + POST direct sans PATCH (409 fix)
-- [x] Pipeline status display : failed en rouge + Retry
-- [x] Pipeline outputs en cards stylisées
+**Travaux terminés cette session (S16) :**
+- [x] Model name fix : claude-sonnet-4-6-latest (pas claude-sonnet-4-latest)
+- [x] Video : `<source type={mimeType}>` + timeout 60s + logging debug
+- [x] Folder matching : normalize() + bidirectional scoring (fuzzy fallback uniquement)
+- [x] **REFONTE** : config-based folder lookup via ClickUp list ID
+- [x] Subdivisions ajoutées pour 9 clients (TikTok, Sony, Ubi, Aujan, PICO, Aristocrat, Bose, Lamarck, CMC)
+- [x] getSubdivisionByListId() helper dans config.ts
+- [x] clickupListId propagé : TrackerProject → tracker-merge → tracker page → project detail → ShareFolderModal
+- [x] 56 nouveaux tests (16 folder matching + 17 integration QA + 23 config lookup)
+- [x] 594 tests total, 0 erreurs TypeScript
 
 **Travaux en cours / à faire :**
 - **LinkedIn auto-post** : bouton "Post to LinkedIn" OAuth2 pas encore implémenté
 - **Commentaires : upload fichiers** → SP "Supporting Files" (spécifié, pas implémenté)
 - **Phase 4 QA** (~75%) : Lighthouse CI, visual regression, E2E LLM integration tests manquants
 - **Phase 5 Launch** : non démarrée
+- **Vérification live Replit** : video playback + folder matching à tester sur déploiement réel
 
 **Prochaines actions recommandées :**
-1. **Phase 4 QA complète** (PRIORITÉ 1 — @qa, @infrastructure) : configurer Lighthouse CI, créer baselines Playwright visual regression, ajouter tests E2E scénarios LLM
-2. **LinkedIn OAuth2 auto-post** (PRIORITÉ 2 — @fullstack) : intégration API LinkedIn Company Page pour publier case studies
-3. **Upload fichiers commentaires** (PRIORITÉ 3 — @fullstack) : permettre upload dans SP "Supporting Files" depuis la page share
+1. **Vérification live sur Replit** (PRIORITÉ 1) : tester les 4 fixes en production — vidéo, folder matching, case study, share link dedup
+2. **Phase 4 QA complète** (PRIORITÉ 2 — @qa, @infrastructure) : Lighthouse CI, visual regression, E2E LLM
+3. **LinkedIn OAuth2 auto-post** (PRIORITÉ 3 — @fullstack)
+4. **Upload fichiers commentaires** (PRIORITÉ 4 — @fullstack)
 
 **Blockers éventuels :**
 - LinkedIn OAuth2 : Thomas doit créer une app LinkedIn et fournir client_id/client_secret
 - Video playback : fix appliqué mais tests live sur Replit nécessaires (pas testable en CI sans SharePoint)
 
 **Décisions de Thomas cette session :**
-- claude-sonnet-4-latest (alias auto-update, pas de version datée)
-- Video = toujours stream proxy, jamais 302 redirect vers SP
-- Préfixes email (Re:/Fwd:/Tr:) strippés avant matching projet
-- Sélection multi-dossier persiste via Map avec metadata
+- claude-sonnet-4-6-latest est le SEUL alias valide (pas claude-sonnet-4-latest)
+- Le folder matching DOIT utiliser le ClickUp list ID (config lookup), PAS le fuzzy matching sur les noms
+- Les subdivisions de TOUS les clients doivent être dans la config (pas juste TikTok)
+- Le fuzzy matching reste uniquement en fallback pour les cas non couverts par la config
 
 **Branche de travail :** claude/session-recovery-analysis-b03NR
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 15. Branche : claude/session-recovery-analysis-b03NR. 6 bugs corrigés (vidéo root cause, commentaires, dedup, TikTok, model, pipeline). Prochaine priorité : Phase 4 QA complète (Lighthouse CI, visual regression), LinkedIn OAuth2 auto-post, upload fichiers commentaires. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 16. Branche : claude/session-recovery-analysis-b03NR. 4 bugs fixés (model 404, video, folder matching, dedup) + refonte folder matching par config lookup ClickUp list ID. 594 tests. Prochaine priorité : vérification live Replit, Phase 4 QA, LinkedIn OAuth2. Ne lance aucun agent avant mon feu vert.
 ```
 - [x] 7 filtres (All/New Projects/Project Feedback/Enquiries/Project Reviews/Others/Managed)
 - [x] Filtre client (2e ligne : TikTok/Sony/Bose/Ubi/Lamarck/Aristocrat/Aujan/CMC/PICO/GEODIS/Others)
