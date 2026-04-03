@@ -431,7 +431,7 @@ function PreviewLinksSection({
   if (previews.length === 0) {
     return (
       <div className="py-6 text-center text-sm text-neutral-400">
-        No presentation link generated yet.{" "}
+        No link generated yet.{" "}
         <span className="text-neutral-500">
           Use &quot;Share Preview&quot; from the Tracker to create one.
         </span>
@@ -904,11 +904,11 @@ export default function ProjectViewPage() {
         </section>
       )}
 
-      {/* ─── Section 3: Presentation Links ───────────────────────────────── */}
+      {/* ─── Section 3: Project Links ────────────────────────────────────── */}
       <section className="bg-white border border-neutral-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-brand-black">
-            Presentation Link
+            Project Link
           </h2>
           {trackerInfo?.client && (
             <button
@@ -916,7 +916,7 @@ export default function ProjectViewPage() {
               className="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors inline-flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>
-              Create presentation
+              Create Link
             </button>
           )}
         </div>
@@ -941,7 +941,7 @@ export default function ProjectViewPage() {
         />
       </section>
 
-      {/* Share folder modal for creating presentation links */}
+      {/* Share folder modal for creating project links */}
       {trackerInfo?.client && (
         <ShareFolderModal
           isOpen={shareModalOpen}

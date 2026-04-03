@@ -10,7 +10,7 @@
 **As a** PM Sarani, **I want** each presentation link generation to create a new version, **so that** I can track delivery history and share the right version with the client.
 
 ### Flow
-1. PM clicks "Create presentation" in the Share modal (tracker or project page)
+1. PM clicks "Create Link" in the Share modal (tracker or project page)
 2. System checks if a presentation already exists for this projectId
 3. If YES → create a NEW row with `version = previous + 1`, slug = `project-slug-v2`
 4. If NO → create V1 with slug = `project-slug`

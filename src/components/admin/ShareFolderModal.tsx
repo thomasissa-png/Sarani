@@ -196,7 +196,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.message || "Failed to generate presentation link");
+        throw new Error(errBody.message || "Failed to generate link");
       }
 
       const result = await res.json();
@@ -215,7 +215,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       // Open in new tab
       window.open(fullUrl, "_blank");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate presentation");
+      setError(err instanceof Error ? err.message : "Failed to generate link");
     } finally {
       setSharing(null);
     }
@@ -248,7 +248,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
 
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
-        throw new Error(errBody.message || "Failed to generate presentation link");
+        throw new Error(errBody.message || "Failed to generate link");
       }
 
       const result = await res.json();
@@ -263,7 +263,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
 
       window.open(fullUrl, "_blank");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate presentation");
+      setError(err instanceof Error ? err.message : "Failed to generate link");
     } finally {
       setSharing(null);
     }
@@ -429,7 +429,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                       sharing === folder.id && "opacity-100 cursor-wait"
                     )}
                   >
-                    {sharing === folder.id ? "Generating..." : "Create presentation"}
+                    {sharing === folder.id ? "Generating..." : "Create Link"}
                   </button>
                 </div>
               ))}
@@ -574,12 +574,12 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           )}
         </div>
 
-        {/* Footer — Create presentation from selected files */}
+        {/* Footer — Create link from selected files */}
         {!loading && data && (data.files.length > 0 || data.folders.length > 0) && (
           <div className="px-6 py-3 border-t border-neutral-200 flex items-center justify-between gap-3">
             <p className="text-xs text-neutral-400">
               {selectedFiles.size > 0
-                ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? "s" : ""} selected for presentation`
+                ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? "s" : ""} selected`
                 : "Select files or pick a folder above"}
             </p>
             {selectedFiles.size > 0 && breadcrumb.length > 0 && (
@@ -591,7 +591,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                 disabled={!!sharing}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
-                {sharing ? "Generating..." : "Create presentation"}
+                {sharing ? "Generating..." : "Create Link"}
               </button>
             )}
           </div>

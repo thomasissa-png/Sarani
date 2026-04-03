@@ -5,7 +5,6 @@
  */
 import { Metadata } from "next";
 import ImageLightbox from "@/components/ui/ImageLightbox";
-import { ReviewActions } from "@/components/ui/ReviewActions";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -508,11 +507,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
           <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">
             Creative Proposal
           </h2>
-          {/* Hint: click to review */}
-          <p className="text-xs text-white/50 flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-            Click on any image to leave feedback
-          </p>
+          {/* Hint: click to review — only shown when images exist */}
+          {images.length > 0 && (
+            <p className="text-xs text-white/50 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+              Click on any image to leave feedback
+            </p>
+          )}
         </div>
 
         {batches.length === 0 ? (
@@ -693,13 +694,6 @@ export default async function ProjectPreviewPage({ params }: Props) {
               Download project files
             </a>
           </div>
-        </section>
-      )}
-
-      {/* Review actions — Approve / Request changes */}
-      {totalAssets > 0 && (
-        <section className="max-w-6xl mx-auto px-6 pb-16">
-          <ReviewActions previewId={preview.id} projectName={preview.projectName} />
         </section>
       )}
 

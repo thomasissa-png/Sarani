@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { slugify } from "@/lib/slugify";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -100,24 +100,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Versioning: find the latest version for this projectId
-    const [latestVersion] = await db
-      .select({ version: projectPreviews.version })
-      .from(projectPreviews)
-      .where(eq(projectPreviews.projectId, projectId))
-      .orderBy(desc(projectPreviews.version))
-      .limit(1);
-
-    const newVersion = latestVersion ? latestVersion.version + 1 : 1;
-
-    // Safety limit: max 20 versions per project
-    if (newVersion > 20) {
-      return NextResponse.json(
-        { error: "VERSION_LIMIT", message: "Maximum 20 versions per project reached." },
-        { status: 409 }
-      );
-    }
-
     // Generate slugs
     const clientSlug = slugify(clientName);
     const baseProjectSlug = slugify(projectName);
@@ -129,27 +111,88 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // V1 = no suffix, V2+ = append -v2, -v3, etc.
-    const projectSlug = newVersion === 1 ? baseProjectSlug : `${baseProjectSlug}-v${newVersion}`;
+    // Check if a preview already exists for this project.
+    // The DB may have a legacy UNIQUE constraint on project_id alone
+    // (project_previews_project_id_key), so we must handle the case where
+    // only one row per project is allowed.
+    const [existing] = await db
+      .select({
+        id: projectPreviews.id,
+        version: projectPreviews.version,
+      })
+      .from(projectPreviews)
+      .where(eq(projectPreviews.projectId, projectId))
+      .orderBy(desc(projectPreviews.version))
+      .limit(1);
 
-    // Insert new version (always a new row, never update)
-    const [inserted] = await db.insert(projectPreviews).values({
-      projectId,
-      version: newVersion,
-      clientSlug,
-      projectSlug,
-      clientName,
-      projectName,
-      brief: brief && typeof brief === "string" ? brief : null,
-      sharepointLink: sharepointLink && typeof sharepointLink === "string" ? sharepointLink : null,
-      spFolderId: spFolderId && typeof spFolderId === "string" ? spFolderId : null,
-      spDriveId: spDriveId && typeof spDriveId === "string" ? spDriveId : null,
-      selectedAssets: selectedAssets ?? null,
-      isActive: true,
-    }).returning({ id: projectPreviews.id });
+    const briefValue = brief && typeof brief === "string" ? brief : null;
+    const sharepointLinkValue = sharepointLink && typeof sharepointLink === "string" ? sharepointLink : null;
+    const spFolderIdValue = spFolderId && typeof spFolderId === "string" ? spFolderId : null;
+    const spDriveIdValue = spDriveId && typeof spDriveId === "string" ? spDriveId : null;
+    const selectedAssetsValue = selectedAssets ?? null;
 
-    const url = `/project/${clientSlug}/${projectSlug}`;
-    return NextResponse.json({ url, created: true, id: inserted.id, version: newVersion }, { status: 201 });
+    let resultId: string;
+    let resultVersion: number;
+
+    if (existing) {
+      // Update the existing preview row (handles legacy UNIQUE on project_id)
+      const newVersion = existing.version + 1;
+      if (newVersion > 20) {
+        return NextResponse.json(
+          { error: "VERSION_LIMIT", message: "Maximum 20 versions per project reached." },
+          { status: 409 }
+        );
+      }
+
+      const projectSlug = `${baseProjectSlug}-v${newVersion}`;
+
+      const [updated] = await db
+        .update(projectPreviews)
+        .set({
+          version: newVersion,
+          clientSlug,
+          projectSlug,
+          clientName,
+          projectName,
+          brief: briefValue,
+          sharepointLink: sharepointLinkValue,
+          spFolderId: spFolderIdValue,
+          spDriveId: spDriveIdValue,
+          selectedAssets: selectedAssetsValue,
+          isActive: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectPreviews.id, existing.id))
+        .returning({ id: projectPreviews.id });
+
+      resultId = updated.id;
+      resultVersion = newVersion;
+    } else {
+      // No existing preview — insert a new row (version 1)
+      const projectSlug = baseProjectSlug;
+
+      const [inserted] = await db.insert(projectPreviews).values({
+        projectId,
+        version: 1,
+        clientSlug,
+        projectSlug,
+        clientName,
+        projectName,
+        brief: briefValue,
+        sharepointLink: sharepointLinkValue,
+        spFolderId: spFolderIdValue,
+        spDriveId: spDriveIdValue,
+        selectedAssets: selectedAssetsValue,
+        isActive: true,
+      }).returning({ id: projectPreviews.id });
+
+      resultId = inserted.id;
+      resultVersion = 1;
+    }
+
+    const finalSlug = resultVersion === 1 ? baseProjectSlug : `${baseProjectSlug}-v${resultVersion}`;
+    const url = `/project/${clientSlug}/${finalSlug}`;
+    return NextResponse.json({ url, created: true, id: resultId, version: resultVersion }, { status: 201 });
   } catch (error: unknown) {
     console.error("[project-previews] POST error:", error);
     // Extract the real PostgreSQL error from Drizzle wrapper

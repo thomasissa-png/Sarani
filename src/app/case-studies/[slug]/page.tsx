@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { Section } from "@/components/layout/section";
-import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/case-studies/stat-card";
 import { CaseStudyCard } from "@/components/case-studies/case-study-card";
 import {
@@ -182,7 +181,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
           {/* Key metric badge */}
           {cs.keyMetric && (
             <div className="mb-8">
-              <span className="inline-block rounded-full bg-brand-flame/10 px-4 py-2 text-sm font-bold text-brand-flame">
+              <span className="inline-block rounded-full bg-brand-flame px-4 py-2 text-sm font-bold text-white">
                 {cs.keyMetric}
               </span>
             </div>
@@ -196,14 +195,6 @@ export default async function CaseStudyPage({ params }: PageProps) {
               </span>
               <span className="font-medium text-brand-black">
                 {cs.deliverable}
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs uppercase tracking-wider text-neutral-500">
-                Category
-              </span>
-              <span className="font-medium text-brand-black">
-                {cs.category}
               </span>
             </div>
           </div>
@@ -305,14 +296,26 @@ export default async function CaseStudyPage({ params }: PageProps) {
                     {cs.deliverable}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wider text-neutral-500">
-                    Category
-                  </dt>
-                  <dd className="font-medium text-brand-black">
-                    {cs.category}
-                  </dd>
-                </div>
+                {cs.volume && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-neutral-500">
+                      Volume
+                    </dt>
+                    <dd className="font-medium text-brand-black">
+                      {cs.volume}
+                    </dd>
+                  </div>
+                )}
+                {cs.turnaround && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-neutral-500">
+                      Turnaround
+                    </dt>
+                    <dd className="font-medium text-brand-black">
+                      {cs.turnaround}
+                    </dd>
+                  </div>
+                )}
                 {cs.keyMetric && (
                   <div>
                     <dt className="text-xs uppercase tracking-wider text-neutral-500">
@@ -324,11 +327,6 @@ export default async function CaseStudyPage({ params }: PageProps) {
                   </div>
                 )}
               </dl>
-              <div className="mt-8">
-                <Button variant="primary" href="/contact" className="w-full">
-                  Start a project
-                </Button>
-              </div>
             </div>
           </aside>
         </div>
@@ -340,7 +338,21 @@ export default async function CaseStudyPage({ params }: PageProps) {
           <h2 className="mb-8 text-center text-2xl font-bold text-brand-black">
             The Work
           </h2>
-          <ImageLightbox images={galleryImages} />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {galleryImages.map((img) => (
+              <ImageLightbox key={img.url} src={img.url} alt={img.name}>
+                <div className="aspect-video overflow-hidden rounded-xl bg-neutral-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.url}
+                    alt={img.name}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </ImageLightbox>
+            ))}
+          </div>
         </Section>
       )}
 

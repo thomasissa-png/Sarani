@@ -216,6 +216,7 @@ export default function CandidateDetailPage() {
   };
 
   const handlePublish = async (outputId: string) => {
+    if (!window.confirm("This case study will be published on sarani.studio and visible to everyone. Continue?")) return;
     setPublishing(true);
     setError(null);
     try {
@@ -350,15 +351,18 @@ export default function CandidateDetailPage() {
       )}
 
       {/* Pipeline Progress Bar */}
-      {candidate.pipelineStatus !== "idle" && (
-        <PipelineProgressBar
-          status={candidate.pipelineStatus}
-          steps={candidate.pipelineSteps}
-          expandedStep={expandedStep}
-          onToggleStep={(step) =>
-            setExpandedStep(expandedStep === step ? null : step)
-          }
-        />
+      <PipelineProgressBar
+        status={candidate.pipelineStatus}
+        steps={candidate.pipelineSteps}
+        expandedStep={expandedStep}
+        onToggleStep={(step) =>
+          setExpandedStep(expandedStep === step ? null : step)
+        }
+      />
+      {candidate.pipelineStatus === "failed" && (
+        <p className="mt-2 text-sm text-red-600">
+          Pipeline failed. You can try again by clicking &quot;Generate All Outputs&quot; above.
+        </p>
       )}
 
       {/* Visual Suggestions Panel */}
@@ -455,7 +459,7 @@ export default function CandidateDetailPage() {
             {candidate.status === "generated" && (
               <button
                 onClick={() => handleStatusChange("reviewed")}
-                className="w-full px-4 py-2 border border-emerald-300 text-emerald-700 text-sm font-medium rounded-lg hover:bg-emerald-50 transition-colors"
+                className="w-full px-4 py-2 border border-brand-cerulean/30 text-brand-cerulean text-sm font-medium rounded-lg hover:bg-brand-cerulean/10 transition-colors"
               >
                 Mark as Reviewed
               </button>
@@ -620,7 +624,7 @@ function CaseStudyPreview({
       </div>
       <div>
         <p className="text-neutral-400 text-xs">Slug</p>
-        <p className="text-sm mt-1 font-mono text-neutral-600">/work/{cs.slug as string}</p>
+        <p className="text-sm mt-1 font-mono text-neutral-600">/case-studies/{cs.slug as string}</p>
       </div>
 
       {/* Publish actions */}
@@ -628,7 +632,7 @@ function CaseStudyPreview({
         {output.publishedAt ? (
           <>
             <a
-              href={`/work/${output.caseStudySlug}`}
+              href={`/case-studies/${output.caseStudySlug}`}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-lg"
@@ -688,7 +692,7 @@ function LinkedInPreview({
           {charCount} / 1,300 characters
         </span>
         <button
-          onClick={() => onCopy(fullText, "Copied! Paste it on LinkedIn.")}
+          onClick={() => onCopy(fullText, "Copied! Paste on LinkedIn.")}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A66C2] text-white text-sm font-medium rounded-lg hover:bg-[#004182] transition-colors"
         >
           {copied ? (
@@ -698,7 +702,7 @@ function LinkedInPreview({
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
               </svg>
-              Copy to LinkedIn Buffer
+              Copy LinkedIn Post
             </>
           )}
         </button>
@@ -819,11 +823,11 @@ function PipelineProgressBar({
                 disabled={state !== "complete"}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                   state === "complete"
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-pointer hover:bg-emerald-100"
+                    ? "bg-brand-cerulean/10 text-brand-cerulean border border-brand-cerulean/30 cursor-pointer hover:bg-brand-cerulean/20"
                     : state === "active"
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      ? "bg-brand-lemon/10 text-brand-black border border-brand-lemon/40"
                       : state === "failed"
-                        ? "bg-red-50 text-red-700 border border-red-200"
+                        ? "bg-brand-flame/10 text-brand-flame border border-brand-flame/30"
                         : "bg-neutral-50 text-neutral-400 border border-neutral-200"
                 }`}
               >
@@ -947,7 +951,7 @@ function VisualSuggestionsPanel({
               onClick={() => onToggle(v.id)}
               className={`relative group aspect-video rounded-lg overflow-hidden border-2 transition-all ${
                 isSelected
-                  ? "border-emerald-500 ring-2 ring-emerald-200"
+                  ? "border-brand-cerulean ring-2 ring-brand-cerulean/20"
                   : "border-transparent hover:border-neutral-300"
               }`}
             >
@@ -962,7 +966,7 @@ function VisualSuggestionsPanel({
               <div
                 className={`absolute top-2 right-2 w-5 h-5 rounded-md flex items-center justify-center transition-all ${
                   isSelected
-                    ? "bg-emerald-500 text-white"
+                    ? "bg-brand-cerulean text-white"
                     : "bg-white/80 border border-neutral-300 group-hover:bg-white"
                 }`}
               >
@@ -981,7 +985,7 @@ function VisualSuggestionsPanel({
         })}
       </div>
       {selectedVisuals.size > 0 && (
-        <p className="mt-3 text-xs text-emerald-600 font-medium">
+        <p className="mt-3 text-xs text-brand-cerulean font-medium">
           {selectedVisuals.size} visual{selectedVisuals.size !== 1 ? "s" : ""} selected
         </p>
       )}
