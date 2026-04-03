@@ -52,6 +52,8 @@ interface ShareFolderModalProps {
   sharepointLink?: string;
   /** ClickUp list name — used to auto-navigate to the right SP subfolder */
   clickupListName?: string;
+  /** Called after a share link is successfully created — use to refresh the parent's link list */
+  onLinkCreated?: () => void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -131,7 +133,7 @@ function findMatchingFolder(folders: FolderItem[], clickupList: string, clientNa
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
-export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink, clickupListName }: ShareFolderModalProps) {
+export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink, clickupListName, onLinkCreated }: ShareFolderModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FoldersResponse | null>(null);
@@ -312,12 +314,15 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
 
       // Open in new tab
       window.open(fullUrl, "_blank");
+
+      // Notify parent to refresh link list
+      onLinkCreated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate link");
     } finally {
       setSharing(null);
     }
-  }, [clientName, projectName, data]);
+  }, [clientName, projectName, data, onLinkCreated]);
 
   // Share folder with specific file selection — stores selected file names in DB
   const shareFolderWithSelection = useCallback(async (folderId: string, folderName: string, folderWebUrl?: string) => {
@@ -363,12 +368,15 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       } catch { /* clipboard not available */ }
 
       window.open(fullUrl, "_blank");
+
+      // Notify parent to refresh link list
+      onLinkCreated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate link");
     } finally {
       setSharing(null);
     }
-  }, [clientName, projectName, data, selectedFiles]);
+  }, [clientName, projectName, data, selectedFiles, onLinkCreated]);
 
   if (!isOpen) return null;
 

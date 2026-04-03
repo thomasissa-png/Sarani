@@ -1057,6 +1057,7 @@ export default function ProjectViewPage() {
           projectName={trackerInfo.project}
           sharepointLink={trackerInfo.sharepointLink}
           clickupTaskUrl={trackerInfo.clickupTaskUrl}
+          onLinkCreated={fetchData}
         />
       )}
     </div>
