@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
       userMessage,
       model: MODEL,
       maxTokens: MAX_TOKENS,
+      timeout: 120_000,
     });
 
     // Validate Claude's response against our schema

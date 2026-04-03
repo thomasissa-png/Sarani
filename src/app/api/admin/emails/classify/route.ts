@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       userMessage: `Subject: ${subject}\nFrom: ${from}\nBody preview: ${bodyPreview}${clientProfile}`,
       model: "claude-haiku-4-5-20251001",
       maxTokens: 1024,
-      timeout: 10_000,
+      timeout: 20_000,
     });
 
     // Validate LLM output with Zod schema

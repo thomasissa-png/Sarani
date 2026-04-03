@@ -150,6 +150,7 @@ export async function POST(request: NextRequest) {
       userMessage,
       model: "claude-sonnet-4-5-20241022",
       maxTokens,
+      timeout: maxTokens > 8192 ? 120_000 : 60_000,
     });
 
     // Validate Claude's response with the appropriate schema

@@ -143,6 +143,7 @@ export async function POST(
         systemPrompt,
         userMessage,
         maxTokens: 8192,
+        timeout: 120_000,
       });
 
       const totalTokens = result.usage.inputTokens + result.usage.outputTokens;
