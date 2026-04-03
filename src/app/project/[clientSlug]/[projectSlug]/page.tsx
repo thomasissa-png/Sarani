@@ -502,11 +502,11 @@ export default async function ProjectPreviewPage({ params }: Props) {
         )}
       </section>
 
-      {/* Deliverables */}
+      {/* Creative Proposal */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
         <div className="flex items-center justify-between mb-10">
           <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">
-            Deliverables
+            Creative Proposal
           </h2>
           {/* Hint: click to review */}
           <p className="text-xs text-white/30 flex items-center gap-1.5">
