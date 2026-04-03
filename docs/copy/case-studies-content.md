@@ -437,15 +437,15 @@ Start a project
 
 *[Framework : BAB — Before / After / Bridge]*
 *[Conscience : Solution-Aware — Sophie knows she needs an agency, evaluates whether Sarani can hold dual-brand constraints at fixed price under a seasonal deadline]*
-*[Objections traitées : dual-brand complexity → addressed in Solution; pricing surprises → addressed via fixed price + unit cost; quality fit for enterprise brands → addressed via first-submission approval fact]*
+*[Objections traitées : dual-brand complexity → addressed in Solution ("two sets of brand guidelines, one brief"); pricing surprises → fixed price + €[X]/asset unit cost; quality fit for Bose standards → "approved on first submission"; deadline pressure → "delivered in [X] days"]*
 
 ---
 
-**Title (H1):**
-Bose × Boulanger: Two Brands, One Seasonal Window
+**Title (H1) — [Framework : Formula 2 — Problem → Result]:**
+Bose needed [X] retail formats in one seasonal window. Delivered in [X] days for €1,080.
 
 **Subtitle:**
-[X] campaign formats delivered in [X] days. €1,080 fixed. No revision disputes.
+Two brand guidelines. One brief. Fixed price, agreed before we started.
 
 ---
 
@@ -453,34 +453,28 @@ Bose × Boulanger: Two Brands, One Seasonal Window
 
 ---
 
-**Challenge:**
+**Challenge — (38 words):**
 
-Bose needed campaign banners for a seasonal French retail push inside Boulanger's ecosystem. The brief had two constraints that don't usually go together: hold Bose's premium audio identity while making the creative feel native to Boulanger's retail environment. The "Les Beaux Jours" window was fixed. There was no time for open-ended revision cycles or a budget conversation halfway through.
-
-*(39 words)*
+Bose had a seasonal window and a brief no traditional agency handles cleanly: two distinct identities — Bose's premium audio brand and Boulanger's retail environment — that both had to win. The "Les Beaux Jours" deadline was fixed. There was no room for revision cycles or a surprise invoice.
 
 ---
 
-**Solution:**
+**Solution — (57 words):**
 
-Sarani adapted Bose's visual codes — deep blacks, controlled product lighting, precise framing — to a format designed to convert inside a mass-market retail context without reading as generic promotion. The result worked for both brands simultaneously. [X] formats produced in [X] days. Fixed price: €1,080, agreed upfront, invoiced as quoted.
-
-*(52 words)*
+Sarani took Bose's visual codes — deep blacks, precise product framing — and built formats that felt native to Boulanger's retail context without reading as generic promotion. Both brands held. [X] formats produced in [X] days. Price agreed upfront at €1,080 — €[X] per asset. Invoiced as quoted. Zero scope conversations.
 
 ---
 
-**Results:**
+**Stats block (3 bullets):**
+- Delivered in [X] days
+- €1,080 fixed — €[X] per asset
+- Approved on first submission — zero revision disputes
+
+---
+
+**Result (closing):**
 
 Campaign went live on time. Fixed price. No revision disputes.
-
----
-
-**Key metrics:**
-- Formats delivered: [X]
-- Price per asset: €[X] (€1,080 for [X] formats)
-- Turnaround: [X] days
-- Revision rounds: approved on first submission — [À CONFIRMER avec l'équipe Bose]
-- Budget overrun: zero
 
 ---
 
