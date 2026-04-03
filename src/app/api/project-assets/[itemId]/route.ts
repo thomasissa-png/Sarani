@@ -29,6 +29,12 @@ export async function GET(
   const { itemId } = await params;
   const driveId = request.nextUrl.searchParams.get("driveId") || SHAREPOINT_ASSETS_DRIVE_ID;
 
+  // Validate inputs to prevent path injection into Graph API
+  const SAFE_ID = /^[a-zA-Z0-9!_-]+$/;
+  if (!SAFE_ID.test(itemId) || !SAFE_ID.test(driveId)) {
+    return NextResponse.json({ error: "Invalid item or drive ID" }, { status: 400 });
+  }
+
   try {
     const item = await graphFetch<{
       "@microsoft.graph.downloadUrl"?: string;

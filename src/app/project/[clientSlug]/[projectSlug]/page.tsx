@@ -143,10 +143,24 @@ interface GraphDriveChild {
 
 /** Maximum depth when recursing into subfolders inside a batch. */
 const MAX_FOLDER_DEPTH = 4;
+/** Maximum concurrent Graph API calls when recursing subfolders. */
+const MAX_CONCURRENCY = 5;
+
+/** Process items in batches of `limit` concurrent promises. */
+async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += limit) {
+    const batch = items.slice(i, i + limit);
+    const batchResults = await Promise.all(batch.map(fn));
+    results.push(...batchResults);
+  }
+  return results;
+}
 
 /**
  * Recursively collect all allowed files from a Graph folder item.
  * Traverses subfolders up to MAX_FOLDER_DEPTH, skipping folders in SKIP_FOLDER_NAMES.
+ * Limits concurrent Graph API calls to MAX_CONCURRENCY.
  */
 async function collectFilesRecursive(
   driveId: string,
@@ -183,12 +197,12 @@ async function collectFilesRecursive(
       }
     }
 
-    // Recurse into nested subfolders in parallel
+    // Recurse into nested subfolders with concurrency limit
     if (nestedFolders.length > 0) {
-      const nestedResults = await Promise.all(
-        nestedFolders.map((f) =>
-          collectFilesRecursive(driveId, f.id, depth + 1)
-        )
+      const nestedResults = await mapConcurrent(
+        nestedFolders,
+        MAX_CONCURRENCY,
+        (f) => collectFilesRecursive(driveId, f.id, depth + 1)
       );
       for (const nested of nestedResults) {
         files.push(...nested);
