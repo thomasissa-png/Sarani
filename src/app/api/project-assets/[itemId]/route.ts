@@ -140,7 +140,16 @@ export async function GET(
       responseHeaders.set("Content-Range", contentRange);
     }
 
-    return new NextResponse(upstream.body, {
+    // Ensure the body stream is available — fallback to arrayBuffer if stream is null
+    const body = upstream.body ?? new ReadableStream({
+      async start(controller) {
+        const buffer = await upstream.arrayBuffer();
+        controller.enqueue(new Uint8Array(buffer));
+        controller.close();
+      },
+    });
+
+    return new NextResponse(body, {
       status: upstream.status, // 200 or 206
       headers: responseHeaders,
     });
