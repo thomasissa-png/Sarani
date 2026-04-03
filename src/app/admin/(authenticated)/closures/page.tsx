@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { RegenerateButton, LinkedInCharCounter, OutputStatusBadge } from "@/components/admin/CaseStudyActions";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -1263,6 +1264,9 @@ export default function ClosuresPage() {
                                 </div>
                               )}
                             </div>
+                            <div className="mt-2">
+                              <RegenerateButton outputId={cs.id} outputType="case_study" onRegenerated={() => { delete outputs[closure.id]; fetchOutputs(closure.id); }} />
+                            </div>
                           </div>
                           );
                         })()}
@@ -1339,6 +1343,11 @@ export default function ClosuresPage() {
                                 </div>
                               )}
                             </div>
+                            <LinkedInCharCounter text={[draft?.hook ?? liContent.hook, draft?.body ?? liContent.body, draft?.proofPoints ?? liContent.proofPoints, draft?.hashtags ?? liContent.hashtags].filter(Boolean).join("\n")} />
+                            <div className="mt-2 flex items-center gap-2">
+                              <OutputStatusBadge outputId={li.id} outputType="linkedin_post" />
+                              <RegenerateButton outputId={li.id} outputType="linkedin_post" onRegenerated={() => { delete outputs[closure.id]; fetchOutputs(closure.id); }} />
+                            </div>
                           </div>
                           );
                         })()}
@@ -1399,6 +1408,10 @@ export default function ClosuresPage() {
                                   )}
                                 </div>
                               )}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <OutputStatusBadge outputId={ne.id} outputType="nurturing_email" />
+                              <RegenerateButton outputId={ne.id} outputType="nurturing_email" onRegenerated={() => { delete outputs[closure.id]; fetchOutputs(closure.id); }} />
                             </div>
                           </div>
                           );
