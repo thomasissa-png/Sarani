@@ -218,6 +218,7 @@ LinkedIn post requirements:
 - hashtags: 3-5 relevant hashtags
 - charCount: actual character count of hook + body + proofPoints + hashtags combined
 - Written from Sarani's perspective ("We delivered...")
+- Tone: confident in our strengths but HUMBLE — let the results speak, never brag. Show competence through facts, not self-congratulation. "We delivered X" is good. "We're the best at X" is forbidden.
 - MUST end with a CTA: either a question to engage ("Managing a co-branding brief this season?") or "Start a project" link
 
 Optimization tips:
