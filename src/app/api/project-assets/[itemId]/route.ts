@@ -15,6 +15,26 @@ const STREAM_MIMETYPES = new Set([
 ]);
 
 /**
+ * Map of video file extensions to their proper MIME types.
+ * Used as fallback when SharePoint returns "application/octet-stream"
+ * or an empty mimeType — which is common for uploaded video files.
+ * Without this, videos get 302-redirected instead of streamed,
+ * breaking HTML5 video playback (cross-origin redirect with no CORS).
+ */
+const VIDEO_EXT_TO_MIME: Record<string, string> = {
+  ".mp4": "video/mp4",
+  ".m4v": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+  ".avi": "video/x-msvideo",
+  ".wmv": "video/x-ms-wmv",
+  ".mkv": "video/x-matroska",
+  ".mpeg": "video/mpeg",
+  ".mpg": "video/mpeg",
+  ".3gp": "video/3gpp",
+};
+
+/**
  * GET /api/project-assets/[itemId]?driveId=xxx
  * Public proxy for SharePoint assets.
  *
@@ -42,6 +62,7 @@ export async function GET(
   try {
     const item = await graphFetch<{
       "@microsoft.graph.downloadUrl"?: string;
+      name?: string;
       file?: { mimeType: string };
       size?: number;
       webUrl?: string;
@@ -52,8 +73,23 @@ export async function GET(
       return NextResponse.json({ error: "No download URL available" }, { status: 404 });
     }
 
-    const mimeType = item.file?.mimeType ?? "";
-    const isVideo = STREAM_MIMETYPES.has(mimeType);
+    let mimeType = item.file?.mimeType ?? "";
+    let isVideo = STREAM_MIMETYPES.has(mimeType);
+
+    // REGRESSION FIX: SharePoint often returns "application/octet-stream" for
+    // video files (especially when uploaded via sync/API). Without this fallback,
+    // videos get 302-redirected instead of streamed, which breaks HTML5 <video>
+    // because the redirect target is cross-origin SharePoint with no CORS headers.
+    // This bug persisted through 4 fix iterations targeting symptoms (CSP, CORS,
+    // crossOrigin attr) while the real cause was mimeType-based filtering.
+    if (!isVideo && item.name) {
+      const ext = item.name.substring(item.name.lastIndexOf(".")).toLowerCase();
+      const fallbackMime = VIDEO_EXT_TO_MIME[ext];
+      if (fallbackMime) {
+        mimeType = fallbackMime;
+        isVideo = true;
+      }
+    }
 
     // For non-video assets, 302 redirect is fine (images, PDFs)
     if (!isVideo) {

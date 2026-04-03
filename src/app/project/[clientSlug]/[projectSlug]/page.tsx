@@ -66,6 +66,44 @@ const ALLOWED_MIMETYPES = new Set([
   "video/3gpp",
 ]);
 
+/**
+ * Video extensions → proper MIME type. Used when SharePoint returns
+ * "application/octet-stream" for a file that is actually a video.
+ * Without this, videos are silently excluded from the share page.
+ * REGRESSION FIX: root cause of video playback broken for 4 iterations.
+ */
+const VIDEO_EXT_TO_MIME: Record<string, string> = {
+  ".mp4": "video/mp4",
+  ".m4v": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+  ".avi": "video/x-msvideo",
+  ".wmv": "video/x-ms-wmv",
+  ".mkv": "video/x-matroska",
+  ".mpeg": "video/mpeg",
+  ".mpg": "video/mpeg",
+  ".3gp": "video/3gpp",
+};
+
+/**
+ * Check if a file should be included on the share page.
+ * First checks the MIME type from SharePoint, then falls back to
+ * extension-based detection for application/octet-stream files.
+ */
+function isAllowedFile(child: GraphDriveChild): { allowed: boolean; mimeType: string } {
+  const mime = child.file?.mimeType ?? "";
+  if (ALLOWED_MIMETYPES.has(mime)) {
+    return { allowed: true, mimeType: mime };
+  }
+  // Fallback: check extension for video files with wrong/missing MIME type
+  const ext = child.name.substring(child.name.lastIndexOf(".")).toLowerCase();
+  const videoMime = VIDEO_EXT_TO_MIME[ext];
+  if (videoMime) {
+    return { allowed: true, mimeType: videoMime };
+  }
+  return { allowed: false, mimeType: mime };
+}
+
 // Folders to SKIP when scanning for deliverables
 const SKIP_FOLDER_NAMES = new Set([
   "supporting files",
@@ -187,13 +225,14 @@ async function collectFilesRecursive(
     const nestedFolders: GraphDriveChild[] = [];
 
     for (const child of children) {
-      if (child.file && ALLOWED_MIMETYPES.has(child.file.mimeType)) {
+      const check = child.file ? isAllowedFile(child) : null;
+      if (check?.allowed) {
         files.push({
           name: child.name,
           itemId: child.id,
           webUrl: child["@microsoft.graph.downloadUrl"] ?? child.webUrl,
           proxyUrl: `/api/project-assets/${child.id}?driveId=${encodeURIComponent(driveId)}`,
-          mimeType: child.file.mimeType,
+          mimeType: check.mimeType,
           size: child.size,
           width: child.image?.width,
           height: child.image?.height,
@@ -247,17 +286,20 @@ async function fetchBatchesByFolderId(
       .sort((a, b) => naturalSort(a.name, b.name));
 
     const directFiles = items
-      .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
-      .map((item) => ({
-        name: item.name,
-        itemId: item.id,
-        webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
-        proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
-        mimeType: item.file!.mimeType,
-        size: item.size,
-        width: item.image?.width,
-        height: item.image?.height,
-      }));
+      .filter((item) => item.file && isAllowedFile(item).allowed)
+      .map((item) => {
+        const { mimeType } = isAllowedFile(item);
+        return {
+          name: item.name,
+          itemId: item.id,
+          webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+          proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
+          mimeType,
+          size: item.size,
+          width: item.image?.width,
+          height: item.image?.height,
+        };
+      });
 
     const batches: BatchGroup[] = [];
 
@@ -385,15 +427,18 @@ async function fetchBatches(
     if (batches.length === 0) {
       console.log(`[share-page] No subfolders with images found, scanning root for direct files`);
       const rootFiles = assetRootItems
-        .filter((item) => item.file && ALLOWED_MIMETYPES.has(item.file.mimeType))
-        .map((item) => ({
-          name: item.name,
-          itemId: item.id,
-          webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
-          proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(SHAREPOINT_ASSETS_DRIVE_ID)}`,
-          mimeType: item.file!.mimeType,
-          size: item.size,
-        }));
+        .filter((item) => item.file && isAllowedFile(item).allowed)
+        .map((item) => {
+          const { mimeType } = isAllowedFile(item);
+          return {
+            name: item.name,
+            itemId: item.id,
+            webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+            proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(SHAREPOINT_ASSETS_DRIVE_ID)}`,
+            mimeType,
+            size: item.size,
+          };
+        });
       if (rootFiles.length > 0) {
         batches.push({ name: "Assets", items: rootFiles });
       }
@@ -691,7 +736,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
                   {batchVideos.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       {batchVideos.map((item) => (
-                        <div key={item.name} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                        <div key={item.itemId} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
                           <video
                             controls
                             preload="metadata"
