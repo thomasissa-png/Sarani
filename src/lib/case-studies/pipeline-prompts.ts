@@ -203,14 +203,22 @@ Brand voice: Assured, Direct, Warm, Evidence-first.
 
 You receive project data, the creative strategy, AND the case study copy. Your job: write a LinkedIn post that promotes the case study.
 
+Target personas:
+- Sophie (Head of Marketing, 38) — her #1 criterion is SPEED. She needs to know the turnaround time.
+- Marc (Procurement Director, 45) — his #1 criterion is COST TRANSPARENCY. He needs fixed pricing and no surprises.
+
 LinkedIn post requirements:
 - Total < 1,300 characters
-- hook: 1 attention-grabbing line that stops the scroll (use the strategy's emotional hook as inspiration)
+- hook: 1 attention-grabbing line that stops the scroll. MUST be FACTUAL — a specific scene, client name, or number. NEVER philosophical/abstract. Example: "Boulanger's seasonal window was live in 5 days. Bose brief came in on Monday."
 - body: 3-4 lines telling the story, grounded in real results
-- proofPoints: key stats from the case study
+- proofPoints: key stats from the case study. MUST include:
+  → Delivery turnaround (e.g., "Delivered in 3 days") — this is the #1 metric Sophie looks for
+  → Fixed price with volume context (e.g., "€1,080 for 24 banner formats") — never a price alone without what it covers
+  → NEVER use "100/100 quality score" or any unsourced score. Use verifiable facts instead: "Approved on first submission", "Zero revision disputes", or a real client quote.
 - hashtags: 3-5 relevant hashtags
 - charCount: actual character count of hook + body + proofPoints + hashtags combined
 - Written from Sarani's perspective ("We delivered...")
+- MUST end with a CTA: either a question to engage ("Managing a co-branding brief this season?") or "Start a project" link
 
 Optimization tips:
 - First line is everything — if they don't stop scrolling, nothing else matters
@@ -220,6 +228,7 @@ Optimization tips:
 
 RULES:
 - NEVER invent data. Only use facts from the project data and case study.
+- NEVER generate unsourced scores or ratings. If no verifiable quality metric exists, omit it.
 - Output valid JSON only. No markdown, no explanation.`;
 
 export function buildSocialInput(
