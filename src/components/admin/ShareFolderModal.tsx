@@ -279,11 +279,37 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     await loadClientRoot();
   }, [fetchFolders, loadClientRoot]);
 
-  // Check if we have a config-based mapping for this ClickUp list
-  const hasConfigMapping = !!(
-    (clickupListId && getSubdivisionByListId(clickupListId)?.subdivision.sharepointSubfolder)
-    || (clickupListName && getSubdivisionByName(clickupListName)?.subdivision.sharepointSubfolder)
-  );
+  // Try to resolve the SP subfolder from config, using list ID or list name.
+  // Returns true if it navigated successfully.
+  const tryConfigNavigation = useCallback(async (listId?: string, listName?: string): Promise<boolean> => {
+    const configMatch = (listId ? getSubdivisionByListId(listId) : undefined)
+      ?? (listName ? getSubdivisionByName(listName) : undefined);
+
+    if (!configMatch?.subdivision.sharepointSubfolder) return false;
+
+    const { mapping, subdivision } = configMatch;
+    const spSubfolder = subdivision.sharepointSubfolder!;
+    const subPath = `${mapping.sharepointCustomerFolder}/03. Projects/${spSubfolder}`;
+    console.log(`[ShareFolderModal] Config navigation: listId=${listId ?? "n/a"}, listName=${listName ?? "n/a"} → "${subdivision.name}" → path="${subPath}"`);
+
+    try {
+      const params = new URLSearchParams();
+      params.set("client", clientName);
+      params.set("path", subPath);
+      const res = await fetch(`/api/admin/integrations/sharepoint/folders?${params}`);
+      if (res.ok) {
+        const result: FoldersResponse = await res.json();
+        setData(result);
+        setBreadcrumb([{ name: spSubfolder, folderId: "", webUrl: "" }]);
+        setLoading(false);
+        return true;
+      }
+      console.warn(`[ShareFolderModal] Config path returned ${res.status}`);
+    } catch (err) {
+      console.warn(`[ShareFolderModal] Config path fetch failed:`, err);
+    }
+    return false;
+  }, [clientName]);
 
   // Load folders on open
   useEffect(() => {
@@ -293,42 +319,59 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setCopied(false);
     setSelectedFiles(new Map());
 
-    // PRIORITY: if we have a config mapping (ClickUp list ID → SP subfolder),
-    // use it directly. This is more reliable than SharePoint links from ClickUp
-    // custom fields, which often point to generic parent folders.
-    if (hasConfigMapping) {
-      loadClientRoot();
-      return;
-    }
+    const init = async () => {
+      // 1. PRIORITY: if we have a clickupListId or clickupListName, try config lookup.
+      // This is more reliable than SP links from ClickUp custom fields.
+      if (clickupListId || clickupListName) {
+        const ok = await tryConfigNavigation(clickupListId || undefined, clickupListName || undefined);
+        if (ok) return;
+      }
 
-    // 1. If we already have a SharePoint link, use it directly
-    if (sharepointLink) {
-      resolveSpLink(sharepointLink);
-      return;
-    }
-
-    // 2. No SP link cached — try to fetch it from ClickUp task's custom fields
-    if (clickupTaskUrl) {
-      const taskIdMatch = clickupTaskUrl.match(/\/t\/([a-zA-Z0-9]+)/);
-      if (taskIdMatch) {
-        fetch(`/api/admin/integrations/clickup/sharepoint-link?taskId=${taskIdMatch[1]}`)
-          .then((r) => r.ok ? r.json() : null)
-          .then((data) => {
-            if (data?.url) {
-              resolveSpLink(data.url);
-            } else {
-              // No SP URL in ClickUp either — fall back to client root
-              loadClientRoot();
+      // 2. If we have a clickupTaskUrl but no listId, fetch the task to get the list ID.
+      // This covers the case where the tracker didn't propagate clickupListId.
+      if (clickupTaskUrl && !clickupListId) {
+        const taskIdMatch = clickupTaskUrl.match(/\/t\/([a-zA-Z0-9]+)/);
+        if (taskIdMatch) {
+          try {
+            const res = await fetch(`/api/admin/integrations/clickup/task-list?taskId=${taskIdMatch[1]}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data?.listId || data?.listName) {
+                const ok = await tryConfigNavigation(data.listId, data.listName);
+                if (ok) return;
+              }
             }
-          })
-          .catch(() => loadClientRoot());
+          } catch { /* fall through */ }
+        }
+      }
+
+      // 3. If we have a SharePoint link, use it directly
+      if (sharepointLink) {
+        resolveSpLink(sharepointLink);
         return;
       }
-    }
 
-    // 3. No ClickUp task — load client root directly
-    loadClientRoot();
-  }, [isOpen, sharepointLink, clickupTaskUrl, resolveSpLink, loadClientRoot, hasConfigMapping]);
+      // 4. Last resort: try ClickUp SP link custom field, then client root
+      if (clickupTaskUrl) {
+        const taskIdMatch = clickupTaskUrl.match(/\/t\/([a-zA-Z0-9]+)/);
+        if (taskIdMatch) {
+          try {
+            const res = await fetch(`/api/admin/integrations/clickup/sharepoint-link?taskId=${taskIdMatch[1]}`);
+            const data = res.ok ? await res.json() : null;
+            if (data?.url) {
+              resolveSpLink(data.url);
+              return;
+            }
+          } catch { /* fall through */ }
+        }
+      }
+
+      // 5. Fallback: browse client root
+      await loadClientRoot();
+    };
+
+    init();
+  }, [isOpen, sharepointLink, clickupTaskUrl, clickupListId, clickupListName, resolveSpLink, loadClientRoot, tryConfigNavigation]);
 
   // Navigate into a subfolder by its ID
   const navigateInto = useCallback((folderName: string, folderId: string, webUrl?: string) => {
