@@ -28,6 +28,7 @@ import {
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const MAX_PDF_SIZE_BYTES = 30 * 1024 * 1024; // 30 MB — brand guidelines PDFs are often 10-25MB
+const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024; // 20 MB — Claude API practical limit for documents
 const CLAUDE_TIMEOUT_MS = 120_000; // 2 min — large PDFs take longer to process
 const CLAUDE_MODEL = "claude-sonnet-4-6";
 const MAX_CONCURRENT_EXTRACTIONS = 3;
@@ -118,7 +119,8 @@ async function findPdfFilesFromLink(
 
 /**
  * Download a PDF from SharePoint and convert to base64.
- * Skips files larger than MAX_PDF_SIZE_BYTES.
+ * For files larger than MAX_DOWNLOAD_BYTES, downloads only the first portion
+ * (the first pages contain the brand elements). Claude can analyze partial PDFs.
  */
 async function downloadPdfAsBase64(
   driveId: string,
@@ -127,14 +129,42 @@ async function downloadPdfAsBase64(
 ): Promise<string | null> {
   if (fileSize > MAX_PDF_SIZE_BYTES) {
     console.warn(
-      `[extract-branding] PDF too large (${(fileSize / 1024 / 1024).toFixed(1)}MB > 5MB limit), skipping`,
+      `[extract-branding] PDF very large (${(fileSize / 1024 / 1024).toFixed(1)}MB), downloading first ${MAX_DOWNLOAD_BYTES / 1024 / 1024}MB only`,
     );
-    return null;
   }
 
-  const arrayBuffer = await getFileContent(driveId, itemId);
-  const buffer = Buffer.from(arrayBuffer);
-  return buffer.toString("base64");
+  try {
+    // Get download URL from Graph API
+    const item = await graphFetch<{ "@microsoft.graph.downloadUrl"?: string }>(
+      `/drives/${driveId}/items/${itemId}`
+    );
+    const downloadUrl = item["@microsoft.graph.downloadUrl"];
+    if (!downloadUrl) return null;
+
+    if (fileSize <= MAX_DOWNLOAD_BYTES) {
+      // Small enough — download entire file
+      const arrayBuffer = await getFileContent(driveId, itemId);
+      return Buffer.from(arrayBuffer).toString("base64");
+    }
+
+    // Large file — download first MAX_DOWNLOAD_BYTES via Range request
+    const response = await fetch(downloadUrl, {
+      headers: { Range: `bytes=0-${MAX_DOWNLOAD_BYTES - 1}` },
+      signal: AbortSignal.timeout(60_000),
+    });
+
+    if (!response.ok && response.status !== 206) {
+      console.error(`[extract-branding] Range download failed: ${response.status}`);
+      return null;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    console.log(`[extract-branding] Downloaded ${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)}MB of ${(fileSize / 1024 / 1024).toFixed(1)}MB PDF`);
+    return Buffer.from(arrayBuffer).toString("base64");
+  } catch (error) {
+    console.error("[extract-branding] PDF download error:", error);
+    return null;
+  }
 }
 
 /**
@@ -240,7 +270,7 @@ async function processClient(
         client: name,
         clientId: id,
         status: "skipped",
-        error: `All PDFs exceed ${MAX_PDF_SIZE_BYTES / 1024 / 1024}MB limit`,
+        error: "Failed to download any PDF from the guidelines folder",
       };
     }
 
