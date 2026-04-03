@@ -19,14 +19,9 @@ export function PublicSiteChrome({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Project presentation pages: no site Header/StickyCTA, but keep the Footer
+  // Project presentation pages have their own layout (no site Header/Footer/CTA)
   if (isProjectPreview) {
-    return (
-      <>
-        {children}
-        <Footer />
-      </>
-    );
+    return <>{children}</>;
   }
 
   return (

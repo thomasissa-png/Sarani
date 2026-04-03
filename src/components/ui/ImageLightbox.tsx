@@ -24,6 +24,10 @@ interface ImageLightboxProps {
   previewId?: string;
   /** Asset name (file name) for linking comments to this specific image */
   assetName?: string;
+  /** All images in the batch — enables prev/next navigation */
+  allImages?: Array<{ src: string; alt: string; assetName: string }>;
+  /** Current index in allImages */
+  currentIndex?: number;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -34,8 +38,11 @@ export default function ImageLightbox({
   children,
   previewId,
   assetName,
+  allImages,
+  currentIndex,
 }: ImageLightboxProps) {
   const [open, setOpen] = useState(false);
+  const [navIndex, setNavIndex] = useState(currentIndex ?? 0);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newPin, setNewPin] = useState<{ x: number; y: number } | null>(null);
   const [commentText, setCommentText] = useState("");
@@ -48,21 +55,43 @@ export default function ImageLightbox({
   const [replyText, setReplyText] = useState("");
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // Current image (supports navigation)
+  const currentImage = allImages && allImages[navIndex]
+    ? allImages[navIndex]
+    : { src, alt, assetName: assetName ?? alt };
+  const canNav = allImages && allImages.length > 1;
+
   const close = useCallback(() => {
     setOpen(false);
     setNewPin(null);
     setSelectedPin(null);
   }, []);
 
-  // Escape to close
+  const goNext = useCallback(() => {
+    if (!allImages) return;
+    setNavIndex((i) => (i + 1) % allImages.length);
+    setNewPin(null);
+    setSelectedPin(null);
+  }, [allImages]);
+
+  const goPrev = useCallback(() => {
+    if (!allImages) return;
+    setNavIndex((i) => (i - 1 + allImages.length) % allImages.length);
+    setNewPin(null);
+    setSelectedPin(null);
+  }, [allImages]);
+
+  // Keyboard: Escape to close, arrows to navigate
   useEffect(() => {
     if (!open) return;
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") close();
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") goNext();
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") goPrev();
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, close]);
+  }, [open, close, goNext, goPrev]);
 
   // Prevent body scroll
   useEffect(() => {
@@ -121,7 +150,7 @@ export default function ImageLightbox({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          assetName: assetName ?? alt,
+          assetName: currentImage.assetName,
           positionX: newPin?.x,
           positionY: newPin?.y,
           authorName: authorName.trim() || undefined,
@@ -149,7 +178,7 @@ export default function ImageLightbox({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          assetName: assetName ?? alt,
+          assetName: currentImage.assetName,
           authorName: authorName.trim() || undefined,
           content: replyText.trim(),
           parentId,
@@ -161,11 +190,11 @@ export default function ImageLightbox({
       }
     } catch { /* ignore */ }
     finally { setPosting(false); }
-  }, [previewId, replyText, authorName, assetName, alt, fetchComments]);
+  }, [previewId, replyText, authorName, currentImage.assetName, fetchComments]);
 
   // Filter comments for this specific image
   const imageComments = comments.filter(
-    (c) => c.assetName === (assetName ?? alt) && c.parentId === null && c.positionX !== null
+    (c) => c.assetName === currentImage.assetName && c.parentId === null && c.positionX !== null
   );
   const getReplies = (parentId: string) => comments.filter((c) => c.parentId === parentId);
 
@@ -201,18 +230,40 @@ export default function ImageLightbox({
             </svg>
           </button>
 
-          {/* Image area (left/center) */}
+          {/* Prev button */}
+          {canNav && (
+            <button
+              onClick={(e) => { e.stopPropagation(); goPrev(); }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+              aria-label="Previous image"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+          )}
+
+          {/* Next button */}
+          {canNav && (
+            <button
+              onClick={(e) => { e.stopPropagation(); goNext(); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white sm:right-3"
+              aria-label="Next image"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          )}
+
+          {/* Image area */}
           <div
             className="flex-1 flex flex-col items-center justify-center p-4 min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative inline-block max-w-full max-h-[85vh]">
+            <div className="relative inline-block max-w-full max-h-[80vh]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 ref={imgRef}
-                src={src}
-                alt={alt}
-                className="max-w-full max-h-[85vh] object-contain rounded-lg cursor-crosshair"
+                src={currentImage.src}
+                alt={currentImage.alt}
+                className="max-w-full max-h-[80vh] object-contain rounded-lg cursor-crosshair"
                 onClick={handleImageClick}
               />
 
@@ -244,21 +295,24 @@ export default function ImageLightbox({
               )}
             </div>
 
-            {/* Caption */}
-            <p className="text-sm text-white/40 text-center max-w-lg truncate mt-3">
-              {alt}
+            {/* Caption + counter */}
+            <div className="flex items-center gap-3 mt-3">
+              <p className="text-sm text-white/50 text-center max-w-lg truncate">
+                {currentImage.alt}
+                {canNav && <span className="text-white/30 ml-2">{navIndex + 1}/{allImages!.length}</span>}
+              </p>
               {previewId && (
-                <span className="text-white/20 ml-2">
-                  · Click on image to add a comment
+                <span className="text-xs text-white/40">
+                  Click on image to comment
                 </span>
               )}
-            </p>
+            </div>
           </div>
 
-          {/* Comments panel (right side) — only when there's interaction */}
+          {/* Comments panel — side on desktop, bottom sheet on mobile */}
           {previewId && (newPin || selectedPin || imageComments.length > 0) && (
             <div
-              className="w-80 bg-neutral-900 border-l border-white/10 flex flex-col overflow-hidden"
+              className="fixed sm:relative bottom-0 left-0 right-0 sm:bottom-auto sm:left-auto sm:right-auto w-full sm:w-80 max-h-[50vh] sm:max-h-none bg-neutral-900 border-t sm:border-t-0 sm:border-l border-white/10 flex flex-col overflow-hidden rounded-t-xl sm:rounded-none z-20"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-4 py-3 border-b border-white/10">
