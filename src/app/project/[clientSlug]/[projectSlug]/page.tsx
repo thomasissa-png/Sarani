@@ -124,22 +124,25 @@ const SKIP_FOLDER_NAMES = new Set([
  * Fetch individual files by their Graph API item IDs.
  * Used when selectedAssets contains IDs from multiple folders —
  * scanning a single folder would miss files from other folders.
+ * Groups items by their parent folder name to preserve subfolder categories.
  */
 async function fetchAssetsByIds(
   assetIds: string[],
   driveId: string
 ): Promise<{ batches: BatchGroup[]; error?: string }> {
   try {
-    const items: BatchItem[] = [];
-    // Fetch each item individually (Graph API batch would be better but this is simpler)
+    // Fetch each item individually — Graph API returns parentReference with folder name
     const results = await Promise.allSettled(
       assetIds.map(async (id) => {
         const item = await graphFetch<GraphDriveChild>(
-          `/drives/${driveId}/items/${id}`
+          `/drives/${driveId}/items/${id}?$select=id,name,size,file,image,webUrl,parentReference,@microsoft.graph.downloadUrl`
         );
         return item;
       })
     );
+
+    // Group items by parent folder name
+    const grouped = new Map<string, BatchItem[]>();
 
     for (const result of results) {
       if (result.status !== "fulfilled") continue;
@@ -147,7 +150,10 @@ async function fetchAssetsByIds(
       if (!item.file) continue;
       const check = isAllowedFile(item);
       if (!check.allowed) continue;
-      items.push({
+
+      const folderName = item.parentReference?.name || "Assets";
+      if (!grouped.has(folderName)) grouped.set(folderName, []);
+      grouped.get(folderName)!.push({
         name: item.name,
         itemId: item.id,
         webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
@@ -159,10 +165,14 @@ async function fetchAssetsByIds(
       });
     }
 
-    if (items.length === 0) return { batches: [] };
+    if (grouped.size === 0) return { batches: [] };
 
-    // Group by parent folder for display
-    return { batches: [{ name: "Selected Assets", items }] };
+    // Convert to BatchGroup array, sorted by folder name
+    const batches: BatchGroup[] = Array.from(grouped.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, items]) => ({ name, items }));
+
+    return { batches };
   } catch (err) {
     console.error("[share-page] Error fetching assets by IDs:", err);
     return { batches: [], error: "Failed to load selected assets" };
@@ -232,6 +242,7 @@ interface GraphDriveChild {
   file?: { mimeType: string };
   image?: { width: number; height: number };
   folder?: { childCount: number };
+  parentReference?: { name?: string; path?: string };
   webUrl: string;
   "@microsoft.graph.downloadUrl"?: string;
 }
