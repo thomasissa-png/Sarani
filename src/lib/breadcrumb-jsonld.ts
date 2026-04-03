@@ -53,7 +53,20 @@ export const BREADCRUMBS = {
     { name: "Home", url: BASE },
     { name: "Legal", url: `${BASE}/legal` },
   ],
+  caseStudies: [
+    { name: "Home", url: BASE },
+    { name: "Case Studies", url: `${BASE}/case-studies` },
+  ],
 } as const;
+
+/** Build breadcrumb for a case study detail page */
+export function caseStudyDetailBreadcrumb(clientName: string, slug: string): BreadcrumbItem[] {
+  return [
+    { name: "Home", url: BASE },
+    { name: "Case Studies", url: `${BASE}/case-studies` },
+    { name: clientName, url: `${BASE}/case-studies/${slug}` },
+  ];
+}
 
 /** Build breadcrumb for a work detail page */
 export function workDetailBreadcrumb(clientName: string, slug: string): BreadcrumbItem[] {
