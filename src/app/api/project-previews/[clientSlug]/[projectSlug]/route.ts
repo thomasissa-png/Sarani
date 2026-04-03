@@ -52,6 +52,12 @@ const ALLOWED_MIMETYPES = new Set([
 
 const BATCH_PATTERN = /^Batch\s*\d+/i;
 
+/** Maximum recursion depth when traversing subfolders inside a batch. */
+const MAX_SUBFOLDER_DEPTH = 3;
+
+/** Maximum total files returned across all batches to prevent overloading. */
+const MAX_TOTAL_FILES = 100;
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 /** Normalize a string for fuzzy folder matching: lowercase, strip non-alpha, collapse spaces. */
@@ -96,6 +102,58 @@ function findProjectFolder(
 /** Natural sort for batch folder names ("Batch 1" < "Batch 2" < "Batch 10"). */
 function naturalSort(a: string, b: string): number {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+}
+
+/**
+ * Recursively list all files inside a folder (including subfolders).
+ * Subfolders are traversed in parallel at each level.
+ * Returns a flat array of DriveItems (files only, no folders).
+ */
+async function listDriveItemsRecursive(
+  driveId: string,
+  folderPath: string,
+  currentDepth: number,
+  fileCountRef: { count: number }
+): Promise<DriveItem[]> {
+  if (currentDepth > MAX_SUBFOLDER_DEPTH || fileCountRef.count >= MAX_TOTAL_FILES) {
+    return [];
+  }
+
+  const items = await listDriveItems(driveId, folderPath);
+
+  const files: DriveItem[] = [];
+  const subfolders: DriveItem[] = [];
+
+  for (const item of items) {
+    if (item.folder) {
+      subfolders.push(item);
+    } else if (item.file) {
+      files.push(item);
+      fileCountRef.count++;
+      if (fileCountRef.count >= MAX_TOTAL_FILES) {
+        return files;
+      }
+    }
+  }
+
+  // Recurse into subfolders in parallel
+  if (subfolders.length > 0 && fileCountRef.count < MAX_TOTAL_FILES) {
+    const subResults = await Promise.all(
+      subfolders.map((sub) =>
+        listDriveItemsRecursive(
+          driveId,
+          `${folderPath}/${sub.name}`,
+          currentDepth + 1,
+          fileCountRef
+        )
+      )
+    );
+    for (const subFiles of subResults) {
+      files.push(...subFiles);
+    }
+  }
+
+  return files;
 }
 
 // ─── Route Handler ─────────────────────────────────────────────────────────
@@ -191,14 +249,20 @@ export async function GET(
       .filter((item) => item.folder && BATCH_PATTERN.test(item.name))
       .sort((a, b) => naturalSort(a.name, b.name));
 
-    // Step 3: For each batch folder, list and filter assets
+    // Step 3: For each batch folder, recursively list and filter assets
+    // (subfolders inside batches are traversed up to MAX_SUBFOLDER_DEPTH levels)
     const batches: BatchGroup[] = [];
+    const fileCountRef = { count: 0 };
 
     for (const batchFolder of batchFolders) {
+      if (fileCountRef.count >= MAX_TOTAL_FILES) break;
+
       const batchPath = `${projectFolderPath}/${batchFolder.name}`;
-      const batchItems = await listDriveItems(
+      const batchItems = await listDriveItemsRecursive(
         SHAREPOINT_ASSETS_DRIVE_ID,
-        batchPath
+        batchPath,
+        1,
+        fileCountRef
       );
 
       const filteredItems: BatchItem[] = batchItems

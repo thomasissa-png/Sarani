@@ -544,8 +544,10 @@ export function ProjectActionModal({
                   onQueryChange={setManualSearchQuery}
                   onSearch={handleManualSearch}
                   isSearching={isManualSearching}
+                  hasSearched={hasManualSearched}
                   results={manualSearchResults}
                   onSelect={handleSelectManualResult}
+                  isSaving={isSavingMapping}
                   onCancel={() => setShowManualMap(false)}
                 />
               )}
@@ -572,7 +574,7 @@ export function ProjectActionModal({
                       ? "Searching for project in ClickUp..."
                       : hasClickUpLink
                         ? `Open ${clickupSearchResult?.taskName ?? "project"} in ClickUp`
-                        : "Project not found in ClickUp"
+                        : "Project not found in ClickUp — use the search below to map it"
                   }
                 >
                   {isSearchingClickUp ? "Searching ClickUp..." : "Open in ClickUp"}
@@ -602,8 +604,10 @@ export function ProjectActionModal({
                   onQueryChange={setManualSearchQuery}
                   onSearch={handleManualSearch}
                   isSearching={isManualSearching}
+                  hasSearched={hasManualSearched}
                   results={manualSearchResults}
                   onSelect={handleSelectManualResult}
+                  isSaving={isSavingMapping}
                   onCancel={() => setShowManualMap(false)}
                 />
               )}
@@ -635,7 +639,28 @@ export function ProjectActionModal({
                 </button>
               </div>
               {!hasClickUpLink && !isSearchingClickUp && !showManualMap && (
-                <p className="text-xs text-neutral-400">Project not found in ClickUp — use &quot;Map manually&quot; above to link it</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-error">Project not found in ClickUp</p>
+                  <button
+                    onClick={() => setShowManualMap(true)}
+                    className="text-xs text-brand-cerulean hover:underline font-medium"
+                  >
+                    Map manually
+                  </button>
+                </div>
+              )}
+              {showManualMap && !hasClickUpLink && (
+                <ManualClickUpSearch
+                  query={manualSearchQuery}
+                  onQueryChange={setManualSearchQuery}
+                  onSearch={handleManualSearch}
+                  isSearching={isManualSearching}
+                  hasSearched={hasManualSearched}
+                  results={manualSearchResults}
+                  onSelect={handleSelectManualResult}
+                  isSaving={isSavingMapping}
+                  onCancel={() => setShowManualMap(false)}
+                />
               )}
             </div>
           )}
@@ -692,8 +717,10 @@ interface ManualClickUpSearchProps {
   onQueryChange: (q: string) => void;
   onSearch: () => void;
   isSearching: boolean;
+  hasSearched: boolean;
   results: Array<{ taskId: string; taskUrl: string; taskName: string }>;
   onSelect: (result: { taskId: string; taskUrl: string; taskName: string }) => void;
+  isSaving: boolean;
   onCancel: () => void;
 }
 
@@ -702,14 +729,16 @@ function ManualClickUpSearch({
   onQueryChange,
   onSearch,
   isSearching,
+  hasSearched,
   results,
   onSelect,
+  isSaving,
   onCancel,
 }: ManualClickUpSearchProps) {
   return (
     <div className="bg-neutral-50 rounded-lg p-3 space-y-2 border border-neutral-200">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-neutral-600">Search ClickUp project</p>
+        <p className="text-xs font-semibold text-neutral-600">Map to ClickUp project</p>
         <button
           onClick={onCancel}
           className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
@@ -718,6 +747,7 @@ function ManualClickUpSearch({
           Cancel
         </button>
       </div>
+      <p className="text-xs text-neutral-400">Search by project or client name, then select the correct match.</p>
       <div className="flex gap-2">
         <input
           type="text"
@@ -746,11 +776,16 @@ function ManualClickUpSearch({
       </div>
       {results.length > 0 && (
         <div className="space-y-1">
+          <p className="text-xs text-neutral-500 font-medium">{results.length} result{results.length > 1 ? "s" : ""} found — click to map:</p>
           {results.map((result) => (
             <button
               key={result.taskId}
               onClick={() => onSelect(result)}
-              className="w-full text-left px-3 py-2 min-h-[44px] rounded-lg text-sm bg-white border border-neutral-200 hover:border-brand-cerulean hover:bg-brand-cerulean/5 transition-colors"
+              disabled={isSaving}
+              className={cn(
+                "w-full text-left px-3 py-2 min-h-[44px] rounded-lg text-sm bg-white border border-neutral-200 hover:border-brand-cerulean hover:bg-brand-cerulean/5 transition-colors",
+                isSaving && "opacity-50 cursor-wait"
+              )}
               aria-label={`Select project: ${result.taskName}`}
             >
               <p className="font-medium text-brand-black">{result.taskName}</p>
@@ -759,8 +794,11 @@ function ManualClickUpSearch({
           ))}
         </div>
       )}
-      {results.length === 0 && !isSearching && query.trim() && (
-        <p className="text-xs text-neutral-400 py-1">No results yet. Press Search or Enter to find the project.</p>
+      {!hasSearched && !isSearching && (
+        <p className="text-xs text-neutral-400 py-1">Press Search or Enter to find the project.</p>
+      )}
+      {hasSearched && results.length === 0 && !isSearching && (
+        <p className="text-xs text-error py-1">No matching projects found. Try a different search term.</p>
       )}
     </div>
   );
