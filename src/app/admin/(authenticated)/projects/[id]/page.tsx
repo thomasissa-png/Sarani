@@ -837,8 +837,11 @@ export default function ProjectViewPage() {
       if (res.ok) {
         const result = await res.json();
         setNominated(result.starred);
+      } else {
+        const errBody = await res.text();
+        console.error("[handleNominate] API error:", res.status, errBody);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error("[handleNominate] Error:", err); }
     finally { setNominating(false); }
   }, [clickupTaskId, clientName, projectName, trackerInfo?.totalValue, trackerInfo?.sharepointLink]);
 

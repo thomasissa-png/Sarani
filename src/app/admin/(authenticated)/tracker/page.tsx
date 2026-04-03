@@ -414,8 +414,11 @@ function TrackerContent() {
           else next.delete(clickupTaskId);
           return next;
         });
+      } else {
+        const errBody = await res.text();
+        console.error("[handleStar] API error:", res.status, errBody);
       }
-    } catch { /* ignore */ }
+    } catch (err) { console.error("[handleStar] Error:", err); }
     finally { setStarringId(null); }
   }, []);
 
