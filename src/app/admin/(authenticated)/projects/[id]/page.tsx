@@ -61,6 +61,7 @@ interface StoryboardItem {
 interface ProjectPreviewItem {
   id: string;
   projectId: string;
+  version: number;
   clientSlug: string;
   projectSlug: string;
   clientName: string;
@@ -451,20 +452,35 @@ function PreviewLinksSection({
 
   return (
     <div className="space-y-3">
-      {previews.map((preview) => {
+      {previews.map((preview, idx) => {
         const url = `/project/${preview.clientSlug}/${preview.projectSlug}`;
+        const isLatest = idx === 0;
+        const date = new Date(preview.createdAt).toLocaleDateString("en-GB", {
+          day: "numeric", month: "short", year: "numeric",
+        });
         return (
           <div
             key={preview.id}
             className="flex items-center justify-between gap-4 border border-neutral-200 rounded-lg p-4"
           >
             <div className="flex items-center gap-3 min-w-0">
+              <span className="text-xs font-bold text-neutral-400 w-6 shrink-0">
+                V{preview.version ?? 1}
+              </span>
               <span
                 className={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${
                   preview.isActive ? "bg-green-500" : "bg-neutral-300"
                 }`}
               />
-              <code className="text-sm text-neutral-600 truncate">{url}</code>
+              <div className="min-w-0">
+                <code className="text-sm text-neutral-600 truncate block">{url}</code>
+                <span className="text-xs text-neutral-400">{date}</span>
+              </div>
+              {isLatest && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-brand-cerulean/10 text-brand-cerulean shrink-0">
+                  Latest
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button

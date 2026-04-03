@@ -188,7 +188,8 @@ export async function GET(
       const previews = await db
         .select()
         .from(projectPreviews)
-        .where(eq(projectPreviews.projectId, projectId));
+        .where(eq(projectPreviews.projectId, projectId))
+        .orderBy(desc(projectPreviews.version));
 
       // Also try matching by clientName if no exact projectId match
       const previewsByClient = previews.length === 0

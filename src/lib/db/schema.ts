@@ -640,22 +640,24 @@ export const projectPreviews = pgTable(
   "project_previews",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    projectId: text("project_id").notNull().unique(),
+    projectId: text("project_id").notNull(),
+    version: integer("version").notNull().default(1),
     clientSlug: text("client_slug").notNull(),
     projectSlug: text("project_slug").notNull(),
     clientName: text("client_name").notNull(),
     projectName: text("project_name").notNull(),
     brief: text("brief"),
     sharepointLink: text("sharepoint_link"),
-    spFolderId: text("sp_folder_id"),      // Graph API item ID of the selected SP folder
-    spDriveId: text("sp_drive_id"),       // Graph API drive ID containing the folder
-    selectedAssets: text("selected_assets"), // JSON array of { id, name, mimeType } — null = show all
+    spFolderId: text("sp_folder_id"),
+    spDriveId: text("sp_drive_id"),
+    selectedAssets: text("selected_assets"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("uq_client_project_slug").on(table.clientSlug, table.projectSlug),
+    uniqueIndex("uq_project_version").on(table.projectId, table.version),
     index("idx_project_previews_project_id").on(table.projectId),
   ]
 );

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { slugify } from "@/lib/slugify";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -14,21 +14,29 @@ export async function GET() {
     const rows = await db
       .select({
         projectId: projectPreviews.projectId,
+        version: projectPreviews.version,
         clientSlug: projectPreviews.clientSlug,
         projectSlug: projectPreviews.projectSlug,
         isActive: projectPreviews.isActive,
         id: projectPreviews.id,
+        createdAt: projectPreviews.createdAt,
       })
       .from(projectPreviews)
-      .where(eq(projectPreviews.isActive, true));
+      .where(eq(projectPreviews.isActive, true))
+      .orderBy(desc(projectPreviews.version));
 
-    const previews: Record<string, { url: string; previewId: string; isActive: boolean }> = {};
+    // Group by projectId — return the latest version per project for the tracker
+    const previews: Record<string, { url: string; previewId: string; isActive: boolean; version: number }> = {};
     for (const row of rows) {
-      previews[row.projectId] = {
-        url: `/project/${row.clientSlug}/${row.projectSlug}`,
-        previewId: row.id,
-        isActive: true,
-      };
+      // Only keep the latest version per projectId (first one due to DESC order)
+      if (!previews[row.projectId]) {
+        previews[row.projectId] = {
+          url: `/project/${row.clientSlug}/${row.projectSlug}`,
+          previewId: row.id,
+          isActive: true,
+          version: row.version,
+        };
+      }
     }
 
     return NextResponse.json({ previews });
@@ -92,79 +100,44 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Check if a preview already exists for this projectId
-    const [existing] = await db
-      .select()
+    // Versioning: find the latest version for this projectId
+    const [latestVersion] = await db
+      .select({ version: projectPreviews.version })
       .from(projectPreviews)
-      .where(eq(projectPreviews.projectId, projectId));
+      .where(eq(projectPreviews.projectId, projectId))
+      .orderBy(desc(projectPreviews.version))
+      .limit(1);
 
-    if (existing) {
-      // Reactivate and update all fields (folder may have changed)
-      const updates: Record<string, unknown> = { updatedAt: new Date(), isActive: true };
-      if (brief && typeof brief === "string") updates.brief = brief;
-      if (sharepointLink && typeof sharepointLink === "string") updates.sharepointLink = sharepointLink;
-      if (spFolderId && typeof spFolderId === "string") updates.spFolderId = spFolderId;
-      if (spDriveId && typeof spDriveId === "string") updates.spDriveId = spDriveId;
-      if (selectedAssets !== undefined) updates.selectedAssets = selectedAssets;
+    const newVersion = latestVersion ? latestVersion.version + 1 : 1;
 
-      if (Object.keys(updates).length > 1) {
-        await db
-          .update(projectPreviews)
-          .set(updates)
-          .where(eq(projectPreviews.id, existing.id));
-      }
-      const url = `/project/${existing.clientSlug}/${existing.projectSlug}`;
-      return NextResponse.json({ url, created: false, id: existing.id }, { status: 200 });
-    }
-
-    // Generate slugs
-    const clientSlug = slugify(clientName);
-    let projectSlug = slugify(projectName);
-
-    if (!clientSlug || !projectSlug) {
+    // Safety limit: max 20 versions per project
+    if (newVersion > 20) {
       return NextResponse.json(
-        {
-          error: "VALIDATION",
-          message: "Could not generate valid slugs from client/project names.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Handle slug collision: check if (clientSlug, projectSlug) already exists
-    let finalSlug = projectSlug;
-    let suffix = 1;
-    const MAX_COLLISION_ATTEMPTS = 20;
-
-    while (suffix <= MAX_COLLISION_ATTEMPTS) {
-      const [collision] = await db
-        .select({ id: projectPreviews.id })
-        .from(projectPreviews)
-        .where(
-          and(
-            eq(projectPreviews.clientSlug, clientSlug),
-            eq(projectPreviews.projectSlug, finalSlug)
-          )
-        );
-
-      if (!collision) break;
-
-      suffix++;
-      finalSlug = `${projectSlug}-${suffix}`;
-    }
-
-    if (suffix > MAX_COLLISION_ATTEMPTS) {
-      return NextResponse.json(
-        { error: "SLUG_COLLISION", message: "Too many projects with similar names." },
+        { error: "VERSION_LIMIT", message: "Maximum 20 versions per project reached." },
         { status: 409 }
       );
     }
 
-    // Insert new preview
+    // Generate slugs
+    const clientSlug = slugify(clientName);
+    const baseProjectSlug = slugify(projectName);
+
+    if (!clientSlug || !baseProjectSlug) {
+      return NextResponse.json(
+        { error: "VALIDATION", message: "Could not generate valid slugs from client/project names." },
+        { status: 400 }
+      );
+    }
+
+    // V1 = no suffix, V2+ = append -v2, -v3, etc.
+    const projectSlug = newVersion === 1 ? baseProjectSlug : `${baseProjectSlug}-v${newVersion}`;
+
+    // Insert new version (always a new row, never update)
     const [inserted] = await db.insert(projectPreviews).values({
       projectId,
+      version: newVersion,
       clientSlug,
-      projectSlug: finalSlug,
+      projectSlug,
       clientName,
       projectName,
       brief: brief && typeof brief === "string" ? brief : null,
@@ -175,8 +148,8 @@ export async function POST(request: NextRequest) {
       isActive: true,
     }).returning({ id: projectPreviews.id });
 
-    const url = `/project/${clientSlug}/${finalSlug}`;
-    return NextResponse.json({ url, created: true, id: inserted.id }, { status: 201 });
+    const url = `/project/${clientSlug}/${projectSlug}`;
+    return NextResponse.json({ url, created: true, id: inserted.id, version: newVersion }, { status: 201 });
   } catch (error: unknown) {
     console.error("[project-previews] POST error:", error);
     // Extract the real PostgreSQL error from Drizzle wrapper
