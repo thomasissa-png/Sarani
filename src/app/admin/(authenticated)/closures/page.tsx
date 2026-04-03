@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { RegenerateButton, LinkedInCharCounter, OutputStatusBadge } from "@/components/admin/CaseStudyActions";
+import { VisualSelector, type SelectedVisuals } from "@/components/admin/CaseStudyVisuals";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,9 @@ interface CaseStudyOutputData {
     metaDescription?: string;
     stats?: Array<{ value: string; label: string }>;
     category?: string;
+    heroImage?: string;
+    linkedInImage?: string;
+    emailHeader?: string;
     [key: string]: unknown;
   };
 }
@@ -444,7 +448,7 @@ export default function ClosuresPage() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
-  const [outputs, setOutputs] = useState<Record<string, { caseStudy: CaseStudyOutputData | null; linkedInPost: LinkedInOutputData | null; nurturingEmail: NurturingEmailOutputData | null }>>({});
+  const [outputs, setOutputs] = useState<Record<string, { caseStudy: CaseStudyOutputData | null; linkedInPost: LinkedInOutputData | null; nurturingEmail: NurturingEmailOutputData | null; sharePointFolderUrl?: string | null }>>({});
   const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
   const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, unknown>>>({});
   const [savingOutput, setSavingOutput] = useState<Set<string>>(new Set());
@@ -526,6 +530,37 @@ export default function ClosuresPage() {
       });
     }
   }, [editDrafts]);
+
+  const handleVisualsSelected = useCallback(async (closureId: string, outputId: string, visuals: SelectedVisuals) => {
+    // Merge visuals into the existing case study content via PATCH
+    const currentOutput = outputs[closureId]?.caseStudy;
+    if (!currentOutput) return;
+    const mergedContent = { ...currentOutput.content, ...visuals };
+    try {
+      const res = await fetch(`/api/admin/case-studies/outputs/${outputId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: mergedContent }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Save failed" }));
+        alert(`Failed to save visuals: ${err.error || res.statusText}`);
+        return;
+      }
+      const updated = await res.json();
+      setOutputs((prev) => ({
+        ...prev,
+        [closureId]: {
+          ...prev[closureId],
+          caseStudy: prev[closureId].caseStudy
+            ? { ...prev[closureId].caseStudy!, content: updated.content }
+            : null,
+        },
+      }));
+    } catch {
+      alert("Network error while saving visuals.");
+    }
+  }, [outputs]);
 
   const publishOutput = useCallback(async (outputId: string, closureId: string) => {
     setPublishingOutput((prev) => new Set(prev).add(outputId));
@@ -645,6 +680,7 @@ export default function ClosuresPage() {
           caseStudy: data.outputs?.caseStudy ?? null,
           linkedInPost: data.outputs?.linkedInPost ?? null,
           nurturingEmail: data.outputs?.nurturingEmail ?? null,
+          sharePointFolderUrl: data.sharePointFolderUrl ?? null,
         },
       }));
     } catch {
@@ -1270,6 +1306,20 @@ export default function ClosuresPage() {
                           </div>
                           );
                         })()}
+
+                        {/* Visual Selector — between case study and LinkedIn */}
+                        {cs?.content && closureOutputs.sharePointFolderUrl && (
+                          <VisualSelector
+                            candidateId={closure.id}
+                            spFolderUrl={closureOutputs.sharePointFolderUrl}
+                            initialVisuals={{
+                              heroImage: cs.content.heroImage as string | undefined,
+                              linkedInImage: cs.content.linkedInImage as string | undefined,
+                              emailHeader: cs.content.emailHeader as string | undefined,
+                            }}
+                            onSelected={(visuals) => handleVisualsSelected(closure.id, cs.id, visuals)}
+                          />
+                        )}
 
                         {/* LinkedIn Post */}
                         {li?.content && (() => {

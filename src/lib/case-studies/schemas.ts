@@ -43,6 +43,10 @@ export const CaseStudyOutputSchema = z.object({
     })
     .nullable()
     .optional(),
+  // Visual assets selected from SharePoint
+  heroImage: z.string().url().optional(),
+  linkedInImage: z.string().url().optional(),
+  emailHeader: z.string().url().optional(),
 });
 
 export const LinkedInPostSchema = z.object({
