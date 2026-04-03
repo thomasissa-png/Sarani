@@ -75,7 +75,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<FoldersResponse | null>(null);
-  const [breadcrumb, setBreadcrumb] = useState<Array<{ name: string; folderId: string }>>([]);
+  const [breadcrumb, setBreadcrumb] = useState<Array<{ name: string; folderId: string; webUrl?: string }>>([]);
   const [sharing, setSharing] = useState<string | null>(null);
   const [sharedLink, setSharedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -135,7 +135,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       return folderLower.includes(listLower) || listLower.includes(folderLower);
     });
     if (match) {
-      setBreadcrumb([{ name: match.name, folderId: match.id }]);
+      setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
       fetchFolders({ folderId: match.id });
     }
   }, [fetchFolders, clickupListName]);
@@ -150,7 +150,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       return folderLower.includes(listLower) || listLower.includes(folderLower);
     });
     if (match) {
-      setBreadcrumb([{ name: match.name, folderId: match.id }]);
+      setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
       fetchFolders({ folderId: match.id });
     }
   }, [fetchFolders, clickupListName]);
@@ -192,8 +192,8 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   }, [isOpen, sharepointLink, clickupTaskUrl, resolveSpLink, loadClientRoot]);
 
   // Navigate into a subfolder by its ID
-  const navigateInto = useCallback((folderName: string, folderId: string) => {
-    setBreadcrumb((prev) => [...prev, { name: folderName, folderId }]);
+  const navigateInto = useCallback((folderName: string, folderId: string, webUrl?: string) => {
+    setBreadcrumb((prev) => [...prev, { name: folderName, folderId, webUrl }]);
     fetchFolders({ folderId });
   }, [fetchFolders]);
 
@@ -215,7 +215,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   }, [breadcrumb, fetchFolders, sharepointLink]);
 
   // Share a folder — create a branded presentation page with assets from this folder
-  const shareFolder = useCallback(async (folderId: string, folderName: string) => {
+  const shareFolder = useCallback(async (folderId: string, folderName: string, folderWebUrl?: string) => {
     setSharing(folderId);
     setError(null);
     try {
@@ -230,6 +230,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           projectName,
           spFolderId: folderId,
           spDriveId: currentDriveId,
+          sharepointLink: folderWebUrl || null,
           brief: `Deliverables for ${projectName} — ${folderName}`,
         }),
       });
@@ -262,7 +263,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   }, [clientName, projectName, data]);
 
   // Share folder with specific file selection — stores selected file names in DB
-  const shareFolderWithSelection = useCallback(async (folderId: string, folderName: string) => {
+  const shareFolderWithSelection = useCallback(async (folderId: string, folderName: string, folderWebUrl?: string) => {
     setSharing(folderId);
     setError(null);
     try {
@@ -281,6 +282,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           projectName,
           spFolderId: folderId,
           spDriveId: currentDriveId,
+          sharepointLink: folderWebUrl || null,
           brief: `Deliverables for ${projectName} — ${folderName}`,
           selectedAssets: selected.length > 0 ? JSON.stringify(selected) : null,
         }),
@@ -445,7 +447,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                   className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg hover:bg-neutral-50 transition-colors group"
                 >
                   <button
-                    onClick={() => navigateInto(folder.name, folder.id)}
+                    onClick={() => navigateInto(folder.name, folder.id, folder.webUrl)}
                     className="flex items-center gap-3 flex-1 min-w-0 text-left"
                   >
                     <svg className="w-5 h-5 text-brand-cerulean shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -460,7 +462,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                     </div>
                   </button>
                   <button
-                    onClick={() => shareFolder(folder.id, folder.name)}
+                    onClick={() => shareFolder(folder.id, folder.name, folder.webUrl)}
                     disabled={sharing === folder.id}
                     className={cn(
                       "px-3 py-1.5 text-xs font-medium rounded-md transition-all shrink-0",
@@ -626,7 +628,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
               <button
                 onClick={() => {
                   const currentEntry = breadcrumb[breadcrumb.length - 1];
-                  shareFolderWithSelection(currentEntry.folderId, currentEntry.name);
+                  shareFolderWithSelection(currentEntry.folderId, currentEntry.name, currentEntry.webUrl);
                 }}
                 disabled={!!sharing}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
