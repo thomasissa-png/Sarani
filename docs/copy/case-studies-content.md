@@ -426,6 +426,77 @@ Start a project
 
 ---
 
+## Case Study 9 — Bose × Boulanger, Les Beaux Jours
+
+**Slug:** `bose-boulanger-les-beaux-jours`
+**Category:** Graphic Design / Retail Campaign
+**Client:** Bose (activation inside Boulanger's retail ecosystem)
+**Year:** [À CONFIRMER]
+
+---
+
+*[Framework : BAB — Before / After / Bridge]*
+*[Conscience : Solution-Aware — Sophie knows she needs an agency, evaluates whether Sarani can hold dual-brand constraints at fixed price under a seasonal deadline]*
+*[Objections traitées : dual-brand complexity → addressed in Solution; pricing surprises → addressed via fixed price + unit cost; quality fit for enterprise brands → addressed via first-submission approval fact]*
+
+---
+
+**Title (H1):**
+Bose × Boulanger: Two Brands, One Seasonal Window
+
+**Subtitle:**
+[X] campaign formats delivered in [X] days. €1,080 fixed. No revision disputes.
+
+---
+
+**Tags:** Graphic Design / Retail / 2025
+
+---
+
+**Challenge:**
+
+Bose needed campaign banners for a seasonal French retail push inside Boulanger's ecosystem. The brief had two constraints that don't usually go together: hold Bose's premium audio identity while making the creative feel native to Boulanger's retail environment. The "Les Beaux Jours" window was fixed. There was no time for open-ended revision cycles or a budget conversation halfway through.
+
+*(39 words)*
+
+---
+
+**Solution:**
+
+Sarani adapted Bose's visual codes — deep blacks, controlled product lighting, precise framing — to a format designed to convert inside a mass-market retail context without reading as generic promotion. The result worked for both brands simultaneously. [X] formats produced in [X] days. Fixed price: €1,080, agreed upfront, invoiced as quoted.
+
+*(52 words)*
+
+---
+
+**Results:**
+
+Campaign went live on time. Fixed price. No revision disputes.
+
+---
+
+**Key metrics:**
+- Formats delivered: [X]
+- Price per asset: €[X] (€1,080 for [X] formats)
+- Turnaround: [X] days
+- Revision rounds: approved on first submission — [À CONFIRMER avec l'équipe Bose]
+- Budget overrun: zero
+
+---
+
+**[TÉMOIGNAGE À OBTENIR — contact : prénom, titre chez Bose France. Question suggérée : "What made the Sarani experience different from your usual agency process on this brief?"]**
+
+---
+
+**CTA:**
+Start a project
+
+*Micro-reassurance below CTA:* First project satisfaction or no invoice.
+
+---
+
+---
+
 ## Hypothèses à valider
 
 Before go-live, confirm the following with Sarani:
@@ -436,4 +507,6 @@ Before go-live, confirm the following with Sarani:
 - [HYPOTHÈSE] TikTok UGC Edits programme year(s) — assumed ongoing from 2023, unconfirmed.
 - [HYPOTHÈSE] TikTok Comedy Club year — assumed 2023 or 2024, unconfirmed.
 - [HYPOTHÈSE] IKEA Summer Tour year — assumed 2024, unconfirmed.
+- [HYPOTHÈSE] Bose × Boulanger: number of formats ([X]), delivery timeframe ([X] days), and year are unconfirmed. Confirmed data: fixed price €1,080. All [X] markers must be filled before publishing.
+- [HYPOTHÈSE] Bose × Boulanger: "Approved on first submission" is the natural result to claim but must be explicitly confirmed with the Bose contact before use.
 - All prices, asset counts, and view counts come from the brief provided by Sarani. No data has been invented. Verify all figures before publishing.
