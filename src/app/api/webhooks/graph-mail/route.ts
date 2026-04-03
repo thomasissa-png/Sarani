@@ -4,6 +4,7 @@ import { callClaudeJSON } from "@/lib/ai/claude";
 import { db } from "@/lib/db";
 import { inboxItems, processedEmails } from "@/lib/db/schema";
 import { eq, and, gte, desc, sql } from "drizzle-orm";
+import { isSaraniEmail } from "@/lib/inbox/sarani-filter";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -214,6 +215,17 @@ async function processEmailNotification(messageId: string): Promise<void> {
     const subject = email.subject;
     const bodyPreview = stripHtml(email.body.content).slice(0, 2000);
     const conversationId = email.conversationId;
+
+    // Skip emails sent BY Sarani — these are our own outgoing replies
+    if (isSaraniEmail(from)) {
+      await db.insert(processedEmails).values({
+        messageId,
+        resultCategory: "internal_skip",
+        inboxItemId: null,
+      });
+      console.log(`[Graph Webhook] Skipping Sarani outgoing email ${messageId} from ${from}`);
+      return;
+    }
 
     let classification: ClassificationResult;
 
