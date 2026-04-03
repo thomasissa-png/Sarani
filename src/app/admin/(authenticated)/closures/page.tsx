@@ -461,6 +461,7 @@ export default function ClosuresPage() {
   const [savingOutput, setSavingOutput] = useState<Set<string>>(new Set());
   const [publishingOutput, setPublishingOutput] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [visualErrors, setVisualErrors] = useState<Record<string, string | null>>({});
 
   // ─── Output editing helpers ────────────────────────────────────────────────
 
@@ -1411,7 +1412,7 @@ export default function ClosuresPage() {
                         })()}
 
                         {/* LinkedIn Visual Preview */}
-                        {closureOutputs.linkedInVisual?.hasVisual && (
+                        {closureOutputs.linkedInVisual?.hasVisual ? (
                           <div className="border border-orange-100 rounded-lg p-4 bg-orange-50/30">
                             <div className="flex items-center justify-between mb-3">
                               <h3 className="text-sm font-semibold text-orange-800">
@@ -1429,20 +1430,20 @@ export default function ClosuresPage() {
                                   type="button"
                                   onClick={async () => {
                                     setActionLoading((prev) => new Set(prev).add(`visual-${closure.id}`));
+                                    setVisualErrors((prev) => ({ ...prev, [closure.id]: null }));
                                     try {
-                                      // Trigger regeneration by fetching the endpoint (it always generates fresh)
-                                      const res = await fetch(`/api/admin/case-studies/candidates/${closure.id}/linkedin-visual`);
+                                      const res = await fetch(`/api/admin/case-studies/candidates/${closure.id}/linkedin-visual?regenerate=true`);
                                       if (res.ok) {
-                                        // Force refresh the preview image
                                         const imgEl = document.getElementById(`linkedin-visual-${closure.id}`) as HTMLImageElement | null;
                                         if (imgEl) {
                                           imgEl.src = `/api/admin/case-studies/candidates/${closure.id}/linkedin-visual?t=${Date.now()}`;
                                         }
+                                        fetchOutputs(closure.id, true);
                                       } else {
-                                        alert("Failed to regenerate visual");
+                                        setVisualErrors((prev) => ({ ...prev, [closure.id]: "Failed to regenerate visual. Please try again." }));
                                       }
                                     } catch {
-                                      alert("Network error while regenerating visual");
+                                      setVisualErrors((prev) => ({ ...prev, [closure.id]: "Network error while regenerating visual." }));
                                     } finally {
                                       setActionLoading((prev) => {
                                         const next = new Set(prev);
@@ -1458,6 +1459,9 @@ export default function ClosuresPage() {
                                 </button>
                               </div>
                             </div>
+                            {visualErrors[closure.id] && (
+                              <p className="text-xs text-red-600 mb-2">{visualErrors[closure.id]}</p>
+                            )}
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               id={`linkedin-visual-${closure.id}`}
@@ -1466,6 +1470,45 @@ export default function ClosuresPage() {
                               className="w-full max-w-md rounded-lg border border-orange-200 mx-auto"
                               loading="lazy"
                             />
+                          </div>
+                        ) : (
+                          <div className="border border-orange-100 rounded-lg p-4 bg-orange-50/30">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-sm font-semibold text-orange-800">
+                                LinkedIn Visual
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  setActionLoading((prev) => new Set(prev).add(`visual-${closure.id}`));
+                                  setVisualErrors((prev) => ({ ...prev, [closure.id]: null }));
+                                  try {
+                                    const res = await fetch(`/api/admin/case-studies/candidates/${closure.id}/linkedin-visual?regenerate=true`);
+                                    if (res.ok) {
+                                      fetchOutputs(closure.id, true);
+                                    } else {
+                                      setVisualErrors((prev) => ({ ...prev, [closure.id]: "Failed to generate visual. Please try again." }));
+                                    }
+                                  } catch {
+                                    setVisualErrors((prev) => ({ ...prev, [closure.id]: "Network error while generating visual." }));
+                                  } finally {
+                                    setActionLoading((prev) => {
+                                      const next = new Set(prev);
+                                      next.delete(`visual-${closure.id}`);
+                                      return next;
+                                    });
+                                  }
+                                }}
+                                disabled={actionLoading.has(`visual-${closure.id}`)}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                              >
+                                {actionLoading.has(`visual-${closure.id}`) ? "Generating..." : "Generate LinkedIn Visual"}
+                              </button>
+                            </div>
+                            {visualErrors[closure.id] && (
+                              <p className="text-xs text-red-600 mt-2">{visualErrors[closure.id]}</p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-2">No visual generated yet. Click to generate one.</p>
                           </div>
                         )}
 

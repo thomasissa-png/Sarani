@@ -284,7 +284,7 @@ export async function POST(
           systemPrompt: SOCIAL_PROMPT,
           userMessage:
             buildSocialInput(candidate, strategyData, copyData) +
-            "\n\nIMPORTANT: Your previous response had validation errors. Ensure the linkedInPost object has ALL required fields: hook (min 1 char), body (min 10 chars), proofPoints (min 1 char), hashtags (min 1 char), charCount (number). Total must be < 1,300 characters.",
+            "\n\nIMPORTANT: Your previous response had validation errors. Ensure the linkedInPost object has ALL required fields: hook (min 1 char), body (min 10 chars), proofPoints (min 1 char), hashtags (empty string — Sarani does not use hashtags), charCount (number). Total must be < 1,300 characters.",
           maxTokens: 2048,
           timeout: 60_000,
         });
