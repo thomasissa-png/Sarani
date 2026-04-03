@@ -4,6 +4,7 @@ import {
   listDriveItems,
   createAnonymousSharingLink,
   resolveSharePointUrl,
+  getDriveItemByPath,
   graphFetch,
 } from "@/lib/integrations/sharepoint";
 import {
@@ -111,30 +112,84 @@ export async function GET(request: NextRequest) {
       // Try 1: resolve via Graph sharing API (works for most URLs)
       let resolvedItem = await resolveSharePointUrl(directUrl);
 
-      // Try 2: if sharing API fails, extract path from URL and try getDriveItemByPath
+      // Try 2: if sharing API fails, extract path from URL and try getDriveItemByPath on hardcoded drive
       if (!resolvedItem?.id && directUrl.includes("sharepoint.com")) {
         try {
-          // Extract path from URL like: https://xxx.sharepoint.com/sites/SiteName/Shared%20Documents/path/to/folder
           const urlObj = new URL(directUrl);
-          // Decode %20 before regex matching — Node keeps %20 in pathname
           const decodedPath = decodeURIComponent(urlObj.pathname);
           const pathMatch = decodedPath.match(/\/(?:Shared\s*Documents|Documents)\/(.*)/i);
           if (pathMatch) {
             const spPath = "/Documents/" + pathMatch[1].replace(/\/$/, "");
-            const { getDriveItemByPath } = await import("@/lib/integrations/sharepoint");
             const byPath = await getDriveItemByPath(SHAREPOINT_ASSETS_DRIVE_ID, spPath);
             if (byPath?.id) {
               resolvedItem = { ...byPath, parentReference: { driveId: SHAREPOINT_ASSETS_DRIVE_ID } } as typeof resolvedItem;
             }
           }
         } catch {
-          // Path-based resolution also failed — will return 404 below
+          // Path-based resolution on hardcoded drive failed — Try 3 below
+        }
+      }
+
+      // Try 3: Extract site from URL, look up the correct drive dynamically
+      if (!resolvedItem?.id && directUrl.includes("sharepoint.com")) {
+        try {
+          const urlObj = new URL(directUrl);
+          const hostname = urlObj.hostname;
+
+          // Extract site path from URL (e.g., "/sites/SiteName" or "/sites/SaraniBusiness")
+          const siteMatch = urlObj.pathname.match(/\/(sites\/[^/]+)/);
+          if (siteMatch) {
+            const sitePath = siteMatch[1]; // "sites/SiteName"
+
+            // Get site info from Graph API
+            const site = await graphFetch<{ id: string }>(`/sites/${hostname}:/${sitePath}`);
+
+            if (site?.id) {
+              // Get document library drives for this site
+              const drives = await graphFetch<{ value: Array<{ id: string; name: string; driveType: string }> }>(
+                `/sites/${site.id}/drives`
+              );
+
+              const docDrive = drives?.value?.find(
+                (d) => d.name === "Documents" || d.driveType === "documentLibrary"
+              );
+
+              if (docDrive) {
+                const decodedPath = decodeURIComponent(urlObj.pathname);
+                const pathMatch = decodedPath.match(/\/(?:Shared\s*Documents|Documents)\/(.*)/i);
+                if (pathMatch) {
+                  const spPath = "/" + pathMatch[1].replace(/\/$/, "");
+                  const byPath = await getDriveItemByPath(docDrive.id, spPath);
+                  if (byPath?.id) {
+                    resolvedItem = { ...byPath, parentReference: { driveId: docDrive.id } } as typeof resolvedItem;
+                  }
+                } else {
+                  // URL has no recognizable document library path — try matching the last segment as a folder name
+                  const urlParts = decodedPath.split("/").filter(Boolean);
+                  const lastPart = urlParts[urlParts.length - 1];
+                  if (lastPart && lastPart !== sitePath.split("/")[1]) {
+                    try {
+                      const byPath = await getDriveItemByPath(docDrive.id, "/" + lastPart);
+                      if (byPath?.id) {
+                        resolvedItem = { ...byPath, parentReference: { driveId: docDrive.id } } as typeof resolvedItem;
+                      }
+                    } catch {
+                      // Last segment match failed
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch {
+          // Site-based resolution failed
         }
       }
 
       if (!resolvedItem?.id || !resolvedItem?.parentReference?.driveId) {
+        console.error("[SP Folders] Could not resolve SharePoint URL:", directUrl);
         return NextResponse.json(
-          { error: `Could not resolve SharePoint URL. The link may be invalid or inaccessible.` },
+          { error: `Could not resolve SharePoint URL: ${directUrl.substring(0, 100)}${directUrl.length > 100 ? "..." : ""}` },
           { status: 404 }
         );
       }
