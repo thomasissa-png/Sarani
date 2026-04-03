@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { caseStudyOutputs, caseStudyCandidates } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
@@ -42,18 +42,7 @@ export async function POST(
       );
     }
 
-    // 2. Read current case-studies.ts
-    let fileContent: string;
-    try {
-      fileContent = readFileSync(CASE_STUDIES_FILE, "utf-8");
-    } catch {
-      return NextResponse.json(
-        { error: "Could not read case-studies.ts file" },
-        { status: 500 }
-      );
-    }
-
-    // 3. Validate slug uniqueness
+    // 2. Validate slug
     const caseStudy = output.content as Record<string, unknown>;
     const slug = caseStudy.slug as string;
 
@@ -64,51 +53,35 @@ export async function POST(
       );
     }
 
-    // Check for slug conflict
-    if (fileContent.includes(`slug: "${slug}"`)) {
-      // Try appending -v2
+    // 3. Check slug uniqueness in DB
+    const existing = await db
+      .select({ id: caseStudyOutputs.id })
+      .from(caseStudyOutputs)
+      .where(and(
+        eq(caseStudyOutputs.caseStudySlug, slug),
+        isNotNull(caseStudyOutputs.publishedAt)
+      ))
+      .limit(1);
+
+    if (existing.length > 0 && existing[0].id !== id) {
       const altSlug = `${slug}-v2`;
-      if (fileContent.includes(`slug: "${altSlug}"`)) {
-        return NextResponse.json(
-          {
-            error: `Slug "${slug}" and "${altSlug}" both exist. Choose a different slug.`,
-          },
-          { status: 409 }
-        );
-      }
       caseStudy.slug = altSlug;
     }
 
-    // 4. Build the CaseStudy object as a TypeScript literal
-    const tsObject = buildTsObject(caseStudy);
-
-    // 5. Insert before the closing `];`
-    const insertionPoint = fileContent.lastIndexOf("];");
-    if (insertionPoint === -1) {
-      return NextResponse.json(
-        { error: "Could not find array closing in case-studies.ts" },
-        { status: 500 }
-      );
-    }
-
-    const newContent =
-      fileContent.slice(0, insertionPoint) +
-      `  ${tsObject},\n` +
-      fileContent.slice(insertionPoint);
-
-    // 6. Write back
+    // 4. Try to write to static file (best effort — DB is source of truth)
     try {
-      writeFileSync(CASE_STUDIES_FILE, newContent, "utf-8");
-    } catch (err) {
-      return NextResponse.json(
-        {
-          error: `Failed to write case-studies.ts: ${err instanceof Error ? err.message : "unknown"}`,
-        },
-        { status: 500 }
-      );
+      const fileContent = readFileSync(CASE_STUDIES_FILE, "utf-8");
+      const tsObject = buildTsObject(caseStudy);
+      const insertionPoint = fileContent.lastIndexOf("];");
+      if (insertionPoint !== -1) {
+        const newContent = fileContent.slice(0, insertionPoint) + `  ${tsObject},\n` + fileContent.slice(insertionPoint);
+        writeFileSync(CASE_STUDIES_FILE, newContent, "utf-8");
+      }
+    } catch {
+      console.warn("[Publish] Could not update case-studies.ts — DB still updated");
     }
 
-    // 7. Update DB
+    // 5. Update DB
     await db
       .update(caseStudyOutputs)
       .set({
@@ -155,61 +128,42 @@ export async function DELETE(
       .where(eq(caseStudyOutputs.id, id))
       .limit(1);
 
-    if (!output || !output.caseStudySlug) {
+    if (!output || !output.publishedAt) {
       return NextResponse.json(
         { error: "Output not found or not published" },
         { status: 404 }
       );
     }
 
-    // Read file and remove the entry by slug
-    let fileContent: string;
-    try {
-      fileContent = readFileSync(CASE_STUDIES_FILE, "utf-8");
-    } catch {
-      return NextResponse.json(
-        { error: "Could not read case-studies.ts" },
-        { status: 500 }
-      );
-    }
-
-    // Find and remove the object block containing this slug
-    const slugPattern = `slug: "${output.caseStudySlug}"`;
-    const slugIndex = fileContent.indexOf(slugPattern);
-    if (slugIndex === -1) {
-      // Already removed — just update DB
-    } else {
-      // Find the enclosing { ... }, starting from before the slug
-      let braceStart = fileContent.lastIndexOf("{", slugIndex);
-      // Walk backwards to find the correct opening brace
-      let depth = 0;
-      let braceEnd = -1;
-      for (let i = braceStart; i < fileContent.length; i++) {
-        if (fileContent[i] === "{") depth++;
-        if (fileContent[i] === "}") {
-          depth--;
-          if (depth === 0) {
-            braceEnd = i;
-            break;
+    // Try to remove from static file (best effort — DB is the source of truth)
+    if (output.caseStudySlug) {
+      try {
+        const fileContent = readFileSync(CASE_STUDIES_FILE, "utf-8");
+        const slugPattern = `slug: "${output.caseStudySlug}"`;
+        const slugIndex = fileContent.indexOf(slugPattern);
+        if (slugIndex !== -1) {
+          const braceStart = fileContent.lastIndexOf("{", slugIndex);
+          let depth = 0;
+          let braceEnd = -1;
+          for (let i = braceStart; i < fileContent.length; i++) {
+            if (fileContent[i] === "{") depth++;
+            if (fileContent[i] === "}") {
+              depth--;
+              if (depth === 0) { braceEnd = i; break; }
+            }
+          }
+          if (braceEnd > braceStart) {
+            let removeEnd = braceEnd + 1;
+            if (fileContent[removeEnd] === ",") removeEnd++;
+            if (fileContent[removeEnd] === "\n") removeEnd++;
+            let removeStart = braceStart;
+            while (removeStart > 0 && fileContent[removeStart - 1] === " ") removeStart--;
+            writeFileSync(CASE_STUDIES_FILE, fileContent.slice(0, removeStart) + fileContent.slice(removeEnd), "utf-8");
           }
         }
-      }
-
-      if (braceEnd > braceStart) {
-        // Remove the object + trailing comma and newline
-        let removeEnd = braceEnd + 1;
-        if (fileContent[removeEnd] === ",") removeEnd++;
-        if (fileContent[removeEnd] === "\n") removeEnd++;
-
-        // Also remove leading whitespace on the line
-        let removeStart = braceStart;
-        while (removeStart > 0 && fileContent[removeStart - 1] === " ") {
-          removeStart--;
-        }
-
-        fileContent =
-          fileContent.slice(0, removeStart) + fileContent.slice(removeEnd);
-        writeFileSync(CASE_STUDIES_FILE, fileContent, "utf-8");
+      } catch {
+        // Static file cleanup failed — not critical, DB is source of truth
+        console.warn("[Unpublish] Could not update case-studies.ts — DB still updated");
       }
     }
 

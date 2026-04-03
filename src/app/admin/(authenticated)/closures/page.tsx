@@ -1492,14 +1492,18 @@ export default function ClosuresPage() {
                           >
                             {actionLoading.has(`override-${closure.id}`) ? "Generating..." : "Create Case Study"}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => handleStarOverride(closure.id, "reject_star", closure.source)}
-                            disabled={actionLoading.has(`override-${closure.id}`)}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300"
-                          >
-                            Remove
-                          </button>
+                          {outputs[closure.id]?.caseStudy?.publishedAt ? (
+                            <span className="text-xs text-neutral-400 italic">Published — unpublish before removing</span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleStarOverride(closure.id, "reject_star", closure.source)}
+                              disabled={actionLoading.has(`override-${closure.id}`)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-300"
+                            >
+                              Remove
+                            </button>
+                          )}
                         </>
                       )}
                       {closure.closedBy?.startsWith("pm_confirmed") && (
