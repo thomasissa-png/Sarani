@@ -139,8 +139,9 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   const [sharing, setSharing] = useState<string | null>(null);
   const [sharedLink, setSharedLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  // Selected files for the presentation (by file ID)
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  // Selected files for the presentation — persists across folder navigation
+  // Map of fileId → file metadata so we keep track even when in a different folder
+  const [selectedFiles, setSelectedFiles] = useState<Map<string, { id: string; name: string; mimeType: string; folderPath: string }>>(new Map());
   // Toggle between list view and thumbnail grid view
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
 
@@ -170,8 +171,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       }
       const result: FoldersResponse = await res.json();
       setData(result);
-      // Auto-select all files in the new folder
-      setSelectedFiles(new Set(result.files.map((f) => f.id)));
+      // Don't reset selection — files from other folders are preserved
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load folders");
@@ -217,6 +217,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setBreadcrumb([]);
     setSharedLink(null);
     setCopied(false);
+    setSelectedFiles(new Map());
 
     // 1. If we already have a SharePoint link, use it directly
     if (sharepointLink) {
@@ -323,10 +324,12 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setSharing(folderId);
     setError(null);
     try {
-      // Build the list of selected file names from current data
-      const selected = data?.files
-        .filter((f) => selectedFiles.has(f.id))
-        .map((f) => ({ id: f.id, name: f.name, mimeType: f.mimeType })) ?? [];
+      // Build the list of ALL selected files across all folders
+      const selected = Array.from(selectedFiles.values()).map((f) => ({
+        id: f.id,
+        name: f.name,
+        mimeType: f.mimeType,
+      }));
 
       const currentDriveId = data?.driveId ?? "";
       const res: Response = await fetch("/api/admin/project-previews", {
@@ -537,7 +540,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                 <div className={data.folders.length > 0 ? "border-t border-neutral-100 mt-2 pt-2" : ""}>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs text-neutral-400 uppercase tracking-wide">
-                      Files ({selectedFiles.size}/{data.files.length} selected)
+                      Files ({data.files.filter((f) => selectedFiles.has(f.id)).length}/{data.files.length} in folder{selectedFiles.size > 0 ? ` · ${selectedFiles.size} total` : ""})
                     </p>
                     <div className="flex items-center gap-3">
                       {/* View toggle */}
@@ -559,15 +562,25 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                       </div>
                       <button
                         onClick={() => {
-                          if (selectedFiles.size === data.files.length) {
-                            setSelectedFiles(new Set());
-                          } else {
-                            setSelectedFiles(new Set(data.files.map((f) => f.id)));
-                          }
+                          const currentPath = breadcrumb.map((b) => b.name).join("/") || clientName;
+                          const allCurrentSelected = data.files.every((f) => selectedFiles.has(f.id));
+                          setSelectedFiles((prev) => {
+                            const next = new Map(prev);
+                            if (allCurrentSelected) {
+                              // Deselect only current folder's files
+                              for (const f of data.files) next.delete(f.id);
+                            } else {
+                              // Select all in current folder (keep others)
+                              for (const f of data.files) {
+                                next.set(f.id, { id: f.id, name: f.name, mimeType: f.mimeType, folderPath: currentPath });
+                              }
+                            }
+                            return next;
+                          });
                         }}
                         className="text-xs text-brand-cerulean hover:underline"
                       >
-                        {selectedFiles.size === data.files.length ? "Deselect all" : "Select all"}
+                        {data.files.every((f) => selectedFiles.has(f.id)) ? "Deselect all" : "Select all"}
                       </button>
                     </div>
                   </div>
@@ -590,10 +603,11 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => {
+                                const currentPath = breadcrumb.map((b) => b.name).join("/") || clientName;
                                 setSelectedFiles((prev) => {
-                                  const next = new Set(prev);
+                                  const next = new Map(prev);
                                   if (next.has(file.id)) next.delete(file.id);
-                                  else next.add(file.id);
+                                  else next.set(file.id, { id: file.id, name: file.name, mimeType: file.mimeType, folderPath: currentPath });
                                   return next;
                                 });
                               }}
@@ -640,10 +654,11 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => {
+                            const currentPath = breadcrumb.map((b) => b.name).join("/") || clientName;
                             setSelectedFiles((prev) => {
-                              const next = new Set(prev);
+                              const next = new Map(prev);
                               if (next.has(file.id)) next.delete(file.id);
-                              else next.add(file.id);
+                              else next.set(file.id, { id: file.id, name: file.name, mimeType: file.mimeType, folderPath: currentPath });
                               return next;
                             });
                           }}
@@ -672,12 +687,54 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           )}
         </div>
 
+        {/* Selected files summary — shows files from other folders */}
+        {selectedFiles.size > 0 && (() => {
+          // Group selections by folder path
+          const byFolder = new Map<string, Array<{ id: string; name: string }>>();
+          for (const [, file] of selectedFiles) {
+            const folder = file.folderPath;
+            if (!byFolder.has(folder)) byFolder.set(folder, []);
+            byFolder.get(folder)!.push(file);
+          }
+          const otherFolders = Array.from(byFolder.entries()).filter(
+            ([path]) => path !== (breadcrumb.map((b) => b.name).join("/") || clientName)
+          );
+          if (otherFolders.length === 0) return null;
+          return (
+            <div className="px-6 py-2 border-t border-neutral-100 bg-brand-cerulean/5">
+              <p className="text-xs font-medium text-brand-cerulean mb-1">
+                + {otherFolders.reduce((n, [, files]) => n + files.length, 0)} file(s) from other folders:
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {otherFolders.map(([path, files]) => (
+                  <span key={path} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border border-neutral-200 rounded text-[10px] text-neutral-600">
+                    {path.split("/").pop()} ({files.length})
+                    <button
+                      onClick={() => {
+                        setSelectedFiles((prev) => {
+                          const next = new Map(prev);
+                          for (const f of files) next.delete(f.id);
+                          return next;
+                        });
+                      }}
+                      className="text-neutral-400 hover:text-red-500 ml-0.5"
+                      title="Remove these files"
+                    >
+                      x
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Footer — Create link from selected files */}
-        {!loading && data && (data.files.length > 0 || data.folders.length > 0) && (
+        {!loading && data && (data.files.length > 0 || data.folders.length > 0 || selectedFiles.size > 0) && (
           <div className="px-6 py-3 border-t border-neutral-200 flex items-center justify-between gap-3">
             <p className="text-xs text-neutral-400">
               {selectedFiles.size > 0
-                ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? "s" : ""} selected`
+                ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? "s" : ""} selected across folders`
                 : "Select files or pick a folder above"}
             </p>
             {selectedFiles.size > 0 && breadcrumb.length > 0 && (
@@ -689,7 +746,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
                 disabled={!!sharing}
                 className="px-4 py-2 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
               >
-                {sharing ? "Generating..." : "Create Link"}
+                {sharing ? "Generating..." : `Create Link (${selectedFiles.size})`}
               </button>
             )}
           </div>
