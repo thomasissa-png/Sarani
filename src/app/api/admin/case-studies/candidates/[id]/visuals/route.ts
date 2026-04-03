@@ -96,42 +96,34 @@ export async function GET(
     const folderId = folderItem.id;
 
     // 3. List children of the folder (files + subfolders)
-    const children = await graphFetch<{ value: DriveItem[] }>(
-      `/drives/${driveId}/items/${folderId}/children?$top=100&$select=id,name,size,webUrl,file,folder,@microsoft.graph.downloadUrl`
+    // Fetch children with thumbnails expanded in a single request (avoids N+1)
+    const children = await graphFetch<{
+      value: (DriveItem & { thumbnails?: ThumbnailSet[] })[];
+    }>(
+      `/drives/${driveId}/items/${folderId}/children?$top=100&$select=id,name,size,webUrl,file,folder,@microsoft.graph.downloadUrl&$expand=thumbnails`
     );
 
-    // 4. Filter visual files and fetch thumbnails
+    // 4. Filter visual files and extract thumbnails from expanded data
     const visualFiles = children.value.filter(
       (item) => item.file && isVisualFile(item.name)
     );
 
-    const visuals: VisualItem[] = [];
+    const visuals: VisualItem[] = visualFiles.slice(0, 20).map((file) => {
+      const thumbSet = file.thumbnails?.[0];
+      const thumbnailUrl =
+        thumbSet?.large?.url ??
+        thumbSet?.medium?.url ??
+        thumbSet?.small?.url ??
+        file["@microsoft.graph.downloadUrl"] ??
+        file.webUrl;
 
-    for (const file of visualFiles.slice(0, 20)) {
-      // Fetch thumbnail for each file
-      let thumbnailUrl = "";
-      try {
-        const thumbs = await graphFetch<{ value: ThumbnailSet[] }>(
-          `/drives/${driveId}/items/${file.id}/thumbnails`
-        );
-        const thumbSet = thumbs.value?.[0];
-        thumbnailUrl =
-          thumbSet?.large?.url ??
-          thumbSet?.medium?.url ??
-          thumbSet?.small?.url ??
-          "";
-      } catch {
-        // No thumbnail available — use download URL as fallback
-        thumbnailUrl = file["@microsoft.graph.downloadUrl"] ?? file.webUrl;
-      }
-
-      visuals.push({
+      return {
         id: file.id,
         name: file.name,
         thumbnailUrl,
         downloadUrl: file["@microsoft.graph.downloadUrl"] ?? file.webUrl,
-      });
-    }
+      };
+    });
 
     return NextResponse.json({ visuals });
   } catch (error) {

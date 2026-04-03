@@ -9,6 +9,7 @@ import {
   getCaseStudyBySlug,
   getRelatedCaseStudies,
 } from "@/data/case-studies";
+import { type CaseStudyOutput } from "@/lib/case-studies/schemas";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { workDetailBreadcrumb } from "@/lib/breadcrumb-jsonld";
 import { db } from "@/lib/db";
@@ -16,40 +17,15 @@ import { caseStudyOutputs } from "@/lib/db/schema";
 import { eq, isNotNull, and } from "drizzle-orm";
 import { CaseStudyCta } from "./cta";
 
-// SSR — Rendering strategy: dynamic page that checks DB first, falls back to static data.
-// Pipeline-generated case studies live at /case-studies/[slug].
-// Static ones redirect to /work/[slug] where they already have a full page.
-
-/* ---------- Types ---------- */
-
-interface DbCaseStudyContent {
-  client: string;
-  headline: string;
-  slug: string;
-  category: string;
-  deliverable: string;
-  keyMetric: string;
-  brief: string;
-  result: string;
-  metaDescription: string;
-  stats?: Array<{ label: string; value: string }>;
-  challenge?: string;
-  solution?: string;
-  resultsDetail?: string;
-  tags?: string[];
-  testimonial?: {
-    quote: string;
-    author: string;
-    role: string;
-    company: string;
-  };
-}
+// ISR — Rendering strategy: revalidates every hour. Checks DB first for pipeline-generated
+// case studies, falls back to static data (redirects to /work/[slug]).
+export const revalidate = 3600;
 
 /* ---------- Data fetching ---------- */
 
 async function fetchPublishedCaseStudy(
   slug: string
-): Promise<DbCaseStudyContent | null> {
+): Promise<CaseStudyOutput | null> {
   try {
     const [output] = await db
       .select({
@@ -67,7 +43,7 @@ async function fetchPublishedCaseStudy(
       .limit(1);
 
     if (!output) return null;
-    return output.content as unknown as DbCaseStudyContent;
+    return output.content as unknown as CaseStudyOutput;
   } catch {
     // DB unavailable — graceful fallback
     return null;

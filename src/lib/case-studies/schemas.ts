@@ -19,8 +19,8 @@ export const CaseStudyOutputSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   client: z.string().min(1),
   deliverable: z.string().min(1),
-  volume: z.string().min(1),
-  turnaround: z.string().min(1),
+  volume: z.string().optional().default(""),
+  turnaround: z.string().optional().default(""),
   outcome: z.string().min(1),
   brief: z.string().min(10),
   result: z.string().min(10),
@@ -34,6 +34,14 @@ export const CaseStudyOutputSchema = z.object({
   solution: z.string().optional(),
   resultsDetail: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  testimonial: z
+    .object({
+      quote: z.string().min(1),
+      author: z.string().min(1),
+      role: z.string().min(1),
+      company: z.string().min(1),
+    })
+    .optional(),
 });
 
 export const LinkedInPostSchema = z.object({
@@ -57,6 +65,7 @@ export const GenerationOutputSchema = z.object({
   nurturingEmail: NurturingEmailSchema,
 });
 
+export type CaseStudyOutput = z.infer<typeof CaseStudyOutputSchema>;
 export type GenerationOutput = z.infer<typeof GenerationOutputSchema>;
 
 /** Map output_type DB values to their Zod schema */

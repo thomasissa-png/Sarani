@@ -391,6 +391,7 @@ export const caseStudyOutputs = pgTable(
   (table) => [
     index("idx_outputs_candidate").on(table.candidateId),
     index("idx_outputs_type").on(table.outputType),
+    index("idx_outputs_slug").on(table.caseStudySlug),
   ]
 );
 

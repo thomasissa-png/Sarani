@@ -113,6 +113,7 @@ You receive project data AND a creative strategy (angle, key messages, visual di
 RULES:
 - NEVER invent data. If a field is missing, use qualitative language.
 - All numbers must come from the input data.
+- If volume or turnaround data is not available in the input, omit these fields or use "On request" as value. NEVER invent specific numbers.
 - Output valid JSON only. No markdown, no explanation.`;
 
 export function buildCopyInput(

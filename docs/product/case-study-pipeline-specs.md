@@ -1033,3 +1033,305 @@ Each channel publishes independently. A case study can be live on the website wi
 
 ---
 
+## 8. User Stories
+
+### US-CSP-01 — Run Multi-Step Generation Pipeline
+
+**Persona:** Thomas (Sarani admin — PM role)
+**Epic:** Case Study Multi-Agent Pipeline
+**Dependencies:** US-CS-02 (existing generation), migration 0018
+**Priority RICE:** R=5 I=5 C=4 E=1 → Score=100
+
+#### Job-to-be-done
+As Thomas (admin), I want to trigger a 3-step AI pipeline (creative strategy → copywriter → social) so that each generated case study has a strategically grounded angle instead of a generic AI template.
+
+#### Context
+- **Origin screen:** `/admin/case-studies/[id]` — candidate detail page, status = "suggested"
+- **Trigger:** Click "Generate" button
+- **Destination (success):** Same page, stepper completes, all 3 output tabs populated
+- **Destination (failure):** Same page, failed step highlighted with [Retry from step X]
+
+#### Data fields — pipeline_runs
+| Field | Type | Required | Validation | Limits | Example |
+|---|---|---|---|---|---|
+| candidateId | uuid | Yes | Valid UUID, references existing candidate | — | "3f1a2b4c-..." |
+| triggeredBy | string | Yes | Current session user ID | max 100 chars | "user_thomas" |
+| fromStep | integer | No (retry only) | 1, 2, or 3 only | — | 2 |
+
+#### Acceptance Criteria
+
+**Happy path:**
+- [ ] GIVEN candidate has status "suggested" WHEN Thomas clicks "Generate" THEN stepper appears with 3 steps in "Pending" state and Step 1 starts immediately
+- [ ] GIVEN Step 1 completes WHEN Step 1 LLM returns valid JSON THEN Step 1 shows "Done (Xs)", Step 2 starts automatically, `pipeline_steps` row created for step 1
+- [ ] GIVEN all 3 steps complete WHEN pipeline finishes THEN candidate status updates to "generated", all 3 output tabs become active, stepper collapses
+
+**Error cases:**
+- [ ] GIVEN Step 2 fails (LLM timeout) WHEN pipeline aborts at Step 2 THEN candidate shows `pipeline_status = "failed_step_2"`, error message shown inline, [Retry from step 2] button visible
+- [ ] GIVEN [Retry from step 2] is clicked WHEN retry runs THEN Step 1 output is reused (no re-call), Step 2 and Step 3 re-run from scratch
+
+**Edge cases:**
+- [ ] GIVEN a generation is already running WHEN Thomas clicks "Generate" again THEN button is disabled, tooltip "Generation in progress"
+- [ ] GIVEN the browser tab is closed during generation WHEN Thomas reopens the page THEN stepper resumes polling and shows current step status (pipeline continues server-side)
+- [ ] GIVEN total pipeline duration > 120 seconds WHEN timeout fires THEN pipeline_run.status = "failed_step_X" (whichever step was running), error shown
+
+**Permissions:**
+- [ ] GIVEN user with role "user" WHEN they access the detail page THEN "Generate" button is visible and functional (user can trigger generation)
+- [ ] GIVEN unauthenticated request to /api/admin/case-studies/.../generate THEN 401 response
+
+**Data integrity:**
+- [ ] GIVEN a candidate already has generated outputs WHEN "Generate" is triggered again THEN previous outputs are preserved as version history, new generation creates version N+1
+
+#### Events analytics
+| Event | Trigger | Properties | Funnel |
+|---|---|---|---|
+| `pipeline_started` | PM clicks Generate | `candidateId`, `candidateScore`, `triggeredBy` | activation |
+| `pipeline_step_completed` | Each step finishes | `stepType`, `tokensUsed`, `durationMs` | activation |
+| `pipeline_completed` | All 3 steps done | `totalDurationMs`, `totalTokens`, `retryCount` | activation |
+| `pipeline_failed` | Step fails | `stepType`, `errorType`, `candidateId` | activation |
+
+#### Definition of Done
+- [ ] UI stepper component implemented with 5 states per step
+- [ ] Polling route `/pipeline-status` functional (3s interval)
+- [ ] `pipeline_runs` and `pipeline_steps` tables migrated
+- [ ] Step retry from failed step works without re-running successful steps
+- [ ] Test E2E: complete pipeline run mock (steps 1-2-3, success path)
+- [ ] Test unit: retry logic (step 2 reuses step 1 output)
+
+---
+
+### US-CSP-02 — Select Visual for Each Channel
+
+**Persona:** Thomas (Sarani admin — PM role)
+**Epic:** Case Study Multi-Agent Pipeline
+**Dependencies:** US-CSP-01
+**Priority RICE:** R=4 I=4 C=4 E=1 → Score=64
+
+#### Job-to-be-done
+As Thomas (admin), I want to select a SharePoint image for each output channel (case study, LinkedIn, email) via a visual picker modal so that each published piece has the right image without leaving the back-office.
+
+#### Context
+- **Origin screen:** `/admin/case-studies/[id]` — any output tab (Case Study | LinkedIn | Email)
+- **Trigger:** Click "Choose Visual" button on any output tab
+- **Destination (success):** Modal closes, selected thumbnail shown in tab
+- **Destination (failure):** Error message in modal, modal stays open
+
+#### Acceptance Criteria
+
+**Happy path:**
+- [ ] GIVEN Step 3 generation is complete WHEN Thomas opens the LinkedIn Post tab THEN up to 6 AI-suggested images are shown in the visual picker, each with a 1-sentence rationale
+- [ ] GIVEN Thomas clicks an image in the picker WHEN he clicks "Confirm Selection" THEN modal closes, thumbnail appears in the LinkedIn Post tab, `selected_visual_url` stored in DB
+- [ ] GIVEN Thomas selects a visual for "case_study" channel WHEN the case study is published to `/case-studies/[slug]` THEN the selected image is used as the hero and OG image
+
+**Error cases:**
+- [ ] GIVEN SharePoint folder has 0 image files WHEN modal opens THEN "No images found in SharePoint folder" message + [Open folder ↗] link to SharePoint
+- [ ] GIVEN Graph API returns 503 WHEN modal tries to load suggestions THEN "Could not load SharePoint images. [Retry]" — modal does not close
+
+**Edge cases:**
+- [ ] GIVEN Thomas selects a visual then changes his mind WHEN he clicks "Choose Visual" again THEN picker re-opens with current selection highlighted
+- [ ] GIVEN Thomas removes the selection WHEN he clicks the × on the thumbnail THEN `selected_visual_url` set to null, "Choose Visual" button reappears
+- [ ] GIVEN candidate has no SharePoint folder URL WHEN Thomas opens visual picker THEN picker shows empty state with "No SharePoint folder linked to this project" + manual URL input field
+
+**Permissions:**
+- [ ] GIVEN user with role "user" WHEN they access visual picker THEN picker is accessible (visual selection is not admin-only)
+
+#### Events analytics
+| Event | Trigger | Properties | Funnel |
+|---|---|---|---|
+| `visual_selected` | PM confirms selection | `channel`, `candidateId`, `fileName` | activation |
+| `visual_removed` | PM removes selection | `channel`, `candidateId` | activation |
+
+---
+
+### US-CSP-03 — Post Directly to LinkedIn
+
+**Persona:** Thomas (Sarani admin)
+**Epic:** Case Study Multi-Agent Pipeline
+**Dependencies:** US-CSP-01, US-CSP-02, LinkedIn OAuth connected
+**Priority RICE:** R=5 I=5 C=3 E=1 → Score=75
+
+#### Job-to-be-done
+As Thomas (admin), I want to post the generated LinkedIn post directly to the Sarani LinkedIn Page with one click so that case study social proof reaches Sophie's feed without manual copy-paste.
+
+#### Context
+- **Origin screen:** `/admin/case-studies/[id]` — LinkedIn Post tab
+- **Trigger:** Click "Post to LinkedIn ↗" button (admin only)
+- **Destination (success):** Button replaced by "Posted ✓ — [View on LinkedIn ↗]"
+- **Destination (failure):** Inline error, button returns to clickable state
+
+#### Acceptance Criteria
+
+**Happy path:**
+- [ ] GIVEN LinkedIn is connected (valid OAuth token) AND the post has not been sent WHEN Thomas clicks "Post to LinkedIn ↗" THEN confirmation dialog appears: "This will publish on Sarani's LinkedIn page. Continue?"
+- [ ] GIVEN Thomas confirms WHEN LinkedIn API call succeeds THEN `linkedin_post_id`, `linkedin_posted_at`, `linkedin_post_url` stored in DB; button shows "Posted ✓ — [View on LinkedIn ↗]"
+- [ ] GIVEN a visual is selected for the LinkedIn channel WHEN the post is sent THEN the image is uploaded to LinkedIn and attached to the post
+
+**Error cases:**
+- [ ] GIVEN LinkedIn OAuth token is expired WHEN Thomas clicks "Post to LinkedIn" THEN error shown: "LinkedIn authentication expired — reconnect in Settings ↗"; no post attempted
+- [ ] GIVEN LinkedIn API returns 422 (content policy violation) WHEN post fails THEN error shown: "LinkedIn rejected this post (content policy). Edit the post and try again."
+- [ ] GIVEN LinkedIn API returns 429 (rate limit) WHEN post fails THEN error: "LinkedIn daily post limit reached. Try again tomorrow."
+
+**Edge cases:**
+- [ ] GIVEN Thomas has already posted this case study WHEN he sees the LinkedIn tab THEN button shows "Post again?" with warning "A post was already sent on [date] — this will create a duplicate"
+- [ ] GIVEN the post text exceeds 1300 characters WHEN Thomas attempts to post THEN publish blocked client-side: "Post too long (1347/1300 chars). Edit before posting."
+- [ ] GIVEN LinkedIn connection is not set up WHEN Thomas accesses the LinkedIn tab THEN "Post to LinkedIn" button shows "LinkedIn not connected — [Connect in Settings]" (disabled)
+
+**Permissions:**
+- [ ] GIVEN user with role "user" (not admin) WHEN they view the LinkedIn tab THEN "Post to LinkedIn" button is hidden — only [Copy to clipboard] and [Mark as Published] are visible
+
+#### Events analytics
+| Event | Trigger | Properties | Funnel |
+|---|---|---|---|
+| `linkedin_post_sent` | Successful API post | `candidateId`, `hasImage`, `charCount`, `postId` | revenue |
+| `linkedin_post_failed` | API error | `errorType`, `candidateId` | revenue |
+| `linkedin_reconnect_triggered` | Admin clicks reconnect | — | activation |
+
+#### Notes for @fullstack
+- LinkedIn image upload is a 2-step process: register asset → PUT binary. Image must be fetched from SharePoint URL first (binary stream)
+- `LINKEDIN_ORGANIZATION_ID` env var must be set — without it, all posts fail silently. Add to env validation on startup.
+- Token encryption: use AES-256-GCM with `INTEGRATION_ENCRYPTION_KEY`. Separate IV per token. Never log tokens.
+
+---
+
+### US-CSP-04 — View Public Case Study Page
+
+**Persona:** Sophie (CMO, grand groupe international — evaluating Sarani)
+**Epic:** Case Study Multi-Agent Pipeline
+**Dependencies:** US-CS-04 (publish to website), Section 6 (public page)
+**Priority RICE:** R=5 I=5 C=5 E=1 → Score=125
+
+#### Job-to-be-done
+As Sophie (CMO), I want to read a detailed case study on `/case-studies/[slug]` so that I can evaluate Sarani's capability on a project similar to mine before scheduling a call.
+
+#### Context
+- **Origin:** LinkedIn post (direct link), `/work` gallery card click, Google search result
+- **Trigger:** Any link pointing to `/case-studies/[slug]`
+- **Destination (success):** Full case study page loads with headline, stats, brief, result
+- **Destination (failure):** 404 page (unknown slug)
+
+#### Acceptance Criteria
+
+**Happy path:**
+- [ ] GIVEN a case study has been published WHEN Sophie navigates to `/case-studies/tiktok-video-production` THEN page loads with H1 = `case_study.headline`, hero image, 3 stats, brief section, result section
+- [ ] GIVEN the page loads WHEN Google crawls it THEN JSON-LD CreativeWork schema is present in the HTML and valid per schema.org spec
+- [ ] GIVEN Sophie shares the URL on LinkedIn WHEN the link is unfurled THEN OG image, title and description appear correctly (uses `selected_visual_url` if set, else branded fallback)
+- [ ] GIVEN Sophie views the page on mobile (375px) WHEN she scrolls THEN hero fills viewport width, stats stack vertically (1 column), no horizontal overflow
+
+**Error cases:**
+- [ ] GIVEN an unknown slug WHEN Sophie navigates to `/case-studies/nonexistent-project` THEN Next.js `notFound()` triggers Sarani's custom 404 page
+- [ ] GIVEN `selected_visual_url` is null (no visual selected by PM) WHEN page renders THEN branded OG fallback image (Next.js ImageResponse) is used — page does not show a broken image
+
+**Edge cases:**
+- [ ] GIVEN a case study is unpublished WHEN Sophie tries to access its slug THEN 404 (slug no longer in `caseStudies` array after unpublish + ISR revalidation)
+- [ ] GIVEN a case study slug is `tiktok-video-production` WHEN `/work` gallery renders THEN the case study card links to `/case-studies/tiktok-video-production` (not an anchor or modal)
+
+**Permissions:**
+- [ ] GIVEN any visitor (unauthenticated) WHEN they navigate to `/case-studies/[slug]` THEN page is publicly accessible — no auth required
+
+#### Notes for @ux
+- CTA block at the bottom must link to `/contact` — not a modal. Sophie's next step after reading is contacting Sarani.
+- "Conviction-first" principle: the page must earn the CTA by presenting the full proof before showing it. CTA is at the bottom, not in the hero.
+
+#### Notes for @fullstack
+- ISR revalidation: call `revalidatePath("/case-studies/[slug]")` AND `revalidatePath("/work")` on every publish/unpublish
+- `generateStaticParams` reads from `caseStudies` array — ensure it runs at build time
+- OG fallback: extend the existing `ImageResponse` pattern (established Session 8) to accept `headline` and `client` params
+
+---
+
+### US-CSP-05 — LinkedIn OAuth Setup
+
+**Persona:** Thomas (Sarani admin)
+**Epic:** Case Study Multi-Agent Pipeline
+**Dependencies:** Section 5 (LinkedIn API), `integration_tokens` table
+**Priority RICE:** R=5 I=5 C=3 E=1 → Score=75
+
+#### Job-to-be-done
+As Thomas (admin), I want to connect Sarani's LinkedIn Page to the back-office via OAuth so that I can enable direct-post capability for case studies.
+
+#### Context
+- **Origin screen:** `/admin/settings/integrations`
+- **Trigger:** Click "Connect LinkedIn"
+- **Destination (success):** Settings page shows "LinkedIn connected — Sarani Page"
+- **Destination (failure):** Error message, connection status = disconnected
+
+#### Acceptance Criteria
+
+**Happy path:**
+- [ ] GIVEN Thomas is on `/admin/settings/integrations` WHEN he clicks "Connect LinkedIn" THEN browser redirects to LinkedIn OAuth consent screen with scopes `w_organization_social r_organization_social`
+- [ ] GIVEN Thomas approves the OAuth consent WHEN LinkedIn redirects to `/api/admin/linkedin/callback` THEN tokens are stored encrypted in `integration_tokens`, Thomas is redirected to `/admin/settings/integrations` with success toast "LinkedIn connected"
+- [ ] GIVEN LinkedIn is connected WHEN Thomas views the integrations page THEN status shows "Connected — Sarani Page", token expiry date, and [Disconnect] button
+
+**Error cases:**
+- [ ] GIVEN Thomas declines the OAuth consent WHEN LinkedIn redirects back with `error=access_denied` THEN Thomas is redirected to settings with error "Connection cancelled. LinkedIn not connected."
+- [ ] GIVEN access token expires WHEN any LinkedIn post attempt is made THEN automatic refresh is attempted; if refresh fails, error shown: "LinkedIn session expired — [Reconnect]"
+
+**Edge cases:**
+- [ ] GIVEN CSRF state token mismatch WHEN callback is received THEN request rejected with 400, "Invalid state parameter — possible CSRF attack"
+- [ ] GIVEN `LINKEDIN_CLIENT_ID` env var is missing WHEN Thomas clicks "Connect LinkedIn" THEN button is disabled with tooltip "LinkedIn not configured — contact admin"
+
+**Permissions:**
+- [ ] GIVEN user with role "user" WHEN they visit `/admin/settings/integrations` THEN LinkedIn connect section is visible but "Connect LinkedIn" button is disabled (admin action only)
+
+---
+
+## 9. Hypotheses to Validate
+
+These assumptions are critical to the pipeline design and must be validated before V2 decisions.
+
+| # | Hypothesis | Risk if wrong | How to validate |
+|---|---|---|---|
+| H1 | LinkedIn Marketing Developer Platform grants `w_organization_social` scope within 2-4 weeks of app submission | Launch blocked or delayed — LinkedIn review can take longer for new apps without established usage | Submit LinkedIn app early in development, not post-launch |
+| H2 | The 3-step chain (45–90s total) is acceptable UX for Thomas — he clicks Generate and returns to other tasks | UX friction causes the team to avoid the pipeline and fall back to manual writing | Measure time from Generate click to PM review session in first 2 weeks; if > 24h average, pipeline is not being used |
+| H3 | SharePoint visual suggestions (up to 18 images) are relevant enough that Thomas picks from suggestions >= 70% of the time (vs. manually browsing SharePoint) | Visual selection modal becomes a friction point — team skips visuals entirely | Track `visual_selected` events: source = "suggestion" vs. "manual browse" |
+| H4 | [HYPOTHESE: total token cost per 3-step generation ~3,000–6,000 tokens × Claude Sonnet pricing ≈ $0.04–0.12 per case study] | Budget impact if significantly higher — especially if Star Pipeline triggers many auto-generations | Measure `totalTokensUsed` in `pipeline_runs` for first 10 generations |
+| H5 | LinkedIn API rate limit (3 posts/day on free Marketing Developer Platform tier) is sufficient for Sarani's publishing cadence | Post blocked mid-campaign if team publishes > 3 case study posts per day | Confirm tier with LinkedIn developer support before launch; upgrade if cadence > 3/day |
+| H6 | ISR revalidation of `/case-studies/[slug]` works reliably on Replit (no stale cache after publish) | Published case studies not visible to Sophie until next Replit deploy | Test publish → ISR → public URL response time in staging before launch |
+
+---
+
+## Hypotheses Summary (marked)
+
+- [HYPOTHESE: total token cost per 3-step pipeline ~$0.04–0.12 per case study — validate with @ia on first 10 runs]
+- [HYPOTHESE: LinkedIn app review timeline 2-4 weeks — submit early, do not block launch on LinkedIn integration]
+- [HYPOTHESE: LinkedIn free tier = 3 posts/day — confirm rate limits with LinkedIn developer support]
+- [HYPOTHESE: SharePoint visual suggestions match quality >= 70% satisfaction rate — validate with Thomas on first 20 selections]
+
+---
+
+**Handoff → @fullstack**
+
+- Files produced: `/home/user/Sarani/docs/product/case-study-pipeline-specs.md`
+- Decisions taken:
+  - Generate button triggers 3-step sequential LLM chain (creative_strategy → copywriter → social) — replaces current single-pass call. External API contract unchanged.
+  - Each step stored in `pipeline_steps` table — enables per-step retry without restarting full chain
+  - Two new tables: `pipeline_runs` + `pipeline_steps` + `integration_tokens`. Three new columns on `case_study_candidates`. Five new columns on `case_study_outputs`.
+  - LinkedIn direct-post via `ugcPosts` endpoint — posts as LinkedIn Company Page (`w_organization_social` scope), not personal profile
+  - Visual suggestions: Step 3 (social agent) pre-selects up to 6 images per channel from SharePoint. PM confirms via slide-over modal. Visual stored as anonymous SharePoint link.
+  - Per-channel publish: case study, LinkedIn, email are independent publish actions
+  - Public page `/case-studies/[slug]`: SSG + ISR, JSON-LD CreativeWork, OG tags, branded OG fallback via ImageResponse pattern
+  - LinkedIn OAuth tokens stored AES-256 encrypted. Never returned to frontend. Refresh handled automatically.
+  - Migration number: `0018_case_study_pipeline.sql`
+
+- Points of attention:
+  - **LinkedIn app submission must happen during development**, not post-launch — reviewer approval can take 2-4 weeks
+  - **Token encryption key** (`INTEGRATION_ENCRYPTION_KEY`) must be added to Replit secrets before LinkedIn integration goes live
+  - **ISR revalidation** after publish must call `revalidatePath` for both `/case-studies/[slug]` AND `/work` (gallery must also update)
+  - **Pipeline polling** (3s interval): implement exponential backoff if polling continues > 60s to reduce server load
+  - **Step 1 output reuse on retry**: when retrying from step 2, fetch the `outputData` from the step 1 `pipeline_steps` row and inject directly — do not re-call the LLM
+  - **Image upload to LinkedIn** is binary (not URL reference) — fetch the SharePoint file server-side, pipe to LinkedIn upload endpoint. Do not expose SharePoint credentials to frontend.
+  - **Settings page** `/admin/settings/integrations` does not exist yet — needs to be created as part of this delta (LinkedIn connection status + connect/disconnect actions)
+
+---
+
+**Handoff → @qa**
+
+- Files to test: all new routes in Section 4, LinkedIn callback route (Section 5), public page (Section 6)
+- Critical test scenarios:
+  - Pipeline step failure + retry from step 2 (US-CSP-01 error path)
+  - LinkedIn post with expired token (US-CSP-03 error)
+  - Double-click protection on "Post to LinkedIn" button
+  - Unauthenticated access to `/case-studies/[slug]` — must succeed (public page)
+  - Unauthenticated access to `/api/admin/...` routes — must return 401
+  - Pipeline polling stops when status = "completed" (no infinite polling)
+  - ISR invalidation after publish — `/case-studies/[slug]` returns 200 within 5s of publish
+

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
 import {
@@ -44,28 +44,19 @@ async function savePipelineStep(
   agent: string,
   output: unknown
 ): Promise<void> {
-  // Read current steps, append new one
-  const [current] = await db
-    .select({ pipelineSteps: caseStudyCandidates.pipelineSteps })
-    .from(caseStudyCandidates)
-    .where(eq(caseStudyCandidates.id, id))
-    .limit(1);
-
-  const existingSteps = (current?.pipelineSteps ?? []) as PipelineStep[];
-  const newStep: PipelineStep = {
+  // Atomic append — no read-modify-write race condition
+  const newStep = JSON.stringify({
     step,
     agent,
     output,
     completedAt: new Date().toISOString(),
-  };
-
-  await db
-    .update(caseStudyCandidates)
-    .set({
-      pipelineSteps: [...existingSteps, newStep],
-      updatedAt: new Date(),
-    })
-    .where(eq(caseStudyCandidates.id, id));
+  });
+  await db.execute(sql`
+    UPDATE case_study_candidates
+    SET pipeline_steps = COALESCE(pipeline_steps, '[]'::jsonb) || ${newStep}::jsonb,
+        updated_at = NOW()
+    WHERE id = ${id}
+  `);
 }
 
 // ─── POST handler — Multi-agent pipeline ──────────────────────────────────
@@ -103,6 +94,12 @@ export async function POST(
     }
 
     // 2. Check eligibility
+    if (candidate.status === "generating") {
+      return NextResponse.json(
+        { error: "Pipeline already in progress for this candidate" },
+        { status: 409 }
+      );
+    }
     if (candidate.status === "excluded") {
       return NextResponse.json(
         { error: "Cannot generate for excluded candidate" },
@@ -145,16 +142,36 @@ export async function POST(
         systemPrompt: CREATIVE_STRATEGY_PROMPT,
         userMessage: buildStrategyInput(candidate),
         maxTokens: 2048,
-        timeout: 20_000,
+        timeout: 15_000,
       });
 
       const parsed = StrategyOutputSchema.safeParse(strategyResult.data);
       if (!parsed.success) {
-        throw new Error(
-          `Strategy validation failed: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+        // Retry once with validation feedback
+        console.warn(
+          "Strategy step failed validation, retrying:",
+          parsed.error.issues
+            .map((i) => `${i.path.join(".")}: ${i.message}`)
+            .join(", ")
         );
+        const retryResult = await callClaudeJSON<StrategyOutput>({
+          systemPrompt: CREATIVE_STRATEGY_PROMPT,
+          userMessage:
+            buildStrategyInput(candidate) +
+            "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid: angle (min 5 chars), keyMessages (2-5 items), visualDirection (min 5 chars), emotionalHook (min 5 chars), targetAudience (min 5 chars), differentiators (1-5 items).",
+          maxTokens: 2048,
+          timeout: 15_000,
+        });
+        const retryParsed = StrategyOutputSchema.safeParse(retryResult.data);
+        if (!retryParsed.success) {
+          throw new Error(
+            `Strategy validation failed after retry: ${retryParsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+          );
+        }
+        strategyData = retryParsed.data;
+      } else {
+        strategyData = parsed.data;
       }
-      strategyData = parsed.data;
       await savePipelineStep(id, 1, "creative-strategy", strategyData);
     } catch (err) {
       await db
@@ -185,7 +202,7 @@ export async function POST(
         systemPrompt: COPYWRITER_PROMPT,
         userMessage: buildCopyInput(candidate, strategyData),
         maxTokens: 4096,
-        timeout: 30_000,
+        timeout: 25_000,
       });
 
       const parsed = CopyOutputSchema.safeParse(copyResult.data);
@@ -203,7 +220,7 @@ export async function POST(
             buildCopyInput(candidate, strategyData) +
             "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid. The slug must be lowercase alphanumeric with hyphens only. The category must be exactly one of: 'Video & Social', 'Graphic Design', 'Event', 'Multilingual', 'Out-of-Home'. Stats must have exactly 3 items.",
           maxTokens: 4096,
-          timeout: 30_000,
+          timeout: 25_000,
         });
         const retryParsed = CopyOutputSchema.safeParse(retryResult.data);
         if (!retryParsed.success) {
@@ -245,16 +262,36 @@ export async function POST(
         systemPrompt: SOCIAL_PROMPT,
         userMessage: buildSocialInput(candidate, strategyData, copyData),
         maxTokens: 2048,
-        timeout: 20_000,
+        timeout: 15_000,
       });
 
       const parsed = SocialOutputSchema.safeParse(socialResult.data);
       if (!parsed.success) {
-        throw new Error(
-          `Social validation failed: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+        // Retry once with validation feedback
+        console.warn(
+          "Social step failed validation, retrying:",
+          parsed.error.issues
+            .map((i) => `${i.path.join(".")}: ${i.message}`)
+            .join(", ")
         );
+        const retryResult = await callClaudeJSON<SocialOutput>({
+          systemPrompt: SOCIAL_PROMPT,
+          userMessage:
+            buildSocialInput(candidate, strategyData, copyData) +
+            "\n\nIMPORTANT: Your previous response had validation errors. Ensure the linkedInPost object has ALL required fields: hook (min 1 char), body (min 10 chars), proofPoints (min 1 char), hashtags (min 1 char), charCount (number). Total must be < 1,300 characters.",
+          maxTokens: 2048,
+          timeout: 15_000,
+        });
+        const retryParsed = SocialOutputSchema.safeParse(retryResult.data);
+        if (!retryParsed.success) {
+          throw new Error(
+            `Social validation failed after retry: ${retryParsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+          );
+        }
+        socialData = retryParsed.data;
+      } else {
+        socialData = parsed.data;
       }
-      socialData = parsed.data;
       await savePipelineStep(id, 3, "social", socialData);
     } catch (err) {
       await db
