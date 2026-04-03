@@ -602,7 +602,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
                           <div className="px-3 py-2 flex items-center justify-between">
                             <span className="text-xs text-white/60 truncate">{item.name.replace(/\.[^.]+$/, "")}</span>
                             <a
-                              href={item.webUrl}
+                              href={item.proxyUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               aria-label={`Download ${item.name}`}
