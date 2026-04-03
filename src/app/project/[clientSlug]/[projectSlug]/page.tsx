@@ -5,6 +5,7 @@
  */
 import { Metadata } from "next";
 import ImageLightbox from "@/components/ui/ImageLightbox";
+import { ReviewActions } from "@/components/ui/ReviewActions";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -26,6 +27,8 @@ import {
 interface BatchItem {
   name: string;
   webUrl: string;
+  /** Proxy URL that never expires (redirects to fresh SP download URL) */
+  proxyUrl: string;
   mimeType: string;
   size: number;
   width?: number;
@@ -159,6 +162,7 @@ async function fetchBatchesByFolderId(
       .map((item) => ({
         name: item.name,
         webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+        proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
         mimeType: item.file!.mimeType,
         size: item.size,
         width: item.image?.width,
@@ -171,6 +175,7 @@ async function fetchBatchesByFolderId(
     for (const folder of subfolders) {
       try {
         const subData = await graphFetch<{ value: Array<{
+          id: string;
           name: string;
           size: number;
           file?: { mimeType: string };
@@ -191,6 +196,7 @@ async function fetchBatchesByFolderId(
           .map((item) => ({
             name: item.name,
             webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+            proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
             mimeType: item.file!.mimeType,
             size: item.size,
             width: item.image?.width,
@@ -305,9 +311,8 @@ async function fetchBatches(
         })
         .map((item) => ({
           name: item.name,
-          // Use the pre-authenticated download URL if available (expires ~1h),
-          // fall back to webUrl (requires auth — won't display on public page)
           webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+          proxyUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl, // Legacy: no item ID, use direct URL
           mimeType: item.file!.mimeType,
           size: item.size,
         }));
@@ -325,6 +330,7 @@ async function fetchBatches(
         .map((item) => ({
           name: item.name,
           webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+          proxyUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
           mimeType: item.file!.mimeType,
           size: item.size,
         }));
@@ -496,11 +502,18 @@ export default async function ProjectPreviewPage({ params }: Props) {
         )}
       </section>
 
-      {/* Creative Proposal */}
+      {/* Deliverables */}
       <section className="max-w-6xl mx-auto px-6 pb-20">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40 mb-10">
-          Creative Proposal
-        </h2>
+        <div className="flex items-center justify-between mb-10">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">
+            Deliverables
+          </h2>
+          {/* Hint: click to review */}
+          <p className="text-xs text-white/30 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+            Click on any image to leave feedback
+          </p>
+        </div>
 
         {batches.length === 0 ? (
           <div className="rounded-xl border border-white/10 bg-white/5 px-6 py-12 text-center">
@@ -540,19 +553,19 @@ export default async function ProjectPreviewPage({ params }: Props) {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                       {batchImages.map((item, imgIdx) => (
                         <ImageLightbox
-                          key={item.webUrl}
-                          src={item.webUrl}
+                          key={item.name}
+                          src={item.proxyUrl}
                           alt={item.name.replace(/\.[^.]+$/, "")}
                           previewId={preview.id}
                           assetName={item.name}
-                          allImages={batchImages.map((bi) => ({ src: bi.webUrl, alt: bi.name.replace(/\.[^.]+$/, ""), assetName: bi.name }))}
+                          allImages={batchImages.map((bi) => ({ src: bi.proxyUrl, alt: bi.name.replace(/\.[^.]+$/, ""), assetName: bi.name }))}
                           currentIndex={imgIdx}
                         >
                           <div className="group rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors">
                             <div className="aspect-[4/3] flex items-center justify-center bg-neutral-900 p-2">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={item.webUrl}
+                                src={item.proxyUrl}
                                 alt={item.name.replace(/\.[^.]+$/, "")}
                                 loading="lazy"
                                 className="max-w-full max-h-full object-contain"
@@ -576,14 +589,14 @@ export default async function ProjectPreviewPage({ params }: Props) {
                   {batchVideos.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       {batchVideos.map((item) => (
-                        <div key={item.webUrl} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                        <div key={item.name} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
                           <video
                             controls
                             preload="metadata"
                             className="w-full aspect-video bg-black"
                             playsInline
                           >
-                            <source src={item.webUrl} type={item.mimeType} />
+                            <source src={item.proxyUrl} type={item.mimeType} />
                             Your browser does not support video playback.
                           </video>
                           <div className="px-3 py-2 flex items-center justify-between">
@@ -680,6 +693,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
               Download project files
             </a>
           </div>
+        </section>
+      )}
+
+      {/* Review actions — Approve / Request changes */}
+      {totalAssets > 0 && (
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <ReviewActions previewId={preview.id} projectName={preview.projectName} />
         </section>
       )}
 
