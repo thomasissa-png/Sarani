@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { caseStudyOutputs, caseStudyCandidates } from "@/lib/db/schema";
 import { eq, and, isNotNull } from "drizzle-orm";
@@ -97,6 +98,10 @@ export async function POST(
       .set({ status: "published", updatedAt: new Date() })
       .where(eq(caseStudyCandidates.id, output.candidateId));
 
+    // Revalidate public pages immediately (don't wait for ISR cycle)
+    revalidatePath("/case-studies");
+    revalidatePath(`/case-studies/${caseStudy.slug}`);
+
     return NextResponse.json({
       success: true,
       slug: caseStudy.slug,
@@ -182,6 +187,12 @@ export async function DELETE(
       .update(caseStudyCandidates)
       .set({ status: "reviewed", updatedAt: new Date() })
       .where(eq(caseStudyCandidates.id, output.candidateId));
+
+    // Revalidate public pages immediately
+    if (output.caseStudySlug) {
+      revalidatePath(`/case-studies/${output.caseStudySlug}`);
+    }
+    revalidatePath("/case-studies");
 
     return NextResponse.json({
       success: true,
