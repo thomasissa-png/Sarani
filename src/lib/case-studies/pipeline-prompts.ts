@@ -161,7 +161,32 @@ ${JSON.stringify(strategy, null, 2)}
 The caseStudy.slug format must be: "${data.clientName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${(data.projectType || "project").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}"
 The category must map from project type: Campaign/Video Production → "Video & Social", Rebranding/Graphic Design/Presentation → "Graphic Design", Event → "Event", Translation → "Multilingual", Other → use your best judgment.
 
-Output a single JSON object with keys: caseStudy, nurturingEmail.`;
+IMPORTANT: Your output MUST be a SINGLE JSON object with EXACTLY this structure:
+{
+  "caseStudy": {
+    "slug": "client-project-type",
+    "client": "Client Name",
+    "deliverable": "What was delivered",
+    "outcome": "Key outcome",
+    "brief": "Project context (min 10 chars)",
+    "result": "What happened (min 10 chars)",
+    "headline": "Problem → Result headline",
+    "keyMetric": "The #1 metric",
+    "stats": [{"label": "...", "value": "..."}, {"label": "...", "value": "..."}, {"label": "...", "value": "..."}],
+    "metaDescription": "SEO meta description (50-160 chars)",
+    "category": "Video & Social"
+  },
+  "nurturingEmail": {
+    "subject": "Subject line (<60 chars)",
+    "body": "Email body (min 50 chars)",
+    "ctaText": "CTA button text",
+    "suggestedSegment": "Target audience segment"
+  }
+}
+
+Do NOT put caseStudy fields at the top level. They MUST be nested inside "caseStudy".
+If testimonial data is not available, OMIT the testimonial field entirely (do not set it to null).
+Output valid JSON only. No markdown, no explanation.`;
 }
 
 // ─── Step 3: Social Media ───────────────────────────────────────────────────

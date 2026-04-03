@@ -579,6 +579,29 @@ export default async function ProjectPreviewPage({ params }: Props) {
         const result = await fetchAssetsByIds(selectedIds, driveId);
         batches = result.batches;
         spError = result.error;
+
+        // Fallback: if fetching by ID returned nothing (stale IDs, API error),
+        // fall back to folder scan + ID filter
+        if (batches.length === 0 && preview.spFolderId) {
+          console.log("[share-page] fetchAssetsByIds returned empty, falling back to folder scan");
+          const folderResult = await fetchBatchesByFolderId(preview.spFolderId, driveId);
+          batches = folderResult.batches;
+          spError = folderResult.error;
+          // Filter by selected IDs if folder scan returned results
+          const idSet = new Set(selectedIds);
+          batches = batches
+            .map((b) => ({
+              ...b,
+              items: b.items.filter((item) => idSet.has(item.itemId)),
+            }))
+            .filter((b) => b.items.length > 0);
+          // If still empty after filtering, show all folder contents
+          if (batches.length === 0) {
+            const fullResult = await fetchBatchesByFolderId(preview.spFolderId, driveId);
+            batches = fullResult.batches;
+            spError = fullResult.error;
+          }
+        }
       } else {
         // Legacy: no IDs, fall back to folder scan + name filter
         const folderResult = preview.spFolderId
