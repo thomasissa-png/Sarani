@@ -1036,7 +1036,17 @@ export default function ClosuresPage() {
                         <span className="text-xs text-green-600 font-medium">Case study in progress ✓</span>
                       )}
                       {closure.source === "candidate" && (closure.status === "generated" || closure.status === "reviewed") && (
-                        <span className="text-xs text-green-600 font-medium">Content generated ✓</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedId(closure.id);
+                            fetchOutputs(closure.id);
+                          }}
+                          className="text-xs text-green-600 font-medium hover:text-green-800 hover:underline transition-colors"
+                        >
+                          Content generated ✓ — Click to view
+                        </button>
                       )}
                       {closure.source === "candidate" && closure.status === "generating" && (
                         <span className="text-xs text-yellow-600 font-medium flex items-center gap-1">
