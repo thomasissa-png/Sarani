@@ -115,7 +115,7 @@ export const CLIENT_MAPPINGS: readonly ClientIntegrationMapping[] = [
       { name: "TikTok SMB", clickupListId: "900802525893", clickupUrl: "https://app.clickup.com/14389859/v/li/900802525893", sharepointSubfolder: "04. SMB" },
       { name: "TikTok Global Accounts", clickupListId: "900502263845", clickupUrl: "https://app.clickup.com/14389859/v/li/900502263845", sharepointSubfolder: "05. Global Accounts" },
       { name: "TikTok Benelux", clickupListId: "900502247464", clickupUrl: "https://app.clickup.com/14389859/v/li/900502247464", sharepointSubfolder: "06. Benelux" },
-      { name: "TikTok Shop SEA", clickupListId: "901701490958", clickupUrl: "https://app.clickup.com/14389859/v/li/901701490958", sharepointSubfolder: "07. SEA" },
+      { name: "TikTok Shop SEA", clickupListId: "900303407539", clickupUrl: "https://app.clickup.com/14389859/v/li/900303407539", sharepointSubfolder: "07. SEA" },
       { name: "TikTok US Branding", clickupListId: "900502251376", clickupUrl: "https://app.clickup.com/14389859/v/li/900502251376", sharepointSubfolder: "08. US Branding" },
       { name: "TikTok USA", clickupListId: "901701757963", clickupUrl: "https://app.clickup.com/14389859/v/li/901701757963", sharepointSubfolder: "09. USA" },
       { name: "TikTok METAP", clickupListId: "901701490958", clickupUrl: "https://app.clickup.com/14389859/v/li/901701490958", sharepointSubfolder: "10. METAP" },
