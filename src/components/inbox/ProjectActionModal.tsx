@@ -70,10 +70,12 @@ export function ProjectActionModal({
     Array<{ taskId: string; taskUrl: string; taskName: string }>
   >([]);
   const [isManualSearching, setIsManualSearching] = useState(false);
+  const [hasManualSearched, setHasManualSearched] = useState(false);
 
   const handleManualSearch = async () => {
     if (!manualSearchQuery.trim()) return;
     setIsManualSearching(true);
+    setHasManualSearched(false);
     try {
       const res = await fetch("/api/admin/clickup/search", {
         method: "POST",
@@ -92,6 +94,7 @@ export function ProjectActionModal({
       showToast("Search failed — try again", "error");
     } finally {
       setIsManualSearching(false);
+      setHasManualSearched(true);
     }
   };
 
@@ -509,6 +512,17 @@ export function ProjectActionModal({
                   </button>
                 </div>
               )}
+              {showManualMap && (
+                <ManualClickUpSearch
+                  query={manualSearchQuery}
+                  onQueryChange={setManualSearchQuery}
+                  onSearch={handleManualSearch}
+                  isSearching={isManualSearching}
+                  results={manualSearchResults}
+                  onSelect={handleSelectManualResult}
+                  onCancel={() => setShowManualMap(false)}
+                />
+              )}
             </div>
           )}
         </div>
@@ -545,6 +559,28 @@ export function ProjectActionModal({
                   Draft Reply
                 </button>
               </div>
+              {!hasClickUpLink && !isSearchingClickUp && !showManualMap && (
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-error">Project not found in ClickUp</p>
+                  <button
+                    onClick={() => setShowManualMap(true)}
+                    className="text-xs text-brand-cerulean hover:underline font-medium"
+                  >
+                    Map manually
+                  </button>
+                </div>
+              )}
+              {showManualMap && (
+                <ManualClickUpSearch
+                  query={manualSearchQuery}
+                  onQueryChange={setManualSearchQuery}
+                  onSearch={handleManualSearch}
+                  isSearching={isManualSearching}
+                  results={manualSearchResults}
+                  onSelect={handleSelectManualResult}
+                  onCancel={() => setShowManualMap(false)}
+                />
+              )}
             </div>
           )}
 
@@ -572,8 +608,8 @@ export function ProjectActionModal({
                   Draft Reply
                 </button>
               </div>
-              {!hasClickUpLink && !isSearchingClickUp && (
-                <p className="text-xs text-neutral-400">Project not found in ClickUp — use the search above to map it</p>
+              {!hasClickUpLink && !isSearchingClickUp && !showManualMap && (
+                <p className="text-xs text-neutral-400">Project not found in ClickUp — use &quot;Map manually&quot; above to link it</p>
               )}
             </div>
           )}
@@ -619,6 +655,87 @@ export function ProjectActionModal({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Manual ClickUp Search Panel ──────────────────────────────────────────
+
+interface ManualClickUpSearchProps {
+  query: string;
+  onQueryChange: (q: string) => void;
+  onSearch: () => void;
+  isSearching: boolean;
+  results: Array<{ taskId: string; taskUrl: string; taskName: string }>;
+  onSelect: (result: { taskId: string; taskUrl: string; taskName: string }) => void;
+  onCancel: () => void;
+}
+
+function ManualClickUpSearch({
+  query,
+  onQueryChange,
+  onSearch,
+  isSearching,
+  results,
+  onSelect,
+  onCancel,
+}: ManualClickUpSearchProps) {
+  return (
+    <div className="bg-neutral-50 rounded-lg p-3 space-y-2 border border-neutral-200">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-neutral-600">Search ClickUp project</p>
+        <button
+          onClick={onCancel}
+          className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+          aria-label="Cancel manual search"
+        >
+          Cancel
+        </button>
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onSearch();
+          }}
+          placeholder="Type project or client name..."
+          className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm text-brand-black focus:border-brand-cerulean focus:ring-1 focus:ring-brand-cerulean outline-none"
+          aria-label="Search query for ClickUp project"
+        />
+        <button
+          onClick={onSearch}
+          disabled={isSearching || !query.trim()}
+          className={cn(
+            "px-3 py-2 min-h-[44px] rounded-lg text-sm font-medium transition-colors shrink-0",
+            isSearching || !query.trim()
+              ? "bg-neutral-200 text-neutral-400 cursor-not-allowed"
+              : "bg-brand-cerulean text-white hover:bg-brand-cerulean-dark"
+          )}
+          aria-label="Search ClickUp"
+        >
+          {isSearching ? "Searching..." : "Search"}
+        </button>
+      </div>
+      {results.length > 0 && (
+        <div className="space-y-1">
+          {results.map((result) => (
+            <button
+              key={result.taskId}
+              onClick={() => onSelect(result)}
+              className="w-full text-left px-3 py-2 min-h-[44px] rounded-lg text-sm bg-white border border-neutral-200 hover:border-brand-cerulean hover:bg-brand-cerulean/5 transition-colors"
+              aria-label={`Select project: ${result.taskName}`}
+            >
+              <p className="font-medium text-brand-black">{result.taskName}</p>
+              <p className="text-xs text-neutral-400 truncate">{result.taskUrl}</p>
+            </button>
+          ))}
+        </div>
+      )}
+      {results.length === 0 && !isSearching && query.trim() && (
+        <p className="text-xs text-neutral-400 py-1">No results yet. Press Search or Enter to find the project.</p>
+      )}
     </div>
   );
 }

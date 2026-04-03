@@ -226,12 +226,11 @@ export default function ImageLightbox({
           <button
             type="button"
             onClick={close}
-            className="absolute top-4 right-4 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
-            aria-label="Close lightbox"
+            className="absolute top-4 right-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 transition-colors"
+            aria-label="Close"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
@@ -262,6 +261,15 @@ export default function ImageLightbox({
             className="flex-1 flex flex-col items-center justify-center p-4 min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Comment hint — above the image */}
+            {previewId && (
+              <div className="mb-4 flex items-center justify-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm text-white backdrop-blur-sm">
+                <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                Click anywhere on the image to leave a comment
+              </div>
+            )}
             <div className="relative inline-block max-w-full max-h-[80vh]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -306,11 +314,6 @@ export default function ImageLightbox({
                 {currentImage.alt}
                 {canNav && <span className="text-white/30 ml-2">{navIndex + 1}/{allImages!.length}</span>}
               </p>
-              {previewId && (
-                <span className="text-xs text-white/40">
-                  Click on image to comment
-                </span>
-              )}
             </div>
           </div>
 
