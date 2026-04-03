@@ -16,6 +16,8 @@ import { db } from "@/lib/db";
 import { caseStudyOutputs } from "@/lib/db/schema";
 import { eq, isNotNull, and } from "drizzle-orm";
 import { CaseStudyCta } from "./cta";
+import { fetchCaseStudyGallery } from "@/lib/case-studies/fetch-gallery";
+import ImageLightbox from "@/components/ui/ImageLightbox";
 
 // ISR — Rendering strategy: revalidates every hour. Checks DB first for pipeline-generated
 // case studies, falls back to static data (redirects to /work/[slug]).
@@ -120,6 +122,9 @@ export default async function CaseStudyPage({ params }: PageProps) {
   const stats = cs.stats ?? [];
   const related = getRelatedCaseStudies(slug).slice(0, 3);
   const pagePath = `/case-studies/${slug}`;
+
+  // Fetch gallery images from SharePoint (graceful fallback to empty array)
+  const galleryImages = await fetchCaseStudyGallery(cs.client, cs.deliverable);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -328,6 +333,16 @@ export default async function CaseStudyPage({ params }: PageProps) {
           </aside>
         </div>
       </Section>
+
+      {/* Project Gallery — visual proof of work (critical for credibility) */}
+      {galleryImages.length > 0 && (
+        <Section ariaLabel="Project gallery">
+          <h2 className="mb-8 text-center text-2xl font-bold text-brand-black">
+            The Work
+          </h2>
+          <ImageLightbox images={galleryImages} />
+        </Section>
+      )}
 
       {/* Testimonial */}
       {cs.testimonial && (
