@@ -69,6 +69,66 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/**
+ * Smart folder matching: tries multiple strategies to match a ClickUp list name
+ * to a SharePoint subfolder name.
+ * e.g. ClickUp list "TikTok P&E SEA" should match SP folder "P&E SEA" or "TikTok P&E SEA"
+ */
+function findMatchingFolder(folders: FolderItem[], clickupList: string, clientName: string): FolderItem | null {
+  const listLower = clickupList.toLowerCase().trim();
+  const clientLower = clientName.toLowerCase().trim();
+
+  // Strategy 1: exact match (case-insensitive)
+  const exact = folders.find((f) => f.name.toLowerCase().trim() === listLower);
+  if (exact) return exact;
+
+  // Strategy 2: mutual includes (original logic)
+  const byIncludes = folders.find((f) => {
+    const folderLower = f.name.toLowerCase();
+    return folderLower.includes(listLower) || listLower.includes(folderLower);
+  });
+  if (byIncludes) return byIncludes;
+
+  // Strategy 3: strip client prefix from list name and try again
+  // e.g. "TikTok P&E SEA" → "P&E SEA", then match against folder "P&E SEA"
+  let stripped = listLower;
+  if (stripped.startsWith(clientLower)) {
+    stripped = stripped.slice(clientLower.length).trim();
+  }
+  // Also handle abbreviations: strip first word if it doesn't match client
+  const words = listLower.split(/\s+/);
+  const strippedFirstWord = words.length > 1 ? words.slice(1).join(" ") : "";
+
+  for (const candidate of [stripped, strippedFirstWord]) {
+    if (candidate.length < 2) continue;
+    const match = folders.find((f) => {
+      const folderLower = f.name.toLowerCase().trim();
+      return folderLower.includes(candidate) || candidate.includes(folderLower);
+    });
+    if (match) return match;
+  }
+
+  // Strategy 4: tokenize and find best word-overlap match (min 2 shared tokens)
+  const listTokens = new Set(listLower.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2));
+  let bestMatch: FolderItem | null = null;
+  let bestScore = 0;
+  for (const folder of folders) {
+    const folderTokens = new Set(folder.name.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((t) => t.length >= 2));
+    let overlap = 0;
+    for (const t of listTokens) {
+      if (folderTokens.has(t)) overlap++;
+    }
+    const score = overlap / Math.max(listTokens.size, folderTokens.size);
+    if (overlap >= 2 && score > bestScore) {
+      bestScore = score;
+      bestMatch = folder;
+    }
+  }
+  if (bestMatch && bestScore >= 0.3) return bestMatch;
+
+  return null;
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export function ShareFolderModal({ isOpen, onClose, clientName, projectName, clickupTaskUrl, sharepointLink, clickupListName }: ShareFolderModalProps) {
@@ -129,31 +189,27 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setError(null);
     const fallbackResult = await fetchFolders({ clientRoot: true });
     if (!fallbackResult || !clickupListName) return;
-    const listLower = clickupListName.toLowerCase();
-    const match = fallbackResult.folders.find((f) => {
-      const folderLower = f.name.toLowerCase();
-      return folderLower.includes(listLower) || listLower.includes(folderLower);
-    });
+    const match = findMatchingFolder(fallbackResult.folders, clickupListName, clientName);
     if (match) {
       setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
       fetchFolders({ folderId: match.id });
     }
-  }, [fetchFolders, clickupListName]);
+  }, [fetchFolders, clickupListName, clientName]);
 
   // Helper: navigate to client root and auto-find matching subfolder
   const loadClientRoot = useCallback(async () => {
     const result = await fetchFolders({ clientRoot: true });
     if (!result || !clickupListName) return;
-    const listLower = clickupListName.toLowerCase();
-    const match = result.folders.find((f) => {
-      const folderLower = f.name.toLowerCase();
-      return folderLower.includes(listLower) || listLower.includes(folderLower);
-    });
+    console.log(`[ShareFolderModal] Auto-matching ClickUp list "${clickupListName}" against ${result.folders.length} SP folders:`, result.folders.map((f) => f.name));
+    const match = findMatchingFolder(result.folders, clickupListName, clientName);
     if (match) {
+      console.log(`[ShareFolderModal] Matched: "${clickupListName}" → "${match.name}"`);
       setBreadcrumb([{ name: match.name, folderId: match.id, webUrl: match.webUrl }]);
       fetchFolders({ folderId: match.id });
+    } else {
+      console.warn(`[ShareFolderModal] No match found for ClickUp list "${clickupListName}" in SP folders`);
     }
-  }, [fetchFolders, clickupListName]);
+  }, [fetchFolders, clickupListName, clientName]);
 
   // Load folders on open
   useEffect(() => {
