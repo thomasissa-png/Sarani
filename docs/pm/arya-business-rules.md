@@ -236,7 +236,7 @@ g. TikTok Benelux:
 - click-up: https://app.clickup.com/14389859/v/li/900502247464
 h. TikTok Shop SEA : 
 - Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F07%2E%20SEA&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
-- click-up: https://app.clickup.com/14389859/v/li/900303407539
+- click-up: https://app.clickup.com/14389859/v/li/900502247998
 i. TikTok US Branding: 
 - Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F08%2E%20US%20Branding&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
 - click-up: https://app.clickup.com/14389859/v/li/900502251376
@@ -275,10 +275,10 @@ t. TikTok EU Branding
 - click up: https://app.clickup.com/14389859/v/li/901711816120
 u.TTS Global Ops: 
 - Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F22%2E%20TTS%20Global%20Ops&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
-- click-up: https://app.clickup.com/14389859/v/li/901702723533
+- click-up: https://app.clickup.com/14389859/v/li/901712261426
 v. TikTok Others (autres divisions non au dessus):
 - Projets: https://saranistudio.sharepoint.com/sites/SaraniAssets/Shared%20Documents/Forms/AllItems.aspx?id=%2Fsites%2FSaraniAssets%2FShared%20Documents%2F03%2E%20Customers%2F05%2E%20TikTok%2F03%2E%20Projects%2F17%2E%20Others&viewid=2c2e4824%2D3cb1%2D4619%2Db7c6%2D219dce795204
-- Click up: https://app.clickup.com/14389859/v/li/901705458972
+- Click up: https://app.clickup.com/14389859/v/li/901704680268
 
 **PICO** : client final, part of Bytedance (maison mere de TikTok)
 - Branding:https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBbX1jrkGZaSqX40qP4uLA4AUzpGlEatWDexJtlNDb-cOE?e=8EPMMS 

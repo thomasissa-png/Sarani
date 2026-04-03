@@ -279,6 +279,12 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     await loadClientRoot();
   }, [fetchFolders, loadClientRoot]);
 
+  // Check if we have a config-based mapping for this ClickUp list
+  const hasConfigMapping = !!(
+    (clickupListId && getSubdivisionByListId(clickupListId)?.subdivision.sharepointSubfolder)
+    || (clickupListName && getSubdivisionByName(clickupListName)?.subdivision.sharepointSubfolder)
+  );
+
   // Load folders on open
   useEffect(() => {
     if (!isOpen) return;
@@ -286,6 +292,14 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setSharedLink(null);
     setCopied(false);
     setSelectedFiles(new Map());
+
+    // PRIORITY: if we have a config mapping (ClickUp list ID → SP subfolder),
+    // use it directly. This is more reliable than SharePoint links from ClickUp
+    // custom fields, which often point to generic parent folders.
+    if (hasConfigMapping) {
+      loadClientRoot();
+      return;
+    }
 
     // 1. If we already have a SharePoint link, use it directly
     if (sharepointLink) {
@@ -314,7 +328,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
 
     // 3. No ClickUp task — load client root directly
     loadClientRoot();
-  }, [isOpen, sharepointLink, clickupTaskUrl, resolveSpLink, loadClientRoot]);
+  }, [isOpen, sharepointLink, clickupTaskUrl, resolveSpLink, loadClientRoot, hasConfigMapping]);
 
   // Navigate into a subfolder by its ID
   const navigateInto = useCallback((folderName: string, folderId: string, webUrl?: string) => {
