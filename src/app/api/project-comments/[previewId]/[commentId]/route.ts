@@ -39,8 +39,8 @@ export async function PATCH(
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
-    // Only the original author can edit (matched by authorName)
-    if (body.authorName && existing.authorName !== body.authorName) {
+    // Only the original author can edit (must provide matching authorName)
+    if (!body.authorName || existing.authorName !== body.authorName) {
       return NextResponse.json({ error: "Only the author can edit this comment" }, { status: 403 });
     }
 
