@@ -33,6 +33,12 @@ const PatchInboxItemSchema = z.object({
   pmId: z.string().optional(),
   summary: z.string().optional(), // PM-edited content
   approvedBy: z.string().optional(),
+  // Manual ClickUp mapping: merge into existing summary JSON without overwriting
+  clickupMapping: z.object({
+    taskId: z.string(),
+    taskUrl: z.string(),
+    taskName: z.string(),
+  }).optional(),
 });
 
 // ─── GET — List inbox items ───────────────────────────────────────────────
@@ -140,6 +146,29 @@ export async function PATCH(request: NextRequest) {
     };
     if (body.summary !== undefined) {
       updateData.summary = body.summary;
+    }
+
+    // Merge ClickUp mapping into existing summary JSON (preserves all other fields)
+    if (body.clickupMapping) {
+      const [existing] = await db
+        .select({ summary: inboxItems.summary })
+        .from(inboxItems)
+        .where(eq(inboxItems.id, body.id))
+        .limit(1);
+      if (existing) {
+        let parsed: Record<string, unknown> = {};
+        try {
+          parsed = JSON.parse(existing.summary ?? "{}") as Record<string, unknown>;
+        } catch { /* start fresh */ }
+        // Merge ClickUp info into classification and top-level
+        const cls = (parsed.classification ?? {}) as Record<string, unknown>;
+        cls.clickupProjectHint = body.clickupMapping.taskName;
+        parsed.classification = cls;
+        parsed.clickupUrl = body.clickupMapping.taskUrl;
+        parsed.clickupTaskId = body.clickupMapping.taskId;
+        updateData.summary = JSON.stringify(parsed);
+        updateData.projectId = body.clickupMapping.taskId;
+      }
     }
 
     const [updated] = await db

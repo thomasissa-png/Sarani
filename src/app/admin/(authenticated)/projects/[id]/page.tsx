@@ -4,9 +4,39 @@
 // The composite project ID (clientName::projectName) comes from the tracker.
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ShareFolderModal } from "@/components/admin/ShareFolderModal";
+
+// ─── Back to Tracker (preserves filters via browser history) ───────────────
+
+function BackToTrackerLink({ className }: { className?: string }) {
+  const router = useRouter();
+
+  const handleBack = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // If there is real navigation history, go back to preserve filter state.
+    // window.history.length > 1 is true even for fresh tabs (the initial entry
+    // counts), so we also check the referrer to detect direct navigation.
+    if (window.history.length > 2 || document.referrer.includes("/admin/tracker")) {
+      e.preventDefault();
+      router.back();
+    }
+    // Otherwise the anchor href="/admin/tracker" fires normally as a fallback.
+  };
+
+  return (
+    <a
+      href="/admin/tracker"
+      onClick={handleBack}
+      className={className}
+    >
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M19 12H5M12 19l-7-7 7-7" />
+      </svg>
+      Back to Tracker
+    </a>
+  );
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -763,15 +793,7 @@ export default function ProjectViewPage() {
   if (error) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
-        <Link
-          href="/admin/tracker"
-          className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-brand-black transition-colors mb-6"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back to Tracker
-        </Link>
+        <BackToTrackerLink className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-brand-black transition-colors mb-6" />
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <p className="text-red-700 font-medium mb-2">
             Failed to load project details
@@ -804,15 +826,7 @@ export default function ProjectViewPage() {
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* ─── Header ──────────────────────────────────────────────────────── */}
       <div>
-        <Link
-          href="/admin/tracker"
-          className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-brand-black transition-colors mb-4"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
-          Back to Tracker
-        </Link>
+        <BackToTrackerLink className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-brand-black transition-colors mb-4" />
 
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>

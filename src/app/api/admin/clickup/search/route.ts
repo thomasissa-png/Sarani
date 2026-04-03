@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserFromSession } from "@/lib/auth";
-import { searchTaskByName } from "@/lib/integrations/clickup";
+import { searchTaskByName, searchTasksByName } from "@/lib/integrations/clickup";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 // ─── Validation ────────────────────────────────────────────────────────────
 
 const SearchSchema = z.object({
   query: z.string().min(1).max(200),
+  multi: z.boolean().optional().default(false),
 });
 
 // ─── POST — Search ClickUp tasks by name ──────────────────────────────────
@@ -36,6 +37,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  // Multi-result mode: return up to 5 matches for manual mapping UI
+  if (body.multi) {
+    const results = await searchTasksByName(body.query, 5);
+    return NextResponse.json({ results });
+  }
+
+  // Single-result mode: backward compatible
   const result = await searchTaskByName(body.query);
 
   return NextResponse.json({

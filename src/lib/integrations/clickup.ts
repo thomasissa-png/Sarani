@@ -476,6 +476,84 @@ export async function searchTaskByName(
 }
 
 /**
+ * Search tasks by name, returning up to `maxResults` matches (best first).
+ * Used by the manual mapping UI to let the PM pick from multiple candidates.
+ */
+export async function searchTasksByName(
+  query: string,
+  maxResults = 5
+): Promise<Array<{ taskId: string; taskUrl: string; taskName: string }>> {
+  const apiKey = process.env.CLICKUP_API_KEY;
+  const teamId = process.env.CLICKUP_WORKSPACE_ID;
+  if (!apiKey || !teamId) return [];
+
+  try {
+    const queryLower = query.toLowerCase();
+    const maxPages = 5;
+    const MATCH_THRESHOLD = 0.4; // Lower threshold for multi-result — show more options
+
+    const exactMatches: Array<{ taskId: string; taskUrl: string; taskName: string }> = [];
+    const scoredCandidates: Array<{ taskId: string; taskUrl: string; taskName: string; score: number }> = [];
+
+    for (let page = 0; page < maxPages; page++) {
+      const searchUrl = `https://api.clickup.com/api/v2/team/${teamId}/task?page=${page}&include_closed=false&custom_task_ids=false&subtasks=false`;
+      const res = await fetch(searchUrl, {
+        method: "GET",
+        headers: { Authorization: apiKey, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(5_000),
+      });
+
+      if (!res.ok) break;
+
+      const data = (await res.json()) as {
+        tasks: Array<{ id: string; name: string; url: string }>;
+      };
+
+      if (data.tasks.length === 0) break;
+
+      for (const task of data.tasks) {
+        const nameLower = task.name.toLowerCase();
+
+        if (nameLower.includes(queryLower) || queryLower.includes(nameLower)) {
+          exactMatches.push({ taskId: task.id, taskUrl: task.url, taskName: task.name });
+          if (exactMatches.length >= maxResults) break;
+        } else {
+          const score = matchScore(query, task.name);
+          if (score >= MATCH_THRESHOLD) {
+            scoredCandidates.push({ taskId: task.id, taskUrl: task.url, taskName: task.name, score });
+          }
+        }
+      }
+
+      if (exactMatches.length >= maxResults) break;
+    }
+
+    // Combine: exact matches first, then scored candidates sorted by score desc
+    scoredCandidates.sort((a, b) => b.score - a.score);
+    const combined = [
+      ...exactMatches,
+      ...scoredCandidates.map(({ taskId, taskUrl, taskName }) => ({ taskId, taskUrl, taskName })),
+    ];
+
+    // Deduplicate by taskId
+    const seen = new Set<string>();
+    const unique: Array<{ taskId: string; taskUrl: string; taskName: string }> = [];
+    for (const item of combined) {
+      if (!seen.has(item.taskId)) {
+        seen.add(item.taskId);
+        unique.push(item);
+      }
+      if (unique.length >= maxResults) break;
+    }
+
+    return unique;
+  } catch (error) {
+    console.warn("[ClickUp Search Multi] Error:", error);
+    return [];
+  }
+}
+
+/**
  * Check if the ClickUp API is reachable and credentials are valid.
  * Returns "not_configured" if env vars are missing (not an error -- expected state).
  */

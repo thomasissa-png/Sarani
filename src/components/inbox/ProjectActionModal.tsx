@@ -71,6 +71,7 @@ export function ProjectActionModal({
   >([]);
   const [isManualSearching, setIsManualSearching] = useState(false);
   const [hasManualSearched, setHasManualSearched] = useState(false);
+  const [isSavingMapping, setIsSavingMapping] = useState(false);
 
   const handleManualSearch = async () => {
     if (!manualSearchQuery.trim()) return;
@@ -80,15 +81,11 @@ export function ProjectActionModal({
       const res = await fetch("/api/admin/clickup/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: manualSearchQuery.trim() }),
+        body: JSON.stringify({ query: manualSearchQuery.trim(), multi: true }),
       });
       if (res.ok) {
-        const data = await res.json() as { taskId: string | null; taskUrl: string | null; taskName: string | null };
-        if (data.taskId && data.taskUrl && data.taskName) {
-          setManualSearchResults([{ taskId: data.taskId, taskUrl: data.taskUrl, taskName: data.taskName }]);
-        } else {
-          setManualSearchResults([]);
-        }
+        const data = await res.json() as { results: Array<{ taskId: string; taskUrl: string; taskName: string }> };
+        setManualSearchResults(data.results ?? []);
       }
     } catch {
       showToast("Search failed — try again", "error");
@@ -98,10 +95,31 @@ export function ProjectActionModal({
     }
   };
 
-  const handleSelectManualResult = (result: { taskId: string; taskUrl: string; taskName: string }) => {
+  const handleSelectManualResult = async (result: { taskId: string; taskUrl: string; taskName: string }) => {
     setClickupSearchResult(result);
-    setShowManualMap(false);
-    showToast(`Mapped to: ${result.taskName}`, "success");
+    setIsSavingMapping(true);
+    try {
+      // Persist the mapping to the inbox item in DB
+      await fetch("/api/admin/inbox", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: itemId,
+          status: "pending", // Keep item in inbox — don't mark as done
+          clickupMapping: {
+            taskId: result.taskId,
+            taskUrl: result.taskUrl,
+            taskName: result.taskName,
+          },
+        }),
+      });
+      showToast(`Mapped to: ${result.taskName}`, "success");
+    } catch {
+      showToast("Mapping saved locally but failed to persist — try again", "error");
+    } finally {
+      setIsSavingMapping(false);
+      setShowManualMap(false);
+    }
   };
 
   const config = VARIANT_CONFIG[variant];
@@ -131,7 +149,11 @@ export function ProjectActionModal({
 
     // Otherwise, use clickupProjectHint to search
     const hint = payload.classification?.clickupProjectHint;
-    if (!hint) return;
+    if (!hint) {
+      // No hint available — auto-show manual mapping UI
+      setShowManualMap(true);
+      return;
+    }
 
     setIsSearchingClickUp(true);
     fetch("/api/admin/clickup/search", {
@@ -147,10 +169,14 @@ export function ProjectActionModal({
             taskUrl: data.taskUrl ?? `https://app.clickup.com/t/${data.taskId}`,
             taskName: data.taskName ?? null,
           });
+        } else {
+          // Auto-search found nothing — show manual mapping UI automatically
+          setShowManualMap(true);
         }
       })
       .catch(() => {
-        // Graceful degradation — button stays disabled
+        // Auto-search failed — show manual mapping UI as fallback
+        setShowManualMap(true);
       })
       .finally(() => setIsSearchingClickUp(false));
   }, [variant, payload]);
