@@ -32,6 +32,7 @@
 
 ## IA et prompts
 
+- [S15] Thomas préfère un alias de modèle auto-update (`claude-sonnet-4-latest`) plutôt qu'une version datée. Il accepte le risque de changement de comportement mineur en échange de la résilience — pas de maintenance quand Anthropic sort une nouvelle version.
 - [S6] Thomas considère le prompt engineering comme un actif stratégique — veut "le meilleur prompt du monde possible" avant toute implémentation IA (vidéo, image, texte). Le prompt library est un livrable à part entière, pas un détail technique.
 - [S6] Pour la vidéo IA : le prompt doit contrôler composition, mouvement caméra, éclairage, cohérence inter-scènes, style. @ia doit le tester sur les 4 cas d'usage Sarani et itérer jusqu'à 9/10.
 - [S7] Thomas a validé l'abandon de PiAPI + Kling 2.6 au profit de Veo 3.1 + Runway Gen-4 + Kling 3.0 — critère #1 : qualité du rendu, pas le prix.

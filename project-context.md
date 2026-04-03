@@ -3,7 +3,7 @@
 > Ce fichier est lu par tous les agents avant toute action.
 > Remplis chaque champ. Les champs vides bloquent les agents.
 > **ATTENTION** : ce fichier peut contenir des informations stratégiques (budget, pricing, concurrents). S'assurer que le repo est **privé** si des données confidentielles y sont renseignées.
-> Dernière mise à jour : 2026-03-24
+> Dernière mise à jour : 2026-04-03
 >
 > **LANGUE DES LIVRABLES : ANGLAIS.** Tous les livrables du projet (frontend, backend, code, contenus du site, copy, documentation technique) DOIVENT être rédigés en anglais. Sarani est une agence internationale — le site et tous ses composants sont en anglais. Seul ce fichier project-context.md et les échanges internes agents restent en français.
 
@@ -103,6 +103,11 @@
 
 ### Règle SharePoint — Liens "Anyone" obligatoires
 - **RÈGLE ABSOLUE** : Tout lien SharePoint utilisé dans le back-office (affichage, stockage, partage, envoi au client, intégration dans un livrable) DOIT être un lien de partage anonyme ("Anyone" / "Link works for anyone, doesn't require sign-in"). Ne JAMAIS utiliser les URLs directes du navigateur SharePoint qui nécessitent une authentification. Le code convertit automatiquement les URLs directes via l'API Graph `createLink` avec `scope: "anonymous"`.
+
+### Règle SharePoint — MimeType non fiable pour les vidéos
+- **RÈGLE ABSOLUE** : Ne JAMAIS faire confiance au `file.mimeType` retourné par l'API Graph pour les fichiers uploadés. SharePoint retourne souvent `application/octet-stream` au lieu du vrai type MIME (surtout pour les vidéos .mp4/.mov/.webm). Toujours implémenter un fallback par extension de fichier. Ce bug a causé 4 itérations de fixes sur la lecture vidéo (CSP, CORS, crossOrigin — tous des symptômes) avant d'identifier la vraie cause : le mimeType erroné empêchait le proxy de streamer → 302 redirect → cross-origin SP sans CORS → playback cassé.
+- **Identifiants fichiers** : Ne JAMAIS utiliser le nom de fichier comme identifiant unique pour les assets SharePoint. Les noms sont dupliqués entre dossiers. Utiliser `item.id` (Graph API ID).
+- **Dossiers** : Les dossiers SharePoint ont souvent des préfixes numériques ("15. Nom") et des sous-dossiers standards ("Projects"). Le matching par nom DOIT normaliser (strip préfixes numériques) et naviguer dans les sous-dossiers connus.
 
 ### Équipe d'agents IA internes (concept clé)
 
@@ -277,6 +282,12 @@
 | @ux | 2026-04-03 | docs/reviews/pipeline-ux-audit.md | Audit UX exhaustif du Case Study Multi-Agent Pipeline. Score PM back-office 7/10, Score Sophie page publique 6.5/10, Score cohérence /case-studies vs /work 5.5/10. 2 P0 identifiés : slug affiché `/work/[slug]` au lieu de `/case-studies/[slug]` (lignes 623+631 page détail), duplication catégorie dans hero page publique (lignes 203-208). 4 P1 : progress bar invisible avant génération (H1 FAIL), CTA "Start a project" dans sidebar pendant lecture (règle conviction-first), Prev/Next navigation absente, bouton "Copy to LinkedIn Buffer" trompeur. Cognitive walkthrough 5 étapes listing→publié (5 clics minimum). 5 états UX : listing PASS sur 4.5/5, détail PASS sur 5/5. Tableau comparatif /case-studies vs /work (5 gaps structurels : hero image, subtitle, Timeline/Volume meta strip, stats conditionnels, Prev/Next). | P0 slug incorrect documenté comme bug de développement : la page publique pipeline est sur `/case-studies/` mais le preview dans le back-office et le lien "View on Website" pointent vers `/work/`. Conviction-first appliqué : le sidebar "At a Glance" avec CTA commercial pendant la phase de lecture contredit la règle projet (CTAs commerciaux en conclusion uniquement). Progress bar "always visible even when idle" recommandée pour H1 Nielsen (l'utilisateur doit savoir que 3 agents vont tourner avant de cliquer Generate). Prev/Next absent = parcours brisé pour Sophie qui lit plusieurs case studies en séquence. |
 | @product-manager | 2026-04-03 | docs/product/case-study-pipeline-specs.md | Delta specs "Case Study Multi-Agent Pipeline" : architecture pipeline 3 étapes LLM (creative_strategy → copywriter → social), chaque étape en séquentiel avec stockage intermédiaire en DB. Delta DB : 2 nouvelles tables (pipeline_runs, pipeline_steps), 1 table (integration_tokens pour LinkedIn OAuth), 3 colonnes sur case_study_candidates, 5 colonnes sur case_study_outputs. 6 nouvelles routes API (pipeline-status, pipeline-retry, visual selection, LinkedIn post, LinkedIn OAuth). LinkedIn API : OAuth2 avec scopes w_organization_social + r_organization_social, posts sur la Company Page Sarani (pas profil personnel), tokens chiffrés AES-256. Page publique /case-studies/[slug] : SSG+ISR, JSON-LD CreativeWork, OG tags, fallback ImageResponse. UI delta : stepper 3 étapes pendant génération, visual picker modal par canal, bouton "Post to LinkedIn" admin-only, publish per-canal indépendant. 5 user stories Given/When/Then (US-CSP-01 à 05). 6 hypothèses à valider. | Pipeline 3 étapes retenu vs appel single-pass : le strategic brief (étape 1) empêche le copywriter de générer des case studies génériques. Séquentiel retenu vs parallèle : chaque étape lit l'output de la précédente — le copywriter doit avoir l'angle stratégique, le social agent doit avoir le copy final. Retry par étape retenu vs restart complet : évite de re-payer le coût LLM des étapes qui ont réussi. Visual suggestions générées par le social agent (step 3) et non par une étape dédiée : réduit le nombre d'appels LLM. LinkedIn Company Page (w_organization_social) retenu vs profil Thomas (w_member_social) : Sarani poste en tant qu'entreprise, pas en tant qu'individu. /case-studies/[slug] SSG+ISR retenu vs DB-driven (SSR) : cohérence avec la stratégie SEO existante (case-studies.ts) et latence < 100ms pour Sophie. |
 | @design | 2026-04-03 | docs/reviews/pipeline-design-audit.md | Audit design exhaustif du Case Study Pipeline (admin + page publique). Score global 6/10. P0 : badge keyMetric `bg-brand-flame/10 + text-brand-flame` → ratio WCAG ~3.4:1 FAIL. P1 : couleurs hors design system (emerald/blue/red) dans progress bar admin, duplication category sidebar, stat cards génériques, tabs actifs discrets, focus-visible absent. P2 : CTA "Start a project" mid-page (violation conviction-first), token `brand-flame-dark` non documenté, galerie incohérente /work vs /case-studies. 9 corrections avec code CSS/classes. | Badge keyMetric en P0 car ratio 3.4:1 FAIL WCAG AA texte normal (seuil 4.5:1). Recommandation bg-brand-flame+text-white retenue car plus distinctif des tags ET conforme règle "Flame = action/énergie". Emerald/blue/red signalés comme hors-système même pour le back-office — les PMs Sarani utilisent cet outil quotidiennement et la cohérence de marque s'applique aussi en interne. Stats cards upgrade black+lemon recommandé pour donner aux métriques clés (60% savings, D+1) un traitement premium aligné brand. |
+| @fullstack | 2026-04-03 | src/lib/inbox/sarani-filter.ts, tests/unit/inbox-sarani-filter.test.ts | Ajout cleanEmailSubject() : strip Re:/Tr:/Fwd:/AW:/WG:/Rép: etc. des sujets email avant matching projet. 14 tests unitaires dédiés ajoutés. Intégré dans match-project, poll-emails, et graph-mail webhook. | Les préfixes de réponse/transfert empêchaient le matching automatique email→projet par similarité de sujet. Fix appliqué à tous les points d'entrée (cron, webhook, API). |
+| @fullstack | 2026-04-03 | src/components/admin/ShareFolderModal.tsx, src/app/admin/(authenticated)/projects/[id]/page.tsx | Share modal : multi-folder file selection (Map<id, metadata>), findMatchingFolder avec stripNumberPrefix + auto-navigation "Projects" subfolder, onLinkCreated callback pour auto-refresh liste. | Les fichiers du même nom dans 2 dossiers différents n'étaient pas sélectionnables ensemble (Set<string> par nom). TikTok Others affiché au lieu du bon dossier (préfixes numériques SP non strippés + sous-dossier "Projects" non parcouru). |
+| @fullstack | 2026-04-03 | src/app/project/[clientSlug]/[projectSlug]/page.tsx | Comment badges par itemId (pas filename), asset selection par itemId avec legacy fallback, VIDEO_EXT_TO_MIME fallback côté share page pour inclure les vidéos mal typées. | Les badges commentaires s'affichaient sur 4 assets (même nom), les assets dédupliqués à 1 (même nom, 2 dossiers), les vidéos exclues si mimeType=octet-stream. |
+| @fullstack | 2026-04-03 | src/app/admin/(authenticated)/closures/page.tsx | Pipeline status affiché (failed → rouge + Retry), source candidate prise en compte dans handleStarOverride (POST direct sans PATCH pour éviter 409), outputs affichés en cards stylisées. | Le bouton "Create Case Study" échouait avec 409 (race condition PATCH→POST) pour les candidats. Le statut pipeline n'était pas visible. |
+| @qa | 2026-04-03 | src/app/api/project-assets/[itemId]/route.ts | ROOT CAUSE vidéo trouvée : SharePoint retourne application/octet-stream pour les vidéos uploadées → proxy faisait 302 redirect → cross-origin SP sans CORS → playback cassé. Fix : VIDEO_EXT_TO_MIME fallback par extension de fichier + ajout `name` dans la requête Graph API. | 4 itérations précédentes ciblaient les symptômes (CSP, CORS headers, crossOrigin attr). La vraie cause était le mimeType erroné de SharePoint. L'extension du fichier est un signal fiable. |
+| @orchestrator | 2026-04-03 | src/lib/ai/claude.ts | DEFAULT_MODEL changé de claude-sonnet-4-6-latest → claude-sonnet-4-latest pour auto-update cross-versions mineures. | Thomas voulait éviter le breakage quand Claude évolue (erreur 404 avec l'ancien modèle daté). L'alias -latest suit les mises à jour Sonnet 4.x automatiquement. |
 
 ---
 
@@ -396,72 +407,50 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-03 (session 14 — en cours)
+**Date et heure de clôture :** 2026-04-03 (session 15)
 
-**Résumé de la session (session 14) :**
-Pipeline case study multi-agents : refactorisé la génération mono-LLM en pipeline 3 étapes séquentielles (creative-strategy → copywriter → social). Migration DB 0006 (pipeline_status, pipeline_steps, visual_suggestions). Route visuals SharePoint (thumbnails). Page publique /case-studies/[slug] SSR + DB fallback (SEO, JSON-LD CreativeWork). Pipeline UI : progress bar 3 étapes, visual suggestions grid, per-channel publish (LinkedIn buffer copy, email copy), badges pipeline sur le listing. Save Draft quotes + Resume Draft. LinkedIn = buffer par décision Thomas (pas d'API directe). Phase 3k finalisée (purpose-of-work déjà OK, email scan déjà OK, save-draft implémenté).
+**Résumé de la session (session 15) :**
+Session de bugfix intensive — 6 bugs corrigés en batch + 3 améliorations. (1) Comment badges affichés sur 4 assets au lieu d'1 → fix itemId unique. (2) Asset selection dedup → fix itemId. (3) TikTok folder matching → stripNumberPrefix + auto-navigate "Projects" subfolder. (4) Video playback ROOT CAUSE trouvée après 4 itérations : SharePoint retourne application/octet-stream pour les vidéos → proxy 302 redirect → cross-origin SP sans CORS. Fix : VIDEO_EXT_TO_MIME fallback par extension. (5) Model name 404 → claude-sonnet-4-latest. (6) Pipeline 409 race condition + status display. Aussi : cleanEmailSubject() pour matching, multi-folder selection, auto-refresh share links.
 
-**Travaux terminés cette session :**
-- [x] Tracker : mapClickUpStatus (Open→In progress, Closed→Delivered)
-- [x] Tracker : filtres dynamiques dans l'URL (survivent au retour arrière)
-- [x] Tracker : clients principaux + Others (plus d'entités dans le dropdown)
-- [x] Tracker : étoiles ⭐ → case study candidates
-- [x] Share modal : browse SP folders par folderId (drill-down Graph API)
-- [x] Share modal : thumbnails grid/list + sélection d'assets individuels
-- [x] Share modal : auto-navigation sous-dossier via clickupListName
-- [x] Share modal : extraction SP link robuste (string, object { url }, stringify fallback)
-- [x] Page présentation : versioning V1/V2/V3 (URL -v2, -v3)
-- [x] Page présentation : proxy /api/project-assets/[itemId] (fix expiration URLs SP)
-- [x] Page présentation : commentaires positionnels (pins, panel, polling 5s)
-- [x] Page présentation : Approve / Request changes (step machine)
-- [x] Page présentation : navigation prev/next lightbox + keyboard ←→
-- [x] Page présentation : bottom-sheet mobile pour le panel commentaires
-- [x] Page présentation : badge "Final delivery" + hint feedback visible
-- [x] Page présentation : footer simplifié (logo + tagline + social)
-- [x] Page présentation : dimensions images affichées + vidéo player HTML5
-- [x] Page présentation : Download project files (lien SP)
-- [x] Performance : modals parallélisés (Promise.allSettled) + UI optimiste
-- [x] Performance : filtres inbox memoizés (5 useMemo chainés)
-- [x] Quotes : skeletons pendant le prefill
-- [x] Quotes : Generate Quote passe project+amount dans l'URL
-- [x] Inbox : TTS alias TikTok + spaceName extraction
-- [x] Inbox : Asset Review items masqués + tab supprimé
-- [x] Inbox : détection auto brief vs feedback (via commentaires ClickUp)
-- [x] Sidebar : Asset Review retiré du menu
-- [x] 35 experts → 45 experts (68 fichiers)
-- [x] Propagation 3 learnings P0 (scénarios réels, tests incrémentaux, LLM call)
-- [x] PublicSiteChrome exclut /project/ (plus de double header)
-- [x] Specs versioning + commentaires positionnels documentées
+**Travaux terminés cette session (S15) :**
+- [x] cleanEmailSubject() — strip Re:/Tr:/Fwd:/AW:/WG:/Rép: + 14 tests unitaires
+- [x] Multi-folder file selection dans ShareFolderModal (Map<id, metadata>)
+- [x] Auto-refresh liste de liens après création share link (onLinkCreated callback)
+- [x] Comment badges par itemId (plus de badge sur 4 assets même nom)
+- [x] Asset selection par itemId avec fallback legacy
+- [x] TikTok folder matching : stripNumberPrefix + auto-navigate "Projects" subfolder
+- [x] Video playback ROOT CAUSE : VIDEO_EXT_TO_MIME fallback proxy + share page
+- [x] Model name : claude-sonnet-4-latest (future-proof auto-update)
+- [x] Case study pipeline : source param + POST direct sans PATCH (409 fix)
+- [x] Pipeline status display : failed en rouge + Retry
+- [x] Pipeline outputs en cards stylisées
 
 **Travaux en cours / à faire :**
-- **Pipeline case study multi-agents** (PRIORITÉ 1 — session 14) : quand PM clique "Generate" sur un candidat, lancer automatiquement creative-strategy → copywriter → social. Réponses Thomas :
-  1. **Visuels** : les agents proposent, la PM peut éditer et choisir manuellement via le Share modal
-  2. **Visuels partout** : case study + LinkedIn + email — mais garder l'étape 2 (Generate) séparée de l'étoile quoi qu'il arrive
-  3. **LinkedIn auto-post** : implémenter un bouton "Post to LinkedIn" qui publie directement sur le compte Sarani depuis la page case study
-  4. **Publication séparée** : chaque canal (case study site, LinkedIn, email) peut être publié indépendamment
-  5. **Page dédiée** : case study publié va sur une page case study dédiée (pas /work/[slug] existant)
-  6. **Persistance** : vérifier que chaque génération est bien enregistrée en DB et ne se perd pas
-- **Commentaires : upload fichiers** → SP "Supporting Files" (spécifié mais pas implémenté)
-- **Migration DB** : Thomas doit exécuter `npm run db:migrate` pour migrations 0024 (versioning) + 0025 (commentaires)
+- **LinkedIn auto-post** : bouton "Post to LinkedIn" OAuth2 pas encore implémenté
+- **Commentaires : upload fichiers** → SP "Supporting Files" (spécifié, pas implémenté)
+- **Phase 4 QA** (~75%) : Lighthouse CI, visual regression, E2E LLM integration tests manquants
+- **Phase 5 Launch** : non démarrée
+
+**Prochaines actions recommandées :**
+1. **Phase 4 QA complète** (PRIORITÉ 1 — @qa, @infrastructure) : configurer Lighthouse CI, créer baselines Playwright visual regression, ajouter tests E2E scénarios LLM
+2. **LinkedIn OAuth2 auto-post** (PRIORITÉ 2 — @fullstack) : intégration API LinkedIn Company Page pour publier case studies
+3. **Upload fichiers commentaires** (PRIORITÉ 3 — @fullstack) : permettre upload dans SP "Supporting Files" depuis la page share
+
+**Blockers éventuels :**
+- LinkedIn OAuth2 : Thomas doit créer une app LinkedIn et fournir client_id/client_secret
+- Video playback : fix appliqué mais tests live sur Replit nécessaires (pas testable en CI sans SharePoint)
 
 **Décisions de Thomas cette session :**
-- Share = browse SP + sélection assets + génère page brandée (pas juste lien SP)
-- Versioning auto à chaque génération (V1, V2, V3...)
-- Commentaires positionnels type Figma (x%, y%) avec quasi-temps réel
-- Approve / Request changes sur la page client
-- Étoile tracker → case study candidate
-- Pipeline case study : creative-strategy → copywriter → social (séquence auto)
-- PM édite les outputs avant publication
-- "Creative Proposal" gardé comme label (pas "Deliverables")
-- Option C pour les snapshots (live SP, pas de copie fichiers)
-- 35 experts → 45 experts partout
-- Asset Review retiré du menu et de l'inbox
+- claude-sonnet-4-latest (alias auto-update, pas de version datée)
+- Video = toujours stream proxy, jamais 302 redirect vers SP
+- Préfixes email (Re:/Fwd:/Tr:) strippés avant matching projet
+- Sélection multi-dossier persiste via Map avec metadata
 
 **Branche de travail :** claude/session-recovery-analysis-b03NR
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 14. Branche : claude/session-recovery-analysis-b03NR. Priorité 1 : pipeline case study multi-agents (creative-strategy → copywriter → social). Migrations 0024+0025 à exécuter. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 15. Branche : claude/session-recovery-analysis-b03NR. 6 bugs corrigés (vidéo root cause, commentaires, dedup, TikTok, model, pipeline). Prochaine priorité : Phase 4 QA complète (Lighthouse CI, visual regression), LinkedIn OAuth2 auto-post, upload fichiers commentaires. Ne lance aucun agent avant mon feu vert.
 ```
 - [x] 7 filtres (All/New Projects/Project Feedback/Enquiries/Project Reviews/Others/Managed)
 - [x] Filtre client (2e ligne : TikTok/Sony/Bose/Ubi/Lamarck/Aristocrat/Aujan/CMC/PICO/GEODIS/Others)
