@@ -393,13 +393,71 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-02 ~19:00 UTC (session 12)
+**Date et heure de clôture :** 2026-04-03 ~23:00 UTC (session 13)
 
-**Résumé de la session (session 12) :**
-Session massive Inbox Arya V3 — ~55 commits. Inbox overhaul complet : 4 catégories email, 7 filtres + filtre client, Create Brief avec LLM extraction, Create Feedback avec LLM extraction, Draft Reply avec LLM, Manual ClickUp mapping, Entity dropdown ClickUp, Assign To avec team profiles + PM par timezone, Health check + alerte, Arya Recommends banner, DueTodayBanner expandable, pagination. Classification centralisée (classifier.ts). 12 clients avec branding complet. 37 team members avec skills/langues/clients. 8 benchmarks estimation charge. Daily digest + deadline alerts crons. 181 tests unitaires (dont 48 scénarios réels). Knowledge base viewer. Client contacts auto-détectés. Formulaire client enrichi. Business rules (29 règles de Thomas). Score Arya 3.4→6.8/10.
+**Résumé de la session (session 13) :**
+Session massive ~50 commits. Tracker : statuts mappés (mapClickUpStatus), filtres dynamiques + URL persistence, clients principaux + Others, étoiles case study. Share modal complet : browse SP folders par ID, thumbnails grid/list, sélection d'assets, auto-navigation via clickupListName, extraction SP link depuis ClickUp custom fields (string + object + stringify fallback). Page présentation projet : versioning V1/V2/V3, images ratio respecté (grille 4:3 + object-contain), player vidéo HTML5, proxy endpoint (fix expiration URLs SP 1h), commentaires positionnels type Figma (pins x%/y%, threads, polling 5s), boutons Approve/Request changes, badge Final delivery, footer simplifié, navigation prev/next lightbox, bottom-sheet mobile. Performance inbox : modals parallélisés, UI optimiste, filtres memoizés, skeletons quotes. 35→45 experts (68 fichiers). Specs versioning + commentaires documentées.
 
 **Travaux terminés cette session :**
-- [x] Inbox overhaul : 4 catégories (enquiry/new_project/project_feedback/other)
+- [x] Tracker : mapClickUpStatus (Open→In progress, Closed→Delivered)
+- [x] Tracker : filtres dynamiques dans l'URL (survivent au retour arrière)
+- [x] Tracker : clients principaux + Others (plus d'entités dans le dropdown)
+- [x] Tracker : étoiles ⭐ → case study candidates
+- [x] Share modal : browse SP folders par folderId (drill-down Graph API)
+- [x] Share modal : thumbnails grid/list + sélection d'assets individuels
+- [x] Share modal : auto-navigation sous-dossier via clickupListName
+- [x] Share modal : extraction SP link robuste (string, object { url }, stringify fallback)
+- [x] Page présentation : versioning V1/V2/V3 (URL -v2, -v3)
+- [x] Page présentation : proxy /api/project-assets/[itemId] (fix expiration URLs SP)
+- [x] Page présentation : commentaires positionnels (pins, panel, polling 5s)
+- [x] Page présentation : Approve / Request changes (step machine)
+- [x] Page présentation : navigation prev/next lightbox + keyboard ←→
+- [x] Page présentation : bottom-sheet mobile pour le panel commentaires
+- [x] Page présentation : badge "Final delivery" + hint feedback visible
+- [x] Page présentation : footer simplifié (logo + tagline + social)
+- [x] Page présentation : dimensions images affichées + vidéo player HTML5
+- [x] Page présentation : Download project files (lien SP)
+- [x] Performance : modals parallélisés (Promise.allSettled) + UI optimiste
+- [x] Performance : filtres inbox memoizés (5 useMemo chainés)
+- [x] Quotes : skeletons pendant le prefill
+- [x] Quotes : Generate Quote passe project+amount dans l'URL
+- [x] Inbox : TTS alias TikTok + spaceName extraction
+- [x] Inbox : Asset Review items masqués + tab supprimé
+- [x] Inbox : détection auto brief vs feedback (via commentaires ClickUp)
+- [x] Sidebar : Asset Review retiré du menu
+- [x] 35 experts → 45 experts (68 fichiers)
+- [x] Propagation 3 learnings P0 (scénarios réels, tests incrémentaux, LLM call)
+- [x] PublicSiteChrome exclut /project/ (plus de double header)
+- [x] Specs versioning + commentaires positionnels documentées
+
+**Travaux en cours / à faire :**
+- **Pipeline case study multi-agents** (PRIORITÉ 1 — session 14) : quand PM clique "Generate" sur un candidat, lancer automatiquement creative-strategy → copywriter → social. PM édite inline puis publie. Questions en attente (Thomas doit répondre) :
+  1. Choix des visuels : PM sélectionne manuellement (comme Share modal) ou agents choisissent auto ?
+  2. Visuels dans quels outputs : case study seul, ou aussi LinkedIn + email ?
+  3. Publication : "Publish all" unique ou par canal séparément ?
+  4. Case study publié va sur /work/[slug] (existant) ou nouvelle page ?
+- **Commentaires : upload fichiers** → SP "Supporting Files" (spécifié mais pas implémenté)
+- **Migration DB** : Thomas doit exécuter `npm run db:migrate` pour migrations 0024 (versioning) + 0025 (commentaires)
+
+**Décisions de Thomas cette session :**
+- Share = browse SP + sélection assets + génère page brandée (pas juste lien SP)
+- Versioning auto à chaque génération (V1, V2, V3...)
+- Commentaires positionnels type Figma (x%, y%) avec quasi-temps réel
+- Approve / Request changes sur la page client
+- Étoile tracker → case study candidate
+- Pipeline case study : creative-strategy → copywriter → social (séquence auto)
+- PM édite les outputs avant publication
+- "Creative Proposal" gardé comme label (pas "Deliverables")
+- Option C pour les snapshots (live SP, pas de copie fichiers)
+- 35 experts → 45 experts partout
+- Asset Review retiré du menu et de l'inbox
+
+**Branche de travail :** claude/extract-project-context-M9ACH
+
+**Commande de reprise suggérée :**
+```
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 13 — ~50 commits. Branche : claude/extract-project-context-M9ACH. Priorité 1 : pipeline case study multi-agents (creative-strategy → copywriter → social). Thomas doit répondre aux 4 questions sur les visuels/publication. Migrations 0024+0025 à exécuter. Ne lance aucun agent avant mon feu vert.
+```
 - [x] 7 filtres (All/New Projects/Project Feedback/Enquiries/Project Reviews/Others/Managed)
 - [x] Filtre client (2e ligne : TikTok/Sony/Bose/Ubi/Lamarck/Aristocrat/Aujan/CMC/PICO/GEODIS/Others)
 - [x] Create Brief : LLM extraction template Arya 7 sections (pas copier-coller email)
