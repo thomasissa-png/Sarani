@@ -142,7 +142,7 @@ export async function POST(
         systemPrompt: CREATIVE_STRATEGY_PROMPT,
         userMessage: buildStrategyInput(candidate),
         maxTokens: 2048,
-        timeout: 15_000,
+        timeout: 60_000,
       });
 
       const parsed = StrategyOutputSchema.safeParse(strategyResult.data);
@@ -160,7 +160,7 @@ export async function POST(
             buildStrategyInput(candidate) +
             "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid: angle (min 5 chars), keyMessages (2-5 items), visualDirection (min 5 chars), emotionalHook (min 5 chars), targetAudience (min 5 chars), differentiators (1-5 items).",
           maxTokens: 2048,
-          timeout: 15_000,
+          timeout: 60_000,
         });
         const retryParsed = StrategyOutputSchema.safeParse(retryResult.data);
         if (!retryParsed.success) {
@@ -202,7 +202,7 @@ export async function POST(
         systemPrompt: COPYWRITER_PROMPT,
         userMessage: buildCopyInput(candidate, strategyData),
         maxTokens: 4096,
-        timeout: 25_000,
+        timeout: 60_000,
       });
 
       const parsed = CopyOutputSchema.safeParse(copyResult.data);
@@ -220,7 +220,7 @@ export async function POST(
             buildCopyInput(candidate, strategyData) +
             "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid. The slug must be lowercase alphanumeric with hyphens only. The category must be exactly one of: 'Video & Social', 'Graphic Design', 'Event', 'Multilingual', 'Out-of-Home'. Stats must have exactly 3 items.",
           maxTokens: 4096,
-          timeout: 25_000,
+          timeout: 60_000,
         });
         const retryParsed = CopyOutputSchema.safeParse(retryResult.data);
         if (!retryParsed.success) {
@@ -262,7 +262,7 @@ export async function POST(
         systemPrompt: SOCIAL_PROMPT,
         userMessage: buildSocialInput(candidate, strategyData, copyData),
         maxTokens: 2048,
-        timeout: 15_000,
+        timeout: 60_000,
       });
 
       const parsed = SocialOutputSchema.safeParse(socialResult.data);
@@ -280,7 +280,7 @@ export async function POST(
             buildSocialInput(candidate, strategyData, copyData) +
             "\n\nIMPORTANT: Your previous response had validation errors. Ensure the linkedInPost object has ALL required fields: hook (min 1 char), body (min 10 chars), proofPoints (min 1 char), hashtags (min 1 char), charCount (number). Total must be < 1,300 characters.",
           maxTokens: 2048,
-          timeout: 15_000,
+          timeout: 60_000,
         });
         const retryParsed = SocialOutputSchema.safeParse(retryResult.data);
         if (!retryParsed.success) {

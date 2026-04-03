@@ -96,7 +96,7 @@ Regenerate the ${typeLabel} applying ONLY the instruction in the user_instructio
       systemPrompt,
       userMessage,
       maxTokens: 2048,
-      timeout: 30_000,
+      timeout: 60_000,
     });
 
     // 4. Validate regenerated content against output type schema
