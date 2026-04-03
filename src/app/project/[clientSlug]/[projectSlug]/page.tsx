@@ -15,6 +15,8 @@ import {
   type DriveItem,
   SharePointApiError,
 } from "@/lib/integrations/sharepoint";
+import { presentationComments } from "@/lib/db/schema";
+import { sql } from "drizzle-orm";
 import {
   SHAREPOINT_ASSETS_DRIVE_ID,
   ASSETS_CUSTOMERS_BASE_PATH,
@@ -425,6 +427,23 @@ export default async function ProjectPreviewPage({ params }: Props) {
   );
   const totalAssets = batches.reduce((sum, b) => sum + b.items.length, 0);
 
+  // Fetch comment counts per asset for badge display
+  const commentCountRows = await db
+    .select({
+      assetName: presentationComments.assetName,
+      count: sql<number>`cast(count(*) as int)`,
+    })
+    .from(presentationComments)
+    .where(eq(presentationComments.previewId, preview.id))
+    .groupBy(presentationComments.assetName);
+
+  const commentCountMap = new Map<string, number>();
+  for (const row of commentCountRows) {
+    if (row.assetName) {
+      commentCountMap.set(row.assetName, row.count);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -552,7 +571,9 @@ export default async function ProjectPreviewPage({ params }: Props) {
                   {/* Image Grid — uniform cards with contained images */}
                   {batchImages.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      {batchImages.map((item, imgIdx) => (
+                      {batchImages.map((item, imgIdx) => {
+                        const assetCommentCount = commentCountMap.get(item.name) ?? 0;
+                        return (
                         <ImageLightbox
                           key={item.name}
                           src={item.proxyUrl}
@@ -562,7 +583,12 @@ export default async function ProjectPreviewPage({ params }: Props) {
                           allImages={batchImages.map((bi) => ({ src: bi.proxyUrl, alt: bi.name.replace(/\.[^.]+$/, ""), assetName: bi.name }))}
                           currentIndex={imgIdx}
                         >
-                          <div className="group rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors">
+                          <div className="group relative rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-brand-flame/50 transition-colors">
+                            {assetCommentCount > 0 && (
+                              <div className="absolute top-2 right-2 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-flame px-1.5 text-xs font-bold text-white shadow-sm">
+                                {assetCommentCount}
+                              </div>
+                            )}
                             <div className="aspect-[4/3] flex items-center justify-center bg-neutral-900 p-2">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
@@ -573,8 +599,14 @@ export default async function ProjectPreviewPage({ params }: Props) {
                               />
                             </div>
                             <div className="px-3 py-2 bg-white/5 flex items-center justify-between gap-2">
-                              <span className="text-xs text-white/50 truncate">
+                              <span className="text-xs text-white/50 truncate flex items-center gap-1.5">
                                 {item.name.replace(/\.[^.]+$/, "")}
+                                {assetCommentCount > 0 && (
+                                  <span className="inline-flex items-center gap-0.5 text-white/35">
+                                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                    <span className="text-[10px] tabular-nums">{assetCommentCount}</span>
+                                  </span>
+                                )}
                               </span>
                               <span className="text-[10px] text-white/25 shrink-0 tabular-nums">
                                 {item.width && item.height ? `${item.width}×${item.height}` : item.name.split(".").pop()?.toUpperCase()}
@@ -582,7 +614,8 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             </div>
                           </div>
                         </ImageLightbox>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
