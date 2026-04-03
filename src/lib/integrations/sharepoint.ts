@@ -518,14 +518,46 @@ export async function getDriveItemByPath(
 export async function resolveSharePointUrl(
   url: string
 ): Promise<DriveItem | null> {
+  // Try with full URL first, then without query params
+  const urlVariants = [url];
   try {
-    // Encode URL as sharing token per Microsoft docs
-    const base64 = Buffer.from(url, "utf-8").toString("base64");
-    const shareToken = "u!" + base64.replace(/=+$/, "").replace(/\//g, "_").replace(/\+/g, "-");
-    return await graphFetch<DriveItem>(`/shares/${shareToken}/driveItem`);
+    const parsed = new URL(url);
+    if (parsed.search) {
+      urlVariants.push(parsed.origin + parsed.pathname);
+    }
   } catch {
-    return null;
+    // Not a valid URL, just try as-is
   }
+
+  for (const variant of urlVariants) {
+    try {
+      const base64 = Buffer.from(variant, "utf-8").toString("base64");
+      const shareToken = "u!" + base64.replace(/=+$/, "").replace(/\//g, "_").replace(/\+/g, "-");
+      const result = await graphFetch<DriveItem>(`/shares/${shareToken}/driveItem`);
+      if (result?.id) return result;
+    } catch {
+      // Try next variant
+    }
+  }
+
+  // Try the /:f:/s/ format — extract the encoded ID and use /shares/s!{id}/driveItem
+  const shortLinkMatch = url.match(/\/:([a-z]):\/(s|g|p)\/([^/]+)\/([^?/]+)/);
+  if (shortLinkMatch) {
+    try {
+      // For short sharing links, the format is /:f:/s/SiteName/EncodedId
+      // Try encoding just the full URL without query params
+      const cleanUrl = url.split("?")[0];
+      const base64 = Buffer.from(cleanUrl, "utf-8").toString("base64");
+      const shareToken = "u!" + base64.replace(/=+$/, "").replace(/\//g, "_").replace(/\+/g, "-");
+      const result = await graphFetch<DriveItem>(`/shares/${shareToken}/driveItem`);
+      if (result?.id) return result;
+    } catch {
+      // Short link resolution failed
+    }
+  }
+
+  console.error(`[sharepoint] resolveSharePointUrl failed for all variants of: ${url.substring(0, 120)}`);
+  return null;
 }
 
 /**
