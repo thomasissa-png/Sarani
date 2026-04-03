@@ -166,6 +166,8 @@ export default function ImageLightbox({
         setCommentText("");
         setNewPin(null);
         await fetchComments();
+        // Signal the parent page that comment counts changed
+        window.dispatchEvent(new CustomEvent("comment-updated", { detail: { previewId } }));
       }
     } catch { /* ignore */ }
     finally { setPosting(false); }
@@ -192,6 +194,7 @@ export default function ImageLightbox({
       if (res.ok) {
         setReplyText("");
         await fetchComments();
+        window.dispatchEvent(new CustomEvent("comment-updated", { detail: { previewId } }));
       }
     } catch { /* ignore */ }
     finally { setPosting(false); }

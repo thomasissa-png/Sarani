@@ -24,6 +24,34 @@ interface SortConfig {
 
 const ITEMS_PER_PAGE = 50;
 
+// ─── Filter persistence helpers ────────────────────────────────────────────
+
+const FILTER_STORAGE_KEY_STATIC = "tracker-filters";
+const FILTER_TTL_MS_STATIC = 60 * 60 * 1000; // 1 hour
+
+function getStoredFilter(key: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(FILTER_STORAGE_KEY_STATIC);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as { ts: number; filters: Record<string, string> };
+    if (Date.now() - parsed.ts > FILTER_TTL_MS_STATIC) {
+      localStorage.removeItem(FILTER_STORAGE_KEY_STATIC);
+      return fallback;
+    }
+    return parsed.filters[key] ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function persistFilters(filters: Record<string, string>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(FILTER_STORAGE_KEY_STATIC, JSON.stringify({ ts: Date.now(), filters }));
+  } catch { /* ignore */ }
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 interface IntegrationStatus {
@@ -186,19 +214,42 @@ function TrackerContent() {
     type: "success" | "error" | "warning";
   } | null>(null);
 
-  // Filters — restored from URL params on mount, default to ClickUp-sourced projects only
-  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
-  const [clientFilter, setClientFilter] = useState(() => searchParams.get("client") ?? "All");
-  const [statusFilter, setStatusFilter] = useState(() => searchParams.get("status") ?? "In progress");
-  const [invoiceFilter, setInvoiceFilter] = useState(() => searchParams.get("invoice") ?? "All");
+  // Filters — restored from URL params first, then localStorage (1h TTL), default to ClickUp-sourced projects only
+  const FILTER_STORAGE_KEY = "tracker-filters";
+  const FILTER_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+  const [search, setSearch] = useState(() => {
+    const urlVal = searchParams.get("q");
+    if (urlVal) return urlVal;
+    return getStoredFilter("q", "");
+  });
+  const [clientFilter, setClientFilter] = useState(() => {
+    const urlVal = searchParams.get("client");
+    if (urlVal) return urlVal;
+    return getStoredFilter("client", "All");
+  });
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const urlVal = searchParams.get("status");
+    if (urlVal) return urlVal;
+    return getStoredFilter("status", "In progress");
+  });
+  const [invoiceFilter, setInvoiceFilter] = useState(() => {
+    const urlVal = searchParams.get("invoice");
+    if (urlVal) return urlVal;
+    return getStoredFilter("invoice", "All");
+  });
   const [sourceFilter, setSourceFilter] = useState<"All" | "ClickUp" | "Excel Only">(() => {
     const s = searchParams.get("source");
-    return s === "All" || s === "Excel Only" ? s : "ClickUp";
+    if (s === "All" || s === "Excel Only") return s;
+    const stored = getStoredFilter("source", "ClickUp");
+    return stored === "All" || stored === "Excel Only" ? stored : "ClickUp";
   });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [showStarredOnly, setShowStarredOnly] = useState(false);
+  const [showStarredOnly, setShowStarredOnly] = useState(() => {
+    return getStoredFilter("starred", "false") === "true";
+  });
 
-  // Sync filters to URL params (replaceState — no history push)
+  // Sync filters to URL params (replaceState — no history push) + persist to localStorage
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
@@ -206,10 +257,20 @@ function TrackerContent() {
     if (statusFilter !== "In progress") params.set("status", statusFilter);
     if (invoiceFilter !== "All") params.set("invoice", invoiceFilter);
     if (sourceFilter !== "ClickUp") params.set("source", sourceFilter);
+    if (showStarredOnly) params.set("starred", "true");
     const qs = params.toString();
     const url = qs ? `/admin/tracker?${qs}` : "/admin/tracker";
     window.history.replaceState(null, "", url);
-  }, [search, clientFilter, statusFilter, invoiceFilter, sourceFilter]);
+    // Persist to localStorage with timestamp (survives page navigation)
+    persistFilters({
+      q: search,
+      client: clientFilter,
+      status: statusFilter,
+      invoice: invoiceFilter,
+      source: sourceFilter,
+      starred: showStarredOnly ? "true" : "false",
+    });
+  }, [search, clientFilter, statusFilter, invoiceFilter, sourceFilter, showStarredOnly]);
 
   // Column visibility — hide non-essential columns by default to prevent horizontal overflow
   type HideableColumn = "contact" | "category" | "po" | "country" | "invoice";
@@ -387,8 +448,14 @@ function TrackerContent() {
     setShareModalProject(p);
   }, []);
 
-  // Toggle star (case study candidate)
-  const handleStar = useCallback(async (p: TrackerProject) => {
+  // Toggle star (case study candidate) — only one star operation at a time
+  const handleStar = useCallback(async (e: React.MouseEvent, p: TrackerProject) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    // Prevent any concurrent star operation
+    if (starringId) return;
+
     // Need a ClickUp task URL to extract the task ID
     const taskIdMatch = p.clickupTaskUrl?.match(/\/t\/([a-z0-9]+)/i);
     const clickupTaskId = taskIdMatch?.[1] ?? `${p.client}::${p.project}`;
@@ -420,7 +487,7 @@ function TrackerContent() {
       }
     } catch (err) { console.error("[handleStar] Error:", err); }
     finally { setStarringId(null); }
-  }, []);
+  }, [starringId]);
 
   // Derived data
   // Client filter: show only main clients (from CLIENT_MAPPINGS) + "Others" for the rest
@@ -1155,8 +1222,8 @@ function TrackerContent() {
                             const isStarred = starredIds.has(tid);
                             return (
                               <button
-                                onClick={() => handleStar(p)}
-                                disabled={starringId === tid}
+                                onClick={(e) => handleStar(e, p)}
+                                disabled={starringId !== null}
                                 title={isStarred ? "Remove from case studies" : "Add to case studies"}
                                 className={`p-1 rounded transition-colors ${isStarred ? "text-brand-lemon" : "text-neutral-400 hover:text-brand-lemon"}`}
                               >
@@ -1357,6 +1424,31 @@ function TrackerContent() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Star legend */}
+      {!loading && data && (
+        <div className="flex items-center justify-between gap-4 px-4 py-3 bg-white rounded-xl border border-neutral-200">
+          <div className="flex items-center gap-3 text-sm text-neutral-500">
+            <svg className="w-4 h-4 text-brand-lemon shrink-0" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span>
+              <strong className="font-medium text-brand-black">Starred projects</strong> are nominated as case study candidates.
+              {starredIds.size > 0 && (
+                <span className="ml-1 text-neutral-400">
+                  ({starredIds.size} starred)
+                </span>
+              )}
+            </span>
+          </div>
+          <Link
+            href="/admin/closures"
+            className="text-sm font-medium text-brand-cerulean hover:text-brand-cerulean-dark transition-colors whitespace-nowrap"
+          >
+            Manage case studies →
+          </Link>
         </div>
       )}
 

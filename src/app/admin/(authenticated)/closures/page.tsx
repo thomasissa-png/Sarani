@@ -538,10 +538,10 @@ export default function ClosuresPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900">
-            Project Closures
+            Case Studies
           </h1>
           <p className="text-sm text-neutral-500 mt-1">
-            Closed projects with star scoring and content pipeline
+            Starred projects with scoring and content pipeline
           </p>
         </div>
         <button
