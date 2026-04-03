@@ -431,11 +431,13 @@ Session massive ~50 commits. Tracker : statuts mappés (mapClickUpStatus), filtr
 - [x] Specs versioning + commentaires positionnels documentées
 
 **Travaux en cours / à faire :**
-- **Pipeline case study multi-agents** (PRIORITÉ 1 — session 14) : quand PM clique "Generate" sur un candidat, lancer automatiquement creative-strategy → copywriter → social. PM édite inline puis publie. Questions en attente (Thomas doit répondre) :
-  1. Choix des visuels : PM sélectionne manuellement (comme Share modal) ou agents choisissent auto ?
-  2. Visuels dans quels outputs : case study seul, ou aussi LinkedIn + email ?
-  3. Publication : "Publish all" unique ou par canal séparément ?
-  4. Case study publié va sur /work/[slug] (existant) ou nouvelle page ?
+- **Pipeline case study multi-agents** (PRIORITÉ 1 — session 14) : quand PM clique "Generate" sur un candidat, lancer automatiquement creative-strategy → copywriter → social. Réponses Thomas :
+  1. **Visuels** : les agents proposent, la PM peut éditer et choisir manuellement via le Share modal
+  2. **Visuels partout** : case study + LinkedIn + email — mais garder l'étape 2 (Generate) séparée de l'étoile quoi qu'il arrive
+  3. **LinkedIn auto-post** : implémenter un bouton "Post to LinkedIn" qui publie directement sur le compte Sarani depuis la page case study
+  4. **Publication séparée** : chaque canal (case study site, LinkedIn, email) peut être publié indépendamment
+  5. **Page dédiée** : case study publié va sur une page case study dédiée (pas /work/[slug] existant)
+  6. **Persistance** : vérifier que chaque génération est bien enregistrée en DB et ne se perd pas
 - **Commentaires : upload fichiers** → SP "Supporting Files" (spécifié mais pas implémenté)
 - **Migration DB** : Thomas doit exécuter `npm run db:migrate` pour migrations 0024 (versioning) + 0025 (commentaires)
 
