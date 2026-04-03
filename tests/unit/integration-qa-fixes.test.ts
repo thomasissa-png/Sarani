@@ -21,10 +21,11 @@ describe("Bug 1: Model name — claude-sonnet-4-6-latest", () => {
       path.resolve(__dirname, "../../src/lib/ai/claude.ts"),
       "utf-8"
     );
-    // Must contain the valid model
-    expect(claudeTs).toContain('claude-sonnet-4-6-latest');
-    // Must NOT contain the invalid model
+    // Must contain the valid model (claude-sonnet-4-6, NOT claude-sonnet-4-6-latest which returns 404)
+    expect(claudeTs).toContain('"claude-sonnet-4-6"');
+    // Must NOT contain invalid aliases
     expect(claudeTs).not.toMatch(/["']claude-sonnet-4-latest["']/);
+    expect(claudeTs).not.toMatch(/["']claude-sonnet-4-6-latest["']/);
   });
 
   it("no other file uses claude-sonnet-4-latest (invalid alias)", () => {
