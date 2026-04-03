@@ -13,10 +13,15 @@ import {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface SelectedVisual {
+  /** Stable proxy URL: /api/project-assets/{itemId}?driveId={driveId} — never expires */
   url: string;
   thumbnailUrl: string;
   name: string;
   size: number;
+  /** SharePoint item ID for direct Graph API access */
+  itemId: string;
+  /** SharePoint drive ID */
+  driveId: string;
 }
 
 export interface AutoSelectedVisuals {
@@ -39,7 +44,7 @@ const PREFERRED_SUBFOLDERS = [
 ];
 
 /** Files above this threshold are likely PSDs/source files — skip them */
-const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 /** Minimum file size to consider (skip tiny thumbnails / placeholders) */
 const MIN_FILE_SIZE_BYTES = 10 * 1024; // 10 KB
@@ -67,16 +72,22 @@ function isPreferredFolder(name: string): boolean {
 }
 
 /**
- * Generate an anonymous sharing link for a drive item.
- * Falls back to the downloadUrl or webUrl if link creation fails.
+ * Build a stable proxy URL for a drive item.
+ * Uses /api/project-assets/{itemId}?driveId={driveId} which re-fetches
+ * the downloadUrl on each request — never expires.
+ * Falls back to anonymous sharing link if itemId is not available.
  */
-async function getSharingUrl(item: DriveItem): Promise<string> {
+async function getStableUrl(item: DriveItem): Promise<string> {
   const driveId = item.parentReference?.driveId;
+  if (driveId && item.id) {
+    return `/api/project-assets/${item.id}?driveId=${driveId}`;
+  }
+  // Fallback: try anonymous sharing link
   if (driveId && item.id) {
     const link = await createAnonymousSharingLink(driveId, item.id);
     if (link) return link;
   }
-  // Fallback: use the temporary download URL or webUrl
+  // Last resort: temporary download URL
   return item["@microsoft.graph.downloadUrl"] ?? item.webUrl;
 }
 
@@ -186,14 +197,16 @@ export async function autoSelectVisuals(
     return { allImages: [], source: "auto" };
   }
 
-  // 5. Generate sharing links for top candidates (max 6 to have some alternates)
+  // 5. Generate stable proxy URLs for top candidates (max 6 to have some alternates)
   const topCandidates = filteredImages.slice(0, 6);
   const allImages: SelectedVisual[] = await Promise.all(
     topCandidates.map(async (item) => ({
       name: item.name,
-      url: await getSharingUrl(item),
+      url: await getStableUrl(item),
       size: item.size,
       thumbnailUrl: getThumbnailUrl(item),
+      itemId: item.id,
+      driveId: item.parentReference?.driveId ?? driveId,
     }))
   );
 

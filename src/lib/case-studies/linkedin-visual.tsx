@@ -201,6 +201,13 @@ export async function generateLinkedInVisual(
 
   // ─── Build the visual JSX ──────────────────────────────────────────────
 
+  // Build secondary line: clientName + optional key stat
+  const secondaryLine =
+    secondaryText ??
+    (clientName
+      ? clientName
+      : undefined);
+
   const imageResponse = new ImageResponse(
     (
       <div
@@ -212,7 +219,7 @@ export async function generateLinkedInVisual(
           alignItems: "center",
           justifyContent: "flex-start",
           background: `linear-gradient(180deg, ${BG_GRADIENT_START} 0%, ${BG_DARK} 100%)`,
-          padding: "60px 60px 40px 60px",
+          padding: "50px 50px 40px 50px",
           fontFamily: "Outfit",
         }}
       >
@@ -224,7 +231,7 @@ export async function generateLinkedInVisual(
             justifyContent: "center",
             borderRadius: 999,
             border: "1px solid rgba(255,255,255,0.12)",
-            backgroundColor: "rgba(255,255,255,0.08)",
+            backgroundColor: "rgba(255,255,255,0.15)",
             padding: "12px 32px",
             marginBottom: 48,
           }}
@@ -242,7 +249,7 @@ export async function generateLinkedInVisual(
                 color: FLAME,
                 fontSize: 24,
                 fontWeight: 700,
-                letterSpacing: "0.15em",
+                letterSpacing: "0.1em",
               }}
             >
               SARANI
@@ -276,25 +283,42 @@ export async function generateLinkedInVisual(
             flexWrap: "wrap",
             justifyContent: "center",
             textAlign: "center",
-            fontSize: 56,
+            fontSize: titleFontSize,
             fontWeight: 700,
-            lineHeight: 1.2,
+            lineHeight: 1.1, // token: tight
             maxWidth: 1000,
-            marginBottom: 48,
+            marginBottom: secondaryLine ? 16 : 48,
           }}
         >
-          {renderTitle(projectTitle, accentWord)}
+          {renderTitle(displayTitle, accentWord)}
         </div>
 
+        {/* ─── Secondary text (client + key stat) ──────────────── */}
+        {secondaryLine && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              fontSize: 28,
+              fontWeight: 400,
+              color: "rgba(255,255,255,0.6)",
+              marginBottom: 32,
+              maxWidth: 900,
+              textAlign: "center",
+            }}
+          >
+            {secondaryLine}
+          </div>
+        )}
+
         {/* ─── Project images — asymmetric layout ───────────────── */}
-        {imageDataUris.length > 0 && (
+        {imageDataUris.length > 0 ? (
           <div
             style={{
               display: "flex",
               flexDirection: "row",
               width: "100%",
-              flex: 1,
-              minHeight: 0,
+              height: IMAGE_AREA_HEIGHT,
             }}
           >
             {/* Left column: 1-2 small images stacked */}
@@ -304,6 +328,7 @@ export async function generateLinkedInVisual(
                   display: "flex",
                   flexDirection: "column",
                   width: "38%",
+                  height: IMAGE_AREA_HEIGHT,
                   marginRight: "2%",
                 }}
               >
@@ -311,9 +336,9 @@ export async function generateLinkedInVisual(
                   src={imageDataUris[1]}
                   style={{
                     width: "100%",
-                    height: imageDataUris.length >= 3 ? "48%" : "100%",
+                    height: imageDataUris.length >= 3 ? Math.floor(IMAGE_AREA_HEIGHT * 0.48) : IMAGE_AREA_HEIGHT,
                     objectFit: "cover",
-                    borderRadius: 16,
+                    borderRadius: PHOTO_RADIUS,
                   }}
                 />
                 {imageDataUris[2] && (
@@ -321,10 +346,10 @@ export async function generateLinkedInVisual(
                     src={imageDataUris[2]}
                     style={{
                       width: "100%",
-                      height: "48%",
+                      height: Math.floor(IMAGE_AREA_HEIGHT * 0.48),
                       objectFit: "cover",
-                      borderRadius: 16,
-                      marginTop: "4%",
+                      borderRadius: PHOTO_RADIUS,
+                      marginTop: Math.floor(IMAGE_AREA_HEIGHT * 0.04),
                     }}
                   />
                 )}
@@ -336,21 +361,64 @@ export async function generateLinkedInVisual(
               src={imageDataUris[0]}
               style={{
                 width: imageDataUris.length >= 2 ? "60%" : "100%",
-                height: "100%",
+                height: IMAGE_AREA_HEIGHT,
                 objectFit: "cover",
-                borderRadius: 16,
+                borderRadius: PHOTO_RADIUS,
+              }}
+            />
+          </div>
+        ) : (
+          /* ─── Fallback: 3 Sarani dots (Flame/Cerulean/Lemon) ── */
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              height: IMAGE_AREA_HEIGHT,
+              gap: 60,
+            }}
+          >
+            <div
+              style={{
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+                backgroundColor: FLAME,
+                opacity: 0.85,
+              }}
+            />
+            <div
+              style={{
+                width: 100,
+                height: 100,
+                borderRadius: 50,
+                backgroundColor: CERULEAN,
+                opacity: 0.75,
+                marginTop: -40,
+              }}
+            />
+            <div
+              style={{
+                width: 80,
+                height: 80,
+                borderRadius: 40,
+                backgroundColor: LEMON,
+                opacity: 0.65,
+                marginTop: 30,
               }}
             />
           </div>
         )}
 
-        {/* ─── Bottom accent line ───────────────────────────────── */}
+        {/* ─── Bottom accent line — full width Flame ────────────── */}
         <div
           style={{
-            width: 60,
-            height: 4,
+            width: "100%",
+            height: 6,
             backgroundColor: FLAME,
-            borderRadius: 2,
+            borderRadius: 3,
             marginTop: 32,
           }}
         />
