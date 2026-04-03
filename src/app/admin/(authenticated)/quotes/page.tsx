@@ -22,6 +22,10 @@ interface QuoteRecord {
   total: string;
   currency: string;
   pdfUrl: string | null;
+  status: string;
+  purposeOfWork: string | null;
+  lang: string;
+  paymentTermsDays: number;
   createdBy: string;
   createdAt: string;
 }

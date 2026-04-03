@@ -326,6 +326,29 @@ export const caseStudyCandidates = pgTable(
     // ignored | suggested | generating | generated | reviewed | published | excluded
     excludedReason: varchar("excluded_reason", { length: 50 }),
     excludedBy: text("excluded_by"),
+    // Pipeline tracking (multi-agent generation)
+    pipelineStatus: varchar("pipeline_status", { length: 20 }).default("idle"),
+    // idle | step_1_creative | step_2_copywriter | step_3_social | complete | failed
+    pipelineSteps: jsonb("pipeline_steps")
+      .$type<
+        Array<{
+          step: number;
+          agent: string;
+          output: unknown;
+          completedAt: string;
+        }>
+      >()
+      .default([]),
+    visualSuggestions: jsonb("visual_suggestions")
+      .$type<
+        Array<{
+          url: string;
+          name: string;
+          thumbnailUrl: string;
+          selected: boolean;
+        }>
+      >()
+      .default([]),
     lastScannedAt: timestamp("last_scanned_at").notNull().defaultNow(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

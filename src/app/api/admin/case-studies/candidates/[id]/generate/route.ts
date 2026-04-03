@@ -4,34 +4,71 @@ import { caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
-import { GenerationOutputSchema, type GenerationOutput } from "@/lib/case-studies/schemas";
+import {
+  StrategyOutputSchema,
+  CopyOutputSchema,
+  SocialOutputSchema,
+  CREATIVE_STRATEGY_PROMPT,
+  COPYWRITER_PROMPT,
+  SOCIAL_PROMPT,
+  buildStrategyInput,
+  buildCopyInput,
+  buildSocialInput,
+  type StrategyOutput,
+  type CopyOutput,
+  type SocialOutput,
+} from "@/lib/case-studies/pipeline-prompts";
 
-// ─── System prompt ─────────────────────────────────────────────────────────
+// ─── Pipeline helpers ─────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are Sarani's content generation engine. Sarani is an international creative agency (45 experts, 5 continents, 18 languages) that delivers enterprise-quality creative in 24 hours with unlimited revisions and fixed prices.
+type PipelineStep = {
+  step: number;
+  agent: string;
+  output: unknown;
+  completedAt: string;
+};
 
-Brand voice: Assured, Direct, Warm, Evidence-first.
-- Lead with proof, not promises
-- Use specific numbers: "1,500+ videos/month" not "many videos"
-- Tone: confident expert sharing results, not salesperson pitching
-- CTA: "Start a project" (always)
-- Never use: affordable, cheap, best value, budget-friendly, game-changer, revolutionary
+async function updatePipelineStatus(
+  id: string,
+  pipelineStatus: string
+): Promise<void> {
+  await db
+    .update(caseStudyCandidates)
+    .set({ pipelineStatus, updatedAt: new Date() })
+    .where(eq(caseStudyCandidates.id, id));
+}
 
-You generate THREE outputs from project data:
+async function savePipelineStep(
+  id: string,
+  step: number,
+  agent: string,
+  output: unknown
+): Promise<void> {
+  // Read current steps, append new one
+  const [current] = await db
+    .select({ pipelineSteps: caseStudyCandidates.pipelineSteps })
+    .from(caseStudyCandidates)
+    .where(eq(caseStudyCandidates.id, id))
+    .limit(1);
 
-1. **Case Study** (website): a CaseStudy JSON object matching the TypeScript interface. The headline MUST follow Formula 2: "Problem → Result" pattern. The slug format is: \`{client-lowercase}-{project-type-slug}\`.
+  const existingSteps = (current?.pipelineSteps ?? []) as PipelineStep[];
+  const newStep: PipelineStep = {
+    step,
+    agent,
+    output,
+    completedAt: new Date().toISOString(),
+  };
 
-2. **LinkedIn Post** (< 1,300 characters total): hook (1 attention-grabbing line) + body (3-4 lines of story) + proof points (key stats) + hashtags (3-5 relevant). Written from Sarani's perspective ("We delivered...").
+  await db
+    .update(caseStudyCandidates)
+    .set({
+      pipelineSteps: [...existingSteps, newStep],
+      updatedAt: new Date(),
+    })
+    .where(eq(caseStudyCandidates.id, id));
+}
 
-3. **Nurturing Email** (< 150 words body): subject line (< 60 chars), body targeting a specific prospect segment similar to the case study's client sector, soft CTA.
-
-IMPORTANT RULES:
-- NEVER invent data. If a field is missing from the input, use qualitative language or mark it clearly.
-- All numbers must come from the input data.
-- The category MUST be one of: "Video & Social", "Graphic Design", "Event", "Multilingual", "Out-of-Home"
-- Output valid JSON only. No markdown, no explanation.`;
-
-// ─── POST handler ──────────────────────────────────────────────────────────
+// ─── POST handler — Multi-agent pipeline ──────────────────────────────────
 
 export async function POST(
   request: NextRequest,
@@ -59,7 +96,10 @@ export async function POST(
       .limit(1);
 
     if (!candidate) {
-      return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Candidate not found" },
+        { status: 404 }
+      );
     }
 
     // 2. Check eligibility
@@ -84,78 +124,172 @@ export async function POST(
       );
     }
 
-    // 3. Set status to "generating"
+    // 3. Set status to "generating" and reset pipeline
     await db
       .update(caseStudyCandidates)
-      .set({ status: "generating", updatedAt: new Date() })
+      .set({
+        status: "generating",
+        pipelineStatus: "idle",
+        pipelineSteps: [],
+        updatedAt: new Date(),
+      })
       .where(eq(caseStudyCandidates.id, id));
 
-    // 4. Build user prompt from project data
-    const userPrompt = buildUserPrompt(candidate);
+    // ─── Step 1: Creative Strategy ──────────────────────────────────────
 
-    // 5. Call Claude
-    let generated: GenerationOutput;
+    let strategyData: StrategyOutput;
     try {
-      const result = await callClaudeJSON<GenerationOutput>({
-        systemPrompt: SYSTEM_PROMPT,
-        userMessage: userPrompt,
-        maxTokens: 4096,
-        timeout: 30_000,
+      await updatePipelineStatus(id, "step_1_creative");
+
+      const strategyResult = await callClaudeJSON<StrategyOutput>({
+        systemPrompt: CREATIVE_STRATEGY_PROMPT,
+        userMessage: buildStrategyInput(candidate),
+        maxTokens: 2048,
+        timeout: 20_000,
       });
 
-      // 6. Validate with Zod
-      const parsed = GenerationOutputSchema.safeParse(result.data);
+      const parsed = StrategyOutputSchema.safeParse(strategyResult.data);
       if (!parsed.success) {
-        // Retry once
-        console.warn(
-          "First generation failed Zod validation, retrying:",
-          parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ")
+        throw new Error(
+          `Strategy validation failed: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
         );
-        const retryResult = await callClaudeJSON<GenerationOutput>({
-          systemPrompt: SYSTEM_PROMPT,
-          userMessage: userPrompt + "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid. The slug must be lowercase alphanumeric with hyphens only. The category must be exactly one of: 'Video & Social', 'Graphic Design', 'Event', 'Multilingual', 'Out-of-Home'. Stats must have exactly 3 items.",
-          maxTokens: 4096,
-          timeout: 30_000,
-        });
-        const retryParsed = GenerationOutputSchema.safeParse(retryResult.data);
-        if (!retryParsed.success) {
-          throw new Error(
-            `Validation failed after retry: ${retryParsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
-          );
-        }
-        generated = retryParsed.data;
-      } else {
-        generated = parsed.data;
       }
+      strategyData = parsed.data;
+      await savePipelineStep(id, 1, "creative-strategy", strategyData);
     } catch (err) {
-      // Revert status on failure
       await db
         .update(caseStudyCandidates)
-        .set({ status: "suggested", updatedAt: new Date() })
+        .set({
+          status: "suggested",
+          pipelineStatus: "failed",
+          updatedAt: new Date(),
+        })
         .where(eq(caseStudyCandidates.id, id));
 
       return NextResponse.json(
         {
-          error: `Generation failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+          error: `Pipeline failed at step 1 (Creative Strategy): ${err instanceof Error ? err.message : "Unknown error"}`,
+          failedStep: 1,
         },
         { status: 500 }
       );
     }
 
-    // 7. Store outputs in DB
+    // ─── Step 2: Copywriter ─────────────────────────────────────────────
+
+    let copyData: CopyOutput;
+    try {
+      await updatePipelineStatus(id, "step_2_copywriter");
+
+      const copyResult = await callClaudeJSON<CopyOutput>({
+        systemPrompt: COPYWRITER_PROMPT,
+        userMessage: buildCopyInput(candidate, strategyData),
+        maxTokens: 4096,
+        timeout: 30_000,
+      });
+
+      const parsed = CopyOutputSchema.safeParse(copyResult.data);
+      if (!parsed.success) {
+        // Retry once with validation feedback
+        console.warn(
+          "Copywriter step failed validation, retrying:",
+          parsed.error.issues
+            .map((i) => `${i.path.join(".")}: ${i.message}`)
+            .join(", ")
+        );
+        const retryResult = await callClaudeJSON<CopyOutput>({
+          systemPrompt: COPYWRITER_PROMPT,
+          userMessage:
+            buildCopyInput(candidate, strategyData) +
+            "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid. The slug must be lowercase alphanumeric with hyphens only. The category must be exactly one of: 'Video & Social', 'Graphic Design', 'Event', 'Multilingual', 'Out-of-Home'. Stats must have exactly 3 items.",
+          maxTokens: 4096,
+          timeout: 30_000,
+        });
+        const retryParsed = CopyOutputSchema.safeParse(retryResult.data);
+        if (!retryParsed.success) {
+          throw new Error(
+            `Copywriter validation failed after retry: ${retryParsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+          );
+        }
+        copyData = retryParsed.data;
+      } else {
+        copyData = parsed.data;
+      }
+      await savePipelineStep(id, 2, "copywriter", copyData);
+    } catch (err) {
+      await db
+        .update(caseStudyCandidates)
+        .set({
+          status: "suggested",
+          pipelineStatus: "failed",
+          updatedAt: new Date(),
+        })
+        .where(eq(caseStudyCandidates.id, id));
+
+      return NextResponse.json(
+        {
+          error: `Pipeline failed at step 2 (Copywriter): ${err instanceof Error ? err.message : "Unknown error"}`,
+          failedStep: 2,
+        },
+        { status: 500 }
+      );
+    }
+
+    // ─── Step 3: Social Media ───────────────────────────────────────────
+
+    let socialData: SocialOutput;
+    try {
+      await updatePipelineStatus(id, "step_3_social");
+
+      const socialResult = await callClaudeJSON<SocialOutput>({
+        systemPrompt: SOCIAL_PROMPT,
+        userMessage: buildSocialInput(candidate, strategyData, copyData),
+        maxTokens: 2048,
+        timeout: 20_000,
+      });
+
+      const parsed = SocialOutputSchema.safeParse(socialResult.data);
+      if (!parsed.success) {
+        throw new Error(
+          `Social validation failed: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
+        );
+      }
+      socialData = parsed.data;
+      await savePipelineStep(id, 3, "social", socialData);
+    } catch (err) {
+      await db
+        .update(caseStudyCandidates)
+        .set({
+          status: "suggested",
+          pipelineStatus: "failed",
+          updatedAt: new Date(),
+        })
+        .where(eq(caseStudyCandidates.id, id));
+
+      return NextResponse.json(
+        {
+          error: `Pipeline failed at step 3 (Social): ${err instanceof Error ? err.message : "Unknown error"}`,
+          failedStep: 3,
+        },
+        { status: 500 }
+      );
+    }
+
+    // ─── Save outputs (backward-compatible with existing frontend) ──────
+
     const now = new Date();
     const outputRecords = [
       {
         candidateId: id,
         outputType: "case_study" as const,
-        content: generated.caseStudy,
+        content: copyData.caseStudy,
         currentVersion: 1,
         versions: [
           {
             version: 1,
-            content: generated.caseStudy,
+            content: copyData.caseStudy,
             generatedAt: now.toISOString(),
-            generatedBy: "ai",
+            generatedBy: "pipeline-v2",
           },
         ],
         generatedAt: now,
@@ -164,14 +298,14 @@ export async function POST(
       {
         candidateId: id,
         outputType: "linkedin_post" as const,
-        content: generated.linkedInPost,
+        content: socialData.linkedInPost,
         currentVersion: 1,
         versions: [
           {
             version: 1,
-            content: generated.linkedInPost,
+            content: socialData.linkedInPost,
             generatedAt: now.toISOString(),
-            generatedBy: "ai",
+            generatedBy: "pipeline-v2",
           },
         ],
         generatedAt: now,
@@ -180,14 +314,14 @@ export async function POST(
       {
         candidateId: id,
         outputType: "nurturing_email" as const,
-        content: generated.nurturingEmail,
+        content: copyData.nurturingEmail,
         currentVersion: 1,
         versions: [
           {
             version: 1,
-            content: generated.nurturingEmail,
+            content: copyData.nurturingEmail,
             generatedAt: now.toISOString(),
-            generatedBy: "ai",
+            generatedBy: "pipeline-v2",
           },
         ],
         generatedAt: now,
@@ -207,60 +341,32 @@ export async function POST(
 
       await tx
         .update(caseStudyCandidates)
-        .set({ status: "generated", updatedAt: new Date() })
+        .set({
+          status: "generated",
+          pipelineStatus: "complete",
+          updatedAt: new Date(),
+        })
         .where(eq(caseStudyCandidates.id, id));
     });
 
     return NextResponse.json({
       success: true,
       candidateId: id,
+      pipeline: {
+        stepsCompleted: 3,
+        strategy: strategyData,
+      },
       outputs: {
-        caseStudy: generated.caseStudy,
-        linkedInPost: generated.linkedInPost,
-        nurturingEmail: generated.nurturingEmail,
+        caseStudy: copyData.caseStudy,
+        linkedInPost: socialData.linkedInPost,
+        nurturingEmail: copyData.nurturingEmail,
       },
     });
   } catch (error) {
-    console.error("Error generating case study:", error);
+    console.error("Error in case study pipeline:", error);
     return NextResponse.json(
-      { error: "Generation failed" },
+      { error: "Pipeline failed unexpectedly" },
       { status: 500 }
     );
   }
-}
-
-// ─── Build user prompt from candidate data ─────────────────────────────────
-
-function buildUserPrompt(candidate: {
-  clientName: string;
-  projectName: string | null;
-  projectType: string | null;
-  projectAmount: string | null;
-  completedAt: Date | null;
-  sharePointAssetCount: number | null;
-  sharePointFolderUrl: string | null;
-  scoreTotal: number;
-  scoreBreakdown: unknown;
-}): string {
-  const data = {
-    clientName: candidate.clientName,
-    projectName: candidate.projectName ?? "Untitled project",
-    projectType: candidate.projectType ?? "Unknown",
-    amount: candidate.projectAmount
-      ? `€${parseFloat(candidate.projectAmount).toLocaleString("en-US")}`
-      : "Not specified",
-    completedAt: candidate.completedAt
-      ? candidate.completedAt.toISOString().split("T")[0]
-      : "Unknown",
-    assetCount: candidate.sharePointAssetCount ?? 0,
-    scoreTotal: candidate.scoreTotal,
-  };
-
-  return `Generate a case study, LinkedIn post, and nurturing email for this project:
-
-${JSON.stringify(data, null, 2)}
-
-Output a single JSON object with keys: caseStudy, linkedInPost, nurturingEmail.
-The caseStudy.slug format must be: "${data.clientName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${(data.projectType || "project").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}"
-The category must map from project type: Campaign/Video Production → "Video & Social", Rebranding/Graphic Design/Presentation → "Graphic Design", Event → "Event", Translation → "Multilingual", Other → use your best judgment.`;
 }

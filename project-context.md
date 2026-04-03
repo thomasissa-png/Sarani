@@ -454,11 +454,11 @@ Session massive ~50 commits. Tracker : statuts mappés (mapClickUpStatus), filtr
 - 35 experts → 45 experts partout
 - Asset Review retiré du menu et de l'inbox
 
-**Branche de travail :** claude/extract-project-context-M9ACH
+**Branche de travail :** claude/session-recovery-analysis-b03NR
 
 **Commande de reprise suggérée :**
 ```
-@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 13 — ~50 commits. Branche : claude/extract-project-context-M9ACH. Priorité 1 : pipeline case study multi-agents (creative-strategy → copywriter → social). Thomas doit répondre aux 4 questions sur les visuels/publication. Migrations 0024+0025 à exécuter. Ne lance aucun agent avant mon feu vert.
+@orchestrator Mode reprise de session. Lis project-context.md (section "Mémo de reprise"). Session 14. Branche : claude/session-recovery-analysis-b03NR. Priorité 1 : pipeline case study multi-agents (creative-strategy → copywriter → social). Migrations 0024+0025 à exécuter. Ne lance aucun agent avant mon feu vert.
 ```
 - [x] 7 filtres (All/New Projects/Project Feedback/Enquiries/Project Reviews/Others/Managed)
 - [x] Filtre client (2e ligne : TikTok/Sony/Bose/Ubi/Lamarck/Aristocrat/Aujan/CMC/PICO/GEODIS/Others)
