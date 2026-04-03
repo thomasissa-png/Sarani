@@ -90,6 +90,13 @@ interface NurturingEmailOutputData {
   };
 }
 
+interface LinkedInVisualMeta {
+  id: string;
+  outputType: string;
+  generatedAt: string;
+  hasVisual: boolean;
+}
+
 type ClosureFormData = {
   clickupTaskId: string;
   projectName: string;
@@ -448,7 +455,7 @@ export default function ClosuresPage() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
-  const [outputs, setOutputs] = useState<Record<string, { caseStudy: CaseStudyOutputData | null; linkedInPost: LinkedInOutputData | null; nurturingEmail: NurturingEmailOutputData | null; sharePointFolderUrl?: string | null }>>({});
+  const [outputs, setOutputs] = useState<Record<string, { caseStudy: CaseStudyOutputData | null; linkedInPost: LinkedInOutputData | null; nurturingEmail: NurturingEmailOutputData | null; linkedInVisual: LinkedInVisualMeta | null; sharePointFolderUrl?: string | null }>>({});
   const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
   const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, unknown>>>({});
   const [savingOutput, setSavingOutput] = useState<Set<string>>(new Set());
@@ -680,6 +687,7 @@ export default function ClosuresPage() {
           caseStudy: data.outputs?.caseStudy ?? null,
           linkedInPost: data.outputs?.linkedInPost ?? null,
           nurturingEmail: data.outputs?.nurturingEmail ?? null,
+          linkedInVisual: data.outputs?.linkedInVisual ?? null,
           sharePointFolderUrl: data.sharePointFolderUrl ?? null,
         },
       }));
@@ -1401,6 +1409,65 @@ export default function ClosuresPage() {
                           </div>
                           );
                         })()}
+
+                        {/* LinkedIn Visual Preview */}
+                        {closureOutputs.linkedInVisual?.hasVisual && (
+                          <div className="border border-orange-100 rounded-lg p-4 bg-orange-50/30">
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-sm font-semibold text-orange-800">
+                                LinkedIn Visual
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={`/api/admin/case-studies/candidates/${closure.id}/linkedin-visual`}
+                                  download={`linkedin-visual-${closure.clientNameResolved?.toLowerCase().replace(/\s+/g, "-") ?? closure.id}.png`}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-orange-700 bg-white border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+                                >
+                                  Download PNG
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    setActionLoading((prev) => new Set(prev).add(`visual-${closure.id}`));
+                                    try {
+                                      // Trigger regeneration by fetching the endpoint (it always generates fresh)
+                                      const res = await fetch(`/api/admin/case-studies/candidates/${closure.id}/linkedin-visual`);
+                                      if (res.ok) {
+                                        // Force refresh the preview image
+                                        const imgEl = document.getElementById(`linkedin-visual-${closure.id}`) as HTMLImageElement | null;
+                                        if (imgEl) {
+                                          imgEl.src = `/api/admin/case-studies/candidates/${closure.id}/linkedin-visual?t=${Date.now()}`;
+                                        }
+                                      } else {
+                                        alert("Failed to regenerate visual");
+                                      }
+                                    } catch {
+                                      alert("Network error while regenerating visual");
+                                    } finally {
+                                      setActionLoading((prev) => {
+                                        const next = new Set(prev);
+                                        next.delete(`visual-${closure.id}`);
+                                        return next;
+                                      });
+                                    }
+                                  }}
+                                  disabled={actionLoading.has(`visual-${closure.id}`)}
+                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                                >
+                                  {actionLoading.has(`visual-${closure.id}`) ? "Generating..." : "Regenerate"}
+                                </button>
+                              </div>
+                            </div>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              id={`linkedin-visual-${closure.id}`}
+                              src={`/api/admin/case-studies/candidates/${closure.id}/linkedin-visual`}
+                              alt={`LinkedIn visual for ${closure.clientNameResolved ?? closure.projectName}`}
+                              className="w-full max-w-md rounded-lg border border-orange-200 mx-auto"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
 
                         {/* Nurturing Email */}
                         {ne?.content && (() => {

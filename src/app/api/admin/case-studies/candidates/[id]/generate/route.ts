@@ -22,6 +22,8 @@ import {
   autoSelectVisuals,
   type AutoSelectedVisuals,
 } from "@/lib/case-studies/auto-select-visuals";
+import { generateLinkedInVisual } from "@/lib/case-studies/linkedin-visual";
+import { getClientLogoUrl } from "@/lib/case-studies/client-logos";
 
 // ─── Pipeline helpers ─────────────────────────────────────────────────────
 
@@ -385,11 +387,62 @@ export async function POST(
       }),
     };
 
+    // ─── Step 5: Generate LinkedIn Visual (NON-BLOCKING) ───────────────
+
+    let linkedInVisualBase64: string | null = null;
+    try {
+      await updatePipelineStatus(id, "step_5_linkedin_visual");
+
+      // Collect project image URLs for the visual
+      const visualImageUrls: string[] = [];
+      if (caseStudyContent.heroImage) visualImageUrls.push(caseStudyContent.heroImage);
+      if (caseStudyContent.linkedInImage) visualImageUrls.push(caseStudyContent.linkedInImage);
+      if (caseStudyContent.emailHeader) visualImageUrls.push(caseStudyContent.emailHeader);
+
+      const pngBuffer = await generateLinkedInVisual({
+        clientName: candidate.clientName,
+        projectTitle:
+          copyData.caseStudy.headline ?? candidate.projectName ?? `${candidate.clientName} Project`,
+        accentWord: candidate.clientName,
+        clientLogoUrl: getClientLogoUrl(candidate.clientName),
+        projectImages: visualImageUrls,
+      });
+
+      linkedInVisualBase64 = pngBuffer.toString("base64");
+      await savePipelineStep(id, 5, "linkedin-visual", {
+        generated: true,
+        sizeBytes: pngBuffer.length,
+      });
+    } catch (err) {
+      // Non-blocking: pipeline continues without the visual
+      console.warn(
+        "[pipeline] Step 5 (LinkedIn visual) failed — continuing:",
+        err instanceof Error ? err.message : err
+      );
+      await savePipelineStep(id, 5, "linkedin-visual", {
+        error: err instanceof Error ? err.message : "Unknown error",
+        skipped: true,
+      });
+    }
+
     const now = new Date();
-    const outputRecords = [
+    const outputRecords: Array<{
+      candidateId: string;
+      outputType: string;
+      content: unknown;
+      currentVersion: number;
+      versions: Array<{
+        version: number;
+        content: unknown;
+        generatedAt: string;
+        generatedBy: string;
+      }>;
+      generatedAt: Date;
+      updatedAt: Date;
+    }> = [
       {
         candidateId: id,
-        outputType: "case_study" as const,
+        outputType: "case_study",
         content: caseStudyContent,
         currentVersion: 1,
         versions: [
@@ -437,6 +490,36 @@ export async function POST(
       },
     ];
 
+    // Add linkedin_visual output if generated successfully
+    if (linkedInVisualBase64) {
+      outputRecords.push({
+        candidateId: id,
+        outputType: "linkedin_visual",
+        content: {
+          base64: linkedInVisualBase64,
+          width: 1200,
+          height: 1200,
+          mimeType: "image/png",
+        },
+        currentVersion: 1,
+        versions: [
+          {
+            version: 1,
+            content: {
+              base64: linkedInVisualBase64,
+              width: 1200,
+              height: 1200,
+              mimeType: "image/png",
+            },
+            generatedAt: now.toISOString(),
+            generatedBy: "pipeline-v2",
+          },
+        ],
+        generatedAt: now,
+        updatedAt: now,
+      });
+    }
+
     // Delete existing outputs + insert new ones + update status atomically
     await db.transaction(async (tx) => {
       await tx
@@ -461,7 +544,7 @@ export async function POST(
       success: true,
       candidateId: id,
       pipeline: {
-        stepsCompleted: 4,
+        stepsCompleted: 5,
         strategy: strategyData,
         visualSelection: selectedVisuals
           ? {
@@ -476,6 +559,7 @@ export async function POST(
         caseStudy: caseStudyContent,
         linkedInPost: socialData.linkedInPost,
         nurturingEmail: copyData.nurturingEmail,
+        linkedInVisual: linkedInVisualBase64 ? { generated: true } : null,
       },
     });
   } catch (error) {

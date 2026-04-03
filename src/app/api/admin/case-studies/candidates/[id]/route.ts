@@ -44,6 +44,20 @@ export async function GET(
       .from(caseStudyOutputs)
       .where(eq(caseStudyOutputs.candidateId, id));
 
+    // For linkedin_visual, strip base64 from the listing to avoid huge payloads.
+    // The full image is available via the /linkedin-visual endpoint.
+    const linkedInVisualOutput = outputs.find(
+      (o) => o.outputType === "linkedin_visual"
+    );
+    const linkedInVisualMeta = linkedInVisualOutput
+      ? {
+          id: linkedInVisualOutput.id,
+          outputType: linkedInVisualOutput.outputType,
+          generatedAt: linkedInVisualOutput.generatedAt,
+          hasVisual: true,
+        }
+      : null;
+
     return NextResponse.json({
       ...candidate,
       outputs: {
@@ -52,6 +66,7 @@ export async function GET(
           outputs.find((o) => o.outputType === "linkedin_post") ?? null,
         nurturingEmail:
           outputs.find((o) => o.outputType === "nurturing_email") ?? null,
+        linkedInVisual: linkedInVisualMeta,
       },
     });
   } catch (error) {

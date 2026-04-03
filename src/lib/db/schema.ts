@@ -328,7 +328,7 @@ export const caseStudyCandidates = pgTable(
     excludedBy: text("excluded_by"),
     // Pipeline tracking (multi-agent generation)
     pipelineStatus: varchar("pipeline_status", { length: 20 }).default("idle"),
-    // idle | step_1_creative | step_2_copywriter | step_3_social | step_4_visuals | complete | failed
+    // idle | step_1_creative | step_2_copywriter | step_3_social | step_4_visuals | step_5_linkedin_visual | complete | failed
     pipelineSteps: jsonb("pipeline_steps")
       .$type<
         Array<{
@@ -370,7 +370,7 @@ export const caseStudyOutputs = pgTable(
       .notNull()
       .references(() => caseStudyCandidates.id, { onDelete: "cascade" }),
     outputType: varchar("output_type", { length: 20 }).notNull(),
-    // case_study | linkedin_post | nurturing_email
+    // case_study | linkedin_post | nurturing_email | linkedin_visual
     currentVersion: integer("current_version").notNull().default(1),
     content: jsonb("content").notNull(),
     versions: jsonb("versions").$type<
