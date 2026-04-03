@@ -218,6 +218,7 @@ LinkedIn post requirements:
   → A verifiable quality fact: "Approved on first submission", "Zero revision disputes", or a real client quote. NEVER unsourced scores like "100/100".
 - hashtags: leave EMPTY string — Sarani does not use hashtags on LinkedIn posts
 - charCount: actual character count of hook + body + proofPoints combined
+- visualSubtitle: a SHORT punchy subtitle (max 60 chars) for the LinkedIn visual image. This appears below the project title on the auto-generated visual card. It should be catchy, factual, and instantly convey the project's impact. Examples: "350 slides. 3 weeks. €8,500.", "D+1 delivery. Zero revision disputes.", "1,500+ videos/month. 20 markets." — use the key metric from the case study. If no strong metric exists, use a short value proposition like "Two brands. One brief. Fixed price."
 - Written from Sarani's perspective ("We delivered...")
 
 POST CLOSING RULE — choose based on content type, NEVER default to a commercial CTA:
@@ -276,5 +277,5 @@ ${JSON.stringify(strategy, null, 2)}
 CASE STUDY:
 ${JSON.stringify(copyOutput.caseStudy, null, 2)}
 
-Output a single JSON object with keys: linkedInPost (containing hook, body, proofPoints, hashtags (empty string), charCount).`;
+Output a single JSON object with keys: linkedInPost (containing hook, body, proofPoints, hashtags (empty string), charCount, visualSubtitle).`;
 }

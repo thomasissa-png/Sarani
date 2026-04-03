@@ -55,6 +55,7 @@ export const LinkedInPostSchema = z.object({
   proofPoints: z.string().min(1),
   hashtags: z.string().default(""),
   charCount: z.number(),
+  visualSubtitle: z.string().max(60).optional().default(""),
 });
 
 export const NurturingEmailSchema = z.object({
