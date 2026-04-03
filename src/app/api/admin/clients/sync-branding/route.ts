@@ -132,6 +132,16 @@ const BUSINESS_RULES_DATA: Record<string, BusinessRuleEntry> = {
       "Small revenue — shares ClickUp space with Other customers.",
     ],
   },
+  "Air Corsica": {
+    isEndClient: true,
+    industry: "other",
+    primaryLanguage: "FR",
+    paymentTermsDays: 45,
+    businessNotes: [
+      "TVA 20%. French client.",
+      "Shares ClickUp space with Other customers.",
+    ],
+  },
 };
 
 // ─── Branding data (SharePoint links from arya-business-rules.md) ───────────
@@ -158,15 +168,21 @@ const BRANDING_DATA: Record<string, {
   },
   TikTok: {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCLhBQNdaHKQpaviLeO_b39AYXKcD_KVcncmYK_TYi4MZg",
-    // [DONNEES MANQUANTES — Thomas doit fournir logoFolderLink, fontFolderLink, primaryColor, fontName, brandTone]
+    // Branding folder contains all assets — also see https://tiktokbrandhub.com/
+    logoFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCLhBQNdaHKQpaviLeO_b39AYXKcD_KVcncmYK_TYi4MZg",
+    // [DONNEES MANQUANTES — Thomas doit fournir: separate logoFolderLink/fontFolderLink if different, primaryColor, fontName, brandTone]
   },
   "PICO XR": {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBbX1jrkGZaSqX40qP4uLA4AUzpGlEatWDexJtlNDb-cOE",
-    // [DONNEES MANQUANTES — Thomas doit fournir logoFolderLink, fontFolderLink, primaryColor, fontName, brandTone]
+    // Branding folder likely contains logos — no separate logo folder documented
+    logoFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBbX1jrkGZaSqX40qP4uLA4AUzpGlEatWDexJtlNDb-cOE",
+    // [DONNEES MANQUANTES — Thomas doit fournir: separate logoFolderLink if different, fontFolderLink, primaryColor, fontName, brandTone]
   },
   Aristocrat: {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBCJutkb3MqRJvd0Hu2kNh1AaHtXHxVcdZ8SZTGsOh8Ky8",
-    // [DONNEES MANQUANTES — Thomas doit fournir logoFolderLink, fontFolderLink, primaryColor, fontName, brandTone]
+    // Branding folder likely contains logos — no separate logo folder documented
+    logoFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBCJutkb3MqRJvd0Hu2kNh1AaHtXHxVcdZ8SZTGsOh8Ky8",
+    // [DONNEES MANQUANTES — Thomas doit fournir: separate logoFolderLink if different, fontFolderLink, primaryColor, fontName, brandTone]
   },
   "CMC Markets": {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQCnEmhVukvISL7fxouW_sPnAVdS8Y3dQjd8YtzbkQTELhs",
@@ -175,7 +191,9 @@ const BRANDING_DATA: Record<string, {
   },
   GEODIS: {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCC3EZk4-7JQ5xtMxUU4oHvAYLb_CRN_go6XmmjAWl0XRE",
-    // [DONNEES MANQUANTES — Thomas doit fournir logoFolderLink, fontFolderLink, primaryColor, fontName, brandTone]
+    // Branding folder likely contains logos — no separate logo folder documented
+    logoFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCC3EZk4-7JQ5xtMxUU4oHvAYLb_CRN_go6XmmjAWl0XRE",
+    // [DONNEES MANQUANTES — Thomas doit fournir: separate logoFolderLink if different, fontFolderLink, primaryColor, fontName, brandTone]
   },
   Lamarck: {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQDfXwOvZseyTJP5rq6C1TRUAUAc5dcmwgPvRzNBPfQXI2c",
@@ -183,11 +201,16 @@ const BRANDING_DATA: Record<string, {
     // [DONNEES MANQUANTES — Thomas doit fournir fontFolderLink, primaryColor, fontName, brandTone]
   },
   Aujan: {
-    // Aujan corporate has no dedicated branding link — sub-brands Rani and Barbican do
+    // Aujan corporate has no dedicated branding link — sub-brands Rani and Barbican have their own
     // Sub-brand Rani branding: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBPylSuEyrcTLERDaOf5P9aAU8ISsUfKlHHdEr0N1qaagQ
     // Sub-brand Rani assets/logos/font: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMmlFzHJBpTJJPUEgmypmLAetzo8F6MalqdLpRvNUh5Yg
     // Sub-brand Barbican branding: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQAZuGuHSxGtQK-kc2YcRaGVAelL_QfVJzR1F2dVV55UZcI
     // Sub-brand Barbican assets/logos: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgAzqDsWe7PRTYVHvEEwZOxTAVF9mNnxYc1Jv6581YFKM4w
+    // Using Rani branding as default brand guidelines (most active sub-brand)
+    brandGuidelinesLink: "https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBPylSuEyrcTLERDaOf5P9aAU8ISsUfKlHHdEr0N1qaagQ",
+    logoFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMmlFzHJBpTJJPUEgmypmLAetzo8F6MalqdLpRvNUh5Yg",
+    // Rani assets folder also contains fonts
+    fontFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCMmlFzHJBpTJJPUEgmypmLAetzo8F6MalqdLpRvNUh5Yg",
     // [DONNEES MANQUANTES — Thomas doit fournir primaryColor, fontName, brandTone for Aujan parent + sub-brands]
   },
   ProcessOut: {
@@ -203,11 +226,15 @@ const BRANDING_DATA: Record<string, {
     // Sub-client IKEA branding: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCaJaA6RjKsTYMNIuqlBCEPAQdrbuZE75qAKLNZvpp2f_0
     // Sub-client Red Bull: no dedicated branding folder
     // Sub-client Barilla: no dedicated branding folder
+    // Using Adidas branding as default (most active sub-client)
+    brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBL8zzafFOASphGhuGJLY19AfSX9UBxan6jy0cICZX4QUA",
     // [DONNEES MANQUANTES — Thomas doit fournir primaryColor, fontName, brandTone for Ubi + sub-clients]
   },
   "Air Corsica": {
-    // Assets folder: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A
-    // [DONNEES MANQUANTES — Thomas doit fournir brandGuidelinesLink, logoFolderLink, fontFolderLink, primaryColor, fontName, brandTone]
+    // Assets folder contains branding materials — no separate guidelines PDF documented
+    brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A",
+    logoFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A",
+    // [DONNEES MANQUANTES — Thomas doit fournir: fontFolderLink, primaryColor, fontName, brandTone]
   },
 };
 
@@ -261,6 +288,34 @@ function buildNotes(
   if (clientName === "Aujan") {
     parts.push(
       "3 sub-brands: Aujan (parent), Rani, Barbican. Each has own branding + ClickUp list.",
+    );
+    parts.push(
+      "Rani branding: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQBPylSuEyrcTLERDaOf5P9aAU8ISsUfKlHHdEr0N1qaagQ",
+    );
+    parts.push(
+      "Barbican branding: https://saranistudio.sharepoint.com/:b:/s/SaraniAssets/IQAZuGuHSxGtQK-kc2YcRaGVAelL_QfVJzR1F2dVV55UZcI",
+    );
+  }
+  if (clientName === "Ubi") {
+    parts.push(
+      "Sub-client branding links — Adidas: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBL8zzafFOASphGhuGJLY19AfSX9UBxan6jy0cICZX4QUA",
+    );
+    parts.push(
+      "Sub-client branding links — LEGO: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDQ4K2X9UPTSbpEaCNynATwAekjalnGuoe-INSRwwcNjCs",
+    );
+    parts.push(
+      "Sub-client branding links — Ubisoft: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBuEIMN9LBMQJqAcOvIZVKfAX5mmMbmcV-Baw9sGG9LQps",
+    );
+    parts.push(
+      "Sub-client branding links — Perrier: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBDtIHXF4q4To0HKqUTePQgAYIuO_UyqLvFxn9boRY_djA",
+    );
+    parts.push(
+      "Sub-client branding links — IKEA: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCaJaA6RjKsTYMNIuqlBCEPAQdrbuZE75qAKLNZvpp2f_0",
+    );
+  }
+  if (clientName === "Air Corsica") {
+    parts.push(
+      "Assets folder: https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgDzWH-EYwhDQJMYuQvQBDHmAUKeNC-_tBuoKUj3Kh88H7A",
     );
   }
 

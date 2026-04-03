@@ -12,6 +12,26 @@ const CLIENT_LOGOS: Record<string, string> = {
   adidas: "/client-logo-adidas.png",
   TikTok: "/client-logo-tiktok.png",
   LEGO: "/client-logo-lego.png",
+  // TODO: download logo from SP — PICO XR branding folder
+  // "PICO XR": "/client-logo-pico-xr.png",
+  // TODO: download logo from SP — Aristocrat branding folder
+  // Aristocrat: "/client-logo-aristocrat.png",
+  // TODO: download logo from SP — Aujan/Rani/Barbican assets folder
+  // Aujan: "/client-logo-aujan.png",
+  // TODO: download logo from SP — Ubi branding (or sub-client logos individually)
+  // Ubi: "/client-logo-ubi.png",
+  // TODO: download logo from SP — Lamarck logo folder
+  // Lamarck: "/client-logo-lamarck.png",
+  // TODO: download logo from SP — CMC Markets brand guidelines
+  // "CMC Markets": "/client-logo-cmc-markets.png",
+  // TODO: download logo from SP — GEODIS branding folder
+  // GEODIS: "/client-logo-geodis.png",
+  // TODO: download logo from SP — ProcessOut branding folder
+  // ProcessOut: "/client-logo-processout.png",
+  // TODO: download logo from SP — Air Corsica assets folder
+  // "Air Corsica": "/client-logo-air-corsica.png",
+  // TODO: Pernod Ricard — no branding data documented in arya-business-rules.md
+  // "Pernod Ricard": "/client-logo-pernod-ricard.png",
 };
 
 /**
