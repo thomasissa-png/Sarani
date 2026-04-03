@@ -18,6 +18,10 @@ import {
   type CopyOutput,
   type SocialOutput,
 } from "@/lib/case-studies/pipeline-prompts";
+import {
+  autoSelectVisuals,
+  type AutoSelectedVisuals,
+} from "@/lib/case-studies/auto-select-visuals";
 
 // ─── Pipeline helpers ─────────────────────────────────────────────────────
 
@@ -312,19 +316,86 @@ export async function POST(
       );
     }
 
+    // ─── Step 4: Auto-select visuals from SharePoint (NON-BLOCKING) ────
+
+    let selectedVisuals: AutoSelectedVisuals | null = null;
+    if (candidate.sharePointFolderUrl) {
+      try {
+        await updatePipelineStatus(id, "step_4_visuals");
+        selectedVisuals = await autoSelectVisuals(
+          candidate.sharePointFolderUrl,
+          candidate.clientName
+        );
+        await savePipelineStep(id, 4, "visual-selector", {
+          heroImage: selectedVisuals.heroImage?.url ?? null,
+          linkedInImage: selectedVisuals.linkedInImage?.url ?? null,
+          emailHeader: selectedVisuals.emailHeader?.url ?? null,
+          totalImagesFound: selectedVisuals.allImages.length,
+        });
+
+        // Update visualSuggestions on candidate
+        if (selectedVisuals.allImages.length > 0) {
+          await db
+            .update(caseStudyCandidates)
+            .set({
+              visualSuggestions: selectedVisuals.allImages.map((img) => ({
+                url: img.url,
+                name: img.name,
+                thumbnailUrl: img.thumbnailUrl,
+                selected: [
+                  selectedVisuals?.heroImage?.url,
+                  selectedVisuals?.linkedInImage?.url,
+                  selectedVisuals?.emailHeader?.url,
+                ].includes(img.url),
+              })),
+              updatedAt: new Date(),
+            })
+            .where(eq(caseStudyCandidates.id, id));
+        }
+      } catch (err) {
+        // Non-blocking: pipeline continues without visuals
+        console.warn(
+          "[pipeline] Step 4 (visual selection) failed — continuing without visuals:",
+          err instanceof Error ? err.message : err
+        );
+        await savePipelineStep(id, 4, "visual-selector", {
+          error: err instanceof Error ? err.message : "Unknown error",
+          skipped: true,
+        });
+      }
+    } else {
+      console.warn(
+        "[pipeline] Step 4 skipped — no sharePointFolderUrl on candidate"
+      );
+    }
+
     // ─── Save outputs (backward-compatible with existing frontend) ──────
+
+    // Enrich case study content with auto-selected visual URLs
+    const caseStudyContent = {
+      ...copyData.caseStudy,
+      ...(selectedVisuals?.heroImage && {
+        heroImage: selectedVisuals.heroImage.url,
+      }),
+      ...(selectedVisuals?.linkedInImage && {
+        linkedInImage: selectedVisuals.linkedInImage.url,
+      }),
+      ...(selectedVisuals?.emailHeader && {
+        emailHeader: selectedVisuals.emailHeader.url,
+      }),
+    };
 
     const now = new Date();
     const outputRecords = [
       {
         candidateId: id,
         outputType: "case_study" as const,
-        content: copyData.caseStudy,
+        content: caseStudyContent,
         currentVersion: 1,
         versions: [
           {
             version: 1,
-            content: copyData.caseStudy,
+            content: caseStudyContent,
             generatedAt: now.toISOString(),
             generatedBy: "pipeline-v2",
           },
@@ -390,11 +461,19 @@ export async function POST(
       success: true,
       candidateId: id,
       pipeline: {
-        stepsCompleted: 3,
+        stepsCompleted: 4,
         strategy: strategyData,
+        visualSelection: selectedVisuals
+          ? {
+              heroImage: selectedVisuals.heroImage?.url ?? null,
+              linkedInImage: selectedVisuals.linkedInImage?.url ?? null,
+              emailHeader: selectedVisuals.emailHeader?.url ?? null,
+              totalImagesFound: selectedVisuals.allImages.length,
+            }
+          : null,
       },
       outputs: {
-        caseStudy: copyData.caseStudy,
+        caseStudy: caseStudyContent,
         linkedInPost: socialData.linkedInPost,
         nurturingEmail: copyData.nurturingEmail,
       },

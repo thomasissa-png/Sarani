@@ -328,7 +328,7 @@ export const caseStudyCandidates = pgTable(
     excludedBy: text("excluded_by"),
     // Pipeline tracking (multi-agent generation)
     pipelineStatus: varchar("pipeline_status", { length: 20 }).default("idle"),
-    // idle | step_1_creative | step_2_copywriter | step_3_social | complete | failed
+    // idle | step_1_creative | step_2_copywriter | step_3_social | step_4_visuals | complete | failed
     pipelineSteps: jsonb("pipeline_steps")
       .$type<
         Array<{
