@@ -617,9 +617,10 @@ export function mergeData(
         : canonicalClient;
 
     // Extract division (the part of the sheet name beyond the canonical client name)
+    const escapedClient = canonicalClient.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const division =
       sheetName && sheetName.toLowerCase() !== canonicalClient.toLowerCase()
-        ? sheetName.replace(new RegExp(`^${canonicalClient}\\s*`, "i"), "").trim() ||
+        ? sheetName.replace(new RegExp(`^${escapedClient}\\s*`, "i"), "").trim() ||
           sheetName
         : undefined;
 
