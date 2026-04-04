@@ -151,7 +151,7 @@ describe("Bug 3: Video playback — proxy streams instead of 302", () => {
     expect(pageCode).toContain("VIDEO_EXT_TO_MIME");
   });
 
-  it("proxy timeout is 60 seconds (not 30)", () => {
+  it("proxy video timeout is 60 seconds, PDF inline timeout is 30 seconds", () => {
     const routeCode = fs.readFileSync(
       path.resolve(
         __dirname,
@@ -159,8 +159,10 @@ describe("Bug 3: Video playback — proxy streams instead of 302", () => {
       ),
       "utf-8"
     );
+    // Video streaming uses 60s timeout (large files need time)
     expect(routeCode).toContain("60_000");
-    expect(routeCode).not.toMatch(/AbortSignal\.timeout\(30/);
+    // PDF inline uses 30s timeout (smaller files, reasonable limit)
+    expect(routeCode).toContain("30_000");
   });
 
   it("proxy forwards Range header for seek support", () => {
