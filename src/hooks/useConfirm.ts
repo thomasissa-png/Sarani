@@ -54,6 +54,10 @@ export function useConfirm() {
     []
   );
 
+  const handleCancel = useCallback(() => {
+    setState((prev) => ({ ...prev, open: false }));
+  }, []);
+
   const dialogProps = {
     open: state.open,
     title: state.title,
@@ -61,10 +65,8 @@ export function useConfirm() {
     confirmLabel: state.confirmLabel,
     variant: state.variant,
     onConfirm: state.onConfirm,
-    onCancel: useCallback(() => {
-      setState((prev) => ({ ...prev, open: false }));
-    }, []),
+    onCancel: handleCancel,
   };
 
-  return { confirm, dialogProps };
+  return { confirm, dialogProps } as const;
 }

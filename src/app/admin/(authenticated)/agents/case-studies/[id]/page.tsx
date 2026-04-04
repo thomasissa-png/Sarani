@@ -572,6 +572,7 @@ export default function CandidateDetailPage() {
           )}
         </div>
       </div>
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }
@@ -1018,7 +1019,6 @@ function VisualSuggestionsPanel({
           {selectedVisuals.size} visual{selectedVisuals.size !== 1 ? "s" : ""} selected
         </p>
       )}
-      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }
