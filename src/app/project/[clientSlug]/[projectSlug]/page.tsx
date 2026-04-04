@@ -834,8 +834,24 @@ export default async function ProjectPreviewPage({ params }: Props) {
                                 {item.name.replace(/\.[^.]+$/, "")}
                                 <CommentCountInline previewId={preview.id} assetName={commentKey} initialCount={assetCommentCount} />
                               </span>
-                              <span className="text-[10px] text-white/25 shrink-0 tabular-nums">
-                                {item.width && item.height ? `${item.width}×${item.height}` : item.name.split(".").pop()?.toUpperCase()}
+                              <span className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[10px] text-white/25 tabular-nums">
+                                  {item.width && item.height ? `${item.width}×${item.height}` : item.name.split(".").pop()?.toUpperCase()}
+                                </span>
+                                <a
+                                  href={item.proxyUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
+                                  aria-label={`Download ${item.name}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                  </svg>
+                                </a>
                               </span>
                             </div>
                           </div>
@@ -859,6 +875,15 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             preload="metadata"
                             className="w-full aspect-video bg-black"
                             playsInline
+                            onError={(e) => {
+                              // If directUrl failed (expired 403/410), force switch to proxy source
+                              const video = e.currentTarget;
+                              const sources = video.querySelectorAll("source");
+                              if (sources.length > 1 && video.currentSrc !== sources[sources.length - 1].src) {
+                                sources[0].remove();
+                                video.load();
+                              }
+                            }}
                           >
                             {item.directUrl && (
                               <source src={item.directUrl} type={item.mimeType} />

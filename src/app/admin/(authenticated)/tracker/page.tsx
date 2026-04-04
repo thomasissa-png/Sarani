@@ -1168,7 +1168,7 @@ function TrackerContent() {
                       )}
                       <td className="px-3 py-3.5 text-sm text-brand-black max-w-[280px] truncate">
                         <Link
-                          href={`/admin/projects/${getProjectId(p)}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}&listId=${encodeURIComponent(p.clickupListId || "")}&listName=${encodeURIComponent(p.clickupListName || "")}`}
+                          href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}&listId=${encodeURIComponent(p.clickupListId || "")}&listName=${encodeURIComponent(p.clickupListName || "")}`}
                           className="hover:text-flame hover:underline transition-colors"
                         >
                           {p.project}
@@ -1325,7 +1325,7 @@ function TrackerContent() {
                 </p>
                 <span className="flex items-center gap-1 mt-0.5">
                   <Link
-                    href={`/admin/projects/${getProjectId(p)}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}&listId=${encodeURIComponent(p.clickupListId || "")}&listName=${encodeURIComponent(p.clickupListName || "")}`}
+                    href={`/admin/projects/${encodeURIComponent(getProjectId(p))}?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&status=${encodeURIComponent(p.status || "")}&value=${p.totalValue ?? ""}&date=${encodeURIComponent(p.date || "")}&invoice=${encodeURIComponent(p.invoiceStatus || "")}&po=${encodeURIComponent(p.poNumber || "")}&sharepoint=${encodeURIComponent(p.sharepointLink || "")}&clickup=${encodeURIComponent(p.clickupTaskUrl || "")}&listId=${encodeURIComponent(p.clickupListId || "")}&listName=${encodeURIComponent(p.clickupListName || "")}`}
                     className="text-sm font-medium text-brand-black hover:text-flame hover:underline transition-colors"
                   >
                     {p.project}

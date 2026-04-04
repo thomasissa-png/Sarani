@@ -11,7 +11,7 @@
  * 4. Link is copied to clipboard + opened in new tab
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { getSubdivisionByListId, getSubdivisionByName, ASSETS_CUSTOMERS_BASE_PATH } from "@/lib/integrations/config";
 
@@ -192,8 +192,16 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
   // Toggle between list view and thumbnail grid view
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
 
+  // AbortController ref — cancels in-flight requests when a new one starts (race condition fix)
+  const abortRef = useRef<AbortController | null>(null);
+
   // Fetch folder contents by ID, URL, or client mapping
   const fetchFolders = useCallback(async (opts: { folderId?: string; url?: string; clientRoot?: boolean }) => {
+    // Abort previous in-flight request to prevent stale data overwriting current view
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError(null);
     setSharedLink(null);
@@ -211,16 +219,21 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
         params.set("client", clientName);
       }
 
-      const res = await fetch(`/api/admin/integrations/sharepoint/folders?${params}`);
+      const res = await fetch(`/api/admin/integrations/sharepoint/folders?${params}`, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return null; // navigated away
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || `Failed to load folders (${res.status})`);
       }
       const result: FoldersResponse = await res.json();
+      if (controller.signal.aborted) return null; // navigated away between res.ok and json parse
       setData(result);
       // Don't reset selection — files from other folders are preserved
       return result;
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return null; // navigated away
       setError(err instanceof Error ? err.message : "Failed to load folders");
       return null;
     } finally {
