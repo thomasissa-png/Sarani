@@ -101,10 +101,17 @@ export async function POST(
 
     // 2. Check eligibility
     if (candidate.status === "generating") {
-      return NextResponse.json(
-        { error: "Pipeline already in progress for this candidate" },
-        { status: 409 }
-      );
+      // Auto-recovery: if stuck in "generating" for >10 min, the worker likely crashed.
+      // Allow re-generation instead of blocking forever.
+      const stuckThreshold = 10 * 60 * 1000; // 10 minutes
+      const updatedAt = candidate.updatedAt ? new Date(candidate.updatedAt).getTime() : 0;
+      if (Date.now() - updatedAt < stuckThreshold) {
+        return NextResponse.json(
+          { error: "Pipeline already in progress for this candidate. If stuck, retry in a few minutes." },
+          { status: 409 }
+        );
+      }
+      console.warn(`[pipeline] Candidate ${id} stuck in "generating" for >${Math.round((Date.now() - updatedAt) / 60000)}min. Auto-recovering.`);
     }
     if (candidate.status === "excluded") {
       return NextResponse.json(

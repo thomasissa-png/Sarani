@@ -576,6 +576,7 @@ export default function ClosuresPage() {
   }, [outputs]);
 
   const publishOutput = useCallback(async (outputId: string, closureId: string) => {
+    if (!window.confirm("This case study will be published on sarani.studio. Continue?")) return;
     setPublishingOutput((prev) => new Set(prev).add(outputId));
     try {
       const res = await fetch(`/api/admin/case-studies/outputs/${outputId}/publish`, {
@@ -609,6 +610,7 @@ export default function ClosuresPage() {
   }, []);
 
   const unpublishOutput = useCallback(async (outputId: string, closureId: string) => {
+    if (!window.confirm("This will remove the case study from sarani.studio. Continue?")) return;
     setPublishingOutput((prev) => new Set(prev).add(outputId));
     try {
       const res = await fetch(`/api/admin/case-studies/outputs/${outputId}/publish`, {
