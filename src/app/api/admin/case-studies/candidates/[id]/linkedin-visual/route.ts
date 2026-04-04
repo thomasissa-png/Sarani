@@ -175,9 +175,11 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("[linkedin-visual] Error generating visual:", error);
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
+    const errStack = error instanceof Error ? error.stack : "";
+    console.error("[linkedin-visual] Error generating visual:", errMsg, errStack);
     return NextResponse.json(
-      { error: "Failed to generate LinkedIn visual" },
+      { error: `Failed to generate LinkedIn visual: ${errMsg}` },
       { status: 500 }
     );
   }

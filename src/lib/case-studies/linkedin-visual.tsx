@@ -76,6 +76,25 @@ async function fetchImageAsDataUri(url: string): Promise<string | null> {
   // Already a data URI — pass through
   if (url.startsWith("data:")) return url;
 
+  // API proxy path (e.g. /api/project-assets/...) — fetch via localhost
+  if (url.startsWith("/api/")) {
+    try {
+      const port = process.env.PORT || "3000";
+      const internalUrl = `http://localhost:${port}${url}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15_000);
+      const res = await fetch(internalUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) return null;
+      const arrayBuf = await res.arrayBuffer();
+      const base64 = Buffer.from(arrayBuf).toString("base64");
+      const contentType = res.headers.get("content-type") ?? "image/png";
+      return `data:${contentType};base64,${base64}`;
+    } catch {
+      return null;
+    }
+  }
+
   // Local public path — read from filesystem
   if (url.startsWith("/")) {
     try {
