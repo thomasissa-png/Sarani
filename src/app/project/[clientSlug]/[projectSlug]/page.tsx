@@ -890,9 +890,10 @@ export default async function ProjectPreviewPage({ params }: Props) {
                       {batchPdfs.map((item) => (
                         <a
                           key={item.itemId || item.name}
-                          href={`${item.proxyUrl}&inline=1`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={item.size <= 10 * 1024 * 1024 ? `${item.proxyUrl}&inline=1` : item.proxyUrl}
+                          target={item.size <= 10 * 1024 * 1024 ? "_blank" : undefined}
+                          rel={item.size <= 10 * 1024 * 1024 ? "noopener noreferrer" : undefined}
+                          download={item.size > 10 * 1024 * 1024 ? item.name : undefined}
                           className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 hover:bg-white/10 transition-all min-h-[44px]"
                         >
                           {/* PDF icon */}
@@ -915,10 +916,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
                           <span className="text-sm text-white/80 truncate flex-1">
                             {item.name}
                           </span>
-                          <span className="text-xs text-white/30 shrink-0">
+                          <span className="text-xs text-white/30 shrink-0 flex items-center gap-1.5">
                             {formatFileSize(item.size)}
+                            {item.size > 10 * 1024 * 1024 && (
+                              <span className="text-[9px] text-white/20">Download</span>
+                            )}
                           </span>
-                          {/* External link icon */}
+                          {/* Open/download icon */}
                           <svg
                             className="w-4 h-4 text-white/30 shrink-0"
                             viewBox="0 0 24 24"
@@ -929,9 +933,19 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             strokeLinejoin="round"
                             aria-hidden="true"
                           >
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                            <polyline points="15 3 21 3 21 9" />
-                            <line x1="10" y1="14" x2="21" y2="3" />
+                            {item.size <= 10 * 1024 * 1024 ? (
+                              <>
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
+                              </>
+                            ) : (
+                              <>
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                              </>
+                            )}
                           </svg>
                         </a>
                       ))}
