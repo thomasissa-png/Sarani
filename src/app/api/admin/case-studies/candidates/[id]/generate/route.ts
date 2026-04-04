@@ -496,7 +496,7 @@ export async function POST(
         candidateId: id,
         outputType: "linkedin_visual",
         content: {
-          base64: linkedInVisualBase64,
+          base64Png: linkedInVisualBase64,
           width: 1200,
           height: 1200,
           mimeType: "image/png",
@@ -506,7 +506,7 @@ export async function POST(
           {
             version: 1,
             content: {
-              base64: linkedInVisualBase64,
+              base64Png: linkedInVisualBase64,
               width: 1200,
               height: 1200,
               mimeType: "image/png",

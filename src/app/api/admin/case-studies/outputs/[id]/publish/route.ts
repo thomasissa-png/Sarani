@@ -3,15 +3,6 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { caseStudyOutputs, caseStudyCandidates } from "@/lib/db/schema";
 import { eq, and, isNotNull } from "drizzle-orm";
-import { readFileSync, writeFileSync } from "fs";
-import { join } from "path";
-
-const CASE_STUDIES_FILE = join(
-  process.cwd(),
-  "src",
-  "data",
-  "case-studies.ts"
-);
 
 /**
  * POST /api/admin/case-studies/outputs/:id/publish
@@ -69,20 +60,7 @@ export async function POST(
       caseStudy.slug = altSlug;
     }
 
-    // 4. Try to write to static file (best effort — DB is source of truth)
-    try {
-      const fileContent = readFileSync(CASE_STUDIES_FILE, "utf-8");
-      const tsObject = buildTsObject(caseStudy);
-      const insertionPoint = fileContent.lastIndexOf("];");
-      if (insertionPoint !== -1) {
-        const newContent = fileContent.slice(0, insertionPoint) + `  ${tsObject},\n` + fileContent.slice(insertionPoint);
-        writeFileSync(CASE_STUDIES_FILE, newContent, "utf-8");
-      }
-    } catch {
-      console.warn("[Publish] Could not update case-studies.ts — DB still updated");
-    }
-
-    // 5. Update DB
+    // 4. Update DB (source of truth — public pages fetch from DB directly)
     await db
       .update(caseStudyOutputs)
       .set({
@@ -140,39 +118,7 @@ export async function DELETE(
       );
     }
 
-    // Try to remove from static file (best effort — DB is the source of truth)
-    if (output.caseStudySlug) {
-      try {
-        const fileContent = readFileSync(CASE_STUDIES_FILE, "utf-8");
-        const slugPattern = `slug: "${output.caseStudySlug}"`;
-        const slugIndex = fileContent.indexOf(slugPattern);
-        if (slugIndex !== -1) {
-          const braceStart = fileContent.lastIndexOf("{", slugIndex);
-          let depth = 0;
-          let braceEnd = -1;
-          for (let i = braceStart; i < fileContent.length; i++) {
-            if (fileContent[i] === "{") depth++;
-            if (fileContent[i] === "}") {
-              depth--;
-              if (depth === 0) { braceEnd = i; break; }
-            }
-          }
-          if (braceEnd > braceStart) {
-            let removeEnd = braceEnd + 1;
-            if (fileContent[removeEnd] === ",") removeEnd++;
-            if (fileContent[removeEnd] === "\n") removeEnd++;
-            let removeStart = braceStart;
-            while (removeStart > 0 && fileContent[removeStart - 1] === " ") removeStart--;
-            writeFileSync(CASE_STUDIES_FILE, fileContent.slice(0, removeStart) + fileContent.slice(removeEnd), "utf-8");
-          }
-        }
-      } catch {
-        // Static file cleanup failed — not critical, DB is source of truth
-        console.warn("[Unpublish] Could not update case-studies.ts — DB still updated");
-      }
-    }
-
-    // Update DB
+    // Update DB (source of truth — public pages fetch from DB directly)
     await db
       .update(caseStudyOutputs)
       .set({
@@ -205,41 +151,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
-
-// ─── Helpers ───────────────────────────────────────────────────────────────
-
-// P0-2: Allowlist to prevent code injection via LLM-generated keys
-const ALLOWED_CASE_STUDY_KEYS = new Set([
-  "slug", "client", "deliverable", "volume", "turnaround", "outcome",
-  "brief", "result", "headline", "keyMetric", "stats", "metaDescription",
-  "category", "subtitle", "challenge", "solution", "resultsDetail", "tags", "image", "testimonial",
-]);
-
-function buildTsObject(obj: Record<string, unknown>): string {
-  const lines: string[] = ["{"];
-  for (const [key, value] of Object.entries(obj)) {
-    if (!ALLOWED_CASE_STUDY_KEYS.has(key)) continue;
-    if (value === undefined || value === null) continue;
-    if (typeof value === "string") {
-      lines.push(`    ${key}: ${JSON.stringify(value)},`);
-    } else if (Array.isArray(value)) {
-      if (value.length > 0 && typeof value[0] === "object") {
-        // Array of objects (stats)
-        const items = value.map(
-          (item) =>
-            `{ ${Object.entries(item as Record<string, unknown>)
-              .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
-              .join(", ")} }`
-        );
-        lines.push(`    ${key}: [${items.join(", ")}],`);
-      } else {
-        lines.push(`    ${key}: ${JSON.stringify(value)},`);
-      }
-    } else {
-      lines.push(`    ${key}: ${JSON.stringify(value)},`);
-    }
-  }
-  lines.push("  }");
-  return lines.join("\n");
 }

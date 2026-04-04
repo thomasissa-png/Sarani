@@ -531,6 +531,8 @@ export default function ClosuresPage() {
           [outputType]: { ...prev[closureId][outputType]!, content: updated.content },
         },
       }));
+      // Exit edit mode for this section after successful save
+      cancelEditingSection(outputId);
     } catch {
       alert("Network error while saving draft.");
     } finally {
@@ -809,7 +811,7 @@ export default function ClosuresPage() {
           await fetchClosures();
           // Auto-expand to show the generated content immediately
           setExpandedId(closureId);
-          await fetchOutputs(closureId);
+          await fetchOutputs(closureId, true);
           return;
         }
 
