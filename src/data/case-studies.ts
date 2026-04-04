@@ -45,8 +45,10 @@ export interface CaseStudy {
   resultsDetail?: string;
   /** Optional tags (category/year) for detail page */
   tags?: string[];
-  /** Optional hero image path (relative to /public) */
+  /** Optional hero image path (relative to /public, for static case studies) */
   image?: string;
+  /** Optional hero image URL (proxy URL, for pipeline-generated case studies) */
+  heroImage?: string;
   /** Client testimonial — verifiable quote from the client contact */
   testimonial?: {
     quote: string;

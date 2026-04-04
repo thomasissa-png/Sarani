@@ -147,7 +147,7 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
             </p>
           )}
 
-          {/* Meta strip */}
+          {/* Meta strip — hide empty fields for pipeline-generated case studies */}
           <div className="flex flex-wrap gap-6 text-sm text-neutral-500">
             <div>
               <span className="block text-xs uppercase tracking-wider text-neutral-500">
@@ -157,29 +157,33 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
                 {cs.deliverable}
               </span>
             </div>
-            <div>
-              <span className="block text-xs uppercase tracking-wider text-neutral-500">
-                Timeline
-              </span>
-              <span className="font-medium text-brand-black">
-                {cs.turnaround}
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs uppercase tracking-wider text-neutral-500">
-                Volume
-              </span>
-              <span className="font-medium text-brand-black">{cs.volume}</span>
-            </div>
+            {cs.turnaround && (
+              <div>
+                <span className="block text-xs uppercase tracking-wider text-neutral-500">
+                  Timeline
+                </span>
+                <span className="font-medium text-brand-black">
+                  {cs.turnaround}
+                </span>
+              </div>
+            )}
+            {cs.volume && (
+              <div>
+                <span className="block text-xs uppercase tracking-wider text-neutral-500">
+                  Volume
+                </span>
+                <span className="font-medium text-brand-black">{cs.volume}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Hero image — the creative work */}
-        {cs.image && (
+        {/* Hero image — the creative work (static `image` or pipeline `heroImage`) */}
+        {(cs.image || cs.heroImage) && (
           <div className="mt-10 mx-auto max-w-4xl">
             <div className="relative aspect-video overflow-hidden rounded-2xl">
               <img
-                src={cs.image}
+                src={cs.image || cs.heroImage}
                 alt={`${cs.client} — ${cs.headline}`}
                 className="h-full w-full object-cover"
               />
@@ -271,20 +275,24 @@ export default async function WorkCaseStudyPage({ params }: PageProps) {
                     {cs.deliverable}
                   </dd>
                 </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wider text-neutral-500">
-                    Volume
-                  </dt>
-                  <dd className="font-medium text-brand-black">{cs.volume}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs uppercase tracking-wider text-neutral-500">
-                    Timeline
-                  </dt>
-                  <dd className="font-medium text-brand-black">
-                    {cs.turnaround}
-                  </dd>
-                </div>
+                {cs.volume && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-neutral-500">
+                      Volume
+                    </dt>
+                    <dd className="font-medium text-brand-black">{cs.volume}</dd>
+                  </div>
+                )}
+                {cs.turnaround && (
+                  <div>
+                    <dt className="text-xs uppercase tracking-wider text-neutral-500">
+                      Timeline
+                    </dt>
+                    <dd className="font-medium text-brand-black">
+                      {cs.turnaround}
+                    </dd>
+                  </div>
+                )}
               </dl>
               <div className="mt-8">
                 <Button variant="primary" href="/contact" className="w-full">
