@@ -98,7 +98,7 @@ describe("Bug 2: Share link — dedup by itemId, not filename", () => {
 
 // ─── Bug 3: Video Streaming Proxy ──────────────────────────────────────────
 
-describe("Bug 3: Video playback — proxy streams instead of 302", () => {
+describe("Bug 3: Video playback — proxy 302 redirect (streaming removed)", () => {
   it("proxy route has VIDEO_EXT_TO_MIME fallback for octet-stream", () => {
     const routeCode = fs.readFileSync(
       path.resolve(
@@ -151,7 +151,7 @@ describe("Bug 3: Video playback — proxy streams instead of 302", () => {
     expect(pageCode).toContain("VIDEO_EXT_TO_MIME");
   });
 
-  it("proxy video timeout is 60 seconds, PDF inline timeout is 30 seconds", () => {
+  it("proxy PDF inline timeout is 30 seconds (video streaming removed)", () => {
     const routeCode = fs.readFileSync(
       path.resolve(
         __dirname,
@@ -159,13 +159,12 @@ describe("Bug 3: Video playback — proxy streams instead of 302", () => {
       ),
       "utf-8"
     );
-    // Video streaming uses 60s timeout (large files need time)
-    expect(routeCode).toContain("60_000");
-    // PDF inline uses 30s timeout (smaller files, reasonable limit)
+    // Video streaming removed — no 60s timeout needed anymore
+    // PDF inline uses 30s timeout (the only streaming case left)
     expect(routeCode).toContain("30_000");
   });
 
-  it("proxy forwards Range header for seek support", () => {
+  it("proxy uses 302 redirect for videos (no Range forwarding, no CORS — browser handles it)", () => {
     const routeCode = fs.readFileSync(
       path.resolve(
         __dirname,
@@ -173,21 +172,10 @@ describe("Bug 3: Video playback — proxy streams instead of 302", () => {
       ),
       "utf-8"
     );
-    expect(routeCode).toContain('request.headers.get("Range")');
-    expect(routeCode).toContain("Accept-Ranges");
-    expect(routeCode).toContain("Content-Range");
-  });
-
-  it("proxy sets CORS headers for cross-origin video requests", () => {
-    const routeCode = fs.readFileSync(
-      path.resolve(
-        __dirname,
-        "../../src/app/api/project-assets/[itemId]/route.ts"
-      ),
-      "utf-8"
-    );
-    expect(routeCode).toContain("Access-Control-Allow-Origin");
-    expect(routeCode).toContain("Cross-Origin-Resource-Policy");
+    // 302 redirect means no streaming, no Range forwarding, no CORS headers needed
+    // Browser follows 302 and handles Range requests on the final SharePoint URL
+    expect(routeCode).toContain("NextResponse.redirect(downloadUrl");
+    expect(routeCode).toContain("status: 302");
   });
 });
 

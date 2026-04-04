@@ -56,106 +56,26 @@ function makeRequest(itemId: string, options?: { range?: string; driveId?: strin
 /*  1. Video proxy CORS headers                                                */
 /* ========================================================================== */
 
-describe("Video proxy — CORS headers for video streaming", () => {
+describe("Video proxy — 302 redirect for all assets (no streaming)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("returns Access-Control-Allow-Origin: * for video responses", async () => {
-    // Mock: video item with download URL
+  it("returns 302 redirect for video/mp4", async () => {
     mockGraphFetch.mockResolvedValueOnce({
       "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/video.mp4",
       file: { mimeType: "video/mp4" },
       size: 1024000,
     });
 
-    // Mock: fetch the actual video (global fetch)
-    const mockBody = new ReadableStream();
-    const mockUpstream = new Response(mockBody, {
-      status: 200,
-      headers: {
-        "Content-Length": "1024000",
-        "Content-Type": "video/mp4",
-      },
-    });
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockUpstream);
-
     const { request, params } = makeRequest("validItemId123");
     const response = await GET(request, { params });
 
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe("https://sharepoint.com/download/video.mp4");
   });
 
-  it("returns Cross-Origin-Resource-Policy: cross-origin for video responses", async () => {
-    mockGraphFetch.mockResolvedValueOnce({
-      "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/video.mp4",
-      file: { mimeType: "video/mp4" },
-      size: 2048000,
-    });
-
-    const mockUpstream = new Response(new ReadableStream(), {
-      status: 200,
-      headers: { "Content-Length": "2048000" },
-    });
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockUpstream);
-
-    const { request, params } = makeRequest("validItemId456");
-    const response = await GET(request, { params });
-
-    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
-  });
-
-  it("returns Accept-Ranges: bytes for video responses", async () => {
-    mockGraphFetch.mockResolvedValueOnce({
-      "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/video.mp4",
-      file: { mimeType: "video/mp4" },
-      size: 512000,
-    });
-
-    const mockUpstream = new Response(new ReadableStream(), {
-      status: 200,
-      headers: { "Content-Length": "512000" },
-    });
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockUpstream);
-
-    const { request, params } = makeRequest("validItemId789");
-    const response = await GET(request, { params });
-
-    expect(response.headers.get("Accept-Ranges")).toBe("bytes");
-  });
-
-  it("forwards Range header and returns 206 with Content-Range", async () => {
-    mockGraphFetch.mockResolvedValueOnce({
-      "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/video.mp4",
-      file: { mimeType: "video/mp4" },
-      size: 5000000,
-    });
-
-    const mockUpstream = new Response(new ReadableStream(), {
-      status: 206,
-      headers: {
-        "Content-Length": "1000000",
-        "Content-Range": "bytes 0-999999/5000000",
-      },
-    });
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(mockUpstream);
-
-    const { request, params } = makeRequest("rangeTestItem", { range: "bytes=0-999999" });
-    const response = await GET(request, { params });
-
-    // Verify Range was forwarded to upstream
-    expect(fetchSpy).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({ Range: "bytes=0-999999" }),
-      })
-    );
-    expect(response.status).toBe(206);
-    expect(response.headers.get("Content-Range")).toBe("bytes 0-999999/5000000");
-    expect(response.headers.get("Access-Control-Allow-Origin")).toBe("*");
-  });
-
-  it("non-video assets get 302 redirect (no CORS headers needed)", async () => {
+  it("returns 302 redirect for image/png", async () => {
     mockGraphFetch.mockResolvedValueOnce({
       "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/image.png",
       file: { mimeType: "image/png" },
@@ -166,7 +86,34 @@ describe("Video proxy — CORS headers for video streaming", () => {
     const response = await GET(request, { params });
 
     expect(response.status).toBe(302);
-    // Redirect responses don't have CORS headers (browser follows redirect)
+  });
+
+  it("returns 302 for video even with Range header (browser handles Range on redirect target)", async () => {
+    mockGraphFetch.mockResolvedValueOnce({
+      "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/video.mp4",
+      file: { mimeType: "video/mp4" },
+      size: 5000000,
+    });
+
+    const { request, params } = makeRequest("rangeTestItem", { range: "bytes=0-999999" });
+    const response = await GET(request, { params });
+
+    // No streaming — 302 redirect. Browser follows and handles Range on final URL.
+    expect(response.status).toBe(302);
+  });
+
+  it("includes Cache-Control on 302 redirect", async () => {
+    mockGraphFetch.mockResolvedValueOnce({
+      "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/video.mp4",
+      file: { mimeType: "video/mp4" },
+      size: 1024000,
+    });
+
+    const { request, params } = makeRequest("cacheTestItem");
+    const response = await GET(request, { params });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Cache-Control")).toContain("max-age=300");
   });
 });
 
