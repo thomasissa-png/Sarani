@@ -549,7 +549,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       )
     );
 
-  if (!preview || !preview.isActive) {
+  if (!preview) {
     return { title: "Project Not Found - Sarani" };
   }
 
@@ -575,7 +575,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
       )
     );
 
-  if (!preview || !preview.isActive) {
+  if (!preview) {
     notFound();
   }
 
