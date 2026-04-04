@@ -875,15 +875,6 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             preload="metadata"
                             className="w-full aspect-video bg-black"
                             playsInline
-                            onError={(e) => {
-                              // If directUrl failed (expired 403/410), force switch to proxy source
-                              const video = e.currentTarget;
-                              const sources = video.querySelectorAll("source");
-                              if (sources.length > 1 && video.currentSrc !== sources[sources.length - 1].src) {
-                                sources[0].remove();
-                                video.load();
-                              }
-                            }}
                           >
                             {item.directUrl && (
                               <source src={item.directUrl} type={item.mimeType} />
