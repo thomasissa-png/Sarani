@@ -191,24 +191,25 @@ export async function autoSelectVisuals(
     return { allImages: [], source: "auto" };
   }
 
-  // 3. Check for preferred sub-folders
+  // 3. Check for preferred sub-folders first, then ALL sub-folders
   const subFolders = items.filter(isFolder);
   let imageItems: DriveItem[] = [];
 
+  // Priority 1: Preferred folders (Final, Export, Delivered, etc.)
   for (const folderName of PREFERRED_SUBFOLDERS) {
     const match = subFolders.find(
       (f) => f.name.toLowerCase().trim() === folderName
     );
     if (match) {
       try {
-        // List sub-folder contents by item ID (not path — path varies by strategy)
         const subData = await graphFetch<{ value: DriveItem[] }>(
           `/drives/${match.parentReference?.driveId ?? driveId}/items/${match.id}/children`
         );
         const subImages = (subData.value ?? []).filter(isImageFile);
         if (subImages.length > 0) {
           imageItems = subImages;
-          break; // Use the first preferred folder that has images
+          console.log(`[auto-select-visuals] Found ${subImages.length} images in preferred folder "${match.name}"`);
+          break;
         }
       } catch {
         // Sub-folder listing failed, try next
@@ -216,9 +217,30 @@ export async function autoSelectVisuals(
     }
   }
 
-  // If no preferred sub-folder had images, use root folder images
+  // Priority 2: Root folder images
   if (imageItems.length === 0) {
     imageItems = items.filter(isImageFile);
+  }
+
+  // Priority 3: If still nothing, scan ALL sub-folders (max 5, skip "brief", "source", etc.)
+  const SKIP_FOLDERS = new Set(["brief", "source", "sources", "source files", "archive", "old", "template"]);
+  if (imageItems.length === 0 && subFolders.length > 0) {
+    console.log(`[auto-select-visuals] No images in root or preferred folders. Scanning ${subFolders.length} sub-folders...`);
+    for (const folder of subFolders.slice(0, 5)) {
+      if (SKIP_FOLDERS.has(folder.name.toLowerCase().trim())) continue;
+      try {
+        const subData = await graphFetch<{ value: DriveItem[] }>(
+          `/drives/${folder.parentReference?.driveId ?? driveId}/items/${folder.id}/children`
+        );
+        const subImages = (subData.value ?? []).filter(isImageFile);
+        if (subImages.length > 0) {
+          imageItems.push(...subImages);
+          console.log(`[auto-select-visuals] Found ${subImages.length} images in sub-folder "${folder.name}"`);
+        }
+      } catch {
+        // continue
+      }
+    }
   }
 
   // 4. Filter by size and sort — sort by most recent first (lastModifiedDateTime), then by size

@@ -1607,7 +1607,8 @@ export default function ClosuresPage() {
                                     if (res.ok) {
                                       fetchOutputs(closure.id, true);
                                     } else {
-                                      setVisualErrors((prev) => ({ ...prev, [closure.id]: "Failed to generate visual. Please try again." }));
+                                      const errData = await res.json().catch(() => ({ error: "Unknown error" }));
+                                      setVisualErrors((prev) => ({ ...prev, [closure.id]: errData.error || `Failed (${res.status})` }));
                                     }
                                   } catch {
                                     setVisualErrors((prev) => ({ ...prev, [closure.id]: "Network error while generating visual." }));
