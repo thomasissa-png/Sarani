@@ -318,6 +318,7 @@ export async function GET(request: NextRequest) {
       files,
       totalFolders: folders.length,
       totalFiles: files.length,
+      driveId: SHAREPOINT_ASSETS_DRIVE_ID,
     });
   } catch (error) {
     console.error("[SP Folders] Error:", error);

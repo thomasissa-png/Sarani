@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { graphFetch } from "@/lib/integrations/sharepoint";
 import { SHAREPOINT_ASSETS_DRIVE_ID } from "@/lib/integrations/config";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /** Video MIME types — used only for mimeType detection fallback (extension-based). */
 const VIDEO_MIMETYPES = new Set([
@@ -52,6 +53,11 @@ export async function GET(
 ) {
   const { itemId } = await params;
   const driveId = request.nextUrl.searchParams.get("driveId") || SHAREPOINT_ASSETS_DRIVE_ID;
+
+  // Rate limit: 200 req/min per IP (public endpoint — protect Graph API quota)
+  if (!checkRateLimit("asset-proxy", 200, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
 
   // Validate inputs to prevent path injection into Graph API
   const SAFE_ID = /^[a-zA-Z0-9!_-]+$/;

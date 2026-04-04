@@ -1,6 +1,7 @@
 /**
  * Public project presentation page.
- * SSR with cache headers for ISR-like behavior (revalidate 300s).
+ * Dynamic SSR on every request — ensures download URLs are always fresh
+ * (SharePoint @microsoft.graph.downloadUrl expires after ~1h).
  * Dark-themed (Sarani brand: bg-black, text-white, accent Flame).
  */
 import { Metadata } from "next";

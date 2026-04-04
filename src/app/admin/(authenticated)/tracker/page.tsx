@@ -1522,6 +1522,7 @@ function TrackerContent() {
         clickupTaskUrl={shareModalProject?.clickupTaskUrl ?? ""}
         clickupListName={shareModalProject?.clickupListName ?? ""}
         clickupListId={shareModalProject?.clickupListId ?? ""}
+        onLinkCreated={() => setToast({ type: "success", message: "Share link created successfully" })}
       />
     </div>
   );
