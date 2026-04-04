@@ -257,8 +257,7 @@ export default function StoryboardsPage() {
         // Copy share URL to clipboard
         const fullUrl = `${window.location.origin}${data.shareUrl}`;
         await navigator.clipboard.writeText(fullUrl).catch(() => {
-          // Fallback: show in alert
-          window.alert(`Share link: ${fullUrl}`);
+          // Clipboard not available — URL is already in the response
         });
         await fetchStoryboards();
       } catch (err) {

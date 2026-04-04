@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { RegenerateButton, LinkedInCharCounter, OutputStatusBadge } from "@/components/admin/CaseStudyActions";
 import { VisualSelector, type SelectedVisuals } from "@/components/admin/CaseStudyVisuals";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useConfirm } from "@/hooks/useConfirm";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -455,6 +457,7 @@ function CloseProjectModal({
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function ClosuresPage() {
+  const { confirm, dialogProps } = useConfirm();
   const [closures, setClosures] = useState<ClosureRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -586,7 +589,12 @@ export default function ClosuresPage() {
   }, [outputs]);
 
   const publishOutput = useCallback(async (outputId: string, closureId: string) => {
-    if (!window.confirm("This case study will be published on sarani.studio. Continue?")) return;
+    const ok = await confirm({
+      title: "Publish case study",
+      message: "This case study will be published on sarani.studio and visible to everyone.",
+      confirmLabel: "Publish",
+    });
+    if (!ok) return;
     setPublishingOutput((prev) => new Set(prev).add(outputId));
     try {
       const res = await fetch(`/api/admin/case-studies/outputs/${outputId}/publish`, {
@@ -620,7 +628,13 @@ export default function ClosuresPage() {
   }, []);
 
   const unpublishOutput = useCallback(async (outputId: string, closureId: string) => {
-    if (!window.confirm("This will remove the case study from sarani.studio. Continue?")) return;
+    const ok = await confirm({
+      title: "Unpublish case study",
+      message: "This will remove the case study from sarani.studio. It will no longer be visible to visitors.",
+      confirmLabel: "Unpublish",
+      variant: "danger",
+    });
+    if (!ok) return;
     setPublishingOutput((prev) => new Set(prev).add(outputId));
     try {
       const res = await fetch(`/api/admin/case-studies/outputs/${outputId}/publish`, {
@@ -1796,6 +1810,9 @@ export default function ClosuresPage() {
           submitting={submitting}
         />
       )}
+
+      {/* Confirmation dialog — replaces window.confirm() */}
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }

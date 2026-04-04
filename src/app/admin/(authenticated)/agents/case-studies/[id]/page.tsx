@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useConfirm } from "@/hooks/useConfirm";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -89,6 +91,7 @@ function getScoreColor(score: number): string {
 // ─── Page Component ─────────────────────────────────────────────────────────
 
 export default function CandidateDetailPage() {
+  const { confirm, dialogProps } = useConfirm();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [candidate, setCandidate] = useState<CandidateDetail | null>(null);
@@ -216,7 +219,12 @@ export default function CandidateDetailPage() {
   };
 
   const handlePublish = async (outputId: string) => {
-    if (!window.confirm("This case study will be published on sarani.studio and visible to everyone. Continue?")) return;
+    const ok = await confirm({
+      title: "Publish case study",
+      message: "This case study will be published on sarani.studio and visible to everyone.",
+      confirmLabel: "Publish",
+    });
+    if (!ok) return;
     setPublishing(true);
     setError(null);
     try {
@@ -1010,6 +1018,7 @@ function VisualSuggestionsPanel({
           {selectedVisuals.size} visual{selectedVisuals.size !== 1 ? "s" : ""} selected
         </p>
       )}
+      <ConfirmDialog {...dialogProps} />
     </div>
   );
 }
