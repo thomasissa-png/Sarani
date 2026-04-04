@@ -8,7 +8,13 @@ import {
   resolveSharePointUrl,
   listDriveItems,
   createAnonymousSharingLink,
+  getDriveItemByPath,
 } from "@/lib/integrations/sharepoint";
+import {
+  SHAREPOINT_ASSETS_DRIVE_ID,
+  ASSETS_CUSTOMERS_BASE_PATH,
+  getMappingBySpaceName,
+} from "@/lib/integrations/config";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -121,35 +127,65 @@ function getThumbnailUrl(item: DriveItem): string {
  */
 export async function autoSelectVisuals(
   sharePointFolderUrl: string,
-  _clientName?: string | null
+  clientName?: string | null
 ): Promise<AutoSelectedVisuals> {
-  // 1. Resolve the folder URL to a drive item
-  const folderItem = await resolveSharePointUrl(sharePointFolderUrl);
-  if (!folderItem?.id || !folderItem.parentReference?.driveId) {
-    console.warn(
-      "[auto-select-visuals] Could not resolve SharePoint folder URL:",
-      sharePointFolderUrl.substring(0, 120)
-    );
-    return { allImages: [], source: "auto" };
+  const driveId = SHAREPOINT_ASSETS_DRIVE_ID;
+  let items: DriveItem[] = [];
+
+  // Strategy 1: Try to resolve as a sharing link via /shares/ API
+  try {
+    const folderItem = await resolveSharePointUrl(sharePointFolderUrl);
+    if (folderItem?.id && folderItem.parentReference?.driveId) {
+      const resolvedDriveId = folderItem.parentReference.driveId;
+      const folderPath = folderItem.parentReference.path
+        ? `${folderItem.parentReference.path}/${folderItem.name}`
+        : `/${folderItem.name}`;
+      const cleanPath = folderPath.replace(/^\/drives\/[^/]+\/root:/, "").replace(/^\/drive\/root:/, "");
+      items = await listDriveItems(resolvedDriveId, cleanPath);
+      console.log(`[auto-select-visuals] Strategy 1 (sharing link): ${items.length} items`);
+    }
+  } catch {
+    // Strategy 1 failed — try next
   }
 
-  const driveId = folderItem.parentReference.driveId;
-  // Build the folder path from the parentReference
-  // The item itself is the folder, so we need its path
-  const folderPath = folderItem.parentReference.path
-    ? `${folderItem.parentReference.path}/${folderItem.name}`
-    : `/${folderItem.name}`;
-  // Strip the "/drive/root:" prefix that Graph API includes
-  const cleanPath = folderPath.replace(/^\/drives\/[^/]+\/root:/, "").replace(/^\/drive\/root:/, "");
+  // Strategy 2: Extract path from webUrl and list via ASSETS drive
+  if (items.length === 0 && sharePointFolderUrl.includes("sharepoint.com")) {
+    try {
+      // webUrl looks like: https://tenant.sharepoint.com/sites/SiteName/Shared Documents/path/to/folder
+      const urlObj = new URL(sharePointFolderUrl);
+      const pathMatch = urlObj.pathname.match(/\/Shared\s*Documents\/(.+)/i)
+        ?? urlObj.pathname.match(/\/Documents\/(.+)/i);
+      if (pathMatch) {
+        const spPath = decodeURIComponent(pathMatch[1]);
+        items = await listDriveItems(driveId, `/${spPath}`);
+        console.log(`[auto-select-visuals] Strategy 2 (webUrl path): ${items.length} items from /${spPath}`);
+      }
+    } catch {
+      // Strategy 2 failed
+    }
+  }
 
-  // 2. List children of the folder
-  let items: DriveItem[];
-  try {
-    items = await listDriveItems(driveId, cleanPath);
-  } catch (err) {
+  // Strategy 3: Use client name + config mapping to find the project folder
+  if (items.length === 0 && clientName) {
+    try {
+      const mapping = getMappingBySpaceName(clientName);
+      if (mapping) {
+        const customerPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
+        const customerItems = await listDriveItems(driveId, customerPath);
+        // Use all images from the client's root as a fallback
+        items = customerItems;
+        console.log(`[auto-select-visuals] Strategy 3 (client root): ${items.length} items`);
+      }
+    } catch {
+      // Strategy 3 failed
+    }
+  }
+
+  if (items.length === 0) {
     console.warn(
-      "[auto-select-visuals] Failed to list folder contents:",
-      err instanceof Error ? err.message : err
+      "[auto-select-visuals] All strategies failed for:",
+      sharePointFolderUrl.substring(0, 120),
+      "client:", clientName
     );
     return { allImages: [], source: "auto" };
   }

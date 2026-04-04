@@ -47,9 +47,10 @@ async function fetchAllPublishedCaseStudies(): Promise<CaseStudyOutput[]> {
       )
       .orderBy(desc(caseStudyOutputs.publishedAt));
 
+    console.log(`[case-studies] Found ${rows.length} published case studies`);
     return rows.map((row) => row.content as unknown as CaseStudyOutput);
-  } catch {
-    // DB unavailable — return empty list gracefully
+  } catch (err) {
+    console.error("[case-studies] DB query failed:", err instanceof Error ? err.message : err);
     return [];
   }
 }

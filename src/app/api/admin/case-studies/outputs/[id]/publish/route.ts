@@ -6,8 +6,8 @@ import { eq, and, isNotNull } from "drizzle-orm";
 
 /**
  * POST /api/admin/case-studies/outputs/:id/publish
- * Publish a case study to the website by appending to case-studies.ts.
- * Admin role only.
+ * Publish a case study to the website.
+ * Sets publishedAt + caseStudySlug in DB. Public pages query DB directly.
  */
 export async function POST(
   _request: NextRequest,
@@ -79,6 +79,8 @@ export async function POST(
     // Revalidate public pages immediately (don't wait for ISR cycle)
     revalidatePath("/case-studies");
     revalidatePath(`/case-studies/${caseStudy.slug}`);
+
+    console.log(`[Publish] Case study published: slug="${caseStudy.slug}", outputId="${id}", candidateId="${output.candidateId}"`);
 
     return NextResponse.json({
       success: true,
