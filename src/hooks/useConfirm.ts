@@ -23,11 +23,12 @@ interface ConfirmState {
  *   <ConfirmDialog {...dialogProps} />
  */
 export function useConfirm() {
-  const [state, setState] = useState<ConfirmState>({
+  const [state, setState] = useState<ConfirmState & { onCancel: () => void }>({
     open: false,
     title: "",
     message: "",
     onConfirm: () => {},
+    onCancel: () => {},
   });
 
   const confirm = useCallback(
@@ -48,15 +49,15 @@ export function useConfirm() {
             setState((prev) => ({ ...prev, open: false }));
             resolve(true);
           },
+          onCancel: () => {
+            setState((prev) => ({ ...prev, open: false }));
+            resolve(false);
+          },
         });
       });
     },
     []
   );
-
-  const handleCancel = useCallback(() => {
-    setState((prev) => ({ ...prev, open: false }));
-  }, []);
 
   const dialogProps = {
     open: state.open,
@@ -65,7 +66,7 @@ export function useConfirm() {
     confirmLabel: state.confirmLabel,
     variant: state.variant,
     onConfirm: state.onConfirm,
-    onCancel: handleCancel,
+    onCancel: state.onCancel,
   };
 
   return { confirm, dialogProps } as const;

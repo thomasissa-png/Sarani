@@ -213,9 +213,10 @@ LinkedIn post requirements:
 - hook: 1 attention-grabbing line that stops the scroll. MUST be FACTUAL — a specific scene, client name, deadline, or number. NEVER philosophical/abstract. A small, clever observation is welcome. Example: "Boulanger's seasonal window opened in 5 days. Bose brief landed on Monday. No pressure."
 - body: 2-4 lines telling the story, grounded in real results. Be concise — every word earns its place.
 - proofPoints: key stats as bullet points (→ prefix). MUST include:
-  → Delivery turnaround (e.g., "Delivered in [X] days") — Sophie's #1 metric. Use [X] if unknown.
-  → Fixed price WITH volume context (e.g., "€1,080 for [X] banner formats") — never price alone. Use [X] if unknown.
-  → A verifiable quality fact: "Approved on first submission", "Zero revision disputes", or a real client quote. NEVER unsourced scores like "100/100".
+  → Delivery turnaround (e.g., "Delivered in 48 hours") — use [turnaround] if unknown
+  → Fixed price WITH volume context (e.g., "€1,080 for 12 banner formats") — use the real amount from the data if available
+  → A verifiable quality fact: "Approved on first submission", "5,700 slides", "300+ videos/month"
+  Placeholders like [turnaround] are OK for missing data — the PM will fill them in. But the REST of the post must be EXCELLENT.
 - hashtags: leave EMPTY string — Sarani does not use hashtags on LinkedIn posts
 - charCount: actual character count of hook + body + proofPoints combined
 - visualTitle: the BIG BOLD title for the LinkedIn visual card image (2-4 WORDS MAX, 30 chars max). This is the dominant text on the visual — like a poster headline. Think magazine cover, not sentence. Examples: "I RUN STORE", "BLACK FRIDAY", "BRAND REBOOT", "350 SLIDES", "GAMING SHOWCASE". Use the project name, deliverable type, or a key number. NEVER a full sentence. NEVER more than 4 words.
@@ -238,13 +239,15 @@ GLOBAL CLOSING RULES:
 - NEVER use "Start a project → sarani.studio" as a post closing. That URL belongs in the LinkedIn profile bio, not in posts.
 - NEVER end two consecutive posts with the same closing type.
 - A post that needs a sales line at the end is a post where the results didn't speak loudly enough. Fix the body, not the closing.
-- If the post data is incomplete (missing turnaround, volume), use [X] placeholders — the PM will fill them in during review.
+- If the post data is incomplete (missing turnaround, volume), use descriptive placeholders like [turnaround] or [volume]. The PM will fill them in during review.
 
-CRITICAL — ALWAYS WRITE THE POST:
+CRITICAL — ALWAYS WRITE A COMPELLING POST:
 - You MUST always produce a complete, publishable LinkedIn post. NEVER refuse to write. NEVER write meta-commentary about the data being insufficient. NEVER write a post about why you can't write a post.
+- NEVER write about Sarani's process ("we're holding this back", "data is being verified", "stays in the vault"). The post is about the CLIENT and the WORK, not about Sarani's internal standards.
+- The post must make the reader think "great work" — not "they're making excuses".
 - If data is thin (small amount, no turnaround, few assets), focus on the CLIENT NAME and DELIVERABLE TYPE — that alone is worth posting about. A €70 project for Adidas is still a post about working with Adidas.
-- Small projects are fine. Not every post needs dramatic metrics. A short, confident 3-line post about a quick deliverable is better than a 10-line explanation of why the data is insufficient.
-- Use [X] placeholders for missing metrics and move on. The PM will fill them in.
+- Small projects are fine. Not every post needs dramatic metrics. A short, confident 3-line post about a quick deliverable is better than one padded with unknown metrics.
+- Placeholders like [turnaround] for missing data are OK — the PM fills them in. But the POST ITSELF must be compelling, well-written, and publishable aside from the placeholders.
 
 RULES:
 - NEVER invent data. Only use facts from the project data and case study.

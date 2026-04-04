@@ -839,19 +839,35 @@ export default function ClosuresPage() {
             setGeneratingMessage(progressMessages[msgIdx]);
           }, 8000);
           try {
-            const genRes = await fetch(`/api/admin/case-studies/candidates/${closureId}/generate`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ force: true }),
-            });
-            if (!genRes.ok) {
-              const errData = await genRes.json().catch(() => ({}));
-              throw new Error(errData?.error ?? `Generation failed (${genRes.status})`);
+            // Generation takes 30-60s. On mobile, switching tabs may abort the fetch.
+            // The server continues regardless — we just need to handle the abort gracefully.
+            let genOk = false;
+            try {
+              const genRes = await fetch(`/api/admin/case-studies/candidates/${closureId}/generate`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ force: true }),
+              });
+              if (!genRes.ok) {
+                const errData = await genRes.json().catch(() => ({}));
+                throw new Error(errData?.error ?? `Generation failed (${genRes.status})`);
+              }
+              genOk = true;
+            } catch (fetchErr) {
+              // If aborted (mobile tab switch, network change), server still runs.
+              // Don't show error — refresh to check status.
+              const msg = fetchErr instanceof Error ? fetchErr.message : "";
+              if (msg.includes("Load failed") || msg.includes("AbortError") || msg.includes("network")) {
+                setToast({ type: "success", message: "Generation in progress. Refreshing..." });
+              } else {
+                throw fetchErr;
+              }
             }
             await fetchClosures();
-            // Auto-expand to show the generated content immediately
-            setExpandedId(closureId);
-            await fetchOutputs(closureId, true);
+            if (genOk) {
+              setExpandedId(closureId);
+              await fetchOutputs(closureId, true);
+            }
           } finally {
             clearInterval(msgInterval);
             setGeneratingMessage(null);

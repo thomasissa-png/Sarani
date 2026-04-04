@@ -221,15 +221,26 @@ export async function autoSelectVisuals(
     imageItems = items.filter(isImageFile);
   }
 
-  // 4. Filter by size and sort
+  // 4. Filter by size and sort — sort by most recent first (lastModifiedDateTime), then by size
   const filteredImages = imageItems
     .filter((item) => item.size >= MIN_FILE_SIZE_BYTES)
     .filter((item) => item.size <= MAX_FILE_SIZE_BYTES)
-    .sort((a, b) => b.size - a.size); // Largest first = highest quality finals
+    .sort((a, b) => {
+      // Prefer most recent files (deliverables are typically the newest)
+      const dateA = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+      const dateB = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+      if (dateB !== dateA) return dateB - dateA;
+      return b.size - a.size; // Tiebreaker: largest first
+    });
+
+  console.log(
+    `[auto-select-visuals] ${imageItems.length} images found, ${filteredImages.length} after size filter (${MIN_FILE_SIZE_BYTES/1024}KB-${MAX_FILE_SIZE_BYTES/(1024*1024)}MB)`
+  );
 
   if (filteredImages.length === 0) {
     console.warn(
-      "[auto-select-visuals] No suitable images found in folder"
+      "[auto-select-visuals] No suitable images found in folder. Image sizes:",
+      imageItems.slice(0, 5).map((i) => `${i.name}: ${(i.size/1024).toFixed(0)}KB`).join(", ")
     );
     return { allImages: [], source: "auto" };
   }
