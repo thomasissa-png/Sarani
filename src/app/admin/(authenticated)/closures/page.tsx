@@ -462,35 +462,31 @@ export default function ClosuresPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
   const [outputs, setOutputs] = useState<Record<string, { caseStudy: CaseStudyOutputData | null; linkedInPost: LinkedInOutputData | null; nurturingEmail: NurturingEmailOutputData | null; linkedInVisual: LinkedInVisualMeta | null; sharePointFolderUrl?: string | null }>>({});
-  const [editingOutputId, setEditingOutputId] = useState<string | null>(null);
+  const [editingSections, setEditingSections] = useState<Set<string>>(new Set());
   const [editDrafts, setEditDrafts] = useState<Record<string, Record<string, unknown>>>({});
   const [savingOutput, setSavingOutput] = useState<Set<string>>(new Set());
   const [publishingOutput, setPublishingOutput] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [visualErrors, setVisualErrors] = useState<Record<string, string | null>>({});
 
-  // ─── Output editing helpers ────────────────────────────────────────────────
+  // ─── Output editing helpers (per-section) ─────────────────────────────────
 
-  const startEditing = useCallback((closureId: string) => {
-    const o = outputs[closureId];
-    if (!o) return;
-    const drafts: Record<string, Record<string, unknown>> = {};
-    if (o.caseStudy) {
-      drafts[o.caseStudy.id] = { ...o.caseStudy.content };
-    }
-    if (o.linkedInPost) {
-      drafts[o.linkedInPost.id] = { ...o.linkedInPost.content };
-    }
-    if (o.nurturingEmail) {
-      drafts[o.nurturingEmail.id] = { ...o.nurturingEmail.content };
-    }
-    setEditDrafts(drafts);
-    setEditingOutputId(closureId);
-  }, [outputs]);
+  const startEditingSection = useCallback((outputId: string, content: Record<string, unknown>) => {
+    setEditDrafts((prev) => ({ ...prev, [outputId]: { ...content } }));
+    setEditingSections((prev) => new Set(prev).add(outputId));
+  }, []);
 
-  const cancelEditing = useCallback(() => {
-    setEditingOutputId(null);
-    setEditDrafts({});
+  const cancelEditingSection = useCallback((outputId: string) => {
+    setEditingSections((prev) => {
+      const next = new Set(prev);
+      next.delete(outputId);
+      return next;
+    });
+    setEditDrafts((prev) => {
+      const next = { ...prev };
+      delete next[outputId];
+      return next;
+    });
   }, []);
 
   const updateDraft = useCallback((outputId: string, field: string, value: unknown) => {
@@ -1141,36 +1137,16 @@ export default function ClosuresPage() {
                     {/* Generated content outputs */}
                     {closure.source === "candidate" && outputs[closure.id] && (() => {
                       const closureOutputs = outputs[closure.id];
-                      const isEditing = editingOutputId === closure.id;
                       const cs = closureOutputs.caseStudy;
                       const li = closureOutputs.linkedInPost;
                       const ne = closureOutputs.nurturingEmail;
                       return (
                       <div className="space-y-4 mb-4">
-                        {/* Edit / Cancel toggle */}
-                        <div className="flex items-center gap-2">
-                          {!isEditing ? (
-                            <button
-                              type="button"
-                              onClick={() => startEditing(closure.id)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
-                            >
-                              Edit outputs
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={cancelEditing}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
-                            >
-                              Cancel editing
-                            </button>
-                          )}
-                        </div>
 
                         {/* Case Study */}
                         {cs?.content && (() => {
-                          const draft = isEditing ? editDrafts[cs.id] : null;
+                          const isCsEditing = editingSections.has(cs.id);
+                          const draft = isCsEditing ? editDrafts[cs.id] : null;
                           const isPublished = !!cs.publishedAt;
                           return (
                           <div className="border border-neutral-200 rounded-lg p-4">
@@ -1179,14 +1155,31 @@ export default function ClosuresPage() {
                                 Case Study (Website)
                               </h3>
                               <div className="flex items-center gap-2">
-                                {isEditing && (
+                                {isCsEditing ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => saveDraft(cs.id, closure.id, "caseStudy")}
+                                      disabled={savingOutput.has(cs.id)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+                                    >
+                                      {savingOutput.has(cs.id) ? "Saving..." : "Save Draft"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => cancelEditingSection(cs.id)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                ) : (
                                   <button
                                     type="button"
-                                    onClick={() => saveDraft(cs.id, closure.id, "caseStudy")}
-                                    disabled={savingOutput.has(cs.id)}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+                                    onClick={() => startEditingSection(cs.id, cs.content)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-700 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
                                   >
-                                    {savingOutput.has(cs.id) ? "Saving..." : "Save Draft"}
+                                    Edit
                                   </button>
                                 )}
                                 {isPublished ? (
@@ -1362,7 +1355,8 @@ export default function ClosuresPage() {
 
                         {/* LinkedIn Post */}
                         {li?.content && (() => {
-                          const draft = isEditing ? editDrafts[li.id] : null;
+                          const isLiEditing = editingSections.has(li.id);
+                          const draft = isLiEditing ? editDrafts[li.id] : null;
                           const liContent = li.content;
                           return (
                           <div className="border border-blue-100 rounded-lg p-4 bg-blue-50/30">
@@ -1371,14 +1365,31 @@ export default function ClosuresPage() {
                                 LinkedIn Post
                               </h3>
                               <div className="flex items-center gap-2">
-                                {isEditing && (
+                                {isLiEditing ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => saveDraft(li.id, closure.id, "linkedInPost")}
+                                      disabled={savingOutput.has(li.id)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                                    >
+                                      {savingOutput.has(li.id) ? "Saving..." : "Save Draft"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => cancelEditingSection(li.id)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                ) : (
                                   <button
                                     type="button"
-                                    onClick={() => saveDraft(li.id, closure.id, "linkedInPost")}
-                                    disabled={savingOutput.has(li.id)}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 disabled:opacity-50 transition-colors"
+                                    onClick={() => startEditingSection(li.id, li.content)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-700 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
                                   >
-                                    {savingOutput.has(li.id) ? "Saving..." : "Save Draft"}
+                                    Edit
                                   </button>
                                 )}
                                 <button
@@ -1544,7 +1555,8 @@ export default function ClosuresPage() {
 
                         {/* Nurturing Email */}
                         {ne?.content && (() => {
-                          const draft = isEditing ? editDrafts[ne.id] : null;
+                          const isNeEditing = editingSections.has(ne.id);
+                          const draft = isNeEditing ? editDrafts[ne.id] : null;
                           const neContent = ne.content;
                           return (
                           <div className="border border-green-100 rounded-lg p-4 bg-green-50/30">
@@ -1553,14 +1565,31 @@ export default function ClosuresPage() {
                                 Email de nurturing
                               </h3>
                               <div className="flex items-center gap-2">
-                                {isEditing && (
+                                {isNeEditing ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => saveDraft(ne.id, closure.id, "nurturingEmail")}
+                                      disabled={savingOutput.has(ne.id)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+                                    >
+                                      {savingOutput.has(ne.id) ? "Saving..." : "Save Draft"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => cancelEditingSection(ne.id)}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-neutral-500 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                ) : (
                                   <button
                                     type="button"
-                                    onClick={() => saveDraft(ne.id, closure.id, "nurturingEmail")}
-                                    disabled={savingOutput.has(ne.id)}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 disabled:opacity-50 transition-colors"
+                                    onClick={() => startEditingSection(ne.id, ne.content)}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-green-700 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
                                   >
-                                    {savingOutput.has(ne.id) ? "Saving..." : "Save Draft"}
+                                    Edit
                                   </button>
                                 )}
                                 <button
