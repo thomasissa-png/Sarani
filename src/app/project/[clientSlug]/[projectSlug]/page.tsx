@@ -165,7 +165,7 @@ async function fetchAssetsByIds(
       grouped.get(folderName)!.push({
         name: item.name,
         itemId: item.id,
-        webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+        webUrl: item.webUrl,
         proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
         directUrl: isVideo ? item["@microsoft.graph.downloadUrl"] : undefined,
         mimeType: check.mimeType,
@@ -301,7 +301,7 @@ async function collectFilesRecursive(
         files.push({
           name: child.name,
           itemId: child.id,
-          webUrl: child["@microsoft.graph.downloadUrl"] ?? child.webUrl,
+          webUrl: child.webUrl,
           proxyUrl: `/api/project-assets/${child.id}?driveId=${encodeURIComponent(driveId)}`,
           directUrl: isVideo ? child["@microsoft.graph.downloadUrl"] : undefined,
           mimeType: check.mimeType,
@@ -365,7 +365,7 @@ async function fetchBatchesByFolderId(
         return {
           name: item.name,
           itemId: item.id,
-          webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+          webUrl: item.webUrl,
           proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(driveId)}`,
           directUrl: isVideo ? item["@microsoft.graph.downloadUrl"] : undefined,
           mimeType,
@@ -508,7 +508,7 @@ async function fetchBatches(
           return {
             name: item.name,
             itemId: item.id,
-            webUrl: item["@microsoft.graph.downloadUrl"] ?? item.webUrl,
+            webUrl: item.webUrl,
             proxyUrl: `/api/project-assets/${item.id}?driveId=${encodeURIComponent(SHAREPOINT_ASSETS_DRIVE_ID)}`,
             directUrl: isVideo ? item["@microsoft.graph.downloadUrl"] : undefined,
             mimeType,
@@ -844,42 +844,28 @@ export default async function ProjectPreviewPage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* Video Players — use directUrl (pre-signed SharePoint URL) instead of proxy.
-                      Proxying video through Next.js API routes is unreliable on Replit:
-                      timeouts on large files, worker killed mid-stream, body size limits.
-                      The directUrl expires after ~1h but the page SSR revalidates every 300s. */}
+                  {/* Video Players — always use proxy URL for reliable playback.
+                      The proxy streams video via /api/project-assets/[id] with Range support,
+                      correct MIME types, and CORS headers. Direct SharePoint URLs expire after
+                      ~1h and are cross-origin with no CORS — unreliable for client-facing pages. */}
                   {batchVideos.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       {batchVideos.map((item) => (
                         <div key={item.itemId} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-                          {item.directUrl ? (
-                            <video
-                              controls
-                              preload="metadata"
-                              className="w-full aspect-video bg-black"
-                              playsInline
-                              src={item.directUrl}
-                            >
-                              Your browser does not support video playback.
-                            </video>
-                          ) : (
-                            /* Fallback to proxy if directUrl is missing (shouldn't happen but safe) */
-                            <video
-                              controls
-                              preload="metadata"
-                              className="w-full aspect-video bg-black"
-                              playsInline
-                            >
-                              <source src={item.proxyUrl} type={item.mimeType} />
-                              Your browser does not support video playback.
-                            </video>
-                          )}
+                          <video
+                            controls
+                            preload="metadata"
+                            className="w-full aspect-video bg-black"
+                            playsInline
+                          >
+                            <source src={item.proxyUrl} type={item.mimeType} />
+                            Your browser does not support video playback.
+                          </video>
                           <div className="px-3 py-2 flex items-center justify-between">
                             <span className="text-xs text-white/60 truncate">{item.name.replace(/\.[^.]+$/, "")}</span>
                             <a
-                              href={item.directUrl || item.proxyUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              href={item.proxyUrl}
+                              download={item.name}
                               aria-label={`Download ${item.name}`}
                               className="text-xs text-white/40 hover:text-white/70 transition-colors shrink-0 ml-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame rounded"
                             >
@@ -891,13 +877,13 @@ export default async function ProjectPreviewPage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* PDF Links */}
+                  {/* PDF Links — open in new tab via proxy with inline Content-Disposition */}
                   {batchPdfs.length > 0 && (
                     <div className="space-y-2">
                       {batchPdfs.map((item) => (
                         <a
-                          key={item.webUrl}
-                          href={item.webUrl}
+                          key={item.itemId || item.name}
+                          href={`${item.proxyUrl}&inline=1`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 hover:bg-white/10 transition-all min-h-[44px]"

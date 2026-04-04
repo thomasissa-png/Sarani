@@ -91,14 +91,43 @@ export async function GET(
       }
     }
 
-    // For non-video assets, 302 redirect is fine (images, PDFs)
-    if (!isVideo) {
+    // For PDFs with ?inline=1: stream through proxy with Content-Disposition: inline
+    // so the browser opens the PDF in a new tab instead of downloading it.
+    const wantInline = request.nextUrl.searchParams.get("inline") === "1";
+    const isPdf = mimeType === "application/pdf" || (item.name?.toLowerCase().endsWith(".pdf") ?? false);
+
+    if (!isVideo && !(isPdf && wantInline)) {
+      // For images and PDFs without inline flag: 302 redirect is fine
       return NextResponse.redirect(downloadUrl, {
         status: 302,
         headers: {
           "Cache-Control": "public, max-age=300, s-maxage=300",
         },
       });
+    }
+
+    // For PDFs with inline=1: fetch and serve with inline disposition
+    if (isPdf && wantInline) {
+      const upstream = await fetch(downloadUrl, {
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!upstream.ok) {
+        return NextResponse.json({ error: "Upstream fetch failed" }, { status: 502 });
+      }
+      const body = upstream.body ?? new ReadableStream({
+        async start(controller) {
+          const buffer = await upstream.arrayBuffer();
+          controller.enqueue(new Uint8Array(buffer));
+          controller.close();
+        },
+      });
+      const pdfHeaders = new Headers();
+      pdfHeaders.set("Content-Type", "application/pdf");
+      pdfHeaders.set("Content-Disposition", `inline; filename="${item.name ?? "document.pdf"}"`);
+      pdfHeaders.set("Cache-Control", "public, max-age=300, s-maxage=300");
+      const pdfContentLength = upstream.headers.get("Content-Length");
+      if (pdfContentLength) pdfHeaders.set("Content-Length", pdfContentLength);
+      return new NextResponse(body, { status: 200, headers: pdfHeaders });
     }
 
     console.log(`[Asset Proxy] Streaming video ${itemId} (${item.name}), mimeType=${mimeType}, size=${item.size}`);
