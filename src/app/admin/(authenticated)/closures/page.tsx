@@ -469,6 +469,16 @@ export default function ClosuresPage() {
   const [publishingOutput, setPublishingOutput] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [visualErrors, setVisualErrors] = useState<Record<string, string | null>>({});
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [generatingMessage, setGeneratingMessage] = useState<string | null>(null);
+
+  // ─── Toast auto-dismiss ────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // ─── Output editing helpers (per-section) ─────────────────────────────────
 
@@ -519,7 +529,7 @@ export default function ClosuresPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Save failed" }));
-        alert(`Save failed: ${err.error || res.statusText}`);
+        setToast({ type: "error", message: `Save failed: ${err.error || res.statusText}` });
         return;
       }
       const updated = await res.json();
@@ -534,7 +544,7 @@ export default function ClosuresPage() {
       // Exit edit mode for this section after successful save
       cancelEditingSection(outputId);
     } catch {
-      alert("Network error while saving draft.");
+      setToast({ type: "error", message: "Network error while saving draft." });
     } finally {
       setSavingOutput((prev) => {
         const next = new Set(prev);
@@ -557,7 +567,7 @@ export default function ClosuresPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Save failed" }));
-        alert(`Failed to save visuals: ${err.error || res.statusText}`);
+        setToast({ type: "error", message: `Failed to save visuals: ${err.error || res.statusText}` });
         return;
       }
       const updated = await res.json();
@@ -571,7 +581,7 @@ export default function ClosuresPage() {
         },
       }));
     } catch {
-      alert("Network error while saving visuals.");
+      setToast({ type: "error", message: "Network error while saving visuals." });
     }
   }, [outputs]);
 
@@ -584,7 +594,7 @@ export default function ClosuresPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Publish failed" }));
-        alert(`Publish failed: ${err.error || res.statusText}`);
+        setToast({ type: "error", message: `Publish failed: ${err.error || res.statusText}` });
         return;
       }
       const data = await res.json();
@@ -599,7 +609,7 @@ export default function ClosuresPage() {
         },
       }));
     } catch {
-      alert("Network error while publishing.");
+      setToast({ type: "error", message: "Network error while publishing." });
     } finally {
       setPublishingOutput((prev) => {
         const next = new Set(prev);
