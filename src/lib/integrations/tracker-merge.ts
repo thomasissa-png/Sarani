@@ -604,15 +604,22 @@ export function mergeData(
     const cleanedSheetName = sheetName
       .replace(/\s*-\s*(hors\s+\w+|internal|test|archive|old|template)\s*$/i, "")
       .trim();
-    const displayClient =
-      cleanedSheetName && cleanedSheetName.toLowerCase() !== ep.client.toLowerCase()
-        ? cleanedSheetName
-        : ep.client;
 
-    // Extract division (the part of the sheet name beyond the client name)
+    // Resolve canonical client name: ClickUp space mapping is the source of truth.
+    // Excel may use legacy names (e.g. "ByteDance" instead of "TikTok").
+    const canonicalClient = clickupTask
+      ? resolveTaskClientName(clickupTask)
+      : ep.client;
+
+    const displayClient =
+      cleanedSheetName && cleanedSheetName.toLowerCase() !== canonicalClient.toLowerCase()
+        ? cleanedSheetName
+        : canonicalClient;
+
+    // Extract division (the part of the sheet name beyond the canonical client name)
     const division =
-      sheetName && sheetName.toLowerCase() !== ep.client.toLowerCase()
-        ? sheetName.replace(new RegExp(`^${ep.client}\\s*`, "i"), "").trim() ||
+      sheetName && sheetName.toLowerCase() !== canonicalClient.toLowerCase()
+        ? sheetName.replace(new RegExp(`^${canonicalClient}\\s*`, "i"), "").trim() ||
           sheetName
         : undefined;
 
@@ -620,7 +627,7 @@ export function mergeData(
     const country = sheetName ? detectCountry(sheetName) : "Other";
 
     return {
-      client: ep.client,
+      client: canonicalClient,
       project: ep.project,
       date: ep.date,
       contact: ep.contact,
