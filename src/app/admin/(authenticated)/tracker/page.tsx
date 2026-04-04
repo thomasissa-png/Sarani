@@ -353,8 +353,10 @@ function TrackerContent() {
     }
     setError(null);
     try {
-      // Fetch tracker data — status is non-blocking (fetched separately)
-      const trackerRes = await fetch("/api/admin/integrations/tracker");
+      // Fetch tracker data with 15s timeout — prevents mobile hanging
+      const trackerRes = await fetch("/api/admin/integrations/tracker", {
+        signal: AbortSignal.timeout(15_000),
+      });
 
       if (!trackerRes.ok) {
         throw new Error(`Failed to fetch tracker data (${trackerRes.status})`);
@@ -381,9 +383,17 @@ function TrackerContent() {
         // Status is informational — ignore failures
       }
     } catch (err) {
+      const isTimeout = err instanceof DOMException && err.name === "TimeoutError";
+      const msg = isTimeout
+        ? "Server is loading data from ClickUp. This can take up to 30s on first load. Retrying..."
+        : err instanceof Error ? err.message : "Unknown error";
       // Only show error if we have NO data at all (neither from API nor from cache)
       if (!data) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(msg);
+        // Auto-retry once on timeout (server may have cached by now)
+        if (isTimeout) {
+          setTimeout(() => fetchData(), 3000);
+        }
       }
     } finally {
       setLoading(false);

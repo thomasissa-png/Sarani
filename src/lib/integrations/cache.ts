@@ -173,6 +173,8 @@ export async function fetchWithCache<T>(params: {
   source: CacheSource;
   ttlSeconds: number;
   fetcher: () => Promise<T>;
+  /** If true, always call the fetcher even if stale cache exists (used by "Sync now") */
+  forceRefresh?: boolean;
 }): Promise<{
   data: T;
   cached: boolean;
@@ -193,6 +195,24 @@ export async function fetchWithCache<T>(params: {
       data: cached.data,
       cached: true,
       stale: false,
+      fetchedAt: cached.fetchedAt,
+    };
+  }
+
+  // If stale cache exists AND not force-refreshed, return stale immediately
+  // and refresh in the background. This eliminates 30-60s cold start waits.
+  if (cached && cached.stale && !params.forceRefresh) {
+    // Fire-and-forget background refresh
+    params.fetcher().then(async (data) => {
+      try {
+        await writeCache(params.cacheKey, params.source, data, params.ttlSeconds);
+      } catch { /* ignore */ }
+    }).catch(() => { /* background refresh failed — stale data still served */ });
+
+    return {
+      data: cached.data,
+      cached: true,
+      stale: true,
       fetchedAt: cached.fetchedAt,
     };
   }

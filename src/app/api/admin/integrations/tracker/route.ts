@@ -378,7 +378,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // If force-refresh header is set, invalidate all tracker caches
+    // If force-refresh header is set, force a fresh fetch (don't serve stale)
     const forceRefresh = request.headers.get("x-force-refresh") === "true";
     if (forceRefresh) {
       // Invalidate per-file Excel caches + ClickUp + Evoliz
