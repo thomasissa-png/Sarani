@@ -9,8 +9,10 @@ import { eq, isNotNull, and, desc } from "drizzle-orm";
 import { type CaseStudyOutput } from "@/lib/case-studies/schemas";
 import { Button } from "@/components/ui/button";
 
-// ISR — revalidates every hour to pick up newly published case studies.
-export const revalidate = 3600;
+// Dynamic rendering — always fetch from DB to show newly published case studies
+// immediately. ISR revalidatePath is unreliable on Replit standalone output.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Case Studies — Real Results for Global Brands | Sarani",

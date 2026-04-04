@@ -16,9 +16,11 @@ import { CaseStudyCta } from "./cta";
 import { fetchCaseStudyGallery } from "@/lib/case-studies/fetch-gallery";
 import ImageLightbox from "@/components/ui/ImageLightbox";
 
-// ISR — revalidates every hour. DB-first for pipeline-generated case studies,
-// falls back to static data (redirects to /work/[slug]).
-export const revalidate = 3600;
+// Dynamic rendering — always fetch from DB for pipeline-generated case studies.
+// ISR revalidatePath is unreliable on Replit standalone output.
+// Falls back to static data (redirects to /work/[slug]).
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 /* ---------- Data fetching ---------- */
 
