@@ -785,7 +785,7 @@ export default function ProjectViewPage() {
         }
       }
 
-      const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+      const res = await fetch(url.toString());
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
         throw new Error(errData?.message || `HTTP ${res.status}`);
