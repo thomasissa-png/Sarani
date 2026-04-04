@@ -412,10 +412,67 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-03 (session 16)
+**Date et heure de clôture :** 2026-04-04 (session 17)
 
-**Résumé de la session (session 16) :**
-Session de correction des 4 bugs non fonctionnels en production identifiés par Thomas en fin de S15, suivie d'une refonte architecturale du folder matching. (1) Model name 404 : claude-sonnet-4-latest n'est PAS un alias Anthropic valide → revert à claude-sonnet-4-6-latest. (2) Video playback : ajout `<source type={mimeType}>` + timeout 60s + logging. (3) Folder matching : ajout normalize() + scoring bidirectionnel. (4) Thomas a pointé la vraie solution : utiliser le ClickUp list ID (déjà connu) pour lookup direct dans la config au lieu de fuzzy matching. Refonte complète : ajout subdivisions pour TOUS les clients (TikTok 21 divisions, Sony 3, Ubi 7, Aujan 3, PICO 2, Aristocrat 2, Bose, Lamarck, CMC) + getSubdivisionByListId() + clickupListId propagé dans tout le flow.
+**Résumé de la session (session 17) :**
+Session massive — pipeline case study complet (5 steps), UI back-office review, page publique, visuels LinkedIn auto-générés, extraction branding IA, fixes performance tracker. ~40 commits.
+
+**Travaux terminés cette session (S17) :**
+- [x] Pipeline case study 5 steps : Creative Strategy → Copywriter → Social → Auto-select visuels SP → Génération visuel LinkedIn (Satori)
+- [x] UI case study review : édition inline, Save Draft, Publish/Unpublish, Copy clipboard, Regenerate + instructions, compteur LinkedIn, Mark as Posted/Used
+- [x] Sélecteur photos SharePoint (VisualSelector) + auto-sélection step 4
+- [x] Visuel LinkedIn auto-généré (Satori 1200x1200, logos, titre 2-4 mots, photos asymétriques)
+- [x] Page publique /case-studies/[slug] + index + SEO (JSON-LD, OG, ISR 1h)
+- [x] revalidatePath sur publish/unpublish (refresh instantané)
+- [x] Protection unstar si case study publié
+- [x] "Pipeline failed" → "Generate Case Study" (UX améliorée)
+- [x] Prompts LinkedIn : 7 types de fermeture, pas de CTA systématique, pas de hashtags, visualTitle 2-4 mots, ton humble+confiant
+- [x] Prompts Copywriter : Formula 2, 40 mots challenge, 60 mots solution, pas de jargon DA
+- [x] Extract-branding endpoint : extraction auto couleurs/fonts/tone depuis PDFs SP via Claude vision
+- [x] Sync-branding enrichi : 12 clients, liens SP, industry, isEndClient, TVA notes
+- [x] Fix model 404 (claude-sonnet-4-6), pipeline timeout (15→60s), schema copywriter
+- [x] Fix TikTok SP mapping root cause (ClickUp SP link bypassait config lookup)
+- [x] Fix 3 IDs TikTok dupliqués + correction BRANDING_DATA
+- [x] Fix vidéo playback (lien direct SP au lieu du proxy)
+- [x] Fix GEODIS page vide (triple fallback)
+- [x] Fix publish/unpublish résilient (DB source de vérité, fichier statique best-effort)
+- [x] Perf tracker mobile : lazy-load ShareFolderModal, cache TTL x3, Cache-Control
+- [x] Audit timeout LLM : 4 routes corrigées (seo 120s, presentation 120s, rerun 120s, classify 20s)
+- [x] Propagation P0 CLAUDE.md : règles 24 (test live obligatoire) et 25 (identifiant unique > fuzzy)
+- [x] 5 reviews complètes (QA, UX, Design, IA, Sophie persona) + corrections groupées
+
+**Travaux en cours / à faire :**
+- **Extract-branding** : fonctionne pour la plupart des clients. TikTok/Sony PDFs très gros — range download implémenté, à re-tester
+- **Logos clients PNG** : seulement 6/13 dans public/ (Sony, IKEA, Bose, Adidas, TikTok, LEGO). Les 7 autres à télécharger depuis SP
+- **Vidéo playback** : fix appliqué (lien direct SP), à confirmer en live
+- **@ux + @design audits** : timeout cette session, à relancer si besoin
+- **Refactoring closures/page.tsx** : 1500+ lignes, à extraire en composants
+- **Pagination serveur tracker** : recommandé si >500 projets
+- **heroImage statique au publish** : découple Graph API du runtime public
+- **Email nurturing** : généré mais pas d'UI "Send" ni intégration Resend
+
+**Prochaines actions recommandées :**
+1. **Re-tester extract-branding** (PRIORITÉ 1) : redéployer et lancer POST /api/admin/clients/extract-branding
+2. **Télécharger les 7 logos clients manquants** (PRIORITÉ 2) : depuis SP vers public/
+3. **Tester pipeline case study end-to-end** (PRIORITÉ 3) : star un projet → générer → review → publish → vérifier page publique
+4. **Background refresh tracker** (PRIORITÉ 4) : cron interne pour pré-charger le cache, élimine les cold starts
+
+**Décisions de Thomas cette session :**
+- Pas de CTA systématique sur LinkedIn — 7 types de fermeture créatifs
+- Pas de hashtags sur LinkedIn
+- visualTitle = 2-4 mots style poster ("I RUN STORE"), pas une phrase
+- Ton humble + confiant, traits d'esprit bienvenus
+- Visuels LinkedIn auto-générés via Satori (0$, pas DALL-E)
+- Auto-sélection visuels SP + possibilité de changer via interface
+- Logo client éditable sur le visuel LinkedIn
+- Extract-branding via Claude vision sur les PDFs de charte SP
+
+**Branche de travail :** claude/extract-project-context-SOC9J
+
+**Commande de reprise suggérée :**
+```
+@orchestrator Mode reprise de session. Session 17. Branche : claude/extract-project-context-SOC9J. Pipeline case study 5 steps complet. Extract-branding à re-tester. 7 logos clients à télécharger. Vidéo à confirmer en live. Ne lance aucun agent avant mon feu vert.
+```
 
 **Travaux terminés cette session (S16) :**
 - [x] Model name fix : claude-sonnet-4-6-latest (pas claude-sonnet-4-latest)
