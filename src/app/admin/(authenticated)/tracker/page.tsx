@@ -219,8 +219,6 @@ function TrackerContent() {
   } | null>(null);
 
   // Filters — restored from URL params first, then localStorage (1h TTL), default to ClickUp-sourced projects only
-  const FILTER_STORAGE_KEY = "tracker-filters";
-  const FILTER_TTL_MS = 60 * 60 * 1000; // 1 hour
 
   const [search, setSearch] = useState(() => {
     const urlVal = searchParams.get("q");
@@ -398,14 +396,8 @@ function TrackerContent() {
     setRefreshing(true);
     setError(null);
     try {
-      // 1. Sync clients from ClickUp → DB
-      const syncRes = await fetch("/api/admin/integrations/sync-clients", {
-        method: "POST",
-      });
-      if (!syncRes.ok) {
-        const syncErr = await syncRes.json().catch(() => ({}));
-        throw new Error(syncErr.error || `Sync failed (${syncRes.status})`);
-      }
+      // 1. Sync clients from ClickUp → DB (fire-and-forget — don't block tracker refresh)
+      fetch("/api/admin/integrations/sync-clients", { method: "POST" }).catch(() => {});
 
       // 2. Fetch fresh tracker data (force-refresh invalidates cache) + status
       const [trackerRes, statusRes] = await Promise.all([
@@ -695,13 +687,14 @@ function TrackerContent() {
   // Share: open SharePoint folder browser modal (replaces old preview system)
 
   // Active filter count (for mobile badge)
+  // Active filter count — aligned with hasActiveFilters defaults
+  // "In progress" and "ClickUp" are defaults, not user-set filters
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (clientFilter !== "All") count++;
-    if (statusFilter !== "All") count++;
+    if (statusFilter !== "In progress") count++; // "In progress" is the default, not a filter
     if (invoiceFilter !== "All") count++;
-    // Country filter removed
-    if (sourceFilter !== "All") count++;
+    if (sourceFilter !== "ClickUp") count++; // "ClickUp" is the default, not a filter
     if (showStarredOnly) count++;
     return count;
   }, [clientFilter, statusFilter, invoiceFilter, sourceFilter, showStarredOnly]);
@@ -1376,6 +1369,22 @@ function TrackerContent() {
               </div>
               {/* Actions — compact text buttons */}
               <div className="flex items-center gap-1.5 pt-1">
+                {(() => {
+                  const tid = getStarId(p);
+                  const isStarred = starredIds.has(tid);
+                  return (
+                    <button
+                      onClick={(e) => handleStar(e, p)}
+                      disabled={starringId !== null}
+                      title={isStarred ? "Remove from case studies" : "Add to case studies"}
+                      className={`p-1.5 min-h-[44px] min-w-[44px] flex items-center justify-center rounded transition-colors ${isStarred ? "text-brand-lemon" : "text-neutral-400 hover:text-brand-lemon"}`}
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill={isStarred ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    </button>
+                  );
+                })()}
                 <Link
                   href={`/admin/quotes?client=${encodeURIComponent(p.client)}&project=${encodeURIComponent(p.project)}&contact=${encodeURIComponent(p.contact)}&amount=${p.totalValue ?? ""}&category=${encodeURIComponent(p.category)}`}
                   className="px-2 py-1 text-xs font-medium rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 hover:text-brand-black transition-colors"
