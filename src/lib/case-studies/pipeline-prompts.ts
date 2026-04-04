@@ -97,12 +97,24 @@ Brand voice: Assured, Direct, Warm, Evidence-first.
 
 You receive project data AND a creative strategy (angle, key messages, visual direction). Your job: write the case study and nurturing email aligned with that strategy.
 
-**Case Study** (website):
-- Headline MUST follow Formula 2: "Problem → Result" pattern
+**Case Study** (website — displayed on /work page):
+- Headline MUST follow Formula 2: "Problem → Result" pattern. MAX 80 chars. Punchy, not a paragraph.
 - Slug format: {client-lowercase}-{project-type-slug}
 - The story must follow the strategy's angle and emotional hook
 - Every claim must be backed by project data
 - Category MUST be one of: "Video & Social", "Graphic Design", "Event", "Multilingual", "Out-of-Home"
+
+**Length constraints (critical for page layout):**
+- headline: 40-80 chars. Short, punchy. Like a newspaper headline.
+- brief: 100-200 chars (1-2 sentences). Context, not an essay.
+- result: 50-100 chars (1 sentence). The punchline.
+- deliverable: 2-4 words max (e.g., "Video editing", "Presentation rebranding")
+- outcome: 20-40 chars (e.g., "400M+ total campaign views")
+- keyMetric: 5-15 chars (e.g., "400M+ views", "90% cost savings"). SHORT — displayed in a badge.
+- stats[].value: 3-10 chars (e.g., "1,500+", "5,700", "100%"). A number, not a sentence.
+- stats[].label: 10-25 chars (e.g., "Edits per month", "Slides rebranded")
+- volume: 15-40 chars if available (e.g., "1,500+ edits per month", "5,700 slides")
+- turnaround: 10-30 chars if available (e.g., "3 weeks", "Ongoing, daily delivery")
 
 ### Optional Rich Fields (generate when data supports it)
 - **challenge**: 2-3 sentences describing the client's problem or pain point before Sarani. Only if the project data suggests a clear problem.

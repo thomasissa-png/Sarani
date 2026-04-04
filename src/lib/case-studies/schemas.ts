@@ -11,21 +11,21 @@ const CaseStudyCategorySchema = z.enum([
 ]);
 
 const CaseStudyStatSchema = z.object({
-  label: z.string().min(1),
-  value: z.string().min(1),
+  label: z.string().min(1).max(30),
+  value: z.string().min(1).max(15),
 });
 
 export const CaseStudyOutputSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  client: z.string().min(1),
-  deliverable: z.string().min(1),
-  volume: z.string().optional().default(""),
-  turnaround: z.string().optional().default(""),
-  outcome: z.string().min(1),
-  brief: z.string().min(10),
-  result: z.string().min(10),
-  headline: z.string().min(5),
-  keyMetric: z.string().min(1),
+  client: z.string().min(1).max(50),
+  deliverable: z.string().min(1).max(60),
+  volume: z.string().max(50).optional().default(""),
+  turnaround: z.string().max(40).optional().default(""),
+  outcome: z.string().min(1).max(60),
+  brief: z.string().min(10).max(300),
+  result: z.string().min(10).max(150),
+  headline: z.string().min(5).max(100),
+  keyMetric: z.string().min(1).max(20),
   stats: z.tuple([CaseStudyStatSchema, CaseStudyStatSchema, CaseStudyStatSchema]),
   metaDescription: z.string().min(50).max(160),
   category: CaseStudyCategorySchema,

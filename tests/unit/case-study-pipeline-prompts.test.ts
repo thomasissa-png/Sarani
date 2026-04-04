@@ -115,7 +115,7 @@ const VALID_COPY_OUTPUT: CopyOutput = {
     turnaround: "D+1 per video",
     outcome: "60% cost reduction vs. in-house production",
     brief: "TikTok's marketing team needed to produce 1,500+ social video edits per month across 12 regional markets. Internal teams were overwhelmed, and traditional agencies quoted 2-week turnarounds per batch.",
-    result: "Sarani's 24/7 production team delivered consistently for 12 months — 18,000+ videos total — at $20/video. TikTok reduced creative production costs by 60% while increasing output volume by 300%.",
+    result: "18,000+ videos in 12 months at $20/video. 60% cost reduction, 300% output increase.",
     headline: "From overwhelmed to 1,500 videos/month: how TikTok scaled creative production globally",
     keyMetric: "1,500+ videos/month",
     stats: [
