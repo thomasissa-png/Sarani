@@ -789,11 +789,6 @@ export default async function ProjectPreviewPage({ params }: Props) {
                 <div key={batch.name}>
                   <h3 className="text-lg font-semibold mb-5 text-white/80 flex items-center gap-3">
                     {formatBatchName(batch.name)}
-                    {idx === 0 && batches.length > 1 && (
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-cerulean/15 text-brand-cerulean">
-                        Final delivery
-                      </span>
-                    )}
                   </h3>
 
                   {/* Image Grid — uniform cards with contained images */}
