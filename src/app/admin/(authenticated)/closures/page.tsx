@@ -48,9 +48,15 @@ interface CaseStudyOutputData {
   content: {
     title?: string;
     slug?: string;
+    client?: string;
+    deliverable?: string;
+    outcome?: string;
+    keyMetric?: string;
     subtitle?: string;
     heroHeadline?: string;
     headline?: string;
+    brief?: string;
+    result?: string;
     challenge?: string;
     approach?: string;
     results?: string;
@@ -804,6 +810,9 @@ export default function ClosuresPage() {
             throw new Error(errData?.error ?? `Generation failed (${genRes.status})`);
           }
           await fetchClosures();
+          // Auto-expand to show the generated content immediately
+          setExpandedId(closureId);
+          await fetchOutputs(closureId);
           return;
         }
 
@@ -903,10 +912,11 @@ export default function ClosuresPage() {
         </div>
       )}
 
-      {/* Closures list */}
-      {!loading && closures.length > 0 && (
-        <div className="space-y-4">
-          {closures.map((closure) => {
+      {/* Closures list — split into Published and To Validate sections */}
+      {!loading && closures.length > 0 && (() => {
+        const published = closures.filter((c) => c.status === "published");
+        const toValidate = closures.filter((c) => c.status !== "published");
+        const renderClosure = (closure: ClosureRecord) => {
             const starBadge = getStarStatusBadge(closure.starStatus);
             const isExpanded = expandedId === closure.id;
             const hasPipeline = closure.pipelineItems.length > 0;
@@ -1231,6 +1241,26 @@ export default function ClosuresPage() {
                                     <input type="text" value={(draft.heroHeadline as string) ?? ""} onChange={(e) => updateDraft(cs.id, "heroHeadline", e.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
                                   ) : (
                                     <p className="mt-1">{cs.content.heroHeadline}</p>
+                                  )}
+                                </div>
+                              )}
+                              {(cs.content.brief || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Brief :</span>
+                                  {draft ? (
+                                    <textarea value={(draft.brief as string) ?? ""} onChange={(e) => updateDraft(cs.id, "brief", e.target.value)} rows={3} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1 text-neutral-600">{cs.content.brief}</p>
+                                  )}
+                                </div>
+                              )}
+                              {(cs.content.result || draft) && (
+                                <div>
+                                  <span className="font-medium text-neutral-900">Result :</span>
+                                  {draft ? (
+                                    <textarea value={(draft.result as string) ?? ""} onChange={(e) => updateDraft(cs.id, "result", e.target.value)} rows={3} className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-sm focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500" />
+                                  ) : (
+                                    <p className="mt-1 text-neutral-600">{cs.content.result}</p>
                                   )}
                                 </div>
                               )}
@@ -1649,9 +1679,36 @@ export default function ClosuresPage() {
                 )}
               </div>
             );
-          })}
-        </div>
-      )}
+          };
+          return (
+            <div className="space-y-8">
+              {/* Published section */}
+              {published.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold text-neutral-800 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-green-500" />
+                    Published ({published.length})
+                  </h2>
+                  <div className="space-y-4">
+                    {published.map(renderClosure)}
+                  </div>
+                </div>
+              )}
+              {/* To validate section */}
+              {toValidate.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold text-neutral-800 mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    To validate ({toValidate.length})
+                  </h2>
+                  <div className="space-y-4">
+                    {toValidate.map(renderClosure)}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
       {/* Close Project Modal */}
       {showModal && (

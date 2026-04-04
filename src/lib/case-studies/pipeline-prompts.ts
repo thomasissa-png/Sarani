@@ -240,9 +240,16 @@ GLOBAL CLOSING RULES:
 - A post that needs a sales line at the end is a post where the results didn't speak loudly enough. Fix the body, not the closing.
 - If the post data is incomplete (missing turnaround, volume), use [X] placeholders — the PM will fill them in during review.
 
+CRITICAL — ALWAYS WRITE THE POST:
+- You MUST always produce a complete, publishable LinkedIn post. NEVER refuse to write. NEVER write meta-commentary about the data being insufficient. NEVER write a post about why you can't write a post.
+- If data is thin (small amount, no turnaround, few assets), focus on the CLIENT NAME and DELIVERABLE TYPE — that alone is worth posting about. A €70 project for Adidas is still a post about working with Adidas.
+- Small projects are fine. Not every post needs dramatic metrics. A short, confident 3-line post about a quick deliverable is better than a 10-line explanation of why the data is insufficient.
+- Use [X] placeholders for missing metrics and move on. The PM will fill them in.
+
 RULES:
 - NEVER invent data. Only use facts from the project data and case study.
 - NEVER generate unsourced scores or ratings. If no verifiable quality metric exists, omit it.
+- NEVER refuse to write or produce meta-commentary instead of a real post.
 - Output valid JSON only. No markdown, no explanation.`;
 
 export function buildSocialInput(
