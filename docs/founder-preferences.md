@@ -76,3 +76,13 @@
 - [S10] **Knowledge base par client/division/individu ET par membre d'équipe.** Arya connaît ses clients ET son équipe — style, forces, axes d'amélioration, préférences.
 - [S10] **L'audit par l'agent utilisateur est le meilleur test.** Arya qui audite son propre back-office détecte des gaps que @qa/@design/@ux ratent — perspective métier terrain.
 - [S10] **Les équipes IA doivent couvrir TOUTES les familles de projets** (vidéo, design, social, marketing, événementiel, traduction, présentation, juridique, email, publicité, identité, SEO). Thomas veut une review à 10/10 via gates spécifiques par type.
+
+## Contenu LinkedIn et case studies
+
+- [S17] **Pas de CTA commercial systématique sur LinkedIn.** 7 types de fermeture créatifs (Open Debate, Uncomfortable Observation, Experience Prompt, Quiet Teaser, Peer Acknowledgement, Provocation Without Resolution, Nothing/Strong Close). "Start a project → sarani.studio" va dans la bio LinkedIn, PAS dans les posts.
+- [S17] **Pas de hashtags sur les posts LinkedIn.** Thomas les trouve inutiles.
+- [S17] **Ton LinkedIn : sûr de nos forces mais humble.** Laisser les résultats parler. "We delivered X" OK. "We're the best at X" interdit. Traits d'esprit et wordplay bienvenus si naturels.
+- [S17] **Titre visuel LinkedIn = 2-4 mots style poster** ("I RUN STORE", "BLACK FRIDAY", "350 SLIDES"). Pas une phrase. Comme un titre de magazine.
+- [S17] **Visuels LinkedIn auto-générés via Satori (0$).** DALL-E écarté car impossible d'injecter des logos fidèles. Template : fond dark, pill Sarani + client, titre gros, 2-3 photos asymétriques.
+- [S17] **Auto-sélection visuels + possibilité de changer.** L'IA sélectionne les 3 meilleures images du dossier SP, Thomas peut les changer via l'interface.
+- [S17] **Logo client éditable.** Thomas veut pouvoir changer le logo client sur le visuel LinkedIn depuis l'interface.

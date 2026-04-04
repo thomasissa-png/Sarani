@@ -272,6 +272,8 @@ Si un agent a été interrompu par un timeout :
 
 25. **Identifiant unique > fuzzy matching.** Quand un identifiant unique existe dans les données (ClickUp list ID, SharePoint item ID, etc.), TOUJOURS l'utiliser pour le mapping au lieu de fuzzy-matcher des noms. Le fuzzy matching est un pis-aller en fallback, pas une solution. Avant de coder un algorithme de matching, vérifier : (1) existe-t-il un ID unique dans les données ? (2) existe-t-il déjà un mapping dans la config/business rules ? (3) seulement si non → fuzzy matching. Signalé comme P0 sur 1 projet — le fuzzy matching de dossiers SharePoint échouait sur les caractères spéciaux et les séparateurs, alors que le ClickUp list ID était déjà disponible.
 
+26. **Timeouts LLM calibrés sur maxTokens.** Un appel LLM avec `maxTokens > 2048` doit avoir un timeout >= 60s. Avec `maxTokens > 8192`, timeout >= 120s. Les timeouts de 15-25s causent des échecs systématiques en production. Signalé comme P0 sur 1 projet — pipeline case study échouait à chaque run avec "Request timed out" (15s pour un appel Sonnet à 2048 tokens).
+
 ## Protocole de test du framework
 
 Pour valider que les agents fonctionnent correctement ensemble, utiliser ce protocole sur un projet fictif ou réel :
