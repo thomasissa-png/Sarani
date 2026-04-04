@@ -844,7 +844,6 @@ export default async function ProjectPreviewPage({ params }: Props) {
                                   rel="noopener noreferrer"
                                   className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
                                   aria-label={`Download ${item.name}`}
-                                  onClick={(e) => e.stopPropagation()}
                                 >
                                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
