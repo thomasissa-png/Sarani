@@ -9,6 +9,7 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { graphFetch } from "@/lib/integrations/sharepoint";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -76,15 +77,27 @@ async function fetchImageAsDataUri(url: string): Promise<string | null> {
   // Already a data URI — pass through
   if (url.startsWith("data:")) return url;
 
-  // API proxy path (e.g. /api/project-assets/...) — fetch via localhost
-  if (url.startsWith("/api/")) {
+  // API proxy path (e.g. /api/project-assets/{itemId}?driveId={driveId})
+  // Resolve directly via Graph API instead of self-HTTP — avoids deadlock on
+  // single-worker Replit (server can't call itself during request processing).
+  if (url.startsWith("/api/project-assets/")) {
     try {
-      const port = process.env.PORT || "3000";
-      const internalUrl = `http://localhost:${port}${url}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15_000);
-      const res = await fetch(internalUrl, { signal: controller.signal });
-      clearTimeout(timeoutId);
+      const urlObj = new URL(url, "http://localhost");
+      const pathParts = urlObj.pathname.split("/");
+      const itemId = pathParts[pathParts.length - 1];
+      const driveId = urlObj.searchParams.get("driveId");
+      if (!itemId || !driveId) return null;
+
+      const item = await graphFetch<{
+        "@microsoft.graph.downloadUrl"?: string;
+      }>(`/drives/${driveId}/items/${itemId}`);
+
+      const downloadUrl = item["@microsoft.graph.downloadUrl"];
+      if (!downloadUrl) return null;
+
+      const res = await fetch(downloadUrl, {
+        signal: AbortSignal.timeout(15_000),
+      });
       if (!res.ok) return null;
       const arrayBuf = await res.arrayBuffer();
       const base64 = Buffer.from(arrayBuf).toString("base64");
