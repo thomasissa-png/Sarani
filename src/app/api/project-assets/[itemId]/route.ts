@@ -97,57 +97,17 @@ export async function GET(
       }
     }
 
-    // For PDFs with ?inline=1: stream through proxy with Content-Disposition: inline
-    // so the browser opens the PDF in a new tab instead of downloading it.
-    const wantInline = request.nextUrl.searchParams.get("inline") === "1";
-    const isPdf = mimeType === "application/pdf" || (item.name?.toLowerCase().endsWith(".pdf") ?? false);
-
-    if (!(isPdf && wantInline)) {
-      // For images, videos, and PDFs without inline flag: 302 redirect to fresh download URL.
-      // The browser follows the redirect and handles Range requests on the final URL.
-      // This avoids streaming through our server which is unreliable on Replit
-      // (timeouts on large files, worker killed mid-stream, body size limits).
-      return NextResponse.redirect(downloadUrl, {
-        status: 302,
-        headers: {
-          "Cache-Control": "public, max-age=300, s-maxage=300",
-        },
-      });
-    }
-
-    // For PDFs with inline=1: fetch and serve with inline disposition
-    if (isPdf && wantInline) {
-      const upstream = await fetch(downloadUrl, {
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (!upstream.ok) {
-        return NextResponse.json({ error: "Upstream fetch failed" }, { status: 502 });
-      }
-      const body = upstream.body ?? new ReadableStream({
-        async start(controller) {
-          const buffer = await upstream.arrayBuffer();
-          controller.enqueue(new Uint8Array(buffer));
-          controller.close();
-        },
-      });
-      const pdfHeaders = new Headers();
-      pdfHeaders.set("Content-Type", "application/pdf");
-      pdfHeaders.set("Content-Disposition", `inline; filename="${item.name ?? "document.pdf"}"`);
-      pdfHeaders.set("Cache-Control", "public, max-age=300, s-maxage=300");
-      const pdfContentLength = upstream.headers.get("Content-Length");
-      if (pdfContentLength) pdfHeaders.set("Content-Length", pdfContentLength);
-      return new NextResponse(body, { status: 200, headers: pdfHeaders });
-    }
-
-    // Video streaming code removed — 302 redirect handles all cases now.
-    // Streaming through Next.js API routes was unreliable on Replit:
-    // timeouts on large files, worker killed mid-stream, body size limits.
-    // The 302 redirect to SharePoint's pre-signed download URL works because:
-    // 1. Modern browsers follow 302 for <video> and handle Range requests on final URL
-    // 2. SharePoint download URLs support Range requests natively
-    // 3. No streaming through our server = no Replit worker limits
-
-    return NextResponse.json({ error: "Unexpected code path" }, { status: 500 });
+    // 302 redirect to fresh SharePoint download URL for ALL asset types.
+    // Browsers follow 302 for images, videos, and PDFs natively.
+    // For PDFs, the browser's built-in viewer opens them inline automatically
+    // when the Content-Type is application/pdf (which SharePoint sets correctly).
+    // Streaming through our server was unreliable on Replit (worker killed mid-stream).
+    return NextResponse.redirect(downloadUrl, {
+      status: 302,
+      headers: {
+        "Cache-Control": "public, max-age=300, s-maxage=300",
+      },
+    });
   } catch (error) {
     console.error(`[Asset Proxy] Error fetching item ${itemId}:`, error);
     return NextResponse.json({ error: "Failed to load asset" }, { status: 502 });

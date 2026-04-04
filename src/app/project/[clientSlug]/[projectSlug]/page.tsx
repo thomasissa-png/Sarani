@@ -905,7 +905,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
                       {batchPdfs.map((item) => (
                         <a
                           key={item.itemId || item.name}
-                          href={`${item.proxyUrl}&inline=1`}
+                          href={item.proxyUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 hover:bg-white/10 transition-all min-h-[44px]"

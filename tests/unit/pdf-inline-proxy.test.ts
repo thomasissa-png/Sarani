@@ -1,17 +1,15 @@
 // @vitest-environment node
 /**
- * Tests for PDF inline proxy feature.
+ * Tests for PDF proxy — 302 redirect behavior.
  *
- * WHY THIS FILE EXISTS:
- * PDFs on share pages now open in-browser (inline) instead of downloading.
- * The proxy route handles ?inline=1 by fetching the PDF from SharePoint and
- * serving it with Content-Disposition: inline. This test verifies:
- * 1. PDFs with ?inline=1 are streamed (not redirected)
- * 2. Content-Disposition is set to inline
- * 3. Content-Type is application/pdf
- * 4. PDFs without ?inline=1 still get 302 redirect
+ * PDFs (like all assets) are served via 302 redirect to the fresh
+ * SharePoint download URL. The browser's built-in PDF viewer opens
+ * them inline automatically when the Content-Type is application/pdf
+ * (which SharePoint sets correctly on the redirect target).
  *
- * REGRESSION: PDF inline viewing — new feature 2026-04-04
+ * Previously, PDFs with ?inline=1 were streamed through the proxy,
+ * but this caused HTTP 500 on Replit (worker killed mid-stream for
+ * large PDFs). Now all assets use 302 redirect uniformly.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -69,79 +67,38 @@ function graphPdfItem(name = "proposal.pdf") {
   };
 }
 
-describe("PDF proxy — inline mode (?inline=1)", () => {
-  it("streams PDF with Content-Disposition: inline when ?inline=1", async () => {
+describe("PDF proxy — 302 redirect (all PDFs)", () => {
+  it("redirects PDF with 302 to SharePoint download URL", async () => {
     mockGraphFetch.mockResolvedValueOnce(graphPdfItem("document.pdf"));
 
-    const pdfContent = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // %PDF magic bytes
-    fetchSpy.mockResolvedValueOnce(
-      new Response(pdfContent, {
-        status: 200,
-        headers: { "Content-Length": "4", "Content-Type": "application/pdf" },
-      })
-    );
-
-    const { request, params } = makeRequest("pdfItem", { inline: true });
+    const { request, params } = makeRequest("pdfItem");
     const response = await GET(request, { params });
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("Content-Type")).toBe("application/pdf");
-    expect(response.headers.get("Content-Disposition")).toContain("inline");
-    expect(response.headers.get("Content-Disposition")).toContain("document.pdf");
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe("https://sharepoint.com/download/file.pdf");
   });
 
-  it("forwards Content-Length from upstream for PDF inline", async () => {
-    mockGraphFetch.mockResolvedValueOnce(graphPdfItem());
-    fetchSpy.mockResolvedValueOnce(
-      new Response("fake-pdf", {
-        status: 200,
-        headers: { "Content-Length": "524288" },
-      })
-    );
+  it("redirects PDF even with ?inline=1 (streaming removed)", async () => {
+    mockGraphFetch.mockResolvedValueOnce(graphPdfItem("document.pdf"));
 
-    const { request, params } = makeRequest("pdfLenItem", { inline: true });
+    const { request, params } = makeRequest("pdfInlineItem", { inline: true });
     const response = await GET(request, { params });
 
-    expect(response.headers.get("Content-Length")).toBe("524288");
+    // ?inline=1 is now ignored — all assets get 302 redirect
+    expect(response.status).toBe(302);
   });
 
-  it("sets cache headers on inline PDF response", async () => {
+  it("sets cache headers on PDF redirect", async () => {
     mockGraphFetch.mockResolvedValueOnce(graphPdfItem());
-    fetchSpy.mockResolvedValueOnce(
-      new Response("fake-pdf", { status: 200, headers: { "Content-Length": "100" } })
-    );
 
-    const { request, params } = makeRequest("pdfCacheItem", { inline: true });
+    const { request, params } = makeRequest("pdfCacheItem");
     const response = await GET(request, { params });
 
-    expect(response.headers.get("Cache-Control")).toContain("public");
+    expect(response.status).toBe(302);
     expect(response.headers.get("Cache-Control")).toContain("max-age=300");
   });
 
-  it("returns 502 when upstream PDF fetch fails", async () => {
-    mockGraphFetch.mockResolvedValueOnce(graphPdfItem());
-    fetchSpy.mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
-
-    const { request, params } = makeRequest("pdfFailItem", { inline: true });
-    const response = await GET(request, { params });
-
-    expect(response.status).toBe(502);
-  });
-});
-
-describe("PDF proxy — without inline flag (regular behavior)", () => {
-  it("redirects PDF with 302 when no ?inline=1", async () => {
-    mockGraphFetch.mockResolvedValueOnce(graphPdfItem());
-
-    const { request, params } = makeRequest("pdfRedirectItem");
-    const response = await GET(request, { params });
-
-    expect(response.status).toBe(302);
-  });
-});
-
-describe("PDF proxy — extension-based detection", () => {
-  it("detects PDF by extension when mimeType is application/octet-stream", async () => {
+  it("redirects octet-stream PDF by extension", async () => {
     mockGraphFetch.mockResolvedValueOnce({
       "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/file",
       file: { mimeType: "application/octet-stream" },
@@ -149,32 +106,18 @@ describe("PDF proxy — extension-based detection", () => {
       size: 1024,
     });
 
-    // Without inline=1, PDF gets 302 redirect regardless
     const { request, params } = makeRequest("pdfOctetItem");
     const response = await GET(request, { params });
 
-    // application/octet-stream + .pdf extension → still not a video → 302 redirect
     expect(response.status).toBe(302);
   });
 
-  it("streams octet-stream PDF with ?inline=1 using extension detection", async () => {
-    mockGraphFetch.mockResolvedValueOnce({
-      "@microsoft.graph.downloadUrl": "https://sharepoint.com/download/file",
-      file: { mimeType: "application/octet-stream" },
-      name: "report.pdf",
-      size: 1024,
-    });
-    fetchSpy.mockResolvedValueOnce(
-      new Response("fake-pdf", { status: 200, headers: { "Content-Length": "1024" } })
-    );
+  it("returns 502 when Graph API fails", async () => {
+    mockGraphFetch.mockRejectedValueOnce(new Error("Graph API unavailable"));
 
-    const { request, params } = makeRequest("pdfOctetInlineItem", { inline: true });
+    const { request, params } = makeRequest("pdfErrorItem");
     const response = await GET(request, { params });
 
-    // The route checks: isPdf = mimeType === "application/pdf" || name.endsWith(".pdf")
-    // For octet-stream + .pdf name + inline=1, isPdf is true via extension check
-    expect(response.status).toBe(200);
-    expect(response.headers.get("Content-Type")).toBe("application/pdf");
-    expect(response.headers.get("Content-Disposition")).toContain("inline");
+    expect(response.status).toBe(502);
   });
 });

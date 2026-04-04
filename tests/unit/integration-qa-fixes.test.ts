@@ -151,7 +151,7 @@ describe("Bug 3: Video playback — proxy 302 redirect (streaming removed)", () 
     expect(pageCode).toContain("VIDEO_EXT_TO_MIME");
   });
 
-  it("proxy PDF inline timeout is 30 seconds (video streaming removed)", () => {
+  it("proxy uses 302 redirect for all assets including PDFs (no streaming)", () => {
     const routeCode = fs.readFileSync(
       path.resolve(
         __dirname,
@@ -159,9 +159,10 @@ describe("Bug 3: Video playback — proxy 302 redirect (streaming removed)", () 
       ),
       "utf-8"
     );
-    // Video streaming removed — no 60s timeout needed anymore
-    // PDF inline uses 30s timeout (the only streaming case left)
-    expect(routeCode).toContain("30_000");
+    // All assets use 302 redirect — no streaming through the server
+    expect(routeCode).toContain("NextResponse.redirect(downloadUrl");
+    // No streaming timeout needed
+    expect(routeCode).not.toContain("AbortSignal.timeout(30");
   });
 
   it("proxy uses 302 redirect for videos (no Range forwarding, no CORS — browser handles it)", () => {

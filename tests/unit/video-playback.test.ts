@@ -370,30 +370,23 @@ describe("Video proxy — 302 redirect behavior", () => {
 });
 
 /* ========================================================================== */
-/*  5. PDF inline streaming (the one streaming case that remains)              */
+/*  5. PDF redirect (streaming removed — all assets use 302)                   */
 /* ========================================================================== */
 
-describe("Video proxy — PDF inline streaming", () => {
-  it("streams PDF with ?inline=1 (status 200, Content-Disposition: inline)", async () => {
+describe("Video proxy — PDF 302 redirect", () => {
+  it("redirects PDF with 302 (inline streaming removed)", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "application/pdf", name: "proposal.pdf" })
-    );
-    fetchSpy.mockResolvedValueOnce(
-      new Response("pdf-content", {
-        status: 200,
-        headers: { "Content-Length": "12345" },
-      })
     );
 
     const { request, params } = makeRequest("pdfInline", { inline: true });
     const response = await GET(request, { params });
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get("Content-Type")).toBe("application/pdf");
-    expect(response.headers.get("Content-Disposition")).toContain("inline");
+    // ?inline=1 is now ignored — all assets get 302
+    expect(response.status).toBe(302);
   });
 
-  it("returns 302 for PDF WITHOUT ?inline=1", async () => {
+  it("redirects PDF without ?inline=1", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "application/pdf", name: "download.pdf" })
     );
@@ -436,32 +429,16 @@ describe("Video proxy — error handling", () => {
     expect(body.error).toBe("No download URL available");
   });
 
-  it("returns 502 when PDF inline upstream fetch fails", async () => {
+  it("redirects PDF even with ?inline=1 (no streaming)", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "application/pdf", name: "broken.pdf" })
     );
-    fetchSpy.mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
 
     const { request, params } = makeRequest("pdfFail", { inline: true });
     const response = await GET(request, { params });
 
-    expect(response.status).toBe(502);
-  });
-
-  it("returns 502 when PDF inline upstream fetch times out (AbortError)", async () => {
-    mockGraphFetch.mockResolvedValueOnce(
-      graphItem({ mimeType: "application/pdf", name: "slow.pdf" })
-    );
-    fetchSpy.mockRejectedValueOnce(
-      new DOMException("The operation was aborted", "AbortError")
-    );
-
-    const { request, params } = makeRequest("pdfTimeout", { inline: true });
-    const response = await GET(request, { params });
-
-    expect(response.status).toBe(502);
-    const body = await response.json();
-    expect(body.error).toBe("Failed to load asset");
+    // PDFs get 302 now — no streaming, no upstream fetch failure possible
+    expect(response.status).toBe(302);
   });
 });
 
@@ -600,18 +577,18 @@ describe("Share page — video element keys use itemId", () => {
 /*  11. Proxy route — timeout configuration                                    */
 /* ========================================================================== */
 
-describe("Video proxy — timeout configuration (static verification)", () => {
+describe("Video proxy — no streaming (static verification)", () => {
   const proxySource = fs.readFileSync(
     "/home/user/Sarani/src/app/api/project-assets/[itemId]/route.ts",
     "utf-8"
   );
 
-  it("uses AbortSignal.timeout for PDF inline fetch", () => {
-    expect(proxySource).toContain("AbortSignal.timeout");
+  it("uses 302 redirect for all assets (no streaming)", () => {
+    expect(proxySource).toContain("NextResponse.redirect(downloadUrl");
   });
 
-  it("PDF inline timeout is 30 seconds", () => {
-    expect(proxySource).toContain("30_000");
+  it("has rate limiting", () => {
+    expect(proxySource).toContain("checkRateLimit");
   });
 });
 
