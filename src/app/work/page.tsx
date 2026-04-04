@@ -3,9 +3,16 @@ import { Suspense } from "react";
 import { Section } from "@/components/layout/section";
 import { Button } from "@/components/ui/button";
 import { WorkGrid } from "@/components/case-studies/work-grid";
-import { getOrderedCaseStudies, getCategories } from "@/data/case-studies";
+import { getOrderedCaseStudies, getCategories, type CaseStudy } from "@/data/case-studies";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { BREADCRUMBS } from "@/lib/breadcrumb-jsonld";
+import { db } from "@/lib/db";
+import { caseStudyOutputs } from "@/lib/db/schema";
+import { eq, isNotNull, and, desc } from "drizzle-orm";
+
+// Dynamic rendering — include DB-published case studies immediately
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: "Work — Enterprise Creative at Scale | Sarani",
@@ -22,9 +29,39 @@ export const metadata: Metadata = {
   },
 };
 
-export default function WorkPage() {
-  const orderedStudies = getOrderedCaseStudies();
-  const categories = getCategories();
+export default async function WorkPage() {
+  const staticStudies = getOrderedCaseStudies();
+  const staticSlugs = new Set(staticStudies.map((s) => s.slug));
+
+  // Fetch DB-published case studies and merge (pipeline-generated)
+  let dbStudies: CaseStudy[] = [];
+  try {
+    const rows = await db
+      .select({ content: caseStudyOutputs.content })
+      .from(caseStudyOutputs)
+      .where(
+        and(
+          eq(caseStudyOutputs.outputType, "case_study"),
+          isNotNull(caseStudyOutputs.publishedAt)
+        )
+      )
+      .orderBy(desc(caseStudyOutputs.publishedAt));
+
+    dbStudies = rows
+      .map((r) => r.content as unknown as CaseStudy)
+      .filter((cs) => cs?.slug && !staticSlugs.has(cs.slug)); // Avoid duplicates
+  } catch (err) {
+    console.error("[work] DB query for published case studies failed:", err instanceof Error ? err.message : err);
+  }
+
+  // DB-published case studies appear first (newest), then static
+  const orderedStudies = [...dbStudies, ...staticStudies];
+  // Merge categories from both sources
+  const allCategories = new Set([
+    ...getCategories(),
+    ...dbStudies.map((cs) => cs.category).filter(Boolean),
+  ]);
+  const categories = Array.from(allCategories);
 
   return (
     <div className="pt-[var(--header-height)]">

@@ -10,11 +10,40 @@ import {
   getCaseStudyBySlug,
   getRelatedCaseStudies,
   getAdjacentCaseStudies,
+  type CaseStudy,
 } from "@/data/case-studies";
 import { BreadcrumbSchema } from "@/components/seo/breadcrumb-schema";
 import { workDetailBreadcrumb } from "@/lib/breadcrumb-jsonld";
 import { fetchCaseStudyGallery } from "@/lib/case-studies/fetch-gallery";
 import ImageLightbox from "@/components/ui/ImageLightbox";
+import { db } from "@/lib/db";
+import { caseStudyOutputs } from "@/lib/db/schema";
+import { eq, isNotNull, and } from "drizzle-orm";
+
+// Dynamic rendering — DB-published case studies need fresh data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+/** Fetch a published case study from DB by slug */
+async function fetchDbCaseStudy(slug: string): Promise<CaseStudy | null> {
+  try {
+    const [output] = await db
+      .select({ content: caseStudyOutputs.content })
+      .from(caseStudyOutputs)
+      .where(
+        and(
+          eq(caseStudyOutputs.caseStudySlug, slug),
+          eq(caseStudyOutputs.outputType, "case_study"),
+          isNotNull(caseStudyOutputs.publishedAt)
+        )
+      )
+      .limit(1);
+    if (!output) return null;
+    return output.content as unknown as CaseStudy;
+  } catch {
+    return null;
+  }
+}
 
 /* ---------- SSG ---------- */
 
@@ -30,7 +59,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const cs = getCaseStudyBySlug(slug);
+  const cs = getCaseStudyBySlug(slug) ?? await fetchDbCaseStudy(slug);
   if (!cs) return {};
 
   return {
@@ -52,7 +81,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function WorkCaseStudyPage({ params }: PageProps) {
   const { slug } = await params;
-  const cs = getCaseStudyBySlug(slug);
+  const cs = getCaseStudyBySlug(slug) ?? await fetchDbCaseStudy(slug);
   if (!cs) notFound();
 
   const related = getRelatedCaseStudies(slug);
