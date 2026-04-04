@@ -844,10 +844,11 @@ export default async function ProjectPreviewPage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* Video Players — always use proxy URL for reliable playback.
-                      The proxy streams video via /api/project-assets/[id] with Range support,
-                      correct MIME types, and CORS headers. Direct SharePoint URLs expire after
-                      ~1h and are cross-origin with no CORS — unreliable for client-facing pages. */}
+                  {/* Video Players — dual source strategy:
+                      1. directUrl (pre-signed SharePoint URL, valid ~1h, refreshed via SSR every 5min)
+                         → browser fetches directly from SharePoint CDN, no streaming through our server
+                      2. proxyUrl (our API route) as fallback if directUrl fails or expires
+                      Browser tries sources in order and falls back automatically. */}
                   {batchVideos.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       {batchVideos.map((item) => (
@@ -858,14 +859,18 @@ export default async function ProjectPreviewPage({ params }: Props) {
                             className="w-full aspect-video bg-black"
                             playsInline
                           >
+                            {item.directUrl && (
+                              <source src={item.directUrl} type={item.mimeType} />
+                            )}
                             <source src={item.proxyUrl} type={item.mimeType} />
                             Your browser does not support video playback.
                           </video>
                           <div className="px-3 py-2 flex items-center justify-between">
                             <span className="text-xs text-white/60 truncate">{item.name.replace(/\.[^.]+$/, "")}</span>
                             <a
-                              href={item.proxyUrl}
-                              download={item.name}
+                              href={item.directUrl || item.proxyUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               aria-label={`Download ${item.name}`}
                               className="text-xs text-white/40 hover:text-white/70 transition-colors shrink-0 ml-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-flame rounded"
                             >

@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { graphFetch } from "@/lib/integrations/sharepoint";
 import { SHAREPOINT_ASSETS_DRIVE_ID } from "@/lib/integrations/config";
 
-/** MIME types that require streaming proxy (302 redirect breaks range requests). */
-const STREAM_MIMETYPES = new Set([
+/** Video MIME types — used only for mimeType detection fallback (extension-based). */
+const VIDEO_MIMETYPES = new Set([
   "video/mp4",
   "video/quicktime",
   "video/webm",
@@ -42,9 +42,9 @@ const VIDEO_EXT_TO_MIME: Record<string, string> = {
  * This endpoint re-fetches it on demand so presentation pages
  * always serve fresh image/video URLs.
  *
- * - Images/PDFs: 302 redirect to the download URL (fast, cacheable).
- * - Videos: streaming proxy that forwards the response body + supports
- *   Range requests (required by HTML5 video players for seek/play).
+ * - All assets (images, videos, PDFs): 302 redirect to the fresh download URL.
+ *   Browsers follow the redirect and handle Range requests on the final URL.
+ * - PDFs with ?inline=1: streamed through proxy with Content-Disposition: inline.
  */
 export async function GET(
   request: NextRequest,
@@ -74,7 +74,7 @@ export async function GET(
     }
 
     let mimeType = item.file?.mimeType ?? "";
-    let isVideo = STREAM_MIMETYPES.has(mimeType);
+    let isVideo = VIDEO_MIMETYPES.has(mimeType);
 
     // REGRESSION FIX: SharePoint often returns "application/octet-stream" for
     // video files (especially when uploaded via sync/API). Without this fallback,
@@ -96,8 +96,11 @@ export async function GET(
     const wantInline = request.nextUrl.searchParams.get("inline") === "1";
     const isPdf = mimeType === "application/pdf" || (item.name?.toLowerCase().endsWith(".pdf") ?? false);
 
-    if (!isVideo && !(isPdf && wantInline)) {
-      // For images and PDFs without inline flag: 302 redirect is fine
+    if (!(isPdf && wantInline)) {
+      // For images, videos, and PDFs without inline flag: 302 redirect to fresh download URL.
+      // The browser follows the redirect and handles Range requests on the final URL.
+      // This avoids streaming through our server which is unreliable on Replit
+      // (timeouts on large files, worker killed mid-stream, body size limits).
       return NextResponse.redirect(downloadUrl, {
         status: 302,
         headers: {
@@ -130,58 +133,15 @@ export async function GET(
       return new NextResponse(body, { status: 200, headers: pdfHeaders });
     }
 
-    console.log(`[Asset Proxy] Streaming video ${itemId} (${item.name}), mimeType=${mimeType}, size=${item.size}`);
+    // Video streaming code removed — 302 redirect handles all cases now.
+    // Streaming through Next.js API routes was unreliable on Replit:
+    // timeouts on large files, worker killed mid-stream, body size limits.
+    // The 302 redirect to SharePoint's pre-signed download URL works because:
+    // 1. Modern browsers follow 302 for <video> and handle Range requests on final URL
+    // 2. SharePoint download URLs support Range requests natively
+    // 3. No streaming through our server = no Replit worker limits
 
-
-    // For video: stream through the proxy to support Range requests.
-    // Forward the Range header from the client to SharePoint.
-    const fetchHeaders: Record<string, string> = {};
-    const rangeHeader = request.headers.get("Range");
-    if (rangeHeader) {
-      fetchHeaders["Range"] = rangeHeader;
-    }
-
-    const upstream = await fetch(downloadUrl, {
-      headers: fetchHeaders,
-      signal: AbortSignal.timeout(60_000),
-    });
-
-    if (!upstream.ok && upstream.status !== 206) {
-      console.error(`[Asset Proxy] Upstream returned ${upstream.status} for item ${itemId} (${item.name})`);
-      return NextResponse.json({ error: "Upstream fetch failed" }, { status: 502 });
-    }
-
-    // Build response headers
-    const responseHeaders = new Headers();
-    responseHeaders.set("Content-Type", mimeType);
-    responseHeaders.set("Accept-Ranges", "bytes");
-    responseHeaders.set("Cache-Control", "public, max-age=300, s-maxage=300");
-    responseHeaders.set("Access-Control-Allow-Origin", "*");
-    responseHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
-
-    // Forward content-length and content-range from upstream
-    const contentLength = upstream.headers.get("Content-Length");
-    if (contentLength) {
-      responseHeaders.set("Content-Length", contentLength);
-    }
-    const contentRange = upstream.headers.get("Content-Range");
-    if (contentRange) {
-      responseHeaders.set("Content-Range", contentRange);
-    }
-
-    // Ensure the body stream is available — fallback to arrayBuffer if stream is null
-    const body = upstream.body ?? new ReadableStream({
-      async start(controller) {
-        const buffer = await upstream.arrayBuffer();
-        controller.enqueue(new Uint8Array(buffer));
-        controller.close();
-      },
-    });
-
-    return new NextResponse(body, {
-      status: upstream.status, // 200 or 206
-      headers: responseHeaders,
-    });
+    return NextResponse.json({ error: "Unexpected code path" }, { status: 500 });
   } catch (error) {
     console.error(`[Asset Proxy] Error fetching item ${itemId}:`, error);
     return NextResponse.json({ error: "Failed to load asset" }, { status: 502 });
