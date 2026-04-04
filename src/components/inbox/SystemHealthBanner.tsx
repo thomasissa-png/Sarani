@@ -5,6 +5,7 @@
 // Hidden when everything is healthy.
 
 import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
 
 interface HealthCheck {
   ok: boolean;
@@ -13,6 +14,7 @@ interface HealthCheck {
 
 interface HealthResponse {
   status: "healthy" | "degraded" | "down";
+  schedulerRunning: boolean;
   checks: {
     cronPollEmails: HealthCheck;
     cronScanKnowledge: HealthCheck;
@@ -60,9 +62,18 @@ export function SystemHealthBanner() {
 
   // Build alert message from failing checks
   const issues: string[] = [];
-  if (!health.checks.cronPollEmails.ok) {
-    const lastRun = formatTimeAgo(health.checks.cronPollEmails.lastRun);
-    issues.push(`Email polling is not running (last check: ${lastRun})`);
+
+  // If scheduler is not running at all, that's the root cause — don't spam individual cron alerts
+  if (!health.schedulerRunning) {
+    issues.push("Scheduler is starting up — crons will resume shortly");
+  } else {
+    if (!health.checks.cronPollEmails.ok) {
+      const lastRun = formatTimeAgo(health.checks.cronPollEmails.lastRun);
+      issues.push(`Email polling is not running (last run: ${lastRun})`);
+    }
+    if (!health.checks.cronScanKnowledge.ok) {
+      issues.push("Knowledge scan cron may be stalled");
+    }
   }
   if (!health.checks.emailApi.ok) {
     issues.push("Email API (Microsoft Graph) is unreachable");
@@ -70,24 +81,29 @@ export function SystemHealthBanner() {
   if (!health.checks.clickupApi.ok) {
     issues.push("ClickUp API is unreachable");
   }
-  if (!health.checks.cronScanKnowledge.ok) {
-    issues.push("Knowledge scan cron may be stalled");
-  }
 
   if (issues.length === 0) return null;
 
+  // If the only issue is scheduler starting up, show an info banner instead of error
+  const isStartingUp = issues.length === 1 && !health.schedulerRunning;
+
   return (
     <div
-      className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700"
+      className={cn(
+        "border rounded-lg px-4 py-3 text-sm",
+        isStartingUp
+          ? "bg-amber-50 border-amber-200 text-amber-700"
+          : "bg-red-50 border-red-200 text-red-700",
+      )}
       role="alert"
     >
       <p className="font-semibold flex items-center gap-1.5">
-        <span aria-hidden="true">&#9888;&#65039;</span>
-        System alert
+        <span aria-hidden="true">{isStartingUp ? "\u23F3" : "\u26A0\uFE0F"}</span>
+        {isStartingUp ? "Starting up" : "System alert"}
       </p>
       <ul className="mt-1 space-y-0.5">
         {issues.map((issue) => (
-          <li key={issue}>{issue}. New emails may not appear. Contact Thomas.</li>
+          <li key={issue}>{issue}</li>
         ))}
       </ul>
     </div>

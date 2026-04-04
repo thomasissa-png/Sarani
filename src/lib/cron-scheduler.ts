@@ -47,6 +47,13 @@ const jobs: CronJob[] = [
     lastRun: 0,
     running: false,
   },
+  {
+    name: "keep-alive",
+    path: "/api/admin/health",
+    intervalMs: 4 * 60 * 1000, // every 4 minutes — prevents Replit sleep (5min idle threshold)
+    lastRun: 0,
+    running: false,
+  },
   // deadline-alerts REMOVED — DueTodayBanner already shows due projects.
   // Thomas explicitly asked to remove these individual alerts from the inbox (regression).
   {
@@ -57,6 +64,17 @@ const jobs: CronJob[] = [
     running: false,
   },
 ];
+
+// ─── Heartbeat recorder ────────────────────────────────────────────────────
+
+function recordHeartbeat(name: string, status: "ok" | "error"): void {
+  const prev = heartbeats[name];
+  heartbeats[name] = {
+    lastRun: Date.now(),
+    lastStatus: status,
+    consecutiveErrors: status === "error" ? (prev?.consecutiveErrors ?? 0) + 1 : 0,
+  };
+}
 
 // ─── Runner ─────────────────────────────────────────────────────────────────
 
@@ -80,15 +98,18 @@ async function runJob(job: CronJob): Promise<void> {
 
     if (!response.ok) {
       console.error(`[Cron] ${job.name} failed: ${response.status}`);
+      recordHeartbeat(job.name, "error");
     } else {
       const data = await response.json().catch(() => ({}));
       console.log(`[Cron] ${job.name} OK:`, JSON.stringify(data).slice(0, 200));
+      recordHeartbeat(job.name, "ok");
     }
   } catch (error) {
     console.error(
       `[Cron] ${job.name} error:`,
       error instanceof Error ? error.message : "Unknown"
     );
+    recordHeartbeat(job.name, "error");
   } finally {
     job.running = false;
   }
@@ -98,6 +119,36 @@ async function runJob(job: CronJob): Promise<void> {
 
 let started = false;
 let intervalId: ReturnType<typeof setInterval> | null = null;
+
+// ─── Heartbeat (in-memory) ─────────────────────────────────────────────────
+// Exposed to health check via getCronHeartbeats().
+
+interface CronHeartbeat {
+  lastRun: number;       // timestamp ms
+  lastStatus: "ok" | "error";
+  consecutiveErrors: number;
+}
+
+const heartbeats: Record<string, CronHeartbeat> = {};
+
+/** Returns heartbeat data for all jobs. Used by /api/admin/health. */
+export function getCronHeartbeats(): Record<string, CronHeartbeat & { intervalMs: number }> {
+  const result: Record<string, CronHeartbeat & { intervalMs: number }> = {};
+  for (const job of jobs) {
+    result[job.name] = {
+      lastRun: heartbeats[job.name]?.lastRun ?? 0,
+      lastStatus: heartbeats[job.name]?.lastStatus ?? "ok",
+      consecutiveErrors: heartbeats[job.name]?.consecutiveErrors ?? 0,
+      intervalMs: job.intervalMs,
+    };
+  }
+  return result;
+}
+
+/** Returns true if the scheduler loop is alive. */
+export function isCronRunning(): boolean {
+  return started;
+}
 
 export function startCronScheduler(): void {
   if (started) return;

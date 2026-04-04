@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { inboxItems } from "@/lib/db/schema";
-import { eq, desc, gte } from "drizzle-orm";
+import { getCronHeartbeats, isCronRunning } from "@/lib/cron-scheduler";
 
 // ─── Health Check Endpoint ─────────────────────────────────────────────────
 // SSR: dynamic — checks cron health + external APIs.
 // Returns overall status: "healthy" | "degraded" | "down".
+// Uses real in-memory heartbeats from the cron scheduler (not DB proxy).
 
 interface HealthCheck {
   ok: boolean;
@@ -14,6 +13,7 @@ interface HealthCheck {
 
 interface HealthResponse {
   status: "healthy" | "degraded" | "down";
+  schedulerRunning: boolean;
   checks: {
     cronPollEmails: HealthCheck;
     cronScanKnowledge: HealthCheck;
@@ -22,61 +22,34 @@ interface HealthResponse {
   };
 }
 
-/** Business hours check: 8h–20h UTC */
-function isBusinessHours(): boolean {
-  const hour = new Date().getUTCHours();
-  return hour >= 8 && hour < 20;
+/**
+ * Check if a cron job heartbeat is healthy.
+ * Healthy = scheduler running AND (never ran yet OR last ran within 2× its interval).
+ * The 2× margin avoids false alarms (one missed tick is OK, two consecutive is not).
+ */
+function checkCronHealth(
+  name: string,
+  heartbeats: ReturnType<typeof getCronHeartbeats>,
+): HealthCheck {
+  const hb = heartbeats[name];
+  if (!hb || hb.lastRun === 0) {
+    // Never ran yet — OK if scheduler just started
+    return { ok: isCronRunning(), lastRun: null };
+  }
+  const age = Date.now() - hb.lastRun;
+  const maxAge = hb.intervalMs * 2.5; // 2.5× interval = grace period
+  return {
+    ok: age < maxAge && hb.consecutiveErrors < 3,
+    lastRun: new Date(hb.lastRun).toISOString(),
+  };
 }
 
 export async function GET(): Promise<NextResponse<HealthResponse>> {
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const heartbeats = getCronHeartbeats();
 
-  // ─── Check 1: cron poll emails ────────────────────────────────────────────
-  // Check if the cron has been active: latest email_classified OR noise item.
-  // If no new items in 1 hour during business hours → likely not running.
-  // Note: if all emails are already processed, the cron runs but creates 0 items.
-  // That's OK — the 1h window is generous enough to avoid most false positives.
-  let cronPollEmails: HealthCheck = { ok: true, lastRun: null };
-  try {
-    const [latest] = await db
-      .select({ createdAt: inboxItems.createdAt })
-      .from(inboxItems)
-      .orderBy(desc(inboxItems.createdAt))
-      .limit(1);
-
-    if (latest) {
-      cronPollEmails.lastRun = latest.createdAt.toISOString();
-      // Only flag if in business hours AND no item at all in the last hour
-      if (isBusinessHours() && latest.createdAt < oneHourAgo) {
-        cronPollEmails.ok = false;
-      }
-    } else {
-      cronPollEmails.ok = !isBusinessHours();
-    }
-  } catch {
-    cronPollEmails = { ok: false, lastRun: null };
-  }
-
-  // ─── Check 2: cron scan knowledge ─────────────────────────────────────────
-  // Check for any inbox item created in last 15 min as a basic heartbeat
-  let cronScanKnowledge: HealthCheck = { ok: true, lastRun: null };
-  try {
-    const [latest] = await db
-      .select({ createdAt: inboxItems.createdAt })
-      .from(inboxItems)
-      .where(gte(inboxItems.createdAt, oneHourAgo))
-      .orderBy(desc(inboxItems.createdAt))
-      .limit(1);
-
-    if (latest) {
-      cronScanKnowledge.lastRun = latest.createdAt.toISOString();
-    } else {
-      // No recent activity — flag during business hours only
-      cronScanKnowledge.ok = !isBusinessHours();
-    }
-  } catch {
-    cronScanKnowledge = { ok: false, lastRun: null };
-  }
+  // ─── Check 1 & 2: cron heartbeats (real, not DB proxy) ───────────────────
+  const cronPollEmails = checkCronHealth("poll-emails", heartbeats);
+  const cronScanKnowledge = checkCronHealth("scan-knowledge", heartbeats);
 
   // ─── Check 3: ClickUp API (lightweight ping) ─────────────────────────────
   let clickupOk = true;
@@ -136,5 +109,5 @@ export async function GET(): Promise<NextResponse<HealthResponse>> {
       ? "down"
       : "degraded";
 
-  return NextResponse.json({ status, checks });
+  return NextResponse.json({ status, schedulerRunning: isCronRunning(), checks });
 }
