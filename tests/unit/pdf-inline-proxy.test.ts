@@ -78,14 +78,21 @@ describe("PDF proxy — 302 redirect (all PDFs)", () => {
     expect(response.headers.get("Location")).toBe("https://sharepoint.com/download/file.pdf");
   });
 
-  it("redirects PDF even with ?inline=1 (streaming removed)", async () => {
+  it("streams PDF inline with ?inline=1 (Content-Disposition: inline)", async () => {
     mockGraphFetch.mockResolvedValueOnce(graphPdfItem("document.pdf"));
+    fetchSpy.mockResolvedValueOnce(
+      new Response("pdf-content", {
+        status: 200,
+        headers: { "Content-Length": "11", "Content-Type": "application/pdf" },
+      })
+    );
 
     const { request, params } = makeRequest("pdfInlineItem", { inline: true });
     const response = await GET(request, { params });
 
-    // ?inline=1 is now ignored — all assets get 302 redirect
-    expect(response.status).toBe(302);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("application/pdf");
+    expect(response.headers.get("Content-Disposition")).toContain("inline");
   });
 
   it("sets cache headers on PDF redirect", async () => {

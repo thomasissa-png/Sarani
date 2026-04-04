@@ -9,6 +9,7 @@ import {
   listDriveItems,
   createAnonymousSharingLink,
   getDriveItemByPath,
+  graphFetch,
 } from "@/lib/integrations/sharepoint";
 import {
   SHAREPOINT_ASSETS_DRIVE_ID,
@@ -200,11 +201,11 @@ export async function autoSelectVisuals(
     );
     if (match) {
       try {
-        const subItems = await listDriveItems(
-          driveId,
-          `${cleanPath}/${match.name}`
+        // List sub-folder contents by item ID (not path — path varies by strategy)
+        const subData = await graphFetch<{ value: DriveItem[] }>(
+          `/drives/${match.parentReference?.driveId ?? driveId}/items/${match.id}/children`
         );
-        const subImages = subItems.filter(isImageFile);
+        const subImages = (subData.value ?? []).filter(isImageFile);
         if (subImages.length > 0) {
           imageItems = subImages;
           break; // Use the first preferred folder that has images

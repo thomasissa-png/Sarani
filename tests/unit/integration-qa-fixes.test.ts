@@ -127,7 +127,7 @@ describe("Bug 3: Video playback — proxy 302 redirect (streaming removed)", () 
     expect(routeCode).toContain("fallbackMime");
   });
 
-  it("share page uses <source> element with type for video", () => {
+  it("share page uses VideoPlayer client component for videos", () => {
     const pageCode = fs.readFileSync(
       path.resolve(
         __dirname,
@@ -135,9 +135,9 @@ describe("Bug 3: Video playback — proxy 302 redirect (streaming removed)", () 
       ),
       "utf-8"
     );
-    // Must use <source src={...} type={...} /> pattern
-    expect(pageCode).toMatch(/<source\s+src=/);
-    expect(pageCode).toMatch(/type=\{.*mimeType/);
+    // Must use VideoPlayer component (Client Component with error handling)
+    expect(pageCode).toContain("VideoPlayer");
+    expect(pageCode).toContain("proxyUrl={item.proxyUrl}");
   });
 
   it("share page also has VIDEO_EXT_TO_MIME fallback in isAllowedFile", () => {

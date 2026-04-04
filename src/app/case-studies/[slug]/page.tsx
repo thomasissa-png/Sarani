@@ -45,8 +45,8 @@ async function fetchPublishedCaseStudy(
 
     if (!output) return null;
     return output.content as unknown as CaseStudyOutput;
-  } catch {
-    // DB unavailable — graceful fallback
+  } catch (err) {
+    console.error("[case-studies/slug] DB query failed:", err instanceof Error ? err.message : err);
     return null;
   }
 }

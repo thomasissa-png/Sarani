@@ -373,17 +373,20 @@ describe("Video proxy — 302 redirect behavior", () => {
 /*  5. PDF redirect (streaming removed — all assets use 302)                   */
 /* ========================================================================== */
 
-describe("Video proxy — PDF 302 redirect", () => {
-  it("redirects PDF with 302 (inline streaming removed)", async () => {
+describe("Video proxy — PDF behavior", () => {
+  it("streams PDF inline with ?inline=1", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "application/pdf", name: "proposal.pdf" })
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response("pdf", { status: 200, headers: { "Content-Length": "3" } })
     );
 
     const { request, params } = makeRequest("pdfInline", { inline: true });
     const response = await GET(request, { params });
 
-    // ?inline=1 is now ignored — all assets get 302
-    expect(response.status).toBe(302);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("application/pdf");
   });
 
   it("redirects PDF without ?inline=1", async () => {
@@ -429,15 +432,16 @@ describe("Video proxy — error handling", () => {
     expect(body.error).toBe("No download URL available");
   });
 
-  it("redirects PDF even with ?inline=1 (no streaming)", async () => {
+  it("falls back to 302 if PDF inline upstream fails", async () => {
     mockGraphFetch.mockResolvedValueOnce(
       graphItem({ mimeType: "application/pdf", name: "broken.pdf" })
     );
+    fetchSpy.mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
 
     const { request, params } = makeRequest("pdfFail", { inline: true });
     const response = await GET(request, { params });
 
-    // PDFs get 302 now — no streaming, no upstream fetch failure possible
+    // Falls back to 302 redirect when inline streaming fails
     expect(response.status).toBe(302);
   });
 });
