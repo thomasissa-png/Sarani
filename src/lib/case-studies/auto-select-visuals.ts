@@ -222,12 +222,19 @@ export async function autoSelectVisuals(
     imageItems = items.filter(isImageFile);
   }
 
-  // Priority 3: If still nothing, scan ALL sub-folders (max 5, skip "brief", "source", etc.)
+  // Priority 3: If still nothing, scan ALL sub-folders — most recent first
   const SKIP_FOLDERS = new Set(["brief", "source", "sources", "source files", "archive", "old", "template"]);
   if (imageItems.length === 0 && subFolders.length > 0) {
-    console.log(`[auto-select-visuals] No images in root or preferred folders. Scanning ${subFolders.length} sub-folders...`);
-    for (const folder of subFolders.slice(0, 5)) {
-      if (SKIP_FOLDERS.has(folder.name.toLowerCase().trim())) continue;
+    // Sort sub-folders by most recent modification date — latest deliveries first
+    const sortedFolders = [...subFolders]
+      .filter((f) => !SKIP_FOLDERS.has(f.name.toLowerCase().trim()))
+      .sort((a, b) => {
+        const dateA = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+        const dateB = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+        return dateB - dateA;
+      });
+    console.log(`[auto-select-visuals] Scanning ${sortedFolders.length} sub-folders (most recent first)...`);
+    for (const folder of sortedFolders.slice(0, 5)) {
       try {
         const subData = await graphFetch<{ value: DriveItem[] }>(
           `/drives/${folder.parentReference?.driveId ?? driveId}/items/${folder.id}/children`
