@@ -45,14 +45,29 @@ const IMAGE_AREA_HEIGHT = 676;
 
 let fontBoldCache: ArrayBuffer | null = null;
 
+/** Try multiple paths for font loading — standalone deploys may differ */
+async function loadFont(filename: string): Promise<ArrayBuffer> {
+  const candidates = [
+    join(process.cwd(), "public", "fonts", filename),
+    join(process.cwd(), ".next", "standalone", "public", "fonts", filename),
+    join(process.cwd(), "fonts", filename),
+    // Replit standalone: public/ is copied to the root
+    join("/home/runner", process.env.REPL_SLUG || "", "public", "fonts", filename),
+  ];
+  for (const fontPath of candidates) {
+    try {
+      const buffer = await readFile(fontPath);
+      return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+    } catch {
+      // Try next path
+    }
+  }
+  throw new Error(`Font ${filename} not found in any of: ${candidates.join(", ")}`);
+}
+
 async function loadOutfitBold(): Promise<ArrayBuffer> {
   if (fontBoldCache) return fontBoldCache;
-  const fontPath = join(process.cwd(), "public", "fonts", "Outfit-Bold.ttf");
-  const buffer = await readFile(fontPath);
-  fontBoldCache = buffer.buffer.slice(
-    buffer.byteOffset,
-    buffer.byteOffset + buffer.byteLength
-  );
+  fontBoldCache = await loadFont("Outfit-Bold.ttf");
   return fontBoldCache;
 }
 
@@ -60,12 +75,7 @@ let fontRegularCache: ArrayBuffer | null = null;
 
 async function loadOutfitRegular(): Promise<ArrayBuffer> {
   if (fontRegularCache) return fontRegularCache;
-  const fontPath = join(process.cwd(), "public", "fonts", "Outfit-Regular.ttf");
-  const buffer = await readFile(fontPath);
-  fontRegularCache = buffer.buffer.slice(
-    buffer.byteOffset,
-    buffer.byteOffset + buffer.byteLength
-  );
+  fontRegularCache = await loadFont("Outfit-Regular.ttf");
   return fontRegularCache;
 }
 
@@ -108,19 +118,26 @@ async function fetchImageAsDataUri(url: string): Promise<string | null> {
     }
   }
 
-  // Local public path — read from filesystem
+  // Local public path — try multiple locations (standalone deploy may differ)
   if (url.startsWith("/")) {
-    try {
-      const filePath = join(process.cwd(), "public", url);
-      const buffer = await readFile(filePath);
-      const base64 = buffer.toString("base64");
-      const ext = url.split(".").pop()?.toLowerCase() ?? "png";
-      const mime =
-        ext === "svg" ? "image/svg+xml" : ext === "jpg" ? "image/jpeg" : `image/${ext}`;
-      return `data:${mime};base64,${base64}`;
-    } catch {
-      return null;
+    const candidates = [
+      join(process.cwd(), "public", url),
+      join(process.cwd(), ".next", "standalone", "public", url),
+      join("/home/runner", process.env.REPL_SLUG || "", "public", url),
+    ];
+    for (const filePath of candidates) {
+      try {
+        const buffer = await readFile(filePath);
+        const base64 = buffer.toString("base64");
+        const ext = url.split(".").pop()?.toLowerCase() ?? "png";
+        const mime =
+          ext === "svg" ? "image/svg+xml" : ext === "jpg" ? "image/jpeg" : `image/${ext}`;
+        return `data:${mime};base64,${base64}`;
+      } catch {
+        // Try next path
+      }
     }
+    return null;
   }
 
   // Remote URL — fetch with timeout
@@ -241,8 +258,9 @@ export async function generateLinkedInVisual(
   // No fallback to clientName — the model template is clean: pill + title + photos only.
   const secondaryLine = secondaryText || undefined;
 
-  const imageResponse = new ImageResponse(
-    (
+  try {
+    const imageResponse = new ImageResponse(
+      (
       <div
         style={{
           width: "100%",
@@ -476,7 +494,19 @@ export async function generateLinkedInVisual(
     }
   );
 
-  // Convert ReadableStream response to Buffer
-  const arrayBuffer = await imageResponse.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+    // Convert ReadableStream response to Buffer
+    const arrayBuffer = await imageResponse.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (err) {
+    console.error("[linkedin-visual] ImageResponse failed:", err instanceof Error ? err.message : err);
+    console.error("[linkedin-visual] Params:", {
+      clientName,
+      titleLength: displayTitle.length,
+      titleFontSize,
+      hasLogo: !!clientLogoDataUri,
+      hasSaraniLogo: !!saraniLogoDataUri,
+      imageCount: imageDataUris.length,
+    });
+    throw err;
+  }
 }

@@ -24,6 +24,12 @@ import {
 } from "@/lib/case-studies/auto-select-visuals";
 import { generateLinkedInVisual } from "@/lib/case-studies/linkedin-visual";
 import { getClientLogoUrl } from "@/lib/case-studies/client-logos";
+import {
+  getMappingBySpaceName,
+  SHAREPOINT_ASSETS_DRIVE_ID,
+  ASSETS_CUSTOMERS_BASE_PATH,
+} from "@/lib/integrations/config";
+import { listDriveItems } from "@/lib/integrations/sharepoint";
 
 // ─── Pipeline helpers ─────────────────────────────────────────────────────
 
@@ -328,11 +334,38 @@ export async function POST(
     // ─── Step 4: Auto-select visuals from SharePoint (NON-BLOCKING) ────
 
     let selectedVisuals: AutoSelectedVisuals | null = null;
-    if (candidate.sharePointFolderUrl) {
+    // Resolve folder URL at generation time if missing from scan
+    let spFolderUrl = candidate.sharePointFolderUrl;
+    if (!spFolderUrl) {
+      try {
+        const mapping = getMappingBySpaceName(candidate.clientName);
+        if (mapping) {
+          const parentPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
+          const items = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, parentPath);
+          const projectLower = (candidate.projectName ?? "").toLowerCase().trim();
+          // Quick fuzzy match in client root
+          const match = items.find((item) => {
+            if (!item.folder) return false;
+            const folderLower = item.name.toLowerCase();
+            return folderLower.includes(projectLower) || projectLower.includes(folderLower);
+          });
+          if (match?.webUrl) {
+            spFolderUrl = match.webUrl;
+            // Save for future runs
+            await db.update(caseStudyCandidates)
+              .set({ sharePointFolderUrl: spFolderUrl, updatedAt: new Date() })
+              .where(eq(caseStudyCandidates.id, id));
+          }
+        }
+      } catch {
+        // Non-blocking — continue without visuals
+      }
+    }
+    if (spFolderUrl) {
       try {
         await updatePipelineStatus(id, "step_4_visuals");
         selectedVisuals = await autoSelectVisuals(
-          candidate.sharePointFolderUrl,
+          spFolderUrl,
           candidate.clientName
         );
         await savePipelineStep(id, 4, "visual-selector", {
