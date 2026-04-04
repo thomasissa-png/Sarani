@@ -9,7 +9,7 @@ import {
   type ClickUpTask,
   type ClickUpCustomField,
 } from "@/lib/integrations/clickup";
-import { listDriveItems } from "@/lib/integrations/sharepoint";
+import { listDriveItems, type DriveItem } from "@/lib/integrations/sharepoint";
 import {
   CLIENT_MAPPINGS,
   SHAREPOINT_ASSETS_DRIVE_ID,
@@ -93,41 +93,97 @@ function extractAmount(task: ClickUpTask): number | null {
   return isNaN(parsed) ? null : parsed;
 }
 
-/** Count SharePoint assets for a client/project folder */
+/** Try to fuzzy-match a project folder among a list of DriveItems */
+function matchProjectFolder(
+  items: DriveItem[],
+  projectName: string
+): DriveItem | null {
+  const projectNameLower = projectName.toLowerCase().trim();
+  return items.find((item) => {
+    if (!item.folder) return false;
+    const folderLower = item.name.toLowerCase();
+    return (
+      folderLower.includes(projectNameLower) ||
+      projectNameLower.includes(folderLower) ||
+      levenshteinSimilarity(folderLower, projectNameLower) >= 0.6
+    );
+  }) ?? null;
+}
+
+/**
+ * Count SharePoint assets for a client/project folder.
+ *
+ * Scans up to 3 levels deep to handle clients with nested folder structures:
+ * Level 0: {clientFolder}/ → direct project folder match
+ * Level 1: {clientFolder}/03. Projects/ → project folder match
+ * Level 2: {clientFolder}/03. Projects/{division}/ → project folder match
+ *
+ * This handles both flat structures (Sony: /02. Sony/{project})
+ * and deep structures (TikTok: /05. TikTok/03. Projects/15. P&E SEA/{project}).
+ */
 async function countSharePointAssets(
   clientFolder: string,
   projectName: string
 ): Promise<{ count: number; folderUrl: string | null }> {
   try {
-    // List items in the client folder and look for a matching subfolder
     const parentPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${clientFolder}`;
     const items = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, parentPath);
 
-    // Try to find a folder matching the project name (fuzzy)
-    const projectNameLower = projectName.toLowerCase().trim();
-    const matchedFolder = items.find((item) => {
-      if (!item.folder) return false;
-      const folderLower = item.name.toLowerCase();
-      return (
-        folderLower.includes(projectNameLower) ||
-        projectNameLower.includes(folderLower) ||
-        levenshteinSimilarity(folderLower, projectNameLower) >= 0.6
-      );
-    });
-
-    if (!matchedFolder) {
-      return { count: 0, folderUrl: null };
+    // Level 0: direct match in client root
+    const directMatch = matchProjectFolder(items, projectName);
+    if (directMatch) {
+      const folderPath = `${parentPath}/${directMatch.name}`;
+      const children = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
+      return {
+        count: children.filter((c: DriveItem) => !c.folder).length,
+        folderUrl: directMatch.webUrl ?? null,
+      };
     }
 
-    // Count files in matched folder
-    const folderPath = `${parentPath}/${matchedFolder.name}`;
-    const children = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
-    const fileCount = children.filter((c) => !c.folder).length;
+    // Level 1: look inside "Projects" subfolder (numbered variants: "03. Projects", "Projects")
+    const projectsFolder = items.find((item) => {
+      if (!item.folder) return false;
+      const lower = item.name.toLowerCase().replace(/^\d+\.\s*/, "");
+      return lower === "projects";
+    });
 
-    return {
-      count: fileCount,
-      folderUrl: matchedFolder.webUrl ?? null,
-    };
+    if (projectsFolder) {
+      const projectsPath = `${parentPath}/${projectsFolder.name}`;
+      const projectsItems = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, projectsPath);
+
+      // Try matching directly inside Projects/
+      const projectMatch = matchProjectFolder(projectsItems, projectName);
+      if (projectMatch) {
+        const folderPath = `${projectsPath}/${projectMatch.name}`;
+        const children = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
+        return {
+          count: children.filter((c: DriveItem) => !c.folder).length,
+          folderUrl: projectMatch.webUrl ?? null,
+        };
+      }
+
+      // Level 2: scan each division subfolder inside Projects/
+      const divisionFolders = projectsItems.filter((i) => i.folder);
+      for (const division of divisionFolders) {
+        try {
+          const divisionPath = `${projectsPath}/${division.name}`;
+          const divisionItems = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, divisionPath);
+          const divisionMatch = matchProjectFolder(divisionItems, projectName);
+          if (divisionMatch) {
+            const folderPath = `${divisionPath}/${divisionMatch.name}`;
+            const children = await listDriveItems(SHAREPOINT_ASSETS_DRIVE_ID, folderPath);
+            return {
+              count: children.filter((c: DriveItem) => !c.folder).length,
+              folderUrl: divisionMatch.webUrl ?? null,
+            };
+          }
+        } catch {
+          // Division folder listing failed — try next
+        }
+      }
+    }
+
+    return { count: 0, folderUrl: null };
   } catch {
     // SharePoint unavailable or folder doesn't exist — graceful degradation
     return { count: 0, folderUrl: null };
