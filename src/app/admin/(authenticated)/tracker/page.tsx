@@ -353,9 +353,9 @@ function TrackerContent() {
     }
     setError(null);
     try {
-      // Fetch tracker data with 15s timeout — prevents mobile hanging
+      // Fetch tracker data — 60s timeout (cold start can take 30-60s on Replit)
       const trackerRes = await fetch("/api/admin/integrations/tracker", {
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(60_000),
       });
 
       if (!trackerRes.ok) {
