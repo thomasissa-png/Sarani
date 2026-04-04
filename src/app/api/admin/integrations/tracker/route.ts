@@ -434,7 +434,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(response, {
       headers: {
-        "Cache-Control": "private, s-maxage=300, stale-while-revalidate=600",
+        // max-age=120: browser cache serves instantly for 2 min (covers mobile cold start)
+        // stale-while-revalidate=600: serve stale for 10 min while refreshing in background
+        "Cache-Control": "private, max-age=120, stale-while-revalidate=600",
       },
     });
   } catch (error) {
