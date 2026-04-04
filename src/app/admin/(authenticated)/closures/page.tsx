@@ -67,6 +67,7 @@ interface CaseStudyOutputData {
     category?: string;
     heroImage?: string;
     linkedInImage?: string;
+    linkedInImages?: string[];
     emailHeader?: string;
     [key: string]: unknown;
   };
@@ -1346,7 +1347,11 @@ export default function ClosuresPage() {
                             spFolderUrl={closureOutputs.sharePointFolderUrl}
                             initialVisuals={{
                               heroImage: cs.content.heroImage as string | undefined,
-                              linkedInImage: cs.content.linkedInImage as string | undefined,
+                              linkedInImages: Array.isArray(cs.content.linkedInImages)
+                                ? cs.content.linkedInImages as string[]
+                                : cs.content.linkedInImage
+                                  ? [cs.content.linkedInImage as string]
+                                  : undefined,
                               emailHeader: cs.content.emailHeader as string | undefined,
                             }}
                             onSelected={(visuals) => handleVisualsSelected(closure.id, cs.id, visuals)}

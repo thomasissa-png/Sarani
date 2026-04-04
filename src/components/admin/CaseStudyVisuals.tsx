@@ -46,7 +46,8 @@ type VisualRole = "heroImage" | "linkedInImage" | "emailHeader";
 
 export interface SelectedVisuals {
   heroImage?: string;
-  linkedInImage?: string;
+  /** 1-3 images for the LinkedIn visual composition */
+  linkedInImages?: string[];
   emailHeader?: string;
 }
 
@@ -59,7 +60,7 @@ interface VisualSelectorProps {
 
 const ROLE_LABELS: Record<VisualRole, string> = {
   heroImage: "Hero (Website)",
-  linkedInImage: "LinkedIn Image",
+  linkedInImage: "LinkedIn (1-3)",
   emailHeader: "Email Header",
 };
 
@@ -67,7 +68,10 @@ const ROLE_COLORS: Record<VisualRole, string> = {
   heroImage: "bg-purple-100 text-purple-700 border-purple-200",
   linkedInImage: "bg-blue-100 text-blue-700 border-blue-200",
   emailHeader: "bg-amber-100 text-amber-700 border-amber-200",
+
 };
+
+const MAX_LINKEDIN_IMAGES = 3;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -158,12 +162,31 @@ export function VisualSelector({
 
   const assignRole = useCallback((file: SpFile, role: VisualRole) => {
     const imageUrl = file.thumbnailUrl || file.webUrl;
-    setVisuals((prev) => ({ ...prev, [role]: imageUrl }));
+    if (role === "linkedInImage") {
+      // LinkedIn: toggle in array (max 3)
+      setVisuals((prev) => {
+        const current = prev.linkedInImages ?? [];
+        if (current.includes(imageUrl)) {
+          return { ...prev, linkedInImages: current.filter((u) => u !== imageUrl) };
+        }
+        if (current.length >= MAX_LINKEDIN_IMAGES) return prev; // already at max
+        return { ...prev, linkedInImages: [...current, imageUrl] };
+      });
+    } else {
+      // Hero / Email: single image
+      setVisuals((prev) => ({ ...prev, [role]: imageUrl }));
+    }
     setRolePickerFor(null);
   }, []);
 
-  const removeRole = useCallback((role: VisualRole) => {
+  const removeRole = useCallback((role: VisualRole, urlToRemove?: string) => {
     setVisuals((prev) => {
+      if (role === "linkedInImage") {
+        if (urlToRemove) {
+          return { ...prev, linkedInImages: (prev.linkedInImages ?? []).filter((u) => u !== urlToRemove) };
+        }
+        return { ...prev, linkedInImages: [] };
+      }
       const next = { ...prev };
       delete next[role];
       return next;
@@ -186,25 +209,28 @@ export function VisualSelector({
 
   const getRolesForUrl = useCallback((url: string): VisualRole[] => {
     const roles: VisualRole[] = [];
-    for (const [role, assignedUrl] of Object.entries(visuals)) {
-      if (assignedUrl === url) roles.push(role as VisualRole);
-    }
+    if (visuals.heroImage === url) roles.push("heroImage");
+    if (visuals.emailHeader === url) roles.push("emailHeader");
+    if (visuals.linkedInImages?.includes(url)) roles.push("linkedInImage");
     return roles;
   }, [visuals]);
 
   // ─── Count assigned visuals ─────────────────────────────────────────────
 
-  const assignedCount = Object.values(visuals).filter(Boolean).length;
+  const assignedCount =
+    (visuals.heroImage ? 1 : 0) +
+    (visuals.linkedInImages?.length ?? 0) +
+    (visuals.emailHeader ? 1 : 0);
 
   // ─── Compact preview when closed ────────────────────────────────────────
 
   const currentVisuals = initialVisuals ?? {};
-  const hasVisuals = Object.values(currentVisuals).some(Boolean);
+  const hasVisuals = !!(currentVisuals.heroImage || (currentVisuals.linkedInImages?.length ?? 0) > 0 || currentVisuals.emailHeader);
 
   return (
     <div className="mt-3">
       {/* Trigger button + mini preview */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <button
           type="button"
           onClick={openPanel}
@@ -216,20 +242,36 @@ export function VisualSelector({
           {hasVisuals ? "Edit Visuals" : "Select Visuals"}
         </button>
         {hasVisuals && (
-          <div className="flex items-center gap-2">
-            {(Object.entries(currentVisuals) as Array<[VisualRole, string | undefined]>)
-              .filter(([, url]) => url)
-              .map(([role, url]) => (
-                <div key={role} className="flex items-center gap-1">
-                  <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded border ${ROLE_COLORS[role]}`}>
-                    {ROLE_LABELS[role]}
-                  </span>
-                  <div className="w-6 h-6 rounded border border-neutral-200 overflow-hidden bg-neutral-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt={ROLE_LABELS[role]} className="w-full h-full object-cover" />
-                  </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {currentVisuals.heroImage && (
+              <div className="flex items-center gap-1">
+                <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded border ${ROLE_COLORS.heroImage}`}>Hero</span>
+                <div className="w-6 h-6 rounded border border-neutral-200 overflow-hidden bg-neutral-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={currentVisuals.heroImage} alt="Hero" className="w-full h-full object-cover" />
                 </div>
-              ))}
+              </div>
+            )}
+            {(currentVisuals.linkedInImages ?? []).length > 0 && (
+              <div className="flex items-center gap-1">
+                <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded border ${ROLE_COLORS.linkedInImage}`}>LinkedIn ({currentVisuals.linkedInImages!.length})</span>
+                {currentVisuals.linkedInImages!.map((url, i) => (
+                  <div key={i} className="w-6 h-6 rounded border border-neutral-200 overflow-hidden bg-neutral-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`LinkedIn ${i + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {currentVisuals.emailHeader && (
+              <div className="flex items-center gap-1">
+                <span className={`inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded border ${ROLE_COLORS.emailHeader}`}>Email</span>
+                <div className="w-6 h-6 rounded border border-neutral-200 overflow-hidden bg-neutral-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={currentVisuals.emailHeader} alt="Email" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -260,36 +302,67 @@ export function VisualSelector({
 
             {/* Selected roles summary */}
             <div className="px-6 py-3 bg-neutral-50 border-b border-neutral-200 flex flex-wrap gap-3">
-              {(Object.keys(ROLE_LABELS) as VisualRole[]).map((role) => {
-                const url = visuals[role];
-                return (
-                  <div key={role} className="flex items-center gap-2">
-                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded border ${ROLE_COLORS[role]}`}>
-                      {ROLE_LABELS[role]}
-                    </span>
-                    {url ? (
-                      <div className="flex items-center gap-1">
+              {/* Hero */}
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded border ${ROLE_COLORS.heroImage}`}>
+                  {ROLE_LABELS.heroImage}
+                </span>
+                {visuals.heroImage ? (
+                  <div className="flex items-center gap-1">
+                    <div className="w-8 h-8 rounded border border-neutral-200 overflow-hidden bg-neutral-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={visuals.heroImage} alt="Hero" className="w-full h-full object-cover" />
+                    </div>
+                    <button type="button" onClick={() => removeRole("heroImage")} className="p-0.5 text-neutral-400 hover:text-red-500 transition-colors" aria-label="Remove Hero">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-neutral-400">Not assigned</span>
+                )}
+              </div>
+              {/* LinkedIn (1-3) */}
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded border ${ROLE_COLORS.linkedInImage}`}>
+                  {ROLE_LABELS.linkedInImage} ({visuals.linkedInImages?.length ?? 0}/{MAX_LINKEDIN_IMAGES})
+                </span>
+                {(visuals.linkedInImages ?? []).length > 0 ? (
+                  <div className="flex items-center gap-1">
+                    {(visuals.linkedInImages ?? []).map((url, i) => (
+                      <div key={i} className="relative">
                         <div className="w-8 h-8 rounded border border-neutral-200 overflow-hidden bg-neutral-100">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt={ROLE_LABELS[role]} className="w-full h-full object-cover" />
+                          <img src={url} alt={`LinkedIn ${i + 1}`} className="w-full h-full object-cover" />
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeRole(role)}
-                          className="p-0.5 text-neutral-400 hover:text-red-500 transition-colors"
-                          aria-label={`Remove ${ROLE_LABELS[role]}`}
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                          </svg>
+                        <button type="button" onClick={() => removeRole("linkedInImage", url)} className="absolute -top-1 -right-1 p-0.5 bg-white rounded-full shadow text-neutral-400 hover:text-red-500 transition-colors" aria-label={`Remove LinkedIn ${i + 1}`}>
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
-                    ) : (
-                      <span className="text-xs text-neutral-400">Not assigned</span>
-                    )}
+                    ))}
                   </div>
-                );
-              })}
+                ) : (
+                  <span className="text-xs text-neutral-400">Not assigned</span>
+                )}
+              </div>
+              {/* Email Header */}
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded border ${ROLE_COLORS.emailHeader}`}>
+                  {ROLE_LABELS.emailHeader}
+                </span>
+                {visuals.emailHeader ? (
+                  <div className="flex items-center gap-1">
+                    <div className="w-8 h-8 rounded border border-neutral-200 overflow-hidden bg-neutral-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={visuals.emailHeader} alt="Email" className="w-full h-full object-cover" />
+                    </div>
+                    <button type="button" onClick={() => removeRole("emailHeader")} className="p-0.5 text-neutral-400 hover:text-red-500 transition-colors" aria-label="Remove Email">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-neutral-400">Not assigned</span>
+                )}
+              </div>
             </div>
 
             {/* Breadcrumb */}
@@ -458,26 +531,37 @@ export function VisualSelector({
                 <p className="text-xs text-neutral-500 mb-3 truncate">{rolePickerFor.name}</p>
                 <div className="space-y-2">
                   {(Object.keys(ROLE_LABELS) as VisualRole[]).map((role) => {
-                    const isCurrentlyAssigned = visuals[role] === (rolePickerFor.thumbnailUrl || rolePickerFor.webUrl);
+                    const fileUrl = rolePickerFor.thumbnailUrl || rolePickerFor.webUrl;
+                    const isLinkedIn = role === "linkedInImage";
+                    const isCurrentlyAssigned = isLinkedIn
+                      ? (visuals.linkedInImages ?? []).includes(fileUrl)
+                      : visuals[role] === fileUrl;
+                    const linkedInFull = isLinkedIn && !isCurrentlyAssigned && (visuals.linkedInImages?.length ?? 0) >= MAX_LINKEDIN_IMAGES;
                     return (
                       <button
                         key={role}
                         type="button"
                         onClick={() => assignRole(rolePickerFor, role)}
+                        disabled={linkedInFull}
                         className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg border transition-colors ${
                           isCurrentlyAssigned
                             ? "bg-neutral-100 border-neutral-300 text-neutral-500"
-                            : "border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 text-neutral-700"
+                            : linkedInFull
+                              ? "border-neutral-100 text-neutral-300 cursor-not-allowed"
+                              : "border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 text-neutral-700"
                         }`}
                       >
                         <span className={`font-medium ${ROLE_COLORS[role].split(" ")[1]}`}>
                           {ROLE_LABELS[role]}
                         </span>
                         {isCurrentlyAssigned && (
-                          <span className="text-xs text-neutral-400">Assigned</span>
+                          <span className="text-xs text-neutral-400">{isLinkedIn ? "Remove" : "Assigned"}</span>
                         )}
-                        {visuals[role] && !isCurrentlyAssigned && (
+                        {!isCurrentlyAssigned && !isLinkedIn && visuals[role] && (
                           <span className="text-xs text-amber-600">Will replace</span>
+                        )}
+                        {linkedInFull && (
+                          <span className="text-xs text-neutral-300">Full (3/3)</span>
                         )}
                       </button>
                     );

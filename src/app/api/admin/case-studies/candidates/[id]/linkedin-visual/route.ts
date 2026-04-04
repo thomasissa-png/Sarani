@@ -100,10 +100,17 @@ export async function GET(
       `${candidate.clientName} Project`;
 
     // Collect project images from case study output visuals
+    // Priority: linkedInImages array (1-3) > legacy linkedInImage > hero/email fallbacks
     const projectImages: string[] = [];
-    if (content?.heroImage) projectImages.push(content.heroImage as string);
-    if (content?.linkedInImage) projectImages.push(content.linkedInImage as string);
-    if (content?.emailHeader) projectImages.push(content.emailHeader as string);
+    const linkedInImages = content?.linkedInImages as string[] | undefined;
+    if (Array.isArray(linkedInImages) && linkedInImages.length > 0) {
+      projectImages.push(...linkedInImages.slice(0, 3));
+    } else {
+      // Legacy fallback: single image fields
+      if (content?.linkedInImage) projectImages.push(content.linkedInImage as string);
+      if (content?.heroImage) projectImages.push(content.heroImage as string);
+      if (content?.emailHeader) projectImages.push(content.emailHeader as string);
+    }
 
     // Fallback: check visualSuggestions on the candidate
     if (projectImages.length === 0 && candidate.visualSuggestions) {
