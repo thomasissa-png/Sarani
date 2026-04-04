@@ -168,9 +168,11 @@ const BRANDING_DATA: Record<string, {
   },
   TikTok: {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCLhBQNdaHKQpaviLeO_b39AYXKcD_KVcncmYK_TYi4MZg",
-    // Branding folder contains all assets — also see https://tiktokbrandhub.com/
     logoFolderLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgCLhBQNdaHKQpaviLeO_b39AYXKcD_KVcncmYK_TYi4MZg",
-    // [DONNEES MANQUANTES — Thomas doit fournir: separate logoFolderLink/fontFolderLink if different, primaryColor, fontName, brandTone]
+    primaryColor: "#FE2C55",
+    fontName: "TikTok Sans",
+    brandTone: "bold, dynamic, energetic",
+    // Source: https://tiktokbrandhub.com/ — secondary colors: #25F4EE (cyan), #000000 (black)
   },
   "PICO XR": {
     brandGuidelinesLink: "https://saranistudio.sharepoint.com/:f:/s/SaraniAssets/IgBbX1jrkGZaSqX40qP4uLA4AUzpGlEatWDexJtlNDb-cOE",
@@ -273,6 +275,7 @@ function buildNotes(
   // 3. Extra branding context
   if (clientName === "TikTok") {
     parts.push("Brand hub: https://tiktokbrandhub.com/");
+    parts.push("Secondary colors: #25F4EE (cyan/turquoise), #000000 (black). Font: TikTok Sans (open-source, SIL OFL). Tone: bold, dynamic, energetic.");
   }
   if (clientName === "Sony") {
     parts.push(
