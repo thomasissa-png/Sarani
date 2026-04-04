@@ -97,11 +97,46 @@ export async function GET(
       }
     }
 
-    // 302 redirect to fresh SharePoint download URL for ALL asset types.
-    // Browsers follow 302 for images, videos, and PDFs natively.
-    // For PDFs, the browser's built-in viewer opens them inline automatically
-    // when the Content-Type is application/pdf (which SharePoint sets correctly).
-    // Streaming through our server was unreliable on Replit (worker killed mid-stream).
+    // Mode: resolve=1 → return download URL as JSON (used by VideoPlayer client component)
+    const resolveMode = request.nextUrl.searchParams.get("resolve") === "1";
+    if (resolveMode) {
+      return NextResponse.json(
+        { downloadUrl, mimeType, name: item.name, size: item.size },
+        { headers: { "Cache-Control": "public, max-age=60, s-maxage=60" } }
+      );
+    }
+
+    // PDFs with ?inline=1: fetch and serve with Content-Disposition: inline
+    // so the browser opens its PDF viewer instead of downloading.
+    // PDFs are small enough (<20MB) to stream reliably on Replit.
+    const wantInline = request.nextUrl.searchParams.get("inline") === "1";
+    const isPdf = mimeType === "application/pdf" || (item.name?.toLowerCase().endsWith(".pdf") ?? false);
+    if (isPdf && wantInline) {
+      try {
+        const upstream = await fetch(downloadUrl, {
+          signal: AbortSignal.timeout(60_000),
+        });
+        if (!upstream.ok) {
+          return NextResponse.redirect(downloadUrl, { status: 302 });
+        }
+        const pdfBuffer = await upstream.arrayBuffer();
+        return new NextResponse(pdfBuffer, {
+          status: 200,
+          headers: {
+            "Content-Type": "application/pdf",
+            "Content-Disposition": `inline; filename="${item.name ?? "document.pdf"}"`,
+            "Content-Length": String(pdfBuffer.byteLength),
+            "Cache-Control": "public, max-age=300, s-maxage=300",
+          },
+        });
+      } catch {
+        // Fallback to redirect if streaming fails
+        return NextResponse.redirect(downloadUrl, { status: 302 });
+      }
+    }
+
+    // Default: 302 redirect to fresh SharePoint download URL.
+    // Browsers follow 302 for images natively.
     return NextResponse.redirect(downloadUrl, {
       status: 302,
       headers: {

@@ -7,6 +7,7 @@
 import { Metadata } from "next";
 import ImageLightbox from "@/components/ui/ImageLightbox";
 import CommentCountBadge, { CommentCountInline } from "@/components/ui/CommentCountBadge";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { db } from "@/lib/db";
 import { projectPreviews } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -855,31 +856,21 @@ export default async function ProjectPreviewPage({ params }: Props) {
                     </div>
                   )}
 
-                  {/* Video Players — dual source strategy:
-                      1. directUrl (pre-signed SharePoint URL, valid ~1h, refreshed via SSR every 5min)
-                         → browser fetches directly from SharePoint CDN, no streaming through our server
-                      2. proxyUrl (our API route) as fallback if directUrl fails or expires
-                      Browser tries sources in order and falls back automatically. */}
+                  {/* Video Players — Client Component that resolves fresh download URLs */}
                   {batchVideos.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                       {batchVideos.map((item) => (
                         <div key={item.itemId} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
-                          <video
-                            controls
-                            preload="metadata"
-                            className="w-full aspect-video bg-black"
-                            playsInline
-                          >
-                            {item.directUrl && (
-                              <source src={item.directUrl} type={item.mimeType} />
-                            )}
-                            <source src={item.proxyUrl} type={item.mimeType} />
-                            Your browser does not support video playback.
-                          </video>
+                          <VideoPlayer
+                            proxyUrl={item.proxyUrl}
+                            directUrl={item.directUrl}
+                            mimeType={item.mimeType}
+                            name={item.name}
+                          />
                           <div className="px-3 py-2 flex items-center justify-between">
                             <span className="text-xs text-white/60 truncate">{item.name.replace(/\.[^.]+$/, "")}</span>
                             <a
-                              href={item.directUrl || item.proxyUrl}
+                              href={item.proxyUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               aria-label={`Download ${item.name}`}
@@ -899,7 +890,7 @@ export default async function ProjectPreviewPage({ params }: Props) {
                       {batchPdfs.map((item) => (
                         <a
                           key={item.itemId || item.name}
-                          href={item.proxyUrl}
+                          href={`${item.proxyUrl}&inline=1`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-3 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:border-[var(--color-brand-flame)]/50 hover:bg-white/10 transition-all min-h-[44px]"
