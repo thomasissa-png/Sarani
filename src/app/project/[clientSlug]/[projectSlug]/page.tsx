@@ -863,7 +863,6 @@ export default async function ProjectPreviewPage({ params }: Props) {
                         <div key={item.itemId} className="rounded-lg overflow-hidden bg-white/5 border border-white/10">
                           <VideoPlayer
                             proxyUrl={item.proxyUrl}
-                            directUrl={item.directUrl}
                             mimeType={item.mimeType}
                             name={item.name}
                           />

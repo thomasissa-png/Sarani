@@ -19,13 +19,12 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 interface VideoPlayerProps {
   proxyUrl: string;
-  directUrl?: string;
   mimeType: string;
   name: string;
 }
 
-export function VideoPlayer({ proxyUrl, directUrl, mimeType, name }: VideoPlayerProps) {
-  const [videoSrc, setVideoSrc] = useState<string | null>(directUrl || null);
+export function VideoPlayer({ proxyUrl, mimeType, name }: VideoPlayerProps) {
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const retryCount = useRef(0);
 
@@ -53,12 +52,10 @@ export function VideoPlayer({ proxyUrl, directUrl, mimeType, name }: VideoPlayer
     }
   }, [proxyUrl]);
 
-  // If no directUrl provided, resolve on mount
+  // Resolve download URL on mount
   useEffect(() => {
-    if (!directUrl) {
-      resolveUrl();
-    }
-  }, [directUrl, resolveUrl]);
+    resolveUrl();
+  }, [resolveUrl]);
 
   // Handle video error — try to get a fresh URL
   const handleError = useCallback(() => {

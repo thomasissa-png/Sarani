@@ -1361,10 +1361,6 @@ function TrackerContent() {
               {/* Fix #2 — Date added to mobile cards */}
               <div className="grid grid-cols-2 gap-2 text-xs text-neutral-500">
                 <div>
-                  <span className="text-neutral-400">Contact:</span>{" "}
-                  {p.contact || "--"}
-                </div>
-                <div>
                   <span className="text-neutral-400">Value:</span>{" "}
                   {formatCurrency(p.totalValue)}
                 </div>

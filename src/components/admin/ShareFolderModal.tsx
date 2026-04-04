@@ -522,12 +522,12 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] sm:max-h-[80vh] flex flex-col mx-2 sm:mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
-          <div>
-            <h2 className="text-lg font-bold text-brand-black">Share project files</h2>
-            <p className="text-sm text-neutral-500 mt-0.5">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-neutral-200">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base sm:text-lg font-bold text-brand-black truncate">Share project files</h2>
+            <p className="text-xs sm:text-sm text-neutral-500 mt-0.5 truncate">
               {clientName} — {projectName}
             </p>
           </div>
@@ -607,7 +607,7 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-3">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3">
           {loading && (
             <div className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-brand-cerulean border-t-transparent rounded-full animate-spin" />
@@ -873,26 +873,42 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
           );
         })()}
 
-        {/* Footer — Create link from selected files */}
-        {!loading && data && (data.files.length > 0 || data.folders.length > 0 || selectedFiles.size > 0) && (
-          <div className="px-6 py-3 border-t border-neutral-200 flex items-center justify-between gap-3">
-            <p className="text-xs text-neutral-400">
+        {/* Footer — always visible, sticky at bottom */}
+        {!loading && data && (
+          <div className="px-4 sm:px-6 py-3 border-t border-neutral-200 flex items-center justify-between gap-2 shrink-0">
+            <p className="text-xs text-neutral-400 truncate">
               {selectedFiles.size > 0
-                ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? "s" : ""} selected across folders`
-                : "Select files or pick a folder above"}
+                ? `${selectedFiles.size} file${selectedFiles.size !== 1 ? "s" : ""} selected`
+                : breadcrumb.length > 0 ? "Share this folder or select files" : "Navigate to a folder"}
             </p>
-            {selectedFiles.size > 0 && breadcrumb.length > 0 && (
-              <button
-                onClick={() => {
-                  const currentEntry = breadcrumb[breadcrumb.length - 1];
-                  shareFolderWithSelection(currentEntry.folderId, currentEntry.name, currentEntry.webUrl);
-                }}
-                disabled={!!sharing}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
-              >
-                {sharing ? "Generating..." : `Create Link (${selectedFiles.size})`}
-              </button>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {selectedFiles.size > 0 && breadcrumb.length > 0 && (
+                <button
+                  onClick={() => {
+                    const currentEntry = breadcrumb[breadcrumb.length - 1];
+                    shareFolderWithSelection(currentEntry.folderId, currentEntry.name, currentEntry.webUrl);
+                  }}
+                  disabled={!!sharing}
+                  className="px-3 sm:px-4 py-2 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {sharing ? "..." : `Create Link (${selectedFiles.size})`}
+                </button>
+              )}
+              {selectedFiles.size === 0 && breadcrumb.length > 0 && (
+                <button
+                  onClick={() => {
+                    const currentEntry = breadcrumb[breadcrumb.length - 1];
+                    if (currentEntry.folderId) {
+                      shareFolder(currentEntry.folderId, currentEntry.name, currentEntry.webUrl);
+                    }
+                  }}
+                  disabled={!!sharing || !breadcrumb[breadcrumb.length - 1]?.folderId}
+                  className="px-3 sm:px-4 py-2 text-sm font-medium rounded-lg bg-brand-black text-white hover:bg-neutral-800 transition-colors disabled:opacity-50 whitespace-nowrap"
+                >
+                  {sharing ? "..." : "Create Link"}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
