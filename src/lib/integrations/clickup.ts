@@ -218,6 +218,44 @@ export async function getListsForSpace(spaceId: string): Promise<ClickUpList[]> 
 }
 
 /**
+ * Fetch Lists inside a Folder.
+ * In ClickUp, Spaces can contain Folders which contain Lists.
+ * Some clients (e.g. TikTok) organize divisions as Folders with Lists inside.
+ */
+export async function getListsForFolder(folderId: string): Promise<ClickUpList[]> {
+  const data = await clickupFetch<{ lists: ClickUpList[] }>(
+    `/folder/${folderId}/list?archived=false`
+  );
+  return data.lists;
+}
+
+/**
+ * Fetch ALL lists for a Space — both folderless AND inside folders.
+ * This is the complete version that doesn't miss folder-nested lists.
+ */
+export async function getAllListsForSpace(spaceId: string): Promise<ClickUpList[]> {
+  // Fetch folderless lists AND folders in parallel
+  const [folderlessLists, folders] = await Promise.all([
+    getListsForSpace(spaceId),
+    getFoldersForSpace(spaceId),
+  ]);
+
+  // Fetch lists inside each folder
+  const folderListResults = await Promise.allSettled(
+    folders.map((f) => getListsForFolder(f.id))
+  );
+
+  const folderLists: ClickUpList[] = [];
+  for (const result of folderListResults) {
+    if (result.status === "fulfilled") {
+      folderLists.push(...result.value);
+    }
+  }
+
+  return [...folderlessLists, ...folderLists];
+}
+
+/**
  * Fetch tasks for a given List, with pagination.
  * Returns up to 100 tasks per page (ClickUp limit).
  * Set `page` to fetch subsequent pages (0-indexed).

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserFromSession } from "@/lib/auth";
 import {
   getSpaces,
-  getListsForSpace,
+  getAllListsForSpace,
   getAllTasksForList,
   type ClickUpTask,
 } from "@/lib/integrations/clickup";
@@ -51,9 +51,9 @@ async function fetchClickUpTasks(): Promise<{
           (s) => !INTERNAL_SPACE_NAMES.has(s.name.toLowerCase())
         );
 
-        // P-01: Fetch lists for all spaces in parallel
+        // P-01: Fetch ALL lists (folderless + inside folders) for all spaces in parallel
         const listsPerSpace = await Promise.all(
-          clientSpaces.map((space) => getListsForSpace(space.id))
+          clientSpaces.map((space) => getAllListsForSpace(space.id))
         );
 
         // Flatten all lists, then fetch tasks for all lists in parallel
