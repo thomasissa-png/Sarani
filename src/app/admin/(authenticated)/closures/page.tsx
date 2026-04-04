@@ -628,7 +628,7 @@ export default function ClosuresPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Unpublish failed" }));
-        alert(`Unpublish failed: ${err.error || res.statusText}`);
+        setToast({ type: "error", message: `Unpublish failed: ${err.error || res.statusText}` });
         return;
       }
       setOutputs((prev) => ({
@@ -641,7 +641,7 @@ export default function ClosuresPage() {
         },
       }));
     } catch {
-      alert("Network error while unpublishing.");
+      setToast({ type: "error", message: "Network error while unpublishing." });
     } finally {
       setPublishingOutput((prev) => {
         const next = new Set(prev);
@@ -811,19 +811,37 @@ export default function ClosuresPage() {
         // The generate endpoint handles setting status to "generating" internally.
         // Calling PATCH first would set status="generating" → POST sees it → 409 race condition.
         if (source === "candidate" && (action === "confirm_star" || action === "nominate_star")) {
-          const genRes = await fetch(`/api/admin/case-studies/candidates/${closureId}/generate`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ force: true }),
-          });
-          if (!genRes.ok) {
-            const errData = await genRes.json().catch(() => ({}));
-            throw new Error(errData?.error ?? `Generation failed (${genRes.status})`);
+          const progressMessages = [
+            "Step 1/5 — Creative Strategy...",
+            "Step 2/5 — Copywriting...",
+            "Step 3/5 — Social Media...",
+            "Step 4/5 — Selecting visuals...",
+            "Step 5/5 — LinkedIn visual...",
+          ];
+          let msgIdx = 0;
+          setGeneratingMessage(progressMessages[0]);
+          const msgInterval = setInterval(() => {
+            msgIdx = Math.min(msgIdx + 1, progressMessages.length - 1);
+            setGeneratingMessage(progressMessages[msgIdx]);
+          }, 8000);
+          try {
+            const genRes = await fetch(`/api/admin/case-studies/candidates/${closureId}/generate`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ force: true }),
+            });
+            if (!genRes.ok) {
+              const errData = await genRes.json().catch(() => ({}));
+              throw new Error(errData?.error ?? `Generation failed (${genRes.status})`);
+            }
+            await fetchClosures();
+            // Auto-expand to show the generated content immediately
+            setExpandedId(closureId);
+            await fetchOutputs(closureId, true);
+          } finally {
+            clearInterval(msgInterval);
+            setGeneratingMessage(null);
           }
-          await fetchClosures();
-          // Auto-expand to show the generated content immediately
-          setExpandedId(closureId);
-          await fetchOutputs(closureId, true);
           return;
         }
 
@@ -900,6 +918,18 @@ export default function ClosuresPage() {
             className="ml-2 underline"
           >
             Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Toast notification */}
+      {toast && (
+        <div className={`mb-4 p-3 rounded-lg text-sm flex items-center justify-between ${
+          toast.type === "success" ? "bg-green-50 border border-green-200 text-green-700" : "bg-red-50 border border-red-200 text-red-700"
+        }`} role="alert">
+          <span>{toast.message}</span>
+          <button type="button" onClick={() => setToast(null)} className="ml-2 shrink-0 text-current opacity-50 hover:opacity-100">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </button>
         </div>
       )}
@@ -1132,7 +1162,7 @@ export default function ClosuresPage() {
                           {actionLoading.has(`override-${closure.id}`) ? (
                             <>
                               <span className="animate-spin h-3 w-3 border border-white/40 border-t-white rounded-full" />
-                              Generating...
+                              {generatingMessage || "Generating..."}
                             </>
                           ) : (
                             "Generate Case Study"
@@ -1678,7 +1708,7 @@ export default function ClosuresPage() {
                             disabled={actionLoading.has(`override-${closure.id}`)}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-400"
                           >
-                            {actionLoading.has(`override-${closure.id}`) ? "Generating..." : "Create Case Study"}
+                            {actionLoading.has(`override-${closure.id}`) ? (generatingMessage || "Generating...") : "Create Case Study"}
                           </button>
                           {outputs[closure.id]?.caseStudy?.publishedAt ? (
                             <span className="text-xs text-neutral-400 italic">Published — unpublish before removing</span>
@@ -1697,7 +1727,7 @@ export default function ClosuresPage() {
                       {closure.closedBy?.startsWith("pm_confirmed") && (
                         <span className="text-xs text-green-600 font-medium">Case study in progress ✓</span>
                       )}
-                      {closure.source === "candidate" && (closure.status === "generated" || closure.status === "reviewed") && (
+                      {closure.source === "candidate" && (closure.status === "generated" || closure.status === "reviewed") && !isExpanded && (
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1713,7 +1743,7 @@ export default function ClosuresPage() {
                       {closure.source === "candidate" && closure.status === "generating" && (
                         <span className="text-xs text-yellow-600 font-medium flex items-center gap-1">
                           <span className="animate-spin h-3 w-3 border border-yellow-400 border-t-yellow-700 rounded-full" />
-                          Generating...
+                          {generatingMessage || "Generating..."}
                         </span>
                       )}
                     </div>
