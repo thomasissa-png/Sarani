@@ -539,19 +539,15 @@ describe("buildSocialInput()", () => {
     expect(input).toContain(VALID_COPY_OUTPUT.caseStudy.headline);
   });
 
-  it("includes amount for cost comparison context", () => {
+  it("does NOT include amount in social input (we don't mention pricing)", () => {
     const input = buildSocialInput(TIKTOK_CANDIDATE, VALID_STRATEGY_OUTPUT, VALID_COPY_OUTPUT);
-    expect(input).toMatch(/€[\d,]+/);
+    expect(input).not.toMatch(/€[\d,]+/);
+    expect(input).not.toContain("amount");
   });
 
-  it("includes asset count for volume proof", () => {
+  it("includes asset count for volume context", () => {
     const input = buildSocialInput(GEODIS_CANDIDATE, VALID_STRATEGY_OUTPUT, VALID_COPY_OUTPUT);
     expect(input).toContain("5700");
-  });
-
-  it("handles null amount (shows 'Not specified')", () => {
-    const input = buildSocialInput(MINIMAL_CANDIDATE, VALID_STRATEGY_OUTPUT, VALID_COPY_OUTPUT);
-    expect(input).toContain("Not specified");
   });
 });
 

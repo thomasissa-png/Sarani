@@ -262,15 +262,20 @@ Global teamwork, real-world impact. Thanks for the trust on these launches.
 
 Project lead: R-Advertising"
 
-═══ CRITICAL RULE: USE THE CASE STUDY DATA ═══
+═══ CRITICAL RULE: MINE THE DATA ═══
 
-The CASE STUDY and CREATIVE STRATEGY above contain real deliverables, the challenge, and the result.
-Use THESE as the raw material. Never invent details not in the data.
+You have 3 layers of real data. Use them in this priority:
 
-If the data is thin (no specific deliverables, no constraints, no volume):
+1. CASE STUDY output (headline, deliverable, brief, result, challenge, stats) — richest source
+2. CREATIVE STRATEGY output (angle, key messages, differentiators) — the "why this matters"
+3. PROJECT DATA (client name, project name, project type, asset count) — raw facts from the brief
+
+Dig into these. The project name often contains the real story ("OP AUDIO Avril" = audio campaign, April, seasonal). The brief describes what the client actually asked for. The deliverable says what was produced. USE ALL OF IT.
+
+If after mining all 3 sources there's still not enough for a rich post:
 - Write SHORTER. 3-4 lines max. Like Post 4: one concrete sentence + done.
 - NEVER compensate for missing data with metaphors or philosophy.
-- "Sound has a season" is EXACTLY what happens when you don't have enough data and try to be clever. DON'T.
+- "Sound has a season" is EXACTLY what happens when you don't have data and try to be clever. DON'T.
 
 ═══ THE HOOK IS EVERYTHING ═══
 
@@ -359,13 +364,11 @@ export function buildSocialInput(
     clientName: candidate.clientName,
     projectName: candidate.projectName ?? "Untitled project",
     projectType: candidate.projectType ?? "Unknown",
-    amount: candidate.projectAmount
-      ? `€${parseFloat(candidate.projectAmount).toLocaleString("en-US")}`
-      : "Not specified",
+    // amount intentionally excluded — we don't mention pricing in LinkedIn posts
     assetCount: candidate.sharePointAssetCount ?? 0,
   };
 
-  return `Write a LinkedIn post promoting this case study.
+  return `Write a LinkedIn post for this project. Mine the case study and strategy for concrete details.
 
 PROJECT DATA:
 ${JSON.stringify(data, null, 2)}
