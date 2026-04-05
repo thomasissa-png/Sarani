@@ -390,16 +390,23 @@ export async function POST(
     if (spFolderUrl) {
       try {
         await updatePipelineStatus(id, "step_4_visuals");
-        selectedVisuals = await autoSelectVisuals(
-          spFolderUrl,
-          candidate.clientName
-        );
-        await savePipelineStep(id, 4, "visual-selector", {
-          heroImage: selectedVisuals.heroImage?.url ?? null,
-          linkedInImage: selectedVisuals.linkedInImage?.url ?? null,
-          emailHeader: selectedVisuals.emailHeader?.url ?? null,
-          totalImagesFound: selectedVisuals.allImages.length,
-        });
+        // 15s max — step 4 is non-blocking, don't let it stall the pipeline
+        const visualsPromise = autoSelectVisuals(spFolderUrl, candidate.clientName);
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000));
+        const result = await Promise.race([visualsPromise, timeoutPromise]);
+        if (result) {
+          selectedVisuals = result;
+        } else {
+          console.warn("[pipeline] Step 4 timed out after 15s — continuing without visuals");
+          await savePipelineStep(id, 4, "visual-selector", { skipped: true, reason: "timeout" });
+        }
+        if (selectedVisuals) {
+          await savePipelineStep(id, 4, "visual-selector", {
+            heroImage: selectedVisuals.heroImage?.url ?? null,
+            linkedInImage: selectedVisuals.linkedInImage?.url ?? null,
+            emailHeader: selectedVisuals.emailHeader?.url ?? null,
+            totalImagesFound: selectedVisuals.allImages.length,
+          });
 
         // Update visualSuggestions on candidate
         if (selectedVisuals.allImages.length > 0) {
@@ -420,6 +427,7 @@ export async function POST(
             })
             .where(eq(caseStudyCandidates.id, id));
         }
+        } // close if (selectedVisuals)
       } catch (err) {
         // Non-blocking: pipeline continues without visuals
         console.warn(
