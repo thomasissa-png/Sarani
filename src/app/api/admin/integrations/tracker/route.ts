@@ -375,11 +375,9 @@ export async function GET(request: Request) {
     // Auth check — allow cron secret for background cache warming
     const cronSecret = request.headers.get("x-cron-secret");
     const isCron = cronSecret && cronSecret === process.env.CRON_SECRET;
-    if (!isCron) {
-      const session = await getUserFromSession();
-      if (!session) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    const session = isCron ? null : await getUserFromSession();
+    if (!isCron && !session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // If force-refresh header is set, force a fresh fetch (don't serve stale)
