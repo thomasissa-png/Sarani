@@ -395,6 +395,22 @@ export async function POST(
       } else {
         socialData = parsed.data;
       }
+      // ── Post-generation quality gates (server-side enforcement) ──
+      const post = socialData.linkedInPost;
+      const fullPost = [post.hook, post.body, post.proofPoints].filter(Boolean).join("\n");
+      const gateFailures: string[] = [];
+      if (fullPost.includes("•") || fullPost.includes("→")) gateFailures.push("G2: bullet points found");
+      if (/traditional\s+agenc|other\s+agenc|compared\s+to/i.test(fullPost)) gateFailures.push("G3: agency comparison");
+      if (/100\/100|quality score|\d+\/\d+\s*score/i.test(fullPost)) gateFailures.push("G4: invented score");
+      if (/unlimited revision|fixed price/i.test(fullPost)) gateFailures.push("G5: process selling point");
+      if (fullPost.length > 1300) gateFailures.push("G7: >1300 chars");
+      if (gateFailures.length > 0) {
+        console.warn(`[pipeline] LinkedIn post gate failures: ${gateFailures.join(", ")}. Auto-cleaning...`);
+        // Auto-clean: remove bullets, truncate
+        post.body = post.body.replace(/[•→]\s*/g, "").replace(/\n{3,}/g, "\n\n");
+        post.proofPoints = "";
+      }
+
       await savePipelineStep(id, 3, "social", socialData);
     } catch (err) {
       await db

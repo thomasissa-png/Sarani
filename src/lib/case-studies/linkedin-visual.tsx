@@ -241,7 +241,7 @@ export async function generateLinkedInVisual(
   } else {
     // With images: title shares space with photo grid
     if (rawTitle.length <= 15) {
-      titleFontSize = 80;
+      titleFontSize = 96; // Poster impact — matches reference "I RUN STORE"
     } else if (rawTitle.length <= 25) {
       titleFontSize = 64;
     } else if (rawTitle.length <= 60) {
@@ -291,7 +291,7 @@ export async function generateLinkedInVisual(
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "flex-start",
+            justifyContent: hasResolvedImages ? "flex-start" : "center",
             background: BG_STYLE,
             padding: "50px 50px 50px 50px",
             fontFamily: "Poppins",
@@ -306,15 +306,15 @@ export async function generateLinkedInVisual(
               borderRadius: 999,
               border: "1px solid rgba(255,255,255,0.15)",
               backgroundColor: "rgba(255,255,255,0.06)",
-              padding: "10px 28px",
+              padding: "14px 32px",
               marginBottom: 32,
             }}
           >
             {saraniLogoDataUri ? (
               <img
                 src={saraniLogoDataUri}
-                width={100}
-                height={34}
+                width={115}
+                height={38}
                 style={{ objectFit: "contain" }}
               />
             ) : (
@@ -435,7 +435,7 @@ export async function generateLinkedInVisual(
                       src={imageDataUris[2]}
                       style={{
                         width: "100%",
-                        height: "52%",
+                        flex: 1,
                         objectFit: "cover",
                         borderRadius: PHOTO_RADIUS,
                       }}

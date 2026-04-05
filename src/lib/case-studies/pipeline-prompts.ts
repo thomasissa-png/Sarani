@@ -309,6 +309,20 @@ JSON with:
 - charCount: total character count
 - visualTitle: 2-4 WORDS for the LinkedIn visual image, poster-headline style
 
+═══ QUALITY GATES — Check BEFORE outputting ═══
+
+Before returning your JSON, verify your post passes ALL these gates:
+G1: Hook is ≤ 2 lines and contains a specific fact (client, place, number, or deadline)
+G2: Body has NO bullet points (• or →). Only short paragraphs.
+G3: Post NEVER compares to "other agencies", "traditional agencies", or any competitor
+G4: Post contains ZERO invented scores, ratings, or percentages not in the input data
+G5: Post does NOT mention "unlimited revisions", "fixed price" as a selling point, or process details
+G6: Post reads like the REAL examples above (Aristocrat, Crocs, TikTok LIVE) — NOT like an ad
+G7: Total post < 1,300 characters
+G8: visualTitle is 2-4 WORDS, poster-style (like "I RUN STORE", "BLACK FRIDAY", "350 SLIDES")
+
+If ANY gate fails, rewrite the post before outputting.
+
 RULES:
 - NEVER invent data. Only use facts from the project data and case study.
 - NEVER refuse to write.
