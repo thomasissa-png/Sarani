@@ -54,7 +54,7 @@ export function buildStrategyInput(candidate: {
   sharePointFolderUrl: string | null;
   scoreTotal: number;
   scoreBreakdown: unknown;
-}): string {
+}, clickupBrief?: string): string {
   const data = {
     clientName: candidate.clientName,
     projectName: candidate.projectName ?? "Untitled project",
@@ -69,11 +69,22 @@ export function buildStrategyInput(candidate: {
     // scoreTotal/scoreBreakdown intentionally excluded — internal metric, not for LLM
   };
 
-  return `Analyze this project and define the creative strategy for its case study:
+  let input = `Analyze this project and define the creative strategy for its case study:
 
-${JSON.stringify(data, null, 2)}
+${JSON.stringify(data, null, 2)}`;
+
+  if (clickupBrief) {
+    input += `
+
+CLICKUP BRIEF (the original client brief — use this as your primary source of project details):
+${clickupBrief}`;
+  }
+
+  input += `
 
 Output a single JSON object with keys: angle, keyMessages, visualDirection, emotionalHook, targetAudience, differentiators.`;
+
+  return input;
 }
 
 // ─── Step 2: Copywriter ─────────────────────────────────────────────────────
@@ -145,7 +156,8 @@ export function buildCopyInput(
     sharePointAssetCount: number | null;
     scoreTotal: number;
   },
-  strategy: StrategyOutput
+  strategy: StrategyOutput,
+  clickupBrief?: string
 ): string {
   const data = {
     clientName: candidate.clientName,
@@ -160,10 +172,19 @@ export function buildCopyInput(
     assetCount: candidate.sharePointAssetCount ?? 0,
   };
 
-  return `Write a case study and nurturing email for this project, aligned with the creative strategy below.
+  let input = `Write a case study and nurturing email for this project, aligned with the creative strategy below.
 
 PROJECT DATA:
-${JSON.stringify(data, null, 2)}
+${JSON.stringify(data, null, 2)}`;
+
+  if (clickupBrief) {
+    input += `
+
+CLICKUP BRIEF (the original client brief — contains what the client asked for, deliverables, context):
+${clickupBrief}`;
+  }
+
+  input += `
 
 CREATIVE STRATEGY:
 ${JSON.stringify(strategy, null, 2)}
@@ -197,6 +218,8 @@ IMPORTANT: Your output MUST be a SINGLE JSON object with EXACTLY this structure:
 Do NOT put caseStudy fields at the top level. They MUST be nested inside "caseStudy".
 If testimonial data is not available, OMIT the testimonial field entirely (do not set it to null).
 Output valid JSON only. No markdown, no explanation.`;
+
+  return input;
 }
 
 // ─── Step 3: Social Media ───────────────────────────────────────────────────

@@ -140,6 +140,22 @@ export async function POST(
       );
     }
 
+    // 2b. Fetch ClickUp task description (the brief has real project data)
+    let clickupBrief = "";
+    try {
+      const { getTask } = await import("@/lib/integrations/clickup");
+      const task = await getTask(candidate.clickupTaskId);
+      if (task.description) {
+        // Strip HTML tags, keep text content
+        clickupBrief = task.description.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+        // Limit to 2000 chars to avoid token bloat
+        if (clickupBrief.length > 2000) clickupBrief = clickupBrief.slice(0, 2000);
+      }
+    } catch {
+      // Non-blocking — continue without ClickUp brief
+      console.warn("[pipeline] Could not fetch ClickUp task description");
+    }
+
     // 3. Set status to "generating" and reset pipeline
     await db
       .update(caseStudyCandidates)
@@ -159,7 +175,7 @@ export async function POST(
 
       const strategyResult = await callClaudeJSON<StrategyOutput>({
         systemPrompt: CREATIVE_STRATEGY_PROMPT,
-        userMessage: buildStrategyInput(candidate),
+        userMessage: buildStrategyInput(candidate, clickupBrief),
         maxTokens: 2048,
         timeout: 60_000,
       });
@@ -176,7 +192,7 @@ export async function POST(
         const retryResult = await callClaudeJSON<StrategyOutput>({
           systemPrompt: CREATIVE_STRATEGY_PROMPT,
           userMessage:
-            buildStrategyInput(candidate) +
+            buildStrategyInput(candidate, clickupBrief) +
             "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid: angle (min 5 chars), keyMessages (2-5 items), visualDirection (min 5 chars), emotionalHook (min 5 chars), targetAudience (min 5 chars), differentiators (1-5 items).",
           maxTokens: 2048,
           timeout: 60_000,
@@ -219,7 +235,7 @@ export async function POST(
 
       const copyResult = await callClaudeJSON<CopyOutput>({
         systemPrompt: COPYWRITER_PROMPT,
-        userMessage: buildCopyInput(candidate, strategyData),
+        userMessage: buildCopyInput(candidate, strategyData, clickupBrief),
         maxTokens: 4096,
         timeout: 60_000,
       });
@@ -239,7 +255,7 @@ export async function POST(
         const retryResult = await callClaudeJSON<CopyOutput>({
           systemPrompt: COPYWRITER_PROMPT,
           userMessage:
-            buildCopyInput(candidate, strategyData) +
+            buildCopyInput(candidate, strategyData, clickupBrief) +
             `\n\nIMPORTANT: Your previous response had these validation errors:\n${errorDetails}\n\nFix these EXACT issues. Key constraints:\n- metaDescription: MUST be 50-160 chars (count carefully!)\n- headline: max 100 chars\n- result: max 150 chars\n- brief: max 300 chars\n- keyMetric: max 20 chars\n- outcome: max 60 chars\n- stats value: max 15 chars, label: max 30 chars\n- slug: lowercase alphanumeric with hyphens only\n- category: exactly one of 'Video & Social', 'Graphic Design', 'Event', 'Multilingual', 'Out-of-Home'\n- stats: exactly 3 items`,
           maxTokens: 4096,
           timeout: 60_000,
