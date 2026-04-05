@@ -327,7 +327,18 @@ export async function POST(
           maxTokens: 2048,
           timeout: 60_000,
         });
-        const retryParsed = SocialOutputSchema.safeParse(retryResult.data);
+        // Auto-fix: ensure proofPoints and hashtags are strings (not null/undefined)
+        const retryData = retryResult.data as Record<string, unknown>;
+        const lp = retryData?.linkedInPost as Record<string, unknown> | undefined;
+        if (lp) {
+          if (!lp.proofPoints || typeof lp.proofPoints !== "string") lp.proofPoints = "";
+          if (!lp.hashtags || typeof lp.hashtags !== "string") lp.hashtags = "";
+          if (!lp.charCount || typeof lp.charCount !== "number") {
+            lp.charCount = ((lp.hook as string) ?? "").length + ((lp.body as string) ?? "").length;
+          }
+          if (!lp.visualTitle || typeof lp.visualTitle !== "string") lp.visualTitle = "";
+        }
+        const retryParsed = SocialOutputSchema.safeParse(retryData);
         if (!retryParsed.success) {
           throw new Error(
             `Social validation failed after retry: ${retryParsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
