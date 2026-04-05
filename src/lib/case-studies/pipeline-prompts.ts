@@ -177,19 +177,19 @@ IMPORTANT: Your output MUST be a SINGLE JSON object with EXACTLY this structure:
 {
   "caseStudy": {
     "slug": "client-project-type",
-    "client": "Client Name",
-    "deliverable": "What was delivered",
-    "outcome": "Key outcome",
-    "brief": "Project context (min 10 chars)",
-    "result": "What happened (min 10 chars)",
-    "headline": "Problem → Result headline",
-    "keyMetric": "The #1 metric",
-    "stats": [{"label": "...", "value": "..."}, {"label": "...", "value": "..."}, {"label": "...", "value": "..."}],
-    "metaDescription": "SEO meta description (50-160 chars)",
+    "client": "Client Name (max 50 chars)",
+    "deliverable": "What was delivered (max 60 chars)",
+    "outcome": "Key outcome (max 60 chars)",
+    "brief": "Project context (10-300 chars)",
+    "result": "What happened (10-150 chars)",
+    "headline": "Problem → Result headline (5-100 chars)",
+    "keyMetric": "The #1 metric (max 20 chars)",
+    "stats": [{"label": "max 30 chars", "value": "max 15 chars"}, ...3 items],
+    "metaDescription": "SEO meta description (EXACTLY 50-160 chars — this is critical, count carefully)",
     "category": "Video & Social"
   },
   "nurturingEmail": {
-    "subject": "Subject line (<60 chars)",
+    "subject": "Subject line (max 60 chars)",
     "body": "Email body (min 50 chars)",
     "ctaText": "CTA button text",
     "suggestedSegment": "Target audience segment"

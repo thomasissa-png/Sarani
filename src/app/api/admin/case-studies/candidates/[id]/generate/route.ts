@@ -233,15 +233,41 @@ export async function POST(
             .map((i) => `${i.path.join(".")}: ${i.message}`)
             .join(", ")
         );
+        const errorDetails = parsed.error.issues
+          .map((i) => `${i.path.join(".")}: ${i.message}`)
+          .join("\n");
         const retryResult = await callClaudeJSON<CopyOutput>({
           systemPrompt: COPYWRITER_PROMPT,
           userMessage:
             buildCopyInput(candidate, strategyData) +
-            "\n\nIMPORTANT: Your previous response had validation errors. Ensure ALL required fields are present and valid. The slug must be lowercase alphanumeric with hyphens only. The category must be exactly one of: 'Video & Social', 'Graphic Design', 'Event', 'Multilingual', 'Out-of-Home'. Stats must have exactly 3 items.",
+            `\n\nIMPORTANT: Your previous response had these validation errors:\n${errorDetails}\n\nFix these EXACT issues. Key constraints:\n- metaDescription: MUST be 50-160 chars (count carefully!)\n- headline: max 100 chars\n- result: max 150 chars\n- brief: max 300 chars\n- keyMetric: max 20 chars\n- outcome: max 60 chars\n- stats value: max 15 chars, label: max 30 chars\n- slug: lowercase alphanumeric with hyphens only\n- category: exactly one of 'Video & Social', 'Graphic Design', 'Event', 'Multilingual', 'Out-of-Home'\n- stats: exactly 3 items`,
           maxTokens: 4096,
           timeout: 60_000,
         });
-        const retryParsed = CopyOutputSchema.safeParse(retryResult.data);
+        // Auto-truncate fields that are too long (safety valve)
+        const retryData = retryResult.data as Record<string, unknown>;
+        const cs = retryData?.caseStudy as Record<string, unknown> | undefined;
+        if (cs) {
+          if (typeof cs.metaDescription === "string" && cs.metaDescription.length > 160) {
+            cs.metaDescription = cs.metaDescription.slice(0, 157) + "...";
+          }
+          if (typeof cs.headline === "string" && cs.headline.length > 100) {
+            cs.headline = cs.headline.slice(0, 97) + "...";
+          }
+          if (typeof cs.result === "string" && cs.result.length > 150) {
+            cs.result = cs.result.slice(0, 147) + "...";
+          }
+          if (typeof cs.brief === "string" && cs.brief.length > 300) {
+            cs.brief = cs.brief.slice(0, 297) + "...";
+          }
+          if (typeof cs.keyMetric === "string" && cs.keyMetric.length > 20) {
+            cs.keyMetric = cs.keyMetric.slice(0, 20);
+          }
+          if (typeof cs.outcome === "string" && cs.outcome.length > 60) {
+            cs.outcome = cs.outcome.slice(0, 57) + "...";
+          }
+        }
+        const retryParsed = CopyOutputSchema.safeParse(retryData);
         if (!retryParsed.success) {
           throw new Error(
             `Copywriter validation failed after retry: ${retryParsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}`
