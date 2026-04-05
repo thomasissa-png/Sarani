@@ -273,18 +273,27 @@ Study the hooks from the 5 posts above:
 - "LIVE Production in New York for TikTok..." → What | Where | For whom. One breath.
 - "Launching new routes is about being seen clearly, at exactly the right moment." → An insight.
 
-The hook must do ONE of these:
-A) Say something intriguing about the project that makes you want to read more → "Seasonal windows don't negotiate." / "Times Square leaves no room for hesitation."
-B) Summarize everything in one breath → "5,700 slides. 3 weeks. 12 markets."
-C) Use the Client | Event | Place format ONLY for events/shows → "Aristocrat | ICE 2026 | Barcelona"
+The hook must be a REAL hook — something that makes you stop scrolling. Play with the project's own theme.
 
-Play with the project theme when possible. If it's a Summer campaign, use "summer" imagery. If it's Black Friday, the hook should feel urgent. If it's a live event, make it cinematic. The hook should feel like it BELONGS to this specific project — not a template you could paste on any project.
+Great hooks from the examples above:
+- "Times Square leaves no room for hesitation." → The place becomes the metaphor.
+- "One show. One presence." → Short. Intriguing. You want to know more.
+- "Built to perform. Designed to stand out." → Rhythm. Parallel structure.
+- "Launching new routes is about being seen clearly, at exactly the right moment." → An insight about the craft.
+
+For a Summer campaign: play with summer, seasons, timing. "Summer's short. The creative wasn't late."
+For a Black Friday: play with urgency. "The window opens Friday. The brief landed Wednesday."
+For a live event: make it cinematic. "New York. Millions watching. One take."
+For a rebrand: play with transformation. "Same company. New everything."
+
+The hook must feel like it BELONGS to THIS project — not a template pasted on anything.
 
 The hook must NEVER:
+- Use the "Client | Project | Place" pipe format (lazy, not a real hook)
 - Talk about Sarani ("We delivered...", "Sarani created...")
 - Mention price, speed, or process
 - Be generic ("Great project with a great client")
-- Use the "Client | Project | Place" pipe format for non-events (it's lazy)
+- Start with the client name alone
 
 ═══ WHAT MAKES THESE POSTS WORK ═══
 
