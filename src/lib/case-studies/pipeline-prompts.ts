@@ -299,12 +299,26 @@ Style E — The Brief in One Line: "Full rebrand. Every deck. Every market."
 Style F — Client Quote or Moment: "Times Square leaves no room for hesitation."
 Style G — Short + Done: "Paris pop-up. i-Run × adidas. Done."
 
+═══ THE WIT FACTOR ═══
+
+Every post should have ONE moment of clever writing — a double meaning, a surprising parallel, a satisfying closer that makes you smile. Not forced humor, not puns. Just smart writing.
+
+Examples of wit done right:
+- "Project closed before the promo did." (double meaning: project delivery vs campaign deadline)
+- "Customers noticed. Teams noticed." (the simplicity IS the flex)
+- "Big space. One collective brand." (contrasting scale with unity)
+- "Times Square leaves no room for hesitation." (the place IS the metaphor)
+
+This is NOT wit: "We crushed it!", "Nailed it!", "Mission accomplished!" — that's self-congratulation.
+
+The wit should be in the CLOSER or the HOOK, not in the body. One clever line per post max.
+
 ═══ OUTPUT FORMAT ═══
 
 JSON with:
 - hook: the first 1-2 lines (the scroll-stopper). MUST be punchy and factual.
 - body: the rest of the post (context + deliverables + closer + project lead). Include \\n\\n for blank lines between sections.
-- proofPoints: leave EMPTY string (we don't use → bullet format, we use • in the body)
+- proofPoints: EMPTY string (no bullet points in Sarani posts — ever)
 - hashtags: EMPTY string (never)
 - charCount: total character count
 - visualTitle: 2-4 WORDS for the LinkedIn visual image, poster-headline style

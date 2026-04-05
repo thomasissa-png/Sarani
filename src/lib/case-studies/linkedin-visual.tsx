@@ -32,11 +32,7 @@ export interface LinkedInVisualParams {
 
 const VISUAL_SIZE = { width: 1200, height: 1200 };
 const FLAME = "#DA5126";
-// Background: dark grey with subtle grain texture via radial gradients
-// Satori doesn't support CSS noise/filter, so we fake grain with overlapping
-// semi-transparent radial gradients at different positions
 const BG = "#2d2d2d";
-const BG_STYLE = `radial-gradient(ellipse at 20% 50%, rgba(60,60,60,0.4) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(50,50,50,0.3) 0%, transparent 40%), radial-gradient(ellipse at 60% 80%, rgba(55,55,55,0.35) 0%, transparent 45%), ${BG}`;
 const PHOTO_RADIUS = 20;
 
 // ─── Font loader ─────────────────────────────────────────────────────────────
@@ -64,7 +60,7 @@ async function loadFont(filename: string): Promise<ArrayBuffer> {
   throw new Error(`Font ${filename} not found in any of: ${candidates.join(", ")}`);
 }
 
-async function loadOutfitBold(): Promise<ArrayBuffer> {
+async function loadPoppinsBold(): Promise<ArrayBuffer> {
   if (fontBoldCache) return fontBoldCache;
   fontBoldCache = await loadFont("Poppins-Bold.ttf");
   return fontBoldCache;
@@ -72,7 +68,7 @@ async function loadOutfitBold(): Promise<ArrayBuffer> {
 
 let fontRegularCache: ArrayBuffer | null = null;
 
-async function loadOutfitRegular(): Promise<ArrayBuffer> {
+async function loadPoppinsRegular(): Promise<ArrayBuffer> {
   if (fontRegularCache) return fontRegularCache;
   fontRegularCache = await loadFont("Poppins-Regular.ttf");
   return fontRegularCache;
@@ -258,8 +254,8 @@ export async function generateLinkedInVisual(
 
   // Load fonts
   const [poppinsBold, poppinsRegular] = await Promise.all([
-    loadOutfitBold(),
-    loadOutfitRegular(),
+    loadPoppinsBold(),
+    loadPoppinsRegular(),
   ]);
 
   // Fetch Sarani logo as data URI
@@ -290,9 +286,9 @@ export async function generateLinkedInVisual(
             height: "100%",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
+            alignItems: "flex-start",
             justifyContent: hasResolvedImages ? "flex-start" : "center",
-            background: BG_STYLE,
+            backgroundColor: BG,
             padding: "50px 50px 50px 50px",
             fontFamily: "Poppins",
           }}
@@ -347,13 +343,11 @@ export async function generateLinkedInVisual(
           <div
             style={{
               display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              textAlign: "center",
               fontSize: titleFontSize,
               fontWeight: 700,
               lineHeight: 1.05,
               letterSpacing: "-0.02em",
+              textTransform: "uppercase" as const,
               maxWidth: 1000,
               marginBottom: hasResolvedImages ? 36 : 0,
             }}
@@ -372,7 +366,6 @@ export async function generateLinkedInVisual(
                 flexDirection: imageDataUris.length === 1 ? "column" : "row",
                 width: "100%",
                 flex: 1,
-                gap: 12,
               }}
             >
               {imageDataUris.length === 1 && (
@@ -396,6 +389,7 @@ export async function generateLinkedInVisual(
                       height: "100%",
                       objectFit: "cover",
                       borderRadius: PHOTO_RADIUS,
+                      marginRight: 12,
                     }}
                   />
                   <img
@@ -419,7 +413,7 @@ export async function generateLinkedInVisual(
                       flexDirection: "column",
                       width: "42%",
                       height: "100%",
-                      gap: 12,
+                      marginRight: 12,
                     }}
                   >
                     <img
@@ -429,6 +423,7 @@ export async function generateLinkedInVisual(
                         height: "45%",
                         objectFit: "cover",
                         borderRadius: PHOTO_RADIUS,
+                        marginBottom: 12,
                       }}
                     />
                     <img
