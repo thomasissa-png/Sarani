@@ -266,24 +266,23 @@ describe("Bug #9 — ConfirmDialog + useConfirm exist and are correct", () => {
 describe("Bug #10 — Auto-select visuals scans all sub-folders", () => {
   const filePath = "src/lib/case-studies/auto-select-visuals.ts";
 
-  it("must contain Priority 3 or 'scan ALL sub-folders' logic", () => {
+  it("scans sub-folders from most recent to oldest", () => {
     const src = read(filePath);
-    const hasPriority3 = /Priority 3/i.test(src);
-    const hasScanAll = /scan ALL sub-folders/i.test(src);
-    const hasAllSubfolders = /all.*sub.*folder/i.test(src);
-    expect(hasPriority3 || hasScanAll || hasAllSubfolders).toBe(true);
+    // Must sort by recency and scan multiple sub-folders
+    expect(src).toMatch(/sortByRecent|most recent|lastModifiedDateTime/i);
+    expect(src).toMatch(/for.*folder.*of.*subFolders|subFolders\.forEach/i);
   });
 
-  it("must NOT be limited to preferred folders only", () => {
+  it("skips supporting files, source, brief, archive folders", () => {
     const src = read(filePath);
-    // Must have logic beyond just PREFERRED_SUBFOLDERS
-    // The function should list children and iterate beyond preferred
-    expect(src).toMatch(/PREFERRED_SUBFOLDERS/);
-    // There must be a fallback that scans non-preferred folders
-    expect(src.length).toBeGreaterThan(2000); // non-trivial implementation
-    // Must have logic for scanning items that are NOT in preferred folders
-    const hasFallbackScan = /!isPreferred|else|Priority 3|scan ALL/i.test(src);
-    expect(hasFallbackScan).toBe(true);
+    expect(src).toMatch(/SKIP_FOLDERS|shouldSkip|supporting files/i);
+  });
+
+  it("assigns all 3 roles: heroImage, linkedInImage, emailHeader", () => {
+    const src = read(filePath);
+    expect(src).toContain("heroImage:");
+    expect(src).toContain("linkedInImage:");
+    expect(src).toContain("emailHeader:");
   });
 });
 

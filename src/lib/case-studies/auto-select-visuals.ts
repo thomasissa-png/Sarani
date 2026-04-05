@@ -1,14 +1,12 @@
 // ─── Auto-select visuals from SharePoint project folder ─────────────────────
 // Step 4 of the case study pipeline.
-// Lists images in the candidate's SP folder, picks the 3 best by size heuristic,
-// and returns anonymous sharing links for downstream use (Satori, DB storage).
+// Lists images in the candidate's SP folder, picks the 3 best,
+// and returns proxy URLs for downstream use (Satori, DB storage).
 
 import {
   type DriveItem,
   resolveSharePointUrl,
   listDriveItems,
-  createAnonymousSharingLink,
-  getDriveItemByPath,
   graphFetch,
 } from "@/lib/integrations/sharepoint";
 import {
@@ -20,14 +18,11 @@ import {
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface SelectedVisual {
-  /** Stable proxy URL: /api/project-assets/{itemId}?driveId={driveId} — never expires */
   url: string;
   thumbnailUrl: string;
   name: string;
   size: number;
-  /** SharePoint item ID for direct Graph API access */
   itemId: string;
-  /** SharePoint drive ID */
   driveId: string;
 }
 
@@ -41,257 +36,171 @@ export interface AutoSelectedVisuals {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-/** Preferred sub-folder names (case-insensitive) — checked in order */
-const PREFERRED_SUBFOLDERS = [
-  "final",
-  "export",
-  "exports",
-  "delivered",
-  "livrables",
-];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MIN_FILE_SIZE = 10 * 1024; // 10 KB
 
-/** Files above this threshold are likely PSDs/source files — skip them */
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
-
-/** Minimum file size to consider (skip tiny thumbnails / placeholders) */
-const MIN_FILE_SIZE_BYTES = 10 * 1024; // 10 KB
+/** Folders to skip when scanning for deliverables */
+const SKIP_FOLDERS = new Set([
+  "supporting files", "rework", "00. brief", "brief",
+  "source files", "source", "sources", "assets source",
+  "archive", "old", "template", "templates",
+]);
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function isImageFile(item: DriveItem): boolean {
-  return (
-    !!item.file?.mimeType &&
-    item.file.mimeType.startsWith("image/") &&
-    !item.folder
+function isImage(item: DriveItem): boolean {
+  return !!item.file?.mimeType && item.file.mimeType.startsWith("image/") && !item.folder;
+}
+
+function isValidSize(item: DriveItem): boolean {
+  return item.size >= MIN_FILE_SIZE && item.size <= MAX_FILE_SIZE;
+}
+
+function shouldSkip(name: string): boolean {
+  return SKIP_FOLDERS.has(name.toLowerCase().trim());
+}
+
+/** Sort by most recent modification date, then by size (largest first) */
+function sortByRecent(items: DriveItem[]): DriveItem[] {
+  return [...items].sort((a, b) => {
+    const dateA = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+    const dateB = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+    if (dateB !== dateA) return dateB - dateA;
+    return b.size - a.size;
+  });
+}
+
+function buildProxyUrl(item: DriveItem, driveId: string): string {
+  const did = item.parentReference?.driveId ?? driveId;
+  return `/api/project-assets/${item.id}?driveId=${encodeURIComponent(did)}`;
+}
+
+function buildThumbnailUrl(item: DriveItem): string {
+  return item["@microsoft.graph.downloadUrl"] ?? item.webUrl;
+}
+
+/** List children of a folder by its Graph item ID */
+async function listByItemId(itemId: string, driveId: string): Promise<DriveItem[]> {
+  const data = await graphFetch<{ value: DriveItem[] }>(
+    `/drives/${driveId}/items/${itemId}/children`
   );
-}
-
-function isFolder(item: DriveItem): boolean {
-  return !!item.folder;
-}
-
-/**
- * Check if a folder name matches one of the preferred sub-folder names.
- */
-function isPreferredFolder(name: string): boolean {
-  const lower = name.toLowerCase().trim();
-  return PREFERRED_SUBFOLDERS.includes(lower);
-}
-
-/**
- * Build a stable proxy URL for a drive item.
- * Uses /api/project-assets/{itemId}?driveId={driveId} which re-fetches
- * the downloadUrl on each request — never expires.
- * Falls back to anonymous sharing link if itemId is not available.
- */
-async function getStableUrl(item: DriveItem): Promise<string> {
-  const driveId = item.parentReference?.driveId;
-  if (driveId && item.id) {
-    return `/api/project-assets/${item.id}?driveId=${driveId}`;
-  }
-  // Fallback: try anonymous sharing link
-  if (driveId && item.id) {
-    const link = await createAnonymousSharingLink(driveId, item.id);
-    if (link) return link;
-  }
-  // Last resort: temporary download URL
-  return item["@microsoft.graph.downloadUrl"] ?? item.webUrl;
-}
-
-/**
- * Build a thumbnail URL from a drive item.
- * Graph API provides thumbnails at /thumbnails/0/large/url for drive items.
- */
-function getThumbnailUrl(item: DriveItem): string {
-  // The downloadUrl works as a thumbnail for images; a proper thumbnail
-  // endpoint would be /drives/{driveId}/items/{itemId}/thumbnails but
-  // that requires an extra call. The downloadUrl is pre-authenticated
-  // and serves the actual image which is good enough for preview.
-  return item["@microsoft.graph.downloadUrl"] ?? item.webUrl;
+  return data.value ?? [];
 }
 
 // ─── Main function ──────────────────────────────────────────────────────────
 
-/**
- * Auto-select the 3 best images from a SharePoint project folder.
- *
- * Strategy:
- * 1. Resolve the SP folder URL to a driveItem
- * 2. Look for preferred sub-folders (Final, Export, Delivered, etc.)
- * 3. List image files, filter by size, sort by size descending
- * 4. Pick top 3 as heroImage, linkedInImage, emailHeader
- * 5. Generate anonymous sharing links for each
- *
- * @param sharePointFolderUrl - The SharePoint folder URL of the project
- * @param _clientName - Optional client name (reserved for future scoring)
- * @returns The auto-selected visuals with sharing links
- */
 export async function autoSelectVisuals(
   sharePointFolderUrl: string,
   clientName?: string | null
 ): Promise<AutoSelectedVisuals> {
   const driveId = SHAREPOINT_ASSETS_DRIVE_ID;
-  let items: DriveItem[] = [];
+  const empty: AutoSelectedVisuals = { allImages: [], source: "auto" };
 
-  // Strategy 1: Try to resolve as a sharing link via /shares/ API
+  // ── Step 1: Resolve the project folder ────────────────────────────────
+  let projectItems: DriveItem[] = [];
+
+  // Strategy 1: Sharing link
   try {
     const folderItem = await resolveSharePointUrl(sharePointFolderUrl);
-    if (folderItem?.id && folderItem.parentReference?.driveId) {
-      const resolvedDriveId = folderItem.parentReference.driveId;
-      const folderPath = folderItem.parentReference.path
-        ? `${folderItem.parentReference.path}/${folderItem.name}`
-        : `/${folderItem.name}`;
-      const cleanPath = folderPath.replace(/^\/drives\/[^/]+\/root:/, "").replace(/^\/drive\/root:/, "");
-      items = await listDriveItems(resolvedDriveId, cleanPath);
-      console.log(`[auto-select-visuals] Strategy 1 (sharing link): ${items.length} items`);
+    if (folderItem?.id) {
+      const did = folderItem.parentReference?.driveId ?? driveId;
+      projectItems = await listByItemId(folderItem.id, did);
+      console.log(`[auto-select] Strategy 1 (sharing link): ${projectItems.length} items`);
     }
-  } catch {
-    // Strategy 1 failed — try next
-  }
+  } catch { /* try next */ }
 
-  // Strategy 2: Extract path from webUrl and list via ASSETS drive
-  if (items.length === 0 && sharePointFolderUrl.includes("sharepoint.com")) {
+  // Strategy 2: Extract path from webUrl
+  if (projectItems.length === 0 && sharePointFolderUrl.includes("sharepoint.com")) {
     try {
-      // webUrl looks like: https://tenant.sharepoint.com/sites/SiteName/Shared Documents/path/to/folder
       const urlObj = new URL(sharePointFolderUrl);
       const pathMatch = urlObj.pathname.match(/\/Shared\s*Documents\/(.+)/i)
         ?? urlObj.pathname.match(/\/Documents\/(.+)/i);
       if (pathMatch) {
         const spPath = decodeURIComponent(pathMatch[1]);
-        items = await listDriveItems(driveId, `/${spPath}`);
-        console.log(`[auto-select-visuals] Strategy 2 (webUrl path): ${items.length} items from /${spPath}`);
+        projectItems = await listDriveItems(driveId, `/${spPath}`);
+        console.log(`[auto-select] Strategy 2 (webUrl path): ${projectItems.length} items`);
       }
-    } catch {
-      // Strategy 2 failed
-    }
+    } catch { /* try next */ }
   }
 
-  // Strategy 3: Use client name + config mapping to find the project folder
-  if (items.length === 0 && clientName) {
+  // Strategy 3: Client root fallback
+  if (projectItems.length === 0 && clientName) {
     try {
       const mapping = getMappingBySpaceName(clientName);
       if (mapping) {
         const customerPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
-        const customerItems = await listDriveItems(driveId, customerPath);
-        // Use all images from the client's root as a fallback
-        items = customerItems;
-        console.log(`[auto-select-visuals] Strategy 3 (client root): ${items.length} items`);
+        projectItems = await listDriveItems(driveId, customerPath);
+        console.log(`[auto-select] Strategy 3 (client root): ${projectItems.length} items`);
+      }
+    } catch { /* give up */ }
+  }
+
+  if (projectItems.length === 0) {
+    console.warn(`[auto-select] No items found for: ${sharePointFolderUrl.substring(0, 100)}`);
+    return empty;
+  }
+
+  // ── Step 2: Find images ───────────────────────────────────────────────
+  // Pattern: look for images in sub-folders (Batch 01, Batch 02, etc.)
+  // Skip: Supporting Files, Source, Brief, Archive, etc.
+  // Priority: most recent sub-folder first
+
+  let images: DriveItem[] = [];
+
+  // Get all sub-folders, filter out skippable ones, sort most recent first
+  const subFolders = sortByRecent(
+    projectItems.filter((i) => i.folder && !shouldSkip(i.name))
+  );
+
+  // Scan sub-folders from most recent to oldest — stop when we have 3+ images
+  for (const folder of subFolders) {
+    if (images.length >= 3) break;
+    try {
+      const folderDriveId = folder.parentReference?.driveId ?? driveId;
+      const children = await listByItemId(folder.id, folderDriveId);
+      const folderImages = children.filter(isImage).filter(isValidSize);
+      if (folderImages.length > 0) {
+        console.log(`[auto-select] Found ${folderImages.length} images in "${folder.name}"`);
+        images.push(...folderImages);
       }
     } catch {
-      // Strategy 3 failed
+      console.warn(`[auto-select] Failed to list sub-folder "${folder.name}"`);
     }
   }
 
-  if (items.length === 0) {
-    console.warn(
-      "[auto-select-visuals] All strategies failed for:",
-      sharePointFolderUrl.substring(0, 120),
-      "client:", clientName
-    );
-    return { allImages: [], source: "auto" };
-  }
-
-  // 3. Check for preferred sub-folders first, then ALL sub-folders
-  const subFolders = items.filter(isFolder);
-  let imageItems: DriveItem[] = [];
-
-  // Priority 1: Preferred folders (Final, Export, Delivered, etc.)
-  for (const folderName of PREFERRED_SUBFOLDERS) {
-    const match = subFolders.find(
-      (f) => f.name.toLowerCase().trim() === folderName
-    );
-    if (match) {
-      try {
-        const subData = await graphFetch<{ value: DriveItem[] }>(
-          `/drives/${match.parentReference?.driveId ?? driveId}/items/${match.id}/children`
-        );
-        const subImages = (subData.value ?? []).filter(isImageFile);
-        if (subImages.length > 0) {
-          imageItems = subImages;
-          console.log(`[auto-select-visuals] Found ${subImages.length} images in preferred folder "${match.name}"`);
-          break;
-        }
-      } catch {
-        // Sub-folder listing failed, try next
-      }
+  // Fallback: check root folder for direct images
+  if (images.length === 0) {
+    images = projectItems.filter(isImage).filter(isValidSize);
+    if (images.length > 0) {
+      console.log(`[auto-select] Found ${images.length} images in root folder`);
     }
   }
 
-  // Priority 2: Root folder images
-  if (imageItems.length === 0) {
-    imageItems = items.filter(isImageFile);
+  if (images.length === 0) {
+    console.warn(`[auto-select] No suitable images found (${MIN_FILE_SIZE/1024}KB-${MAX_FILE_SIZE/(1024*1024)}MB)`);
+    return empty;
   }
 
-  // Priority 3: If still nothing, scan ALL sub-folders — most recent first
-  const SKIP_FOLDERS = new Set(["brief", "source", "sources", "source files", "archive", "old", "template"]);
-  if (imageItems.length === 0 && subFolders.length > 0) {
-    // Sort sub-folders by most recent modification date — latest deliveries first
-    const sortedFolders = [...subFolders]
-      .filter((f) => !SKIP_FOLDERS.has(f.name.toLowerCase().trim()))
-      .sort((a, b) => {
-        const dateA = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
-        const dateB = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
-        return dateB - dateA;
-      });
-    console.log(`[auto-select-visuals] Scanning ${sortedFolders.length} sub-folders (most recent first)...`);
-    for (const folder of sortedFolders.slice(0, 5)) {
-      try {
-        const subData = await graphFetch<{ value: DriveItem[] }>(
-          `/drives/${folder.parentReference?.driveId ?? driveId}/items/${folder.id}/children`
-        );
-        const subImages = (subData.value ?? []).filter(isImageFile);
-        if (subImages.length > 0) {
-          imageItems.push(...subImages);
-          console.log(`[auto-select-visuals] Found ${subImages.length} images in sub-folder "${folder.name}"`);
-        }
-      } catch {
-        // continue
-      }
-    }
-  }
+  // Sort by most recent, pick top 6
+  const sorted = sortByRecent(images).slice(0, 6);
 
-  // 4. Filter by size and sort — sort by most recent first (lastModifiedDateTime), then by size
-  const filteredImages = imageItems
-    .filter((item) => item.size >= MIN_FILE_SIZE_BYTES)
-    .filter((item) => item.size <= MAX_FILE_SIZE_BYTES)
-    .sort((a, b) => {
-      // Prefer most recent files (deliverables are typically the newest)
-      const dateA = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
-      const dateB = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
-      if (dateB !== dateA) return dateB - dateA;
-      return b.size - a.size; // Tiebreaker: largest first
-    });
+  // ── Step 3: Build SelectedVisual objects ───────────────────────────────
+  const allImages: SelectedVisual[] = sorted.map((item) => ({
+    name: item.name,
+    url: buildProxyUrl(item, driveId),
+    thumbnailUrl: buildThumbnailUrl(item),
+    size: item.size,
+    itemId: item.id,
+    driveId: item.parentReference?.driveId ?? driveId,
+  }));
 
-  console.log(
-    `[auto-select-visuals] ${imageItems.length} images found, ${filteredImages.length} after size filter (${MIN_FILE_SIZE_BYTES/1024}KB-${MAX_FILE_SIZE_BYTES/(1024*1024)}MB)`
-  );
-
-  if (filteredImages.length === 0) {
-    console.warn(
-      "[auto-select-visuals] No suitable images found in folder. Image sizes:",
-      imageItems.slice(0, 5).map((i) => `${i.name}: ${(i.size/1024).toFixed(0)}KB`).join(", ")
-    );
-    return { allImages: [], source: "auto" };
-  }
-
-  // 5. Generate stable proxy URLs for top candidates (max 6 to have some alternates)
-  const topCandidates = filteredImages.slice(0, 6);
-  const allImages: SelectedVisual[] = await Promise.all(
-    topCandidates.map(async (item) => ({
-      name: item.name,
-      url: await getStableUrl(item),
-      size: item.size,
-      thumbnailUrl: getThumbnailUrl(item),
-      itemId: item.id,
-      driveId: item.parentReference?.driveId ?? driveId,
-    }))
-  );
-
-  // 6. Assign the top 3
+  // ── Step 4: Assign roles ──────────────────────────────────────────────
+  // hero = website case study page, linkedIn = LinkedIn visual, email = email header
+  // Use different images for each role when possible
   return {
     heroImage: allImages[0],
-    linkedInImage: allImages[1],
-    emailHeader: allImages[2],
+    linkedInImage: allImages[1] ?? allImages[0], // fallback to hero if only 1 image
+    emailHeader: allImages[2] ?? allImages[0],   // fallback to hero if < 3 images
     allImages,
     source: "auto",
   };
