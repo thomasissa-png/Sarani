@@ -48,6 +48,13 @@ const jobs: CronJob[] = [
     running: false,
   },
   {
+    name: "tracker-cache-warm",
+    path: "/api/admin/integrations/tracker",
+    intervalMs: 25 * 60 * 1000, // every 25 min — keeps cache warm (TTL is 30 min)
+    lastRun: 0,
+    running: false,
+  },
+  {
     name: "keep-alive",
     path: "/api/admin/health",
     intervalMs: 4 * 60 * 1000, // every 4 minutes — prevents Replit sleep (5min idle threshold)

@@ -372,10 +372,14 @@ async function fetchEvolizInvoices(): Promise<{
 
 export async function GET(request: Request) {
   try {
-    // Auth check
-    const session = await getUserFromSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Auth check — allow cron secret for background cache warming
+    const cronSecret = request.headers.get("x-cron-secret");
+    const isCron = cronSecret && cronSecret === process.env.CRON_SECRET;
+    if (!isCron) {
+      const session = await getUserFromSession();
+      if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
     }
 
     // If force-refresh header is set, force a fresh fetch (don't serve stale)
@@ -407,8 +411,9 @@ export async function GET(request: Request) {
     );
 
     // S-01/S-02: Strip financial data for non-admin users
-    // Per spec BR-INT-02: "A user role never sees financial data (invoice amounts, billing status)"
-    const filteredProjects = session.role === "admin"
+    // Cron calls get full data (for cache warming). User calls check role.
+    const isAdmin = isCron || session?.role === "admin";
+    const filteredProjects = isAdmin
       ? projects
       : projects.map(({ totalValue, invoiceStatus, invoiceNumber, ...rest }) => ({
           ...rest,
