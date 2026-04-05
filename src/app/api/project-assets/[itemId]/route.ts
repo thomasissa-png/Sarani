@@ -190,16 +190,54 @@ export async function GET(
       );
     }
 
-    // ── Mode: stream=1 → Proxy video through our server with Range support ──
+    // ── Mode: stream=1 → Proxy through our server ──
+    // Used by VideoPlayer. Always proxy when requested.
     const streamMode = request.nextUrl.searchParams.get("stream") === "1";
-    if (streamMode && isVideo) {
-      return proxyVideo(
-        request,
-        downloadUrl,
-        mimeType,
-        item.name ?? "video.mp4",
-        item.size ?? 0
-      );
+    if (streamMode) {
+      const videoMime = isVideo ? mimeType : (mimeType || "video/mp4");
+      try {
+        const rangeHeader = request.headers.get("Range");
+        const fetchHeaders: Record<string, string> = {};
+        if (rangeHeader) {
+          fetchHeaders["Range"] = rangeHeader;
+        }
+
+        const upstream = await fetch(downloadUrl, {
+          headers: fetchHeaders,
+          signal: AbortSignal.timeout(120_000),
+        });
+
+        if (!upstream.ok && upstream.status !== 206) {
+          console.error(`[Asset Proxy] Video upstream ${upstream.status} for ${item.name}`);
+          return new NextResponse(`Video fetch failed: ${upstream.status}`, { status: 502 });
+        }
+
+        // Buffer the response (most reliable on Node.js/Replit)
+        const buffer = await upstream.arrayBuffer();
+
+        const headers: Record<string, string> = {
+          "Content-Type": videoMime,
+          "Content-Length": String(buffer.byteLength),
+          "Content-Disposition": `inline; filename="${item.name ?? "video.mp4"}"`,
+          "Accept-Ranges": "bytes",
+          "Cache-Control": "public, max-age=300",
+          "Access-Control-Allow-Origin": "*",
+        };
+
+        // Forward Range response headers
+        const contentRange = upstream.headers.get("Content-Range");
+        if (contentRange) {
+          headers["Content-Range"] = contentRange;
+        }
+
+        return new NextResponse(buffer, {
+          status: upstream.status === 206 ? 206 : 200,
+          headers,
+        });
+      } catch (err) {
+        console.error(`[Asset Proxy] Video proxy error for ${item.name}:`, err);
+        return new NextResponse(`Video proxy error: ${err instanceof Error ? err.message : "unknown"}`, { status: 502 });
+      }
     }
 
     // ── Mode: inline=1 (PDFs) → Buffer through proxy ──
