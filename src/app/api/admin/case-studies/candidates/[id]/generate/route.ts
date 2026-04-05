@@ -248,8 +248,12 @@ export async function POST(
         const retryData = retryResult.data as Record<string, unknown>;
         const cs = retryData?.caseStudy as Record<string, unknown> | undefined;
         if (cs) {
+          // ── Truncate strings that exceed max ──
           if (typeof cs.metaDescription === "string" && cs.metaDescription.length > 160) {
             cs.metaDescription = cs.metaDescription.slice(0, 157) + "...";
+          }
+          if (typeof cs.metaDescription === "string" && cs.metaDescription.length < 50) {
+            cs.metaDescription = cs.metaDescription + " — " + (cs.headline || "Case study by Sarani");
           }
           if (typeof cs.headline === "string" && cs.headline.length > 100) {
             cs.headline = cs.headline.slice(0, 97) + "...";
@@ -266,7 +270,50 @@ export async function POST(
           if (typeof cs.outcome === "string" && cs.outcome.length > 60) {
             cs.outcome = cs.outcome.slice(0, 57) + "...";
           }
+
+          // ── Fix slug — normalize to lowercase alphanumeric with hyphens ──
+          if (typeof cs.slug === "string") {
+            cs.slug = cs.slug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+          }
+
+          // ── Fix stats — truncate to max 5, truncate labels/values ──
+          if (Array.isArray(cs.stats)) {
+            cs.stats = cs.stats.slice(0, 5).map((s: unknown) => {
+              const stat = s as Record<string, unknown>;
+              return {
+                label: typeof stat.label === "string" ? stat.label.slice(0, 30) : "Metric",
+                value: typeof stat.value === "string" ? stat.value.slice(0, 15) : "—",
+              };
+            });
+          }
+
+          // ── Fix category — map common LLM variations to valid enum ──
+          const CATEGORY_MAP: Record<string, string> = {
+            "branding": "Graphic Design",
+            "video production": "Video & Social",
+            "video": "Video & Social",
+            "social media": "Video & Social",
+            "social": "Video & Social",
+            "translation": "Multilingual",
+            "print": "Out-of-Home",
+            "ooh": "Out-of-Home",
+            "outdoor": "Out-of-Home",
+            "presentation": "Graphic Design",
+            "design": "Graphic Design",
+          };
+          const VALID_CATEGORIES = new Set(["Video & Social", "Graphic Design", "Event", "Multilingual", "Out-of-Home"]);
+          if (typeof cs.category === "string" && !VALID_CATEGORIES.has(cs.category)) {
+            const mapped = CATEGORY_MAP[cs.category.toLowerCase().trim()];
+            cs.category = mapped ?? "Graphic Design"; // default fallback
+          }
         }
+
+        // ── Fix nurturingEmail subject truncation ──
+        const ne = retryData?.nurturingEmail as Record<string, unknown> | undefined;
+        if (ne && typeof ne.subject === "string" && ne.subject.length > 60) {
+          ne.subject = ne.subject.slice(0, 57) + "...";
+        }
+
         const retryParsed = CopyOutputSchema.safeParse(retryData);
         if (!retryParsed.success) {
           throw new Error(
