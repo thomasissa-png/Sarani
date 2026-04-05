@@ -237,11 +237,9 @@ You receive project data and a case study. Write a short, airy LinkedIn post.
 ═══ THE SARANI STYLE — Learn from these REAL posts ═══
 
 Post 1:
-"Aristocrat | ICE 2026 | Barcelona
+"One show. One presence.
 
-One show. One presence.
-
-For ICE 2026, the global gaming industry's largest European trade show, we transformed Aristocrat's escalator and pillar sponsorship into a bold, unified statement.
+For ICE 2026 in Barcelona, we transformed Aristocrat's escalator and pillar sponsorship into a bold, unified statement.
 
 The goal was clear: bring Aristocrat Gaming and Aristocrat Interactive together under one cohesive visual identity, from the main lobby through to the booth.
 
@@ -261,9 +259,7 @@ Global teamwork, high-visibility delivery.
 Project lead: TikTok Shop USA"
 
 Post 3:
-"i-Run | adidas | Paris Pop-Up
-
-Built to perform. Designed to stand out.
+"Built to perform. Designed to stand out.
 
 A Paris pop-up bringing i-Run and adidas together in a space where the product does the talking and the visuals keep up.
 
@@ -275,7 +271,7 @@ Post 4:
 "LIVE Production in New York for TikTok in front of an audience of millions with best-selling author Mel Robbins: done!"
 
 Post 5:
-"Launching new routes is about being seen clearly, at exactly the right moment.
+"New routes. New cities. Same standard.
 
 For Air Corsica's expansion into Munich and Vienna, Sarani delivered a comprehensive suite of creative assets designed to cut through the noise of a busy airport.
 
@@ -305,11 +301,13 @@ If after mining all 3 sources there's still not enough for a rich post:
 The hook is the ONLY thing people see before clicking "...see more". It must make them WANT to read.
 
 Study the hooks from the 5 posts above:
-- "Aristocrat | ICE 2026 | Barcelona" → Client | Event | Place. Clean. Specific.
-- "Times Square leaves no room for hesitation." → The place IS the story. Intriguing.
-- "i-Run | adidas | Paris Pop-Up" → Two brands | City | Format. You know what it is.
-- "LIVE Production in New York for TikTok..." → What | Where | For whom. One breath.
-- "Launching new routes is about being seen clearly, at exactly the right moment." → An insight.
+- "One show. One presence." → Short. Intriguing. You want to know more.
+- "Times Square leaves no room for hesitation." → The place IS the story.
+- "Built to perform. Designed to stand out." → Rhythm. Parallel structure.
+- "LIVE Production in New York for TikTok..." → What, where, for whom. One breath.
+- "New routes. New cities. Same standard." → Contrast that creates tension.
+
+NEVER use the "Client | Project | Location" pipe format in hooks. It's lazy and templated.
 
 The hook must be a REAL hook — something that makes you stop scrolling. Play with the project's own theme.
 

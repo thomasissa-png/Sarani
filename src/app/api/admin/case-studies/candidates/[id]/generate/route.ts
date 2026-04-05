@@ -419,6 +419,7 @@ export async function POST(
       // Hook gates
       if (/fixed price|24 hours|same.day|next.day|unlimited revision|on time|D\+1|turnaround/i.test(post.hook)) gateFailures.push("H3: hook selling point");
       if (/^(thrilled|proud|excited|i'm |we're |so proud)/i.test(post.hook)) gateFailures.push("H5: LinkedIn bro opening");
+      if (/\w+\s*\|\s*\w+\s*\|\s*\w+/.test(post.hook)) gateFailures.push("H6: pipe format in hook (banned)");
 
       // Body gates
       if (fullPost.includes("•") || fullPost.includes("→") || /\n- /g.test(fullPost)) gateFailures.push("G2: bullet points");

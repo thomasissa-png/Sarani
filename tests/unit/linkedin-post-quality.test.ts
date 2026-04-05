@@ -18,8 +18,8 @@ const route = fs.readFileSync(ROUTE_PATH, "utf-8");
 
 describe("LinkedIn prompt — real examples present", () => {
   it("contains Aristocrat ICE 2026 post", () => {
-    expect(prompt).toContain("Aristocrat | ICE 2026 | Barcelona");
     expect(prompt).toContain("One show. One presence.");
+    expect(prompt).toContain("Big space. One collective brand.");
   });
 
   it("contains Times Square Crocs post", () => {
@@ -27,7 +27,7 @@ describe("LinkedIn prompt — real examples present", () => {
   });
 
   it("contains i-Run adidas post", () => {
-    expect(prompt).toContain("i-Run | adidas | Paris Pop-Up");
+    expect(prompt).toContain("Built to perform. Designed to stand out.");
     expect(prompt).toContain("This was fun!");
   });
 
@@ -51,6 +51,13 @@ describe("LinkedIn prompt — banned patterns", () => {
 
   it("bans agency comparisons", () => {
     expect(prompt).toMatch(/no comparison|never.*agenc|unlike traditional/i);
+  });
+
+  it("bans pipe format in hooks", () => {
+    expect(prompt).toMatch(/never.*pipe format|never.*Client \| Project/i);
+    // Verify no example hook uses pipe format
+    const hookSection = prompt.split("THE HOOK IS EVERYTHING")[1]?.split("═══")[0] ?? "";
+    expect(hookSection).not.toMatch(/"\w+ \| \w+ \| \w+"/);
   });
 
   it("bans scores and ratings", () => {
