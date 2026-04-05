@@ -399,14 +399,25 @@ export async function POST(
       const post = socialData.linkedInPost;
       const fullPost = [post.hook, post.body, post.proofPoints].filter(Boolean).join("\n");
       const gateFailures: string[] = [];
-      if (fullPost.includes("•") || fullPost.includes("→")) gateFailures.push("G2: bullet points found");
-      if (/traditional\s+agenc|other\s+agenc|compared\s+to/i.test(fullPost)) gateFailures.push("G3: agency comparison");
-      if (/100\/100|quality score|\d+\/\d+\s*score/i.test(fullPost)) gateFailures.push("G4: invented score");
-      if (/unlimited revision|fixed price/i.test(fullPost)) gateFailures.push("G5: process selling point");
+
+      // Hook gates
+      if (/fixed price|24 hours|unlimited revision|on time|D\+1/i.test(post.hook)) gateFailures.push("H3: hook contains selling point");
+
+      // Body gates
+      if (fullPost.includes("•") || fullPost.includes("→")) gateFailures.push("G2: bullet points");
+      if (/traditional\s+agenc|other\s+agenc|compared\s+to|typical\s+agenc/i.test(fullPost)) gateFailures.push("G3: agency comparison");
+      if (/100\/100|quality score|\d+\/\d+\s*score|enterprise.grade|world.class|best.in.class|fully\s+aligned|exceptional|outstanding/i.test(fullPost)) gateFailures.push("G4: invented score/qualifier");
+      if (/unlimited revision|fixed price|zero overrun|no invoice surprise|no extra cost|no hidden fee|zero surcharge|cost.effective/i.test(fullPost)) gateFailures.push("G5: selling point");
       if (fullPost.length > 1300) gateFailures.push("G7: >1300 chars");
+
+      // Closer gates
+      const lines = fullPost.split("\n").filter(Boolean);
+      const lastLine = lines[lines.length - 1]?.trim() ?? "";
+      if (/on time|on budget|on brand\.|zero overrun|no invoice/i.test(lastLine)) gateFailures.push("C1: closer is selling point");
+
       if (gateFailures.length > 0) {
         console.warn(`[pipeline] LinkedIn post gate failures: ${gateFailures.join(", ")}. Auto-cleaning...`);
-        // Auto-clean: remove bullets, truncate
+        // Auto-clean: remove bullets, clear proofPoints
         post.body = post.body.replace(/[•→]\s*/g, "").replace(/\n{3,}/g, "\n\n");
         post.proofPoints = "";
       }

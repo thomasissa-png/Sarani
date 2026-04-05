@@ -312,13 +312,29 @@ JSON with:
 ═══ QUALITY GATES — Check BEFORE outputting ═══
 
 Before returning your JSON, verify your post passes ALL these gates:
-G1: Hook is ≤ 2 lines and contains a specific fact (client, place, number, or deadline)
-G2: Body has NO bullet points (• or →). Only short paragraphs.
+
+HOOK GATES:
+H1: Hook is ≤ 2 lines
+H2: Hook starts with the CLIENT NAME, a PLACE, or a PROJECT — never with a Sarani selling point
+H3: Hook does NOT contain "fixed price", "24 hours", "unlimited revisions", "on time", "D+1", or any process/pricing fact
+H4: Hook would make sense if Sarani's name were removed — it's about the project, not the agency
+
+BODY GATES:
+G2: Body has NO bullet points (• or →). Only short paragraphs separated by blank lines.
 G3: Post NEVER compares to "other agencies", "traditional agencies", or any competitor
-G4: Post contains ZERO invented scores, ratings, or percentages not in the input data
-G5: Post does NOT mention "unlimited revisions", "fixed price" as a selling point, or process details
-G6: Post reads like the REAL examples above (Aristocrat, Crocs, TikTok LIVE) — NOT like an ad
+G4: Post contains ZERO invented scores, ratings, percentages, or qualifiers not in the input data. Ban: "enterprise-grade", "world-class", "best-in-class", "fully aligned", "exceptional", "outstanding"
+G5: Post does NOT mention "unlimited revisions", "fixed price", "zero overruns", "no invoice surprises", "no extra costs", "no hidden fees" as selling points
+G6: Post reads like the REAL examples above (Aristocrat, Crocs, TikTok LIVE) — describes the WORK, not the business model
 G7: Total post < 1,300 characters
+
+CLOSER GATES:
+C1: Closer does NOT contain process metrics ("on time", "on budget", "on brand", "zero overruns"). It speaks about the result or the relationship ("This was fun!", "Thanks for the trust.", "Big space. One collective brand.")
+
+STRUCTURE GATES:
+S1: Post does NOT follow the "problem → solution → result" agency case study format. It describes the project directly.
+S2: Post does NOT contain "X needed Y" or "X couldn't wait" patterns that position Sarani as the savior
+
+VISUAL GATE:
 G8: visualTitle is 2-4 WORDS, poster-style (like "I RUN STORE", "BLACK FRIDAY", "350 SLIDES")
 
 If ANY gate fails, rewrite the post before outputting.
