@@ -333,47 +333,37 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setSelectedFiles(new Map());
 
     const init = async () => {
-      console.log(`[ShareFolderModal] Init: listId="${clickupListId}", listName="${clickupListName}", taskUrl="${clickupTaskUrl?.substring(0, 50)}"`);
+      console.log(`[ShareFolderModal] Init: sharepointLink="${sharepointLink?.substring(0, 80)}", listId="${clickupListId}", taskUrl="${clickupTaskUrl?.substring(0, 50)}"`);
 
-      // 1. Try config lookup with tracker-provided listId/listName
-      if (clickupListId || clickupListName) {
-        console.log(`[ShareFolderModal] Step 1: trying config with listId="${clickupListId}", listName="${clickupListName}"`);
-        const ok = await tryConfigNavigation(clickupListId || undefined, clickupListName || undefined);
-        if (ok) { console.log("[ShareFolderModal] Step 1 succeeded"); return; }
-        console.log("[ShareFolderModal] Step 1 failed — config lookup didn't match or SP path not found");
-      }
-
-      // 2. ALWAYS verify via ClickUp API when we have a task URL.
+      // 1. ClickUp API — source of truth for which list/division the task belongs to.
+      // The tracker often passes the wrong listId. The direct API always returns the correct one.
       if (clickupTaskUrl) {
         const taskIdMatch = clickupTaskUrl.match(/\/t\/([a-zA-Z0-9]+)/);
         if (taskIdMatch) {
           try {
-            console.log(`[ShareFolderModal] Step 2: fetching task list from ClickUp API for taskId="${taskIdMatch[1]}"`);
+            console.log(`[ShareFolderModal] Step 1: ClickUp API for taskId="${taskIdMatch[1]}"`);
             const res = await fetch(`/api/admin/integrations/clickup/task-list?taskId=${taskIdMatch[1]}`);
             if (res.ok) {
               const data = await res.json();
-              console.log(`[ShareFolderModal] Step 2: API returned listId="${data?.listId}", listName="${data?.listName}"`);
+              console.log(`[ShareFolderModal] Step 1: listId="${data?.listId}", listName="${data?.listName}"`);
               if (data?.listId || data?.listName) {
                 const ok = await tryConfigNavigation(data.listId, data.listName);
-                if (ok) { console.log("[ShareFolderModal] Step 2 succeeded"); return; }
-                console.log("[ShareFolderModal] Step 2 config navigation failed");
+                if (ok) { console.log("[ShareFolderModal] Step 1 succeeded"); return; }
+                console.log("[ShareFolderModal] Step 1: config navigation failed for this listId");
               }
-            } else {
-              console.log(`[ShareFolderModal] Step 2: API returned ${res.status}`);
             }
-          } catch (err) {
-            console.log("[ShareFolderModal] Step 2: API call failed", err);
-          }
+          } catch { /* fall through */ }
         }
       }
 
-      // 3. If we have a SharePoint link, use it directly
+      // 2. SharePoint link from tracker (if available)
       if (sharepointLink) {
-        resolveSpLink(sharepointLink);
+        console.log("[ShareFolderModal] Step 2: using sharepointLink");
+        await resolveSpLink(sharepointLink);
         return;
       }
 
-      // 4. Last resort: try ClickUp SP link custom field, then client root
+      // 3. Try ClickUp SP link custom field
       if (clickupTaskUrl) {
         const taskIdMatch = clickupTaskUrl.match(/\/t\/([a-zA-Z0-9]+)/);
         if (taskIdMatch) {
@@ -381,7 +371,8 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
             const res = await fetch(`/api/admin/integrations/clickup/sharepoint-link?taskId=${taskIdMatch[1]}`);
             const data = res.ok ? await res.json() : null;
             if (data?.url) {
-              resolveSpLink(data.url);
+              console.log(`[ShareFolderModal] Step 3: using ClickUp SP custom field`);
+              await resolveSpLink(data.url);
               return;
             }
           } catch { /* fall through */ }
