@@ -67,7 +67,7 @@ async function loadFont(filename: string): Promise<ArrayBuffer> {
 
 async function loadOutfitBold(): Promise<ArrayBuffer> {
   if (fontBoldCache) return fontBoldCache;
-  fontBoldCache = await loadFont("Outfit-Bold.ttf");
+  fontBoldCache = await loadFont("Poppins-Bold.ttf");
   return fontBoldCache;
 }
 
@@ -75,7 +75,7 @@ let fontRegularCache: ArrayBuffer | null = null;
 
 async function loadOutfitRegular(): Promise<ArrayBuffer> {
   if (fontRegularCache) return fontRegularCache;
-  fontRegularCache = await loadFont("Outfit-Regular.ttf");
+  fontRegularCache = await loadFont("Poppins-Regular.ttf");
   return fontRegularCache;
 }
 
@@ -271,7 +271,7 @@ export async function generateLinkedInVisual(
           justifyContent: "flex-start",
           background: `linear-gradient(180deg, ${BG_GRADIENT_START} 0%, ${BG_DARK} 100%)`,
           padding: "50px 50px 40px 50px",
-          fontFamily: "Outfit",
+          fontFamily: "Poppins",
         }}
       >
         {/* ─── Pill: Sarani logo + client logo ──────────────────── */}
@@ -479,13 +479,13 @@ export async function generateLinkedInVisual(
       ...VISUAL_SIZE,
       fonts: [
         {
-          name: "Outfit",
+          name: "Poppins",
           data: outfitBold,
           weight: 700,
           style: "normal",
         },
         {
-          name: "Outfit",
+          name: "Poppins",
           data: outfitRegular,
           weight: 400,
           style: "normal",
