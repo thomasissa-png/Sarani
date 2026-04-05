@@ -81,7 +81,10 @@
 
 - [S17] **Pas de CTA commercial systématique sur LinkedIn.** 7 types de fermeture créatifs (Open Debate, Uncomfortable Observation, Experience Prompt, Quiet Teaser, Peer Acknowledgement, Provocation Without Resolution, Nothing/Strong Close). "Start a project → sarani.studio" va dans la bio LinkedIn, PAS dans les posts.
 - [S17] **Pas de hashtags sur les posts LinkedIn.** Thomas les trouve inutiles.
-- [S17] **Ton LinkedIn : sûr de nos forces mais humble.** Laisser les résultats parler. "We delivered X" OK. "We're the best at X" interdit. Traits d'esprit et wordplay bienvenus si naturels.
+- [S18] **Ton LinkedIn RÉVISÉ :** léger, un peu drôle, tout en restant pro. On connaît nos forces, on s'assume et on joue avec. L'objectif n'est PAS de se mettre en avant mais d'**entertainer**. Un post qui dit "on a fait ça, c'était bien et pas cher" = tout le monde s'en fout. Il faut des éléments de story, du wit, quelque chose qui donne envie de lire.
+- [S18] **Le hook est CLÉ.** LinkedIn n'a pas de titre — la première ligne EST le post. Elle doit stopper le scroll immédiatement.
+- [S18] **Les posts ne sont pas forcément longs** mais ils doivent apporter une VALEUR (insight, histoire, humour, angle inattendu).
+- [S18] **5-10 façons d'écrire les posts** pour éviter la monotonie, mais TOUTES doivent respecter : entertaining, ton léger+pro, hook fort, valeur ajoutée.
 - [S17] **Titre visuel LinkedIn = 2-4 mots style poster** ("I RUN STORE", "BLACK FRIDAY", "350 SLIDES"). Pas une phrase. Comme un titre de magazine.
 - [S17] **Visuels LinkedIn auto-générés via Satori (0$).** DALL-E écarté car impossible d'injecter des logos fidèles. Template : fond dark, pill Sarani + client, titre gros, 2-3 photos asymétriques.
 - [S17] **Auto-sélection visuels + possibilité de changer.** L'IA sélectionne les 3 meilleures images du dossier SP, Thomas peut les changer via l'interface.
