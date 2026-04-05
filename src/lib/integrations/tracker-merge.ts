@@ -681,28 +681,30 @@ export function mergeData(
     });
   }
 
-  // Deduplicate by client+project (Excel-enriched first since they have richer data from both sources)
-  // Then ClickUp-only fills remaining entries
+  // Deduplicate by client+project.
+  // ClickUp-only FIRST (source of truth for status, dates, assignments).
+  // Excel-enriched SECOND (fills in financial data, categories, PO numbers).
+  // When a project exists in both, ClickUp fields take priority, Excel completes gaps.
   const seen = new Map<string, TrackerProject>();
-  for (const p of [...excelMerged, ...clickupOnly]) {
+  for (const p of [...clickupOnly, ...excelMerged]) {
     const key = `${p.client.toLowerCase().trim()}::${p.project.toLowerCase().trim()}`;
     const existing = seen.get(key);
     if (!existing) {
       seen.set(key, p);
     } else {
-      // Merge: keep richer data (prefer non-empty fields)
+      // Merge: existing (ClickUp) takes priority, new (Excel) fills gaps
       seen.set(key, {
-        ...existing,
-        status: existing.status || p.status,
+        ...p,           // Excel base (has financial data, categories)
+        ...existing,    // ClickUp overlay (has status, dates, assignments)
+        // Fill ClickUp gaps from Excel
         date: existing.date || p.date,
         contact: existing.contact || p.contact,
         category: existing.category || p.category,
-        sharepointLink: existing.sharepointLink || p.sharepointLink,
         totalValue: existing.totalValue ?? p.totalValue,
-        clickupTaskUrl: existing.clickupTaskUrl || p.clickupTaskUrl,
-        clickupStatus: existing.clickupStatus || p.clickupStatus,
+        poNumber: existing.poNumber || p.poNumber,
         invoiceStatus: existing.invoiceStatus || p.invoiceStatus,
         invoiceNumber: existing.invoiceNumber || p.invoiceNumber,
+        sharepointLink: existing.sharepointLink || p.sharepointLink,
         excelTrackerFile: existing.excelTrackerFile || p.excelTrackerFile,
         excelSheetName: existing.excelSheetName || p.excelSheetName,
         excelTrackerUrl: existing.excelTrackerUrl || p.excelTrackerUrl,
