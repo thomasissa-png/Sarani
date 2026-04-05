@@ -32,11 +32,12 @@ export interface LinkedInVisualParams {
 
 const VISUAL_SIZE = { width: 1200, height: 1200 };
 const FLAME = "#DA5126";
-const BG_DARK = "#0d0d0d";
-const BG_GRADIENT_START = "#1a1a1a";
-const PHOTO_RADIUS = 16;
-/** Pixel height reserved for images (canvas 1200 - top padding 60 - pill ~64 - gap 40 - title ~120 - gap 40 - bar 6 - bottom pad 40) */
-const IMAGE_AREA_HEIGHT = 720;
+// Background: dark grey with subtle grain texture via radial gradients
+// Satori doesn't support CSS noise/filter, so we fake grain with overlapping
+// semi-transparent radial gradients at different positions
+const BG = "#2d2d2d";
+const BG_STYLE = `radial-gradient(ellipse at 20% 50%, rgba(60,60,60,0.4) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(50,50,50,0.3) 0%, transparent 40%), radial-gradient(ellipse at 60% 80%, rgba(55,55,55,0.35) 0%, transparent 45%), ${BG}`;
+const PHOTO_RADIUS = 20;
 
 // ─── Font loader ─────────────────────────────────────────────────────────────
 // Loads Outfit Bold from public/fonts/ (already in the repo).
@@ -289,12 +290,11 @@ export async function generateLinkedInVisual(
             height: "100%",
             display: "flex",
             flexDirection: "column",
-            alignItems: hasResolvedImages ? "center" : "center",
-            justifyContent: hasResolvedImages ? "flex-start" : "center",
-            background: `linear-gradient(180deg, ${BG_GRADIENT_START} 0%, ${BG_DARK} 100%)`,
-            padding: hasResolvedImages ? "60px 60px 0 60px" : "80px 80px 0 80px",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            background: BG_STYLE,
+            padding: "50px 50px 50px 50px",
             fontFamily: "Poppins",
-            position: "relative",
           }}
         >
           {/* ─── Pill: Sarani logo + client logo ──────────────────── */}
@@ -304,29 +304,22 @@ export async function generateLinkedInVisual(
               alignItems: "center",
               justifyContent: "center",
               borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.12)",
-              backgroundColor: "rgba(255,255,255,0.08)",
-              padding: "12px 32px",
-              marginBottom: hasResolvedImages ? 40 : 48,
+              border: "1px solid rgba(255,255,255,0.15)",
+              backgroundColor: "rgba(255,255,255,0.06)",
+              padding: "10px 28px",
+              marginBottom: 32,
             }}
           >
             {saraniLogoDataUri ? (
               <img
                 src={saraniLogoDataUri}
-                width={120}
-                height={40}
+                width={100}
+                height={34}
                 style={{ objectFit: "contain" }}
               />
             ) : (
-              <span
-                style={{
-                  color: FLAME,
-                  fontSize: 24,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                }}
-              >
-                SARANI
+              <span style={{ color: "#ffffff", fontSize: 20, fontWeight: 700, letterSpacing: "0.05em" }}>
+                sarani
               </span>
             )}
             {clientLogoDataUri && (
@@ -334,23 +327,23 @@ export async function generateLinkedInVisual(
                 <div
                   style={{
                     width: 1,
-                    height: 32,
-                    backgroundColor: "rgba(255,255,255,0.2)",
-                    marginLeft: 24,
-                    marginRight: 24,
+                    height: 28,
+                    backgroundColor: "rgba(255,255,255,0.25)",
+                    marginLeft: 20,
+                    marginRight: 20,
                   }}
                 />
                 <img
                   src={clientLogoDataUri}
-                  width={100}
-                  height={36}
+                  width={90}
+                  height={32}
                   style={{ objectFit: "contain" }}
                 />
               </>
             )}
           </div>
 
-          {/* ─── Title: Poppins Bold, white + client name in Flame ── */}
+          {/* ─── Title: Poppins Bold, white + accent word in Flame ── */}
           <div
             style={{
               display: "flex",
@@ -359,85 +352,109 @@ export async function generateLinkedInVisual(
               textAlign: "center",
               fontSize: titleFontSize,
               fontWeight: 700,
-              lineHeight: 1.1,
-              maxWidth: 1040,
-              marginBottom: hasResolvedImages ? 40 : 0,
+              lineHeight: 1.05,
+              letterSpacing: "-0.02em",
+              maxWidth: 1000,
+              marginBottom: hasResolvedImages ? 36 : 0,
             }}
           >
             {renderTitle(displayTitle, accentWord)}
           </div>
 
-          {/* ─── Project images — asymmetric layout ───────────────── */}
+          {/* ─── Project images — matches reference exactly ─────── */}
+          {/* 3 images: small top-left, large right, large bottom-left */}
+          {/* 2 images: left + right side by side */}
+          {/* 1 image: full width */}
           {hasResolvedImages && (
             <div
               style={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection: imageDataUris.length === 1 ? "column" : "row",
                 width: "100%",
                 flex: 1,
-                marginBottom: 46,
+                gap: 12,
               }}
             >
-              {/* Left column: 1-2 small images stacked */}
-              {imageDataUris.length >= 2 && (
-                <div
+              {imageDataUris.length === 1 && (
+                <img
+                  src={imageDataUris[0]}
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    width: "38%",
+                    width: "100%",
                     height: "100%",
-                    marginRight: "2%",
+                    objectFit: "cover",
+                    borderRadius: PHOTO_RADIUS,
                   }}
-                >
+                />
+              )}
+
+              {imageDataUris.length === 2 && (
+                <>
                   <img
-                    src={imageDataUris[1]}
+                    src={imageDataUris[0]}
                     style={{
-                      width: "100%",
-                      height: imageDataUris.length >= 3 ? "48%" : "100%",
+                      width: "48%",
+                      height: "100%",
                       objectFit: "cover",
                       borderRadius: PHOTO_RADIUS,
                     }}
                   />
-                  {imageDataUris[2] && (
+                  <img
+                    src={imageDataUris[1]}
+                    style={{
+                      width: "48%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: PHOTO_RADIUS,
+                    }}
+                  />
+                </>
+              )}
+
+              {imageDataUris.length >= 3 && (
+                <>
+                  {/* Left column: small top + large bottom */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      width: "42%",
+                      height: "100%",
+                      gap: 12,
+                    }}
+                  >
+                    <img
+                      src={imageDataUris[0]}
+                      style={{
+                        width: "100%",
+                        height: "45%",
+                        objectFit: "cover",
+                        borderRadius: PHOTO_RADIUS,
+                      }}
+                    />
                     <img
                       src={imageDataUris[2]}
                       style={{
                         width: "100%",
-                        height: "48%",
+                        height: "52%",
                         objectFit: "cover",
                         borderRadius: PHOTO_RADIUS,
-                        marginTop: "4%",
                       }}
                     />
-                  )}
-                </div>
+                  </div>
+                  {/* Right: large image */}
+                  <img
+                    src={imageDataUris[1]}
+                    style={{
+                      width: "55%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: PHOTO_RADIUS,
+                    }}
+                  />
+                </>
               )}
-
-              {/* Right / main image (large) */}
-              <img
-                src={imageDataUris[0]}
-                style={{
-                  width: imageDataUris.length >= 2 ? "60%" : "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  borderRadius: PHOTO_RADIUS,
-                }}
-              />
             </div>
           )}
-
-          {/* ─── Bottom accent bar — full width Flame (6px) ─────── */}
-          <div
-            style={{
-              width: "100%",
-              height: 6,
-              backgroundColor: FLAME,
-              borderRadius: 3,
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-            }}
-          />
         </div>
       ),
       {
