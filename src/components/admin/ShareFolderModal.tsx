@@ -333,16 +333,16 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
     setSelectedFiles(new Map());
 
     const init = async () => {
-      // 1. PRIORITY: if we have a clickupListId or clickupListName, try config lookup.
-      // This is more reliable than SP links from ClickUp custom fields.
+      // 1. Try config lookup with tracker-provided listId/listName
       if (clickupListId || clickupListName) {
         const ok = await tryConfigNavigation(clickupListId || undefined, clickupListName || undefined);
         if (ok) return;
       }
 
-      // 2. If we have a clickupTaskUrl but no listId, fetch the task to get the list ID.
-      // This covers the case where the tracker didn't propagate clickupListId.
-      if (clickupTaskUrl && !clickupListId) {
+      // 2. ALWAYS verify via ClickUp API when we have a task URL.
+      // The tracker may pass the wrong listId (e.g. "Others" instead of the real list).
+      // The direct ClickUp API is the source of truth for which list a task belongs to.
+      if (clickupTaskUrl) {
         const taskIdMatch = clickupTaskUrl.match(/\/t\/([a-zA-Z0-9]+)/);
         if (taskIdMatch) {
           try {
