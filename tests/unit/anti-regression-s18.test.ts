@@ -216,8 +216,8 @@ describe("Bug #7 — /work page queries DB for published case studies", () => {
 // ────────────────────────────────────────────────────────────────────────────
 // 8. VideoPlayer is a Client Component with proxy URL
 // REGRESSION: VideoPlayer without "use client" crashed in Server Component
-//             context. Without resolve=1, expired SharePoint URLs broke
-//             playback. -- fixed 2026-04-04
+//             context. resolve=1 pattern failed (CORS on downloadUrl).
+//             Fixed with stream=1 proxy passthrough. -- fixed 2026-04-05
 // ────────────────────────────────────────────────────────────────────────────
 describe("Bug #8 — VideoPlayer is a Client Component with proxy URL", () => {
   const filePath = "src/components/ui/VideoPlayer.tsx";
@@ -228,9 +228,9 @@ describe("Bug #8 — VideoPlayer is a Client Component with proxy URL", () => {
     expect(firstLine).toMatch(/^["']use client["']/);
   });
 
-  it("must use resolve=1 proxy URL pattern", () => {
+  it("must use stream=1 proxy URL pattern (NOT resolve=1 — see 15+ failed iterations)", () => {
     const src = read(filePath);
-    expect(src).toMatch(/resolve=1/);
+    expect(src).toMatch(/stream=1/);
   });
 });
 
