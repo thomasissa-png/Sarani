@@ -52,7 +52,7 @@ export const CaseStudyOutputSchema = z.object({
 export const LinkedInPostSchema = z.object({
   hook: z.string().min(1),
   body: z.string().min(10),
-  proofPoints: z.string().min(1),
+  proofPoints: z.string().default(""),
   hashtags: z.string().default(""),
   charCount: z.number(),
   visualTitle: z.string().max(30).optional().default(""),
