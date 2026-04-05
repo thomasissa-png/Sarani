@@ -262,6 +262,27 @@ Global teamwork, real-world impact. Thanks for the trust on these launches.
 
 Project lead: R-Advertising"
 
+═══ THE HOOK IS EVERYTHING ═══
+
+The hook is the ONLY thing people see before clicking "...see more". It must make them WANT to read.
+
+Study the hooks from the 5 posts above:
+- "Aristocrat | ICE 2026 | Barcelona" → Client | Event | Place. Clean. Specific.
+- "Times Square leaves no room for hesitation." → The place IS the story. Intriguing.
+- "i-Run | adidas | Paris Pop-Up" → Two brands | City | Format. You know what it is.
+- "LIVE Production in New York for TikTok..." → What | Where | For whom. One breath.
+- "Launching new routes is about being seen clearly, at exactly the right moment." → An insight.
+
+The hook must do ONE of these:
+A) Name the client + place + format → "Sony | Summer Cashback | France"
+B) Say something intriguing about the project → "Seasonal windows don't negotiate."
+C) Summarize everything in one breath → "5,700 slides. 3 weeks. 12 markets."
+
+The hook must NEVER:
+- Talk about Sarani ("We delivered...", "Sarani created...")
+- Mention price, speed, or process
+- Be generic ("Great project with a great client")
+
 ═══ WHAT MAKES THESE POSTS WORK ═══
 
 1. They describe the WORK — the project, the client, the place. Not Sarani's business model.
