@@ -66,8 +66,7 @@ export function buildStrategyInput(candidate: {
       ? candidate.completedAt.toISOString().split("T")[0]
       : "Unknown",
     assetCount: candidate.sharePointAssetCount ?? 0,
-    scoreTotal: candidate.scoreTotal,
-    scoreBreakdown: candidate.scoreBreakdown,
+    // scoreTotal/scoreBreakdown intentionally excluded — internal metric, not for LLM
   };
 
   return `Analyze this project and define the creative strategy for its case study:
@@ -159,7 +158,6 @@ export function buildCopyInput(
       ? candidate.completedAt.toISOString().split("T")[0]
       : "Unknown",
     assetCount: candidate.sharePointAssetCount ?? 0,
-    scoreTotal: candidate.scoreTotal,
   };
 
   return `Write a case study and nurturing email for this project, aligned with the creative strategy below.
@@ -217,21 +215,51 @@ You receive project data, the creative strategy, AND the case study copy. Your j
 
 Tone: factual, direct, proud but never vantard. Short sentences. We describe the work — the project speaks for itself. Light touch of personality ("This was fun!", "Done.", "Thanks for the trust on this one."). Never corporate, never philosophical, never salesy.
 
-We DON'T:
-- Write long paragraphs or essays
-- Compare ourselves to other agencies
-- Flex with superlatives ("incredible", "game-changing", "revolutionary")
-- Talk about our methodology or process
-- Write meta-commentary ("This project taught us that...")
-- Use hashtags
+ABSOLUTE BANS — violating these means the post is REJECTED:
+- NEVER compare to other agencies or "traditional agencies"
+- NEVER mention "100/100", "quality score", or any invented score/rating
+- NEVER use bullet points with • or → in the post body. Use short paragraphs instead.
+- NEVER use superlatives ("incredible", "game-changing", "revolutionary")
+- NEVER mention our methodology, process, or "unlimited revisions" as a selling point
+- NEVER write meta-commentary ("This project taught us...")
+- NEVER mention the scoreTotal or any internal scoring metric
+- NEVER use hashtags
 
 We DO:
-- State what we did, for whom, where
+- State what we did, for whom, where — in short paragraphs, NOT bullet lists
 - Let impressive facts land on their own
-- Use bullet points for multiple deliverables
 - Add "Project lead: [client/partner name]" when relevant
-- Add "Global teamwork" or similar one-liner at the end
+- Add a warm closer ("Global teamwork.", "This was fun!", "Thanks for the trust.")
 - Keep it airy — skip lines between sections
+
+═══ REAL EXAMPLES FROM SARANI (copy this style EXACTLY) ═══
+
+Example A:
+"Aristocrat | ICE 2026 | Barcelona
+
+One show. One presence.
+
+For ICE 2026, the global gaming industry's largest European trade show, we transformed Aristocrat's escalator and pillar sponsorship into a bold, unified statement.
+
+The goal was clear: bring Aristocrat Gaming and Aristocrat Interactive together under one cohesive visual identity, from the main lobby through to the booth.
+
+Customers noticed. Teams noticed.
+
+Big space. One collective brand."
+
+Example B:
+"Times Square leaves no room for hesitation.
+
+For Crocs' week-long takeover of TikTok Shop USA, Sarani created and adapted visuals designed to stand out on some of the biggest digital screens in the world.
+
+Custom-built layouts, designed square by square. Assets adapted to the unique grid of Times Square screens. Clear, readable visuals built to hold attention at scale.
+
+Global teamwork, high-visibility delivery.
+
+Project lead: TikTok Shop USA"
+
+Example C:
+"LIVE Production in New York for TikTok in front of an audience of millions with best-selling author Mel Robbins: done!"
 
 ═══ POST STRUCTURE ═══
 

@@ -440,7 +440,7 @@ describe("buildStrategyInput()", () => {
     expect(input).toContain("Social Video Campaign");
     expect(input).toContain("Video Production");
     expect(input).toContain("482"); // asset count
-    expect(input).toContain("92"); // score
+    // scoreTotal is intentionally excluded from LLM input
   });
 
   it("formats amount with euro sign for Sony", () => {
@@ -477,10 +477,10 @@ describe("buildStrategyInput()", () => {
     expect(input).toContain('"completedAt": "Unknown"');
   });
 
-  it("includes score breakdown object", () => {
+  it("does NOT include scoreTotal or scoreBreakdown (internal metrics)", () => {
     const input = buildStrategyInput(TIKTOK_CANDIDATE);
-    expect(input).toContain("clientPrestige");
-    expect(input).toContain("narrativePotential");
+    expect(input).not.toContain("scoreTotal");
+    expect(input).not.toContain("scoreBreakdown");
   });
 
   it("returns valid JSON within the message", () => {

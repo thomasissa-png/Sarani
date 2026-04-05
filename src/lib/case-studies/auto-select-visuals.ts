@@ -117,18 +117,31 @@ export async function autoSelectVisuals(
     } catch { /* try next */ }
   }
 
-  // Strategy 2: Extract path from webUrl
+  // Strategy 2: Extract path from webUrl or AllItems.aspx?id= parameter
   if (projectItems.length === 0 && sharePointFolderUrl.includes("sharepoint.com")) {
     try {
       const urlObj = new URL(sharePointFolderUrl);
-      const pathMatch = urlObj.pathname.match(/\/Shared\s*Documents\/(.+)/i)
-        ?? urlObj.pathname.match(/\/Documents\/(.+)/i);
+
+      // SharePoint AllItems.aspx URLs have the real path in the ?id= query param
+      // e.g., ?id=/sites/SaraniAssets/Shared Documents/03. Customers/02. Sony/...
+      const idParam = urlObj.searchParams.get("id");
+      const pathSource = idParam
+        ? decodeURIComponent(idParam)
+        : decodeURIComponent(urlObj.pathname);
+
+      const pathMatch = pathSource.match(/\/Shared\s*Documents\/(.+)/i)
+        ?? pathSource.match(/\/Documents\/(.+)/i);
       if (pathMatch) {
-        const spPath = decodeURIComponent(pathMatch[1]);
+        // Remove trailing file names (AllItems.aspx, Forms, etc.)
+        let spPath = pathMatch[1].replace(/\/Forms\/.*$/i, "").replace(/\/AllItems\.aspx$/i, "");
+        // Remove "03. Customers/" prefix if present (listDriveItems expects path relative to drive root)
+        // Actually keep it — the drive root IS "Documents", so the path should include "03. Customers/..."
         projectItems = await listDriveItems(driveId, `/${spPath}`);
-        console.log(`[auto-select] Strategy 2 (webUrl path): ${projectItems.length} items`);
+        console.log(`[auto-select] Strategy 2 (webUrl/id param): ${projectItems.length} items from /${spPath}`);
       }
-    } catch { /* try next */ }
+    } catch (err) {
+      console.warn(`[auto-select] Strategy 2 failed:`, err instanceof Error ? err.message : err);
+    }
   }
 
   // Strategy 3: SKIP — client root is too broad (lists all divisions, not project files).
