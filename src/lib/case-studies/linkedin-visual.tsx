@@ -144,8 +144,18 @@ async function fetchImageAsDataUri(url: string): Promise<string | null> {
 
     if (!res.ok) return null;
     const arrayBuf = await res.arrayBuffer();
+    // Reject files > 2MB — Satori can't handle huge SVGs/images
+    if (arrayBuf.byteLength > 2 * 1024 * 1024) {
+      console.warn(`[linkedin-visual] Image too large (${(arrayBuf.byteLength / 1024 / 1024).toFixed(1)}MB), skipping: ${url.substring(0, 80)}`);
+      return null;
+    }
     const base64 = Buffer.from(arrayBuf).toString("base64");
     const contentType = res.headers.get("content-type") ?? "image/png";
+    // Reject SVGs that are too complex (XML parse will fail)
+    if (contentType.includes("svg") && arrayBuf.byteLength > 500_000) {
+      console.warn(`[linkedin-visual] SVG too large (${(arrayBuf.byteLength / 1024).toFixed(0)}KB), skipping`);
+      return null;
+    }
     return `data:${contentType};base64,${base64}`;
   } catch {
     return null;
