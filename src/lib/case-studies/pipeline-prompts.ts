@@ -279,8 +279,11 @@ Never write: "100/100 quality score"
 Never write: "Unlike traditional agencies..."
 Never write: "Unlimited revisions built in"
 Never write: "Enterprise-grade seasonal creative"
-Never write bullet lists with • or →
-Never use hashtags
+Never write bullet lists with • or → or - as list markers
+Never use hashtags (#anything)
+Never use emojis
+Never start with: "Thrilled to...", "Proud to share...", "Excited to...", "I'm...", "We're...", "So proud..."
+Never mention the project price/amount in the post — the work matters, not the invoice
 
 ═══ OUTPUT ═══
 

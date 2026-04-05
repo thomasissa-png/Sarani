@@ -370,7 +370,7 @@ export async function POST(
           systemPrompt: SOCIAL_PROMPT,
           userMessage:
             buildSocialInput(candidate, strategyData, copyData) +
-            "\n\nIMPORTANT: Your previous response had validation errors. Ensure the linkedInPost object has ALL required fields: hook (min 1 char), body (min 10 chars), proofPoints (min 1 char), hashtags (empty string — Sarani does not use hashtags), charCount (number). Total must be < 1,300 characters.",
+            "\n\nIMPORTANT: Your previous response had validation errors. Ensure the linkedInPost object has ALL required fields: hook (min 1 char), body (min 10 chars), proofPoints (empty string \"\"), hashtags (empty string \"\"), charCount (number), visualTitle (2-4 uppercase words). No bullets, no hashtags, no emojis, no price amounts.",
           maxTokens: 2048,
           timeout: 60_000,
         });
@@ -401,25 +401,37 @@ export async function POST(
       const gateFailures: string[] = [];
 
       // Hook gates
-      if (/fixed price|24 hours|unlimited revision|on time|D\+1/i.test(post.hook)) gateFailures.push("H3: hook contains selling point");
+      if (/fixed price|24 hours|same.day|next.day|unlimited revision|on time|D\+1|turnaround/i.test(post.hook)) gateFailures.push("H3: hook selling point");
+      if (/^(thrilled|proud|excited|i'm |we're |so proud)/i.test(post.hook)) gateFailures.push("H5: LinkedIn bro opening");
 
       // Body gates
-      if (fullPost.includes("•") || fullPost.includes("→")) gateFailures.push("G2: bullet points");
-      if (/traditional\s+agenc|other\s+agenc|compared\s+to|typical\s+agenc/i.test(fullPost)) gateFailures.push("G3: agency comparison");
-      if (/100\/100|quality score|\d+\/\d+\s*score|enterprise.grade|world.class|best.in.class|fully\s+aligned|exceptional|outstanding/i.test(fullPost)) gateFailures.push("G4: invented score/qualifier");
-      if (/unlimited revision|fixed price|zero overrun|no invoice surprise|no extra cost|no hidden fee|zero surcharge|cost.effective/i.test(fullPost)) gateFailures.push("G5: selling point");
+      if (fullPost.includes("•") || fullPost.includes("→") || /\n- /g.test(fullPost)) gateFailures.push("G2: bullet points");
+      if (/traditional\s+agenc|other\s+agenc|compared\s+to|typical\s+agenc|unlike most|while others|most agencies/i.test(fullPost)) gateFailures.push("G3: agency comparison");
+      if (/100\/100|quality score|\d+\/\d+\s*score|enterprise.grade|world.class|best.in.class/i.test(fullPost)) gateFailures.push("G4: invented score");
+      if (/unlimited revision|fixed price|zero overrun|no invoice surprise|no extra cost|no hidden fee|zero surcharge|cost.effective|flat rate|all.inclusive|satisfaction guarantee/i.test(fullPost)) gateFailures.push("G5: selling point");
+      if (/(?:^|\s)#\w+/.test(fullPost)) gateFailures.push("G9: hashtag");
+      if (/€[\d,.]+/.test(fullPost)) gateFailures.push("G10: price/amount in post");
       if (fullPost.length > 1300) gateFailures.push("G7: >1300 chars");
 
       // Closer gates
       const lines = fullPost.split("\n").filter(Boolean);
       const lastLine = lines[lines.length - 1]?.trim() ?? "";
-      if (/on time|on budget|on brand\.|zero overrun|no invoice/i.test(lastLine)) gateFailures.push("C1: closer is selling point");
+      if (/on time|on budget|on brand\.|zero overrun|no invoice/i.test(lastLine)) gateFailures.push("C1: closer selling point");
 
       if (gateFailures.length > 0) {
         console.warn(`[pipeline] LinkedIn post gate failures: ${gateFailures.join(", ")}. Auto-cleaning...`);
-        // Auto-clean: remove bullets, clear proofPoints
-        post.body = post.body.replace(/[•→]\s*/g, "").replace(/\n{3,}/g, "\n\n");
+        // Auto-clean: remove bullets, hashtags, emojis, price mentions, clear proofPoints
+        post.body = post.body
+          .replace(/[•→]\s*/g, "")
+          .replace(/\n- /g, "\n")
+          .replace(/(?:^|\s)#\w+/g, "")
+          .replace(/€[\d,.]+/g, "[amount]")
+          .replace(/\n{3,}/g, "\n\n");
+        post.hook = post.hook
+          .replace(/(?:^|\s)#\w+/g, "")
+          .replace(/€[\d,.]+/g, "[amount]");
         post.proofPoints = "";
+        post.hashtags = "";
       }
 
       await savePipelineStep(id, 3, "social", socialData);
