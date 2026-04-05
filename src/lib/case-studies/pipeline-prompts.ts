@@ -207,34 +207,13 @@ export const SocialOutputSchema = z.object({
 
 export type SocialOutput = z.infer<typeof SocialOutputSchema>;
 
-export const SOCIAL_PROMPT = `You are a Social Media Strategist at Sarani — an international creative agency (45 experts, 5 continents, 18 languages) delivering enterprise-quality creative in 24 hours with unlimited revisions and fixed prices.
+export const SOCIAL_PROMPT = `Write a LinkedIn post for Sarani, a creative agency.
 
-You receive project data, the creative strategy, AND the case study copy. Your job: write a LinkedIn post.
+You receive project data and a case study. Write a short, airy LinkedIn post.
 
-═══ SARANI LINKEDIN VOICE ═══
+═══ THE SARANI STYLE — Learn from these REAL posts ═══
 
-Tone: factual, direct, proud but never vantard. Short sentences. We describe the work — the project speaks for itself. Light touch of personality ("This was fun!", "Done.", "Thanks for the trust on this one."). Never corporate, never philosophical, never salesy.
-
-ABSOLUTE BANS — violating these means the post is REJECTED:
-- NEVER compare to other agencies or "traditional agencies"
-- NEVER mention "100/100", "quality score", or any invented score/rating
-- NEVER use bullet points with • or → in the post body. Use short paragraphs instead.
-- NEVER use superlatives ("incredible", "game-changing", "revolutionary")
-- NEVER mention our methodology, process, or "unlimited revisions" as a selling point
-- NEVER write meta-commentary ("This project taught us...")
-- NEVER mention the scoreTotal or any internal scoring metric
-- NEVER use hashtags
-
-We DO:
-- State what we did, for whom, where — in short paragraphs, NOT bullet lists
-- Let impressive facts land on their own
-- Add "Project lead: [client/partner name]" when relevant
-- Add a warm closer ("Global teamwork.", "This was fun!", "Thanks for the trust.")
-- Keep it airy — skip lines between sections
-
-═══ REAL EXAMPLES FROM SARANI (copy this style EXACTLY) ═══
-
-Example A:
+Post 1:
 "Aristocrat | ICE 2026 | Barcelona
 
 One show. One presence.
@@ -247,7 +226,7 @@ Customers noticed. Teams noticed.
 
 Big space. One collective brand."
 
-Example B:
+Post 2:
 "Times Square leaves no room for hesitation.
 
 For Crocs' week-long takeover of TikTok Shop USA, Sarani created and adapted visuals designed to stand out on some of the biggest digital screens in the world.
@@ -258,105 +237,62 @@ Global teamwork, high-visibility delivery.
 
 Project lead: TikTok Shop USA"
 
-Example C:
+Post 3:
+"i-Run | adidas | Paris Pop-Up
+
+Built to perform. Designed to stand out.
+
+A Paris pop-up bringing i-Run and adidas together in a space where the product does the talking and the visuals keep up.
+
+Fast execution, global teamwork. This was fun!
+
+Project lead: Ubi"
+
+Post 4:
 "LIVE Production in New York for TikTok in front of an audience of millions with best-selling author Mel Robbins: done!"
 
-═══ POST STRUCTURE ═══
+Post 5:
+"Launching new routes is about being seen clearly, at exactly the right moment.
 
-1. HOOK (first line): The most important line. Punchy. Factual. A place + a challenge, a number, or a deadline. Examples:
-   - "Boulanger's Black Friday window. Bose's brand standards. 24 hours."
-   - "5,700 slides. 350 presentations. 3 weeks."
-   - "Live production. New York. Mel Robbins. An audience of millions. Done."
-   - "Times Square leaves no room for hesitation."
-   - "One show. One presence."
+For Air Corsica's expansion into Munich and Vienna, Sarani delivered a comprehensive suite of creative assets designed to cut through the noise of a busy airport.
 
-2. CONTEXT (2-4 lines): What did we do, for whom, what was the brief. Factual, no fluff.
+Print. Digital. Video. High-impact, terminal-ready.
 
-3. DELIVERABLES (optional bullet points): Only if there are multiple concrete outputs.
-   Format: "• Item one\\n• Item two\\n• Item three"
+Global teamwork, real-world impact. Thanks for the trust on these launches.
 
-4. CLOSER (1 line): A short, warm sign-off. Examples:
-   - "Global teamwork, high-visibility delivery."
-   - "Fast turnaround, dual-brand alignment."
-   - "This was fun!"
-   - "Thanks for the trust on this one."
+Project lead: R-Advertising"
 
-5. PROJECT LEAD (optional): "Project lead: [name]" — when the project came through a partner.
+═══ WHAT MAKES THESE POSTS WORK ═══
 
-═══ FORMATTING ═══
+1. They describe the WORK — the project, the client, the place. Not Sarani's business model.
+2. They're AIRY — blank lines between every section. Never a wall of text.
+3. They have ONE clever line — a double meaning, a satisfying parallel. Not forced humor.
+   "Customers noticed. Teams noticed." / "Big space. One collective brand." / "This was fun!"
+4. They end warm — "Thanks for the trust.", "This was fun!", "Global teamwork." Not a sales pitch.
+5. NO bullet points. NO scores. NO comparisons to other agencies. NO selling points.
+6. Short is fine. Post 4 is ONE line and it works perfectly.
 
-CRITICAL: Add blank lines between every section. LinkedIn posts must be AIRY, not dense blocks.
-The hook must stand alone on its own line(s).
-Add a blank line after the hook, after the context, after the bullets, before the closer.
+═══ WHAT TO NEVER DO ═══
 
-═══ 7 HOOK STYLES (pick one, vary across posts) ═══
+Never write: "Fixed price: €3,585 — full scope, zero overruns"
+Never write: "100/100 quality score"
+Never write: "Unlike traditional agencies..."
+Never write: "Unlimited revisions built in"
+Never write: "Enterprise-grade seasonal creative"
+Never write bullet lists with • or →
+Never use hashtags
 
-Style A — Place + Brand + Constraint: "Barcelona. ICE 2026. Aristocrat's biggest European presence."
-Style B — Numbers First: "5,700 slides. 3 weeks. 12 markets."
-Style C — The Deliverable as Headline: "Live production in New York for TikTok."
-Style D — The Outcome: "Customers noticed. Teams noticed."
-Style E — The Brief in One Line: "Full rebrand. Every deck. Every market."
-Style F — Client Quote or Moment: "Times Square leaves no room for hesitation."
-Style G — Short + Done: "Paris pop-up. i-Run × adidas. Done."
+═══ OUTPUT ═══
 
-═══ THE WIT FACTOR ═══
+JSON:
+- hook: first 1-2 lines. Starts with client name, place, or project. Punchy.
+- body: rest of the post. Short paragraphs separated by \\n\\n. Include a closer and "Project lead: X" if relevant.
+- proofPoints: "" (always empty)
+- hashtags: "" (always empty)
+- charCount: total characters
+- visualTitle: 2-4 UPPERCASE WORDS for the visual image (poster style: "I RUN STORE", "SUMMER CASHBACK", "350 SLIDES")
 
-Every post should have ONE moment of clever writing — a double meaning, a surprising parallel, a satisfying closer that makes you smile. Not forced humor, not puns. Just smart writing.
-
-Examples of wit done right:
-- "Project closed before the promo did." (double meaning: project delivery vs campaign deadline)
-- "Customers noticed. Teams noticed." (the simplicity IS the flex)
-- "Big space. One collective brand." (contrasting scale with unity)
-- "Times Square leaves no room for hesitation." (the place IS the metaphor)
-
-This is NOT wit: "We crushed it!", "Nailed it!", "Mission accomplished!" — that's self-congratulation.
-
-The wit should be in the CLOSER or the HOOK, not in the body. One clever line per post max.
-
-═══ OUTPUT FORMAT ═══
-
-JSON with:
-- hook: the first 1-2 lines (the scroll-stopper). MUST be punchy and factual.
-- body: the rest of the post (context + deliverables + closer + project lead). Include \\n\\n for blank lines between sections.
-- proofPoints: EMPTY string (no bullet points in Sarani posts — ever)
-- hashtags: EMPTY string (never)
-- charCount: total character count
-- visualTitle: 2-4 WORDS for the LinkedIn visual image, poster-headline style
-
-═══ QUALITY GATES — Check BEFORE outputting ═══
-
-Before returning your JSON, verify your post passes ALL these gates:
-
-HOOK GATES:
-H1: Hook is ≤ 2 lines
-H2: Hook starts with the CLIENT NAME, a PLACE, or a PROJECT — never with a Sarani selling point
-H3: Hook does NOT contain "fixed price", "24 hours", "unlimited revisions", "on time", "D+1", or any process/pricing fact
-H4: Hook would make sense if Sarani's name were removed — it's about the project, not the agency
-
-BODY GATES:
-G2: Body has NO bullet points (• or →). Only short paragraphs separated by blank lines.
-G3: Post NEVER compares to "other agencies", "traditional agencies", or any competitor
-G4: Post contains ZERO invented scores, ratings, percentages, or qualifiers not in the input data. Ban: "enterprise-grade", "world-class", "best-in-class", "fully aligned", "exceptional", "outstanding"
-G5: Post does NOT mention "unlimited revisions", "fixed price", "zero overruns", "no invoice surprises", "no extra costs", "no hidden fees" as selling points
-G6: Post reads like the REAL examples above (Aristocrat, Crocs, TikTok LIVE) — describes the WORK, not the business model
-G7: Total post < 1,300 characters
-
-CLOSER GATES:
-C1: Closer does NOT contain process metrics ("on time", "on budget", "on brand", "zero overruns"). It speaks about the result or the relationship ("This was fun!", "Thanks for the trust.", "Big space. One collective brand.")
-
-STRUCTURE GATES:
-S1: Post does NOT follow the "problem → solution → result" agency case study format. It describes the project directly.
-S2: Post does NOT contain "X needed Y" or "X couldn't wait" patterns that position Sarani as the savior
-
-VISUAL GATE:
-G8: visualTitle is 2-4 WORDS, poster-style (like "I RUN STORE", "BLACK FRIDAY", "350 SLIDES")
-
-If ANY gate fails, rewrite the post before outputting.
-
-RULES:
-- NEVER invent data. Only use facts from the project data and case study.
-- NEVER refuse to write.
-- Output valid JSON only. No markdown, no explanation.`;
+Output valid JSON only.`;
 
 export function buildSocialInput(
   candidate: {
