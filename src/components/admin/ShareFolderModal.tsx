@@ -530,6 +530,10 @@ export function ShareFolderModal({ isOpen, onClose, clientName, projectName, cli
             <p className="text-xs sm:text-sm text-neutral-500 mt-0.5 truncate">
               {clientName} — {projectName}
             </p>
+            {/* Debug: show which list ID is being used for navigation */}
+            <p className="text-[10px] text-neutral-300 truncate">
+              List: {clickupListName || "none"} ({clickupListId || "no ID"})
+            </p>
           </div>
           <button
             onClick={onClose}
