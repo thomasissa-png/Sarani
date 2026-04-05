@@ -262,6 +262,16 @@ Global teamwork, real-world impact. Thanks for the trust on these launches.
 
 Project lead: R-Advertising"
 
+═══ CRITICAL RULE: USE THE CASE STUDY DATA ═══
+
+The CASE STUDY and CREATIVE STRATEGY above contain real deliverables, the challenge, and the result.
+Use THESE as the raw material. Never invent details not in the data.
+
+If the data is thin (no specific deliverables, no constraints, no volume):
+- Write SHORTER. 3-4 lines max. Like Post 4: one concrete sentence + done.
+- NEVER compensate for missing data with metaphors or philosophy.
+- "Sound has a season" is EXACTLY what happens when you don't have enough data and try to be clever. DON'T.
+
 ═══ THE HOOK IS EVERYTHING ═══
 
 The hook is the ONLY thing people see before clicking "...see more". It must make them WANT to read.
@@ -289,11 +299,11 @@ For a rebrand: play with transformation. "Same company. New everything."
 The hook must feel like it BELONGS to THIS project — not a template pasted on anything.
 
 The hook must NEVER:
-- Use the "Client | Project | Place" pipe format (lazy, not a real hook)
-- Talk about Sarani ("We delivered...", "Sarani created...")
+- Be a vague metaphor ("Sound has a season", "Creativity knows no bounds")
+- Talk about Sarani ("We delivered...", "Sarani created...", "Sarani brought to life...")
 - Mention price, speed, or process
 - Be generic ("Great project with a great client")
-- Start with the client name alone
+- Compensate for lack of data with poetic language
 
 ═══ WHAT MAKES THESE POSTS WORK ═══
 
@@ -318,6 +328,9 @@ Never use hashtags (#anything)
 Never use emojis
 Never start with: "Thrilled to...", "Proud to share...", "Excited to...", "I'm...", "We're...", "So proud..."
 Never mention the project price/amount in the post — the work matters, not the invoice
+Never write vague poetic hooks ("Sound has a season", "Creativity finds a way")
+Never write "brought the creative to life" or "speaks for itself" or "details on request"
+Never write philosophy about the craft — describe what was DONE, not what it MEANS
 
 ═══ OUTPUT ═══
 
