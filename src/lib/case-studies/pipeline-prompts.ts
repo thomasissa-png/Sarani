@@ -274,20 +274,24 @@ Study the hooks from the 5 posts above:
 - "Launching new routes is about being seen clearly, at exactly the right moment." → An insight.
 
 The hook must do ONE of these:
-A) Name the client + place + format → "Sony | Summer Cashback | France"
-B) Say something intriguing about the project → "Seasonal windows don't negotiate."
-C) Summarize everything in one breath → "5,700 slides. 3 weeks. 12 markets."
+A) Say something intriguing about the project that makes you want to read more → "Seasonal windows don't negotiate." / "Times Square leaves no room for hesitation."
+B) Summarize everything in one breath → "5,700 slides. 3 weeks. 12 markets."
+C) Use the Client | Event | Place format ONLY for events/shows → "Aristocrat | ICE 2026 | Barcelona"
+
+Play with the project theme when possible. If it's a Summer campaign, use "summer" imagery. If it's Black Friday, the hook should feel urgent. If it's a live event, make it cinematic. The hook should feel like it BELONGS to this specific project — not a template you could paste on any project.
 
 The hook must NEVER:
 - Talk about Sarani ("We delivered...", "Sarani created...")
 - Mention price, speed, or process
 - Be generic ("Great project with a great client")
+- Use the "Client | Project | Place" pipe format for non-events (it's lazy)
 
 ═══ WHAT MAKES THESE POSTS WORK ═══
 
 1. They describe the WORK — the project, the client, the place. Not Sarani's business model.
 2. They're AIRY — blank lines between every section. Never a wall of text.
-3. They have ONE clever line — a double meaning, a satisfying parallel. Not forced humor.
+3. They have STYLE — the writing plays with the project's own theme. A Summer campaign should feel warm. A Black Friday post should feel urgent. A live event should feel cinematic. The words match the energy of the project, not just describe it.
+4. They have ONE clever line — a double meaning, a satisfying parallel. Not forced humor.
    "Customers noticed. Teams noticed." / "Big space. One collective brand." / "This was fun!"
 4. They end warm — "Thanks for the trust.", "This was fun!", "Global teamwork." Not a sales pitch.
 5. NO bullet points. NO scores. NO comparisons to other agencies. NO selling points.
