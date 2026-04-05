@@ -99,15 +99,23 @@ export async function autoSelectVisuals(
   // ── Step 1: Resolve the project folder ────────────────────────────────
   let projectItems: DriveItem[] = [];
 
-  // Strategy 1: Sharing link
-  try {
-    const folderItem = await resolveSharePointUrl(sharePointFolderUrl);
-    if (folderItem?.id) {
-      const did = folderItem.parentReference?.driveId ?? driveId;
-      projectItems = await listByItemId(folderItem.id, did);
-      console.log(`[auto-select] Strategy 1 (sharing link): ${projectItems.length} items`);
-    }
-  } catch { /* try next */ }
+  // Strategy 1: Sharing link — ONLY for actual sharing links (/:f:/ or /:v:/ format)
+  // Skip for regular webUrls (they hang for 30s+ per variant in the /shares/ API)
+  const isSharingLink = /\/:[a-z]:\//i.test(sharePointFolderUrl);
+  if (isSharingLink) {
+    try {
+      const resolveWithTimeout = Promise.race([
+        resolveSharePointUrl(sharePointFolderUrl),
+        new Promise<null>((r) => setTimeout(() => r(null), 5_000)), // 5s max
+      ]);
+      const folderItem = await resolveWithTimeout;
+      if (folderItem?.id) {
+        const did = folderItem.parentReference?.driveId ?? driveId;
+        projectItems = await listByItemId(folderItem.id, did);
+        console.log(`[auto-select] Strategy 1 (sharing link): ${projectItems.length} items`);
+      }
+    } catch { /* try next */ }
+  }
 
   // Strategy 2: Extract path from webUrl
   if (projectItems.length === 0 && sharePointFolderUrl.includes("sharepoint.com")) {
@@ -123,16 +131,11 @@ export async function autoSelectVisuals(
     } catch { /* try next */ }
   }
 
-  // Strategy 3: Client root fallback
-  if (projectItems.length === 0 && clientName) {
-    try {
-      const mapping = getMappingBySpaceName(clientName);
-      if (mapping) {
-        const customerPath = `${ASSETS_CUSTOMERS_BASE_PATH}/${mapping.sharepointCustomerFolder}`;
-        projectItems = await listDriveItems(driveId, customerPath);
-        console.log(`[auto-select] Strategy 3 (client root): ${projectItems.length} items`);
-      }
-    } catch { /* give up */ }
+  // Strategy 3: SKIP — client root is too broad (lists all divisions, not project files).
+  // If strategies 1-2 failed, we don't have a precise folder → return empty.
+  if (projectItems.length === 0) {
+    console.warn(`[auto-select] Strategies 1-2 failed. URL: ${sharePointFolderUrl.substring(0, 100)}`);
+    return empty;
   }
 
   if (projectItems.length === 0) {
