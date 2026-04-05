@@ -630,8 +630,8 @@ export function mergeData(
     return {
       client: canonicalClient,
       project: ep.project,
-      date: ep.date,
-      contact: ep.contact,
+      date: clickupTask ? getClickUpTaskDate(clickupTask) || ep.date : ep.date,
+      contact: clickupTask?.assignees?.[0]?.username || ep.contact,
       status: mappedStatus?.projectStatus || clickupStatusRaw || ep.status,
       category: ep.category,
       sharepointLink: ep.sharepointLink || (clickupTask ? extractSharePointLink(clickupTask) : ""),
