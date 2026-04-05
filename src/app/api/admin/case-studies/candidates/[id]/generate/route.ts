@@ -535,6 +535,7 @@ export async function POST(
         clientName: candidate.clientName,
         projectTitle:
           copyData.caseStudy.headline ?? candidate.projectName ?? `${candidate.clientName} Project`,
+        visualTitle: socialData.linkedInPost.visualTitle || undefined,
         accentWord: candidate.clientName,
         clientLogoUrl: getClientLogoUrl(candidate.clientName),
         projectImages: visualImageUrls,

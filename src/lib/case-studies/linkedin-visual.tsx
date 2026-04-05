@@ -16,6 +16,8 @@ import { graphFetch } from "@/lib/integrations/sharepoint";
 export interface LinkedInVisualParams {
   clientName: string;
   projectTitle: string;
+  /** 2-4 word poster-style title from LLM (visualTitle). Used as primary display. Falls back to projectTitle. */
+  visualTitle?: string;
   /** Word to highlight in Flame #DA5126. Defaults to clientName. */
   accentWord?: string;
   /** Absolute URL to client logo PNG. Null = show Sarani logo only. */
@@ -24,21 +26,17 @@ export interface LinkedInVisualParams {
   clientLogoOverride?: string;
   /** 1-3 image URLs (SharePoint direct URLs or data URIs). */
   projectImages: string[];
-  /** Optional secondary line: client name + key stat. Displayed below title. */
-  secondaryText?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VISUAL_SIZE = { width: 1200, height: 1200 };
 const FLAME = "#DA5126";
-const CERULEAN = "#2D7DD2";
-const LEMON = "#F0C808";
-const BG_DARK = "#000000"; // token: surface.dark
-const BG_GRADIENT_START = "#1d1d1d"; // token: surface.dark-elevated
-const PHOTO_RADIUS = 32; // token: 2xl — pronounced rounded corners per Thomas template
-/** Pixel height reserved for images (canvas 1200 - padding 100 - pill ~64 - margins ~96 - title ~132 - subtitle ~36 - bar 6) */
-const IMAGE_AREA_HEIGHT = 676;
+const BG_DARK = "#0d0d0d";
+const BG_GRADIENT_START = "#1a1a1a";
+const PHOTO_RADIUS = 16;
+/** Pixel height reserved for images (canvas 1200 - top padding 60 - pill ~64 - gap 40 - title ~120 - gap 40 - bar 6 - bottom pad 40) */
+const IMAGE_AREA_HEIGHT = 720;
 
 // ─── Font loader ─────────────────────────────────────────────────────────────
 // Loads Outfit Bold from public/fonts/ (already in the repo).
@@ -207,30 +205,58 @@ export async function generateLinkedInVisual(
 ): Promise<Buffer> {
   const {
     clientName,
-    projectTitle: rawTitle,
+    projectTitle,
+    visualTitle,
     accentWord = clientName,
     clientLogoUrl,
     clientLogoOverride,
     projectImages,
-    secondaryText,
   } = params;
 
-  // Dynamic title sizing — scale UP for short titles (poster impact), DOWN for long ones
-  let titleFontSize = 60; // token: 6xl — default
+  // Use visualTitle (2-4 words poster-style from LLM) as primary display.
+  // Fall back to projectTitle (headline) if visualTitle is empty or missing.
+  const rawTitle = visualTitle && visualTitle.trim().length > 0
+    ? visualTitle.trim()
+    : projectTitle;
+
+  const hasImages = projectImages.length > 0;
+
+  // Dynamic title sizing — scale UP for short titles (poster impact), DOWN for long ones.
+  // When no images: title is the hero element, go even bigger.
+  let titleFontSize: number;
   let displayTitle = rawTitle;
-  if (rawTitle.length <= 15) {
-    titleFontSize = 96; // 2-3 word poster headline like "I RUN STORE"
-  } else if (rawTitle.length <= 25) {
-    titleFontSize = 80; // short title, still big impact
-  } else if (rawTitle.length > 120) {
-    titleFontSize = 36;
-    displayTitle = rawTitle.length > 150 ? rawTitle.slice(0, 147) + "..." : rawTitle;
-  } else if (rawTitle.length > 80) {
-    titleFontSize = 44;
+  if (!hasImages) {
+    // Fallback mode: title is the visual centerpiece
+    if (rawTitle.length <= 15) {
+      titleFontSize = 96;
+    } else if (rawTitle.length <= 30) {
+      titleFontSize = 80;
+    } else if (rawTitle.length <= 60) {
+      titleFontSize = 64;
+    } else {
+      titleFontSize = 48;
+      displayTitle = rawTitle.length > 100 ? rawTitle.slice(0, 97) + "..." : rawTitle;
+    }
+  } else {
+    // With images: title shares space with photo grid
+    if (rawTitle.length <= 15) {
+      titleFontSize = 80;
+    } else if (rawTitle.length <= 25) {
+      titleFontSize = 64;
+    } else if (rawTitle.length <= 60) {
+      titleFontSize = 52;
+    } else if (rawTitle.length > 120) {
+      titleFontSize = 36;
+      displayTitle = rawTitle.length > 150 ? rawTitle.slice(0, 147) + "..." : rawTitle;
+    } else if (rawTitle.length > 80) {
+      titleFontSize = 40;
+    } else {
+      titleFontSize = 48;
+    }
   }
 
   // Load fonts
-  const [outfitBold, outfitRegular] = await Promise.all([
+  const [poppinsBold, poppinsRegular] = await Promise.all([
     loadOutfitBold(),
     loadOutfitRegular(),
   ]);
@@ -252,247 +278,186 @@ export async function generateLinkedInVisual(
     await Promise.all(projectImages.slice(0, 3).map(fetchImageAsDataUri))
   ).filter((uri): uri is string => uri !== null);
 
-  // ─── Build the visual JSX ──────────────────────────────────────────────
-
-  // Secondary line: only shown if explicitly provided (e.g. LLM-generated visualTitle).
-  // No fallback to clientName — the model template is clean: pill + title + photos only.
-  const secondaryLine = secondaryText || undefined;
+  const hasResolvedImages = imageDataUris.length > 0;
 
   try {
     const imageResponse = new ImageResponse(
       (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          background: `linear-gradient(180deg, ${BG_GRADIENT_START} 0%, ${BG_DARK} 100%)`,
-          padding: "50px 50px 40px 50px",
-          fontFamily: "Poppins",
-        }}
-      >
-        {/* ─── Pill: Sarani logo + client logo ──────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 999,
-            border: "1px solid rgba(255,255,255,0.12)",
-            backgroundColor: "rgba(255,255,255,0.15)",
-            padding: "12px 32px",
-            marginBottom: 48,
-          }}
-        >
-          {saraniLogoDataUri ? (
-            <img
-              src={saraniLogoDataUri}
-              width={120}
-              height={40}
-              style={{ objectFit: "contain" }}
-            />
-          ) : (
-            <span
-              style={{
-                color: FLAME,
-                fontSize: 24,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-              }}
-            >
-              SARANI
-            </span>
-          )}
-          {clientLogoDataUri && (
-            <>
-              <div
-                style={{
-                  width: 1,
-                  height: 32,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  marginLeft: 24,
-                  marginRight: 24,
-                }}
-              />
-              <img
-                src={clientLogoDataUri}
-                width={100}
-                height={36}
-                style={{ objectFit: "contain" }}
-              />
-            </>
-          )}
-        </div>
-
-        {/* ─── Title ────────────────────────────────────────────── */}
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            textAlign: "center",
-            fontSize: titleFontSize,
-            fontWeight: 700,
-            lineHeight: 1.1, // token: tight
-            maxWidth: 1000,
-            marginBottom: secondaryLine ? 16 : 48,
-          }}
-        >
-          {renderTitle(displayTitle, accentWord)}
-        </div>
-
-        {/* ─── Secondary text (client + key stat) ──────────────── */}
-        {secondaryLine && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              fontSize: 28,
-              fontWeight: 400,
-              color: "rgba(255,255,255,0.6)",
-              marginBottom: 32,
-              maxWidth: 900,
-              textAlign: "center",
-            }}
-          >
-            {secondaryLine}
-          </div>
-        )}
-
-        {/* ─── Project images — asymmetric layout ───────────────── */}
-        {imageDataUris.length > 0 ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              width: "100%",
-              height: IMAGE_AREA_HEIGHT,
-            }}
-          >
-            {/* Left column: 1-2 small images stacked */}
-            {imageDataUris.length >= 2 && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  width: "38%",
-                  height: IMAGE_AREA_HEIGHT,
-                  marginRight: "2%",
-                }}
-              >
-                <img
-                  src={imageDataUris[1]}
-                  style={{
-                    width: "100%",
-                    height: imageDataUris.length >= 3 ? Math.floor(IMAGE_AREA_HEIGHT * 0.33) : IMAGE_AREA_HEIGHT,
-                    objectFit: "cover",
-                    borderRadius: PHOTO_RADIUS,
-                  }}
-                />
-                {imageDataUris[2] && (
-                  <img
-                    src={imageDataUris[2]}
-                    style={{
-                      width: "100%",
-                      height: Math.floor(IMAGE_AREA_HEIGHT * 0.63),
-                      objectFit: "cover",
-                      borderRadius: PHOTO_RADIUS,
-                      marginTop: Math.floor(IMAGE_AREA_HEIGHT * 0.04),
-                    }}
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Right / main image (large) */}
-            <img
-              src={imageDataUris[0]}
-              style={{
-                width: imageDataUris.length >= 2 ? "60%" : "100%",
-                height: IMAGE_AREA_HEIGHT,
-                objectFit: "cover",
-                borderRadius: PHOTO_RADIUS,
-              }}
-            />
-          </div>
-        ) : (
-          /* ─── Fallback: 3 Sarani dots (Flame/Cerulean/Lemon) ── */
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "100%",
-              height: IMAGE_AREA_HEIGHT,
-              gap: 60,
-            }}
-          >
-            <div
-              style={{
-                width: 120,
-                height: 120,
-                borderRadius: 60,
-                backgroundColor: FLAME,
-                opacity: 0.85,
-              }}
-            />
-            <div
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: 50,
-                backgroundColor: CERULEAN,
-                opacity: 0.75,
-                marginTop: -40,
-              }}
-            />
-            <div
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: LEMON,
-                opacity: 0.65,
-                marginTop: 30,
-              }}
-            />
-          </div>
-        )}
-
-        {/* ─── Bottom accent line — full width Flame ────────────── */}
         <div
           style={{
             width: "100%",
-            height: 6,
-            backgroundColor: FLAME,
-            borderRadius: 3,
-            marginTop: 32,
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: hasResolvedImages ? "center" : "center",
+            justifyContent: hasResolvedImages ? "flex-start" : "center",
+            background: `linear-gradient(180deg, ${BG_GRADIENT_START} 0%, ${BG_DARK} 100%)`,
+            padding: hasResolvedImages ? "60px 60px 0 60px" : "80px 80px 0 80px",
+            fontFamily: "Poppins",
+            position: "relative",
           }}
-        />
-      </div>
-    ),
-    {
-      ...VISUAL_SIZE,
-      fonts: [
-        {
-          name: "Poppins",
-          data: outfitBold,
-          weight: 700,
-          style: "normal",
-        },
-        {
-          name: "Poppins",
-          data: outfitRegular,
-          weight: 400,
-          style: "normal",
-        },
-      ],
-    }
-  );
+        >
+          {/* ─── Pill: Sarani logo + client logo ──────────────────── */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.12)",
+              backgroundColor: "rgba(255,255,255,0.08)",
+              padding: "12px 32px",
+              marginBottom: hasResolvedImages ? 40 : 48,
+            }}
+          >
+            {saraniLogoDataUri ? (
+              <img
+                src={saraniLogoDataUri}
+                width={120}
+                height={40}
+                style={{ objectFit: "contain" }}
+              />
+            ) : (
+              <span
+                style={{
+                  color: FLAME,
+                  fontSize: 24,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                }}
+              >
+                SARANI
+              </span>
+            )}
+            {clientLogoDataUri && (
+              <>
+                <div
+                  style={{
+                    width: 1,
+                    height: 32,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    marginLeft: 24,
+                    marginRight: 24,
+                  }}
+                />
+                <img
+                  src={clientLogoDataUri}
+                  width={100}
+                  height={36}
+                  style={{ objectFit: "contain" }}
+                />
+              </>
+            )}
+          </div>
+
+          {/* ─── Title: Poppins Bold, white + client name in Flame ── */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              textAlign: "center",
+              fontSize: titleFontSize,
+              fontWeight: 700,
+              lineHeight: 1.1,
+              maxWidth: 1040,
+              marginBottom: hasResolvedImages ? 40 : 0,
+            }}
+          >
+            {renderTitle(displayTitle, accentWord)}
+          </div>
+
+          {/* ─── Project images — asymmetric layout ───────────────── */}
+          {hasResolvedImages && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                width: "100%",
+                flex: 1,
+                marginBottom: 46,
+              }}
+            >
+              {/* Left column: 1-2 small images stacked */}
+              {imageDataUris.length >= 2 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    width: "38%",
+                    height: "100%",
+                    marginRight: "2%",
+                  }}
+                >
+                  <img
+                    src={imageDataUris[1]}
+                    style={{
+                      width: "100%",
+                      height: imageDataUris.length >= 3 ? "48%" : "100%",
+                      objectFit: "cover",
+                      borderRadius: PHOTO_RADIUS,
+                    }}
+                  />
+                  {imageDataUris[2] && (
+                    <img
+                      src={imageDataUris[2]}
+                      style={{
+                        width: "100%",
+                        height: "48%",
+                        objectFit: "cover",
+                        borderRadius: PHOTO_RADIUS,
+                        marginTop: "4%",
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Right / main image (large) */}
+              <img
+                src={imageDataUris[0]}
+                style={{
+                  width: imageDataUris.length >= 2 ? "60%" : "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: PHOTO_RADIUS,
+                }}
+              />
+            </div>
+          )}
+
+          {/* ─── Bottom accent bar — full width Flame (6px) ─────── */}
+          <div
+            style={{
+              width: "100%",
+              height: 6,
+              backgroundColor: FLAME,
+              borderRadius: 3,
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+            }}
+          />
+        </div>
+      ),
+      {
+        ...VISUAL_SIZE,
+        fonts: [
+          {
+            name: "Poppins",
+            data: poppinsBold,
+            weight: 700,
+            style: "normal" as const,
+          },
+          {
+            name: "Poppins",
+            data: poppinsRegular,
+            weight: 400,
+            style: "normal" as const,
+          },
+        ],
+      }
+    );
 
     // Convert ReadableStream response to Buffer
     const arrayBuffer = await imageResponse.arrayBuffer();

@@ -127,12 +127,10 @@ export async function GET(
       }
     }
 
-    // Build secondary text: clientName + first stat if available
-    let secondaryText: string | undefined;
-    const stats = content?.stats as Array<{ label: string; value: string }> | undefined;
-    if (stats && stats.length > 0) {
-      secondaryText = `${candidate.clientName} — ${stats[0].value} ${stats[0].label}`;
-    }
+    // Extract visualTitle from social output (2-4 word poster-style title from LLM)
+    const socialOutput = outputs.find((o) => o.outputType === "linkedin_post");
+    const socialContent = socialOutput?.content as Record<string, unknown> | undefined;
+    const visualTitle = (socialContent?.visualTitle as string) || undefined;
 
     // 3. Generate the visual
     const clientLogoUrl = getClientLogoUrl(candidate.clientName);
@@ -140,10 +138,10 @@ export async function GET(
     const pngBuffer = await generateLinkedInVisual({
       clientName: candidate.clientName,
       projectTitle,
+      visualTitle,
       accentWord: candidate.clientName,
       clientLogoUrl,
       projectImages,
-      secondaryText,
     });
 
     // 4. Store in DB for caching
