@@ -26,7 +26,7 @@ export const CaseStudyOutputSchema = z.object({
   result: z.string().min(10).max(150),
   headline: z.string().min(5).max(100),
   keyMetric: z.string().min(1).max(20),
-  stats: z.tuple([CaseStudyStatSchema, CaseStudyStatSchema, CaseStudyStatSchema]),
+  stats: z.array(CaseStudyStatSchema).min(1).max(5),
   metaDescription: z.string().min(50).max(160),
   category: CaseStudyCategorySchema,
   subtitle: z.string().optional(),
@@ -44,9 +44,9 @@ export const CaseStudyOutputSchema = z.object({
     .nullable()
     .optional(),
   // Visual assets selected from SharePoint
-  heroImage: z.string().url().optional(),
-  linkedInImage: z.string().url().optional(),
-  emailHeader: z.string().url().optional(),
+  heroImage: z.string().optional(),
+  linkedInImage: z.string().optional(),
+  emailHeader: z.string().optional(),
 });
 
 export const LinkedInPostSchema = z.object({
@@ -60,7 +60,7 @@ export const LinkedInPostSchema = z.object({
 
 export const NurturingEmailSchema = z.object({
   subject: z.string().min(1).max(60),
-  body: z.string().min(50),
+  body: z.string().min(10),
   ctaText: z.string().min(1),
   suggestedSegment: z.string().min(1),
 });

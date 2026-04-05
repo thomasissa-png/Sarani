@@ -30,7 +30,7 @@ export interface CaseStudy {
   /** Short metric for card display */
   keyMetric: string;
   /** Stats displayed in the results section (3 cards) */
-  stats: [CaseStudyStat, CaseStudyStat, CaseStudyStat];
+  stats: CaseStudyStat[];
   /** SEO meta description */
   metaDescription: string;
   /** Primary category for filtering on Work listing page */

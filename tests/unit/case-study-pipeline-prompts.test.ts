@@ -303,8 +303,19 @@ describe("CopyOutputSchema", () => {
     }
   });
 
-  it("rejects stats with less than 3 items (tuple)", () => {
+  it("rejects stats with 0 items", () => {
     const result = CopyOutputSchema.safeParse({
+      ...VALID_COPY_OUTPUT,
+      caseStudy: {
+        ...VALID_COPY_OUTPUT.caseStudy,
+        stats: [],
+      },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts stats with 1-5 items (flexible array)", () => {
+    const result2 = CopyOutputSchema.safeParse({
       ...VALID_COPY_OUTPUT,
       caseStudy: {
         ...VALID_COPY_OUTPUT.caseStudy,
@@ -314,11 +325,9 @@ describe("CopyOutputSchema", () => {
         ],
       },
     });
-    expect(result.success).toBe(false);
-  });
+    expect(result2.success).toBe(true);
 
-  it("rejects stats with more than 3 items (tuple)", () => {
-    const result = CopyOutputSchema.safeParse({
+    const result4 = CopyOutputSchema.safeParse({
       ...VALID_COPY_OUTPUT,
       caseStudy: {
         ...VALID_COPY_OUTPUT.caseStudy,
@@ -330,7 +339,7 @@ describe("CopyOutputSchema", () => {
         ],
       },
     });
-    expect(result.success).toBe(false);
+    expect(result4.success).toBe(true);
   });
 
   it("rejects metaDescription longer than 160 chars", () => {
@@ -366,12 +375,12 @@ describe("CopyOutputSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects nurturing email body shorter than 50 chars", () => {
+  it("rejects nurturing email body shorter than 10 chars", () => {
     const result = CopyOutputSchema.safeParse({
       ...VALID_COPY_OUTPUT,
       nurturingEmail: {
         ...VALID_COPY_OUTPUT.nurturingEmail,
-        body: "Too short body",
+        body: "Short",
       },
     });
     expect(result.success).toBe(false);
