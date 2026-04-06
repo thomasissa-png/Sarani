@@ -179,6 +179,12 @@ export function startCronScheduler(): void {
 
   // Run poll-emails immediately on startup (don't wait 5min)
   setTimeout(() => void runJob(jobs[0]), 5_000);
+
+  // Warm the tracker cache immediately on startup (don't wait 25min)
+  const trackerJob = jobs.find((j) => j.name === "tracker-cache-warm");
+  if (trackerJob) {
+    setTimeout(() => void runJob(trackerJob), 10_000);
+  }
 }
 
 export function stopCronScheduler(): void {
