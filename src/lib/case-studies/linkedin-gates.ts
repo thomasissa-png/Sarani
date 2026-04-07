@@ -139,7 +139,7 @@ export function checkPrice(fullPost: string): GateResult {
 /** G-CLICHE: Zero agency clichés */
 export function checkCliche(fullPost: string): GateResult {
   const hasCliche =
-    /brought to life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class/i.test(
+    /brought\b.*?\bto life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class/i.test(
       fullPost
     );
   return {
@@ -261,7 +261,7 @@ export function autoClean(post: LinkedInPost): { post: LinkedInPost; logWarnings
   if (/^(thrilled|proud|excited|i'm\s|we're\s|so proud)/i.test(hook.trim())) {
     warnings.push("G-BRO: LinkedIn bro opening — requires manual rewrite");
   }
-  if (/brought to life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class/i.test(fullPost)) {
+  if (/brought\b.*?\bto life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class/i.test(fullPost)) {
     warnings.push("G-CLICHE: agency cliché found — requires manual rewrite");
   }
   if (/100\/100|quality score|\d+\/\d+\s*score/i.test(fullPost)) {
