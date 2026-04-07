@@ -412,7 +412,57 @@ Thomas (Chief of Operations), Sébastien (Tech Lead), Vitalii (Tech Lead), Mariu
 
 ## Mémo de reprise — dernière session
 
-**Date et heure de clôture :** 2026-04-04 (session 17)
+**Date et heure de clôture :** 2026-04-07 (session 18)
+
+**Résumé de la session (session 18) :**
+Session massive (~80 commits) couvrant 3 flows : Tracker, Case Studies, Share Links. Corrections de bugs critiques (vidéo playback, auto-sélection visuels, publish case studies), refonte du prompt LinkedIn (7 itérations → réécriture from scratch), implémentation des 13 quality gates LinkedIn, fixes mobile (cache warming, timeouts), et 907 tests unitaires.
+
+**Travaux terminés cette session (S18) :**
+- [x] TikTok branding (couleurs, font, tone depuis tiktokbrandhub.com)
+- [x] Cron health avec heartbeats réels + keep-alive anti-sleep Replit
+- [x] ClickUp folder-lists (getAllListsForSpace récupère les lists dans les folders)
+- [x] Canonical client name (ClickUp > Excel, ByteDance → TikTok)
+- [x] Vidéo playback : streaming proxy avec buffer (la seule approche qui marche)
+- [x] PDF inline (≤10MB viewer, >10MB download)
+- [x] Share link : toutes versions accessibles (isActive retiré), "Final delivery" badge supprimé
+- [x] ShareFolderModal : ClickUp API step 1, mobile responsive, footer always visible
+- [x] Case studies : split Published/To validate, auto-expand, edit per section
+- [x] Case studies publiés sur /work (pas /case-studies), heroImage fallback, volume/turnaround conditionnel
+- [x] LinkedIn multi-images (1-3 pour le visuel)
+- [x] LinkedIn prompt réécrit from scratch : 7 exemples + pattern tagline/body/closer + 3 règles
+- [x] LinkedIn 13 quality gates serveur avec auto-clean (linkedin-gates.ts)
+- [x] LinkedIn visuel : Poppins font, template conforme référence, align gauche, uppercase
+- [x] Pipeline : ClickUp brief passé à tous les steps, auto-truncate, auto-fix schemas
+- [x] Pipeline stuck recovery (10min auto-reset)
+- [x] Publish confirmation dialog (ConfirmDialog + useConfirm hook)
+- [x] Toast system (remplace 8 alert())
+- [x] Tracker : ClickUp source de vérité dans le merge, dates/contacts ClickUp > Excel
+- [x] Tracker mobile : star button 44px, badge filtres corrigé, cache warming au démarrage
+- [x] 907 tests (29 fichiers) dont 188 anti-régression S18 + 96 LinkedIn gates
+
+**Travaux en cours / à faire :**
+- **LinkedIn visual** : le template Satori est fonctionnel mais le rendu ne sera jamais au niveau d'un designer. Thomas doit valider si c'est acceptable ou si un template Canva/Figma est préférable.
+- **Auto-select visuals** : fonctionne pour les URLs avec `?id=` param mais dépend de la structure SP du projet. À tester sur plus de projets.
+- **Vidéo playback** : streaming proxy via buffer fonctionne. À tester sur des vidéos >100MB.
+- **Phase 4 QA** : Lighthouse CI, visual regression, E2E LLM tests manquants.
+
+**Prochaines actions recommandées :**
+1. **Tester en live** (PRIORITÉ 1) : vidéo playback, auto-select visuals, publish → /work, LinkedIn visual
+2. **LinkedIn visual template** (PRIORITÉ 2) : valider le rendu Satori vs attentes Thomas
+3. **LinkedIn post quality** (PRIORITÉ 3) : tester avec 5+ projets réels, itérer si nécessaire
+
+**Décisions de Thomas cette session :**
+- Le format pipe (X | Y | Z) est INTERDIT dans les hooks LinkedIn (sauf events)
+- Le post LinkedIn = tagline créative (2-6 mots) + body factuel + closer chaleureux
+- Les 7 vrais posts de Thomas sont la seule référence du style
+- Le "100/100 quality score" n'existe pas et ne doit jamais apparaître
+- ClickUp est la source de vérité pour les statuts/dates (Excel = fallback financier)
+- Toutes les versions de share links doivent rester accessibles (pas d'isActive check)
+- Le tracker doit charger instantanément sur mobile (cache warming au démarrage)
+- Les images auto-sélectionnées doivent venir des sous-dossiers les plus récents
+- Le ClickUp brief (description de la tâche) doit être passé à tous les steps du pipeline
+
+**Branche de travail :** claude/tracker-flow-case-study-CM1NC
 
 **Résumé de la session (session 17) :**
 Session massive — pipeline case study complet (5 steps), UI back-office review, page publique, visuels LinkedIn auto-générés, extraction branding IA, fixes performance tracker. ~40 commits.
