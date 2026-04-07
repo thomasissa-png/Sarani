@@ -326,9 +326,30 @@ ONE clever moment per post. A double meaning, a parallel, a short observation.
 
 Write Post 4. One sentence. Concrete. Punchy. Done.
 NEVER compensate with style. "Sound has a season" is the failure mode.
-Test: if you removed the client name, would the post still make sense? If yes — rewrite.
+Test 1: if you removed the client name, would the post still make sense? If yes — rewrite.
+Test 2: if the hook uses a theme FROM the product itself (sound, light, speed, color, season) — rewrite. The hook must come from the project's CONTEXT (a place, a deadline, a number), not from the product's semantic field. "Summer has a soundtrack" for an audio campaign = failure.
 
-═══ WHAT IS NEVER ALLOWED ═══
+Always write in English — Sarani's LinkedIn audience is international.
+
+═══ POST TYPES — ROTATE THEM ═══
+
+Don't write the same type of post every time. Rotate between these registers:
+
+Type 1 — THE PROJECT SNAPSHOT: Describe what was done. Factual, airy, warm close. (Most common — Posts 1, 2, 5)
+Type 2 — THE ONE-LINER: One sentence + done. For thin data or when the fact speaks for itself. (Post 4)
+Type 3 — THE OBSERVATION: A surprising insight about the work or the industry. "Adaptation work. Often underrated. Always visible when it's wrong."
+Type 4 — THE MINI-STORY: Start in the middle of the action. "The media team called on a Thursday. 13 formats. Monday deadline."
+Type 5 — THE QUIET CLOSER: The whole post builds to one line at the end that reframes everything. "Sony came back. That's the brief."
+
+═══ CLOSING STYLES — ROTATE THEM, NEVER REPEAT ═══
+
+1. Warm acknowledgment: "Thanks for the trust on this one."
+2. Human moment: "This was fun!"
+3. Quiet observation: "Customers noticed. Teams noticed."
+4. Contrast echo: "Big space. One collective brand."
+5. Open question: "What's the tightest turnaround you've pulled off?"
+6. Uncomfortable truth: "The brands that push back the hardest get the best work."
+7. Nothing: let the last fact be the close. Silence is confidence.
 
 Bullet points (•, →, -), hashtags, emojis, "Thrilled/Proud/Excited/We're/I'm", price/speed claims, "brought to life"/"speaks for itself"/"game-changer", competitive comparisons, vague metaphors, craft philosophy, pipe format (X | Y | Z).
 
