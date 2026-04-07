@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
+import { clients, caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { callClaudeJSON } from "@/lib/ai/claude";
 import { checkRateLimit, UUID_REGEX } from "@/lib/rate-limit";
@@ -582,10 +582,34 @@ export async function POST(
         projectImages: visualImageUrls,
       };
 
+      // Fetch client branding for AI background personalization
+      let clientIndustry: string | null = null;
+      let clientPrimaryColor: string | null = null;
+      let clientBrandTone: string | null = null;
+      if (candidate.clientId) {
+        const [clientRow] = await db
+          .select({
+            industry: clients.industry,
+            primaryColor: clients.primaryColor,
+            brandTone: clients.brandTone,
+          })
+          .from(clients)
+          .where(eq(clients.id, candidate.clientId))
+          .limit(1);
+        if (clientRow) {
+          clientIndustry = clientRow.industry;
+          clientPrimaryColor = clientRow.primaryColor;
+          clientBrandTone = clientRow.brandTone;
+        }
+      }
+
       const pngBuffer = process.env.OPENAI_API_KEY
         ? await generateLinkedInVisualHybrid({
             ...visualParams,
             projectType: candidate.projectType,
+            industry: clientIndustry,
+            primaryColor: clientPrimaryColor,
+            brandTone: clientBrandTone,
           })
         : await generateLinkedInVisual(visualParams);
 

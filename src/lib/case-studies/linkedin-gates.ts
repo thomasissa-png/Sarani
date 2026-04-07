@@ -41,9 +41,9 @@ export function checkBullets(fullPost: string): GateResult {
   };
 }
 
-/** G-HASHTAGS: Zero hashtags (#anything) */
+/** G-HASHTAGS: Zero hashtags (#Word) — excludes #1, #2 etc. (rankings, not hashtags) */
 export function checkHashtags(fullPost: string): GateResult {
-  const hasHashtags = /(?:^|\s)#\w+/.test(fullPost);
+  const hasHashtags = /(?:^|\s)#[a-zA-Z]\w*/.test(fullPost);
   return {
     gate: "G-HASHTAGS",
     passed: !hasHashtags,
@@ -77,10 +77,10 @@ export function checkPipeFormat(hook: string, body: string): GateResult {
   };
 }
 
-/** G-SCORES: Zero invented scores (100/100, quality score, X/X score) */
+/** G-SCORES: Zero invented scores (100/100, quality score, X/X score, 100% satisfaction, flawless) */
 export function checkScores(fullPost: string): GateResult {
   const hasScores =
-    /100\/100|quality score|\d+\/\d+\s*score|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class/i.test(
+    /100\/100|quality score|\d+\/\d+\s*score|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class|100%\s*(?:client|satisfaction|delivery|on[- ]time)|flawless|perfect\s+(?:record|track|delivery|execution)/i.test(
       fullPost
     );
   return {
@@ -139,7 +139,7 @@ export function checkPrice(fullPost: string): GateResult {
 /** G-CLICHE: Zero agency clichés */
 export function checkCliche(fullPost: string): GateResult {
   const hasCliche =
-    /brought\b.*?\bto life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class/i.test(
+    /brought\b.*?\bto life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class|cutting[.-]edge|state[.-]of[.-]the[.-]art|next[.-]level|end[.-]to[.-]end|turnkey|one[.-]stop|elevat(?:e|ing)/i.test(
       fullPost
     );
   return {
@@ -179,6 +179,32 @@ export function checkEmptyHash(hashtags: string): GateResult {
   };
 }
 
+/** G-HOOK-LENGTH: Hook (tagline) must be 2-8 words. Ultra-short posts (<50 chars body) are exempt. */
+export function checkHookLength(hook: string, body: string): GateResult {
+  const words = hook.trim().split(/\s+/).filter(Boolean).length;
+  // Exempt ultra-short posts (Post 4 style: hook IS the whole post)
+  const isUltraShort = body.trim().length < 50;
+  const passed = isUltraShort || (words >= 2 && words <= 8);
+  return {
+    gate: "G-HOOK-LENGTH",
+    passed,
+    detail: !passed ? `Hook is ${words} words (expected 2-8): "${hook.slice(0, 60)}"` : undefined,
+  };
+}
+
+/** G-CTA: Zero call-to-action (DM me, link in comments, start a project, etc.) */
+export function checkCTA(fullPost: string): GateResult {
+  const hasCTA =
+    /\bDM me\b|link in (?:the )?comments|visit our|check it out|learn more|start a project|get in touch|reach out|book a (?:call|demo|meeting)|contact us|let'?s (?:chat|talk|connect)/i.test(
+      fullPost
+    );
+  return {
+    gate: "G-CTA",
+    passed: !hasCTA,
+    detail: hasCTA ? "Call-to-action detected" : undefined,
+  };
+}
+
 // ─── Run all gates ───────────────────────────────────────────────────────
 
 export function runAllGates(post: LinkedInPost): GatesReport {
@@ -196,6 +222,8 @@ export function runAllGates(post: LinkedInPost): GatesReport {
     checkPrice(fullPost),
     checkCliche(fullPost),
     checkLength(fullPost),
+    checkHookLength(post.hook, post.body),
+    checkCTA(fullPost),
     checkEmptyProof(post.proofPoints ?? ""),
     checkEmptyHash(post.hashtags ?? ""),
   ];
@@ -229,9 +257,9 @@ export function autoClean(post: LinkedInPost): { post: LinkedInPost; logWarnings
     .replace(/(?:^|\n)\s*[-*]\s+/gm, "\n");
   hook = hook.replace(/[•→]\s*/g, "");
 
-  // G-HASHTAGS: remove hashtags
-  body = body.replace(/(?:^|\s)#\w+/g, "");
-  hook = hook.replace(/(?:^|\s)#\w+/g, "");
+  // G-HASHTAGS: remove hashtags (preserve #1, #2 etc. — rankings, not hashtags)
+  body = body.replace(/(?:^|\s)#[a-zA-Z]\w*/g, "");
+  hook = hook.replace(/(?:^|\s)#[a-zA-Z]\w*/g, "");
 
   // G-EMOJIS: strip emoji characters
   const emojiRegex =
@@ -239,9 +267,10 @@ export function autoClean(post: LinkedInPost): { post: LinkedInPost; logWarnings
   body = body.replace(emojiRegex, "");
   hook = hook.replace(emojiRegex, "");
 
-  // G-PRICE: replace amounts with [amount]
-  body = body.replace(/[€$][\d,.]+|\d+\s*[€$]/g, "[amount]");
-  hook = hook.replace(/[€$][\d,.]+|\d+\s*[€$]/g, "[amount]");
+  // G-PRICE: warning-only (auto-clean would leave "[amount]" visible in published post)
+  if (/[€$][\d,.]+|\d+\s*[€$]/.test(hook + "\n" + body)) {
+    warnings.push("G-PRICE: monetary amount found — requires manual rewrite (not auto-cleaned to avoid [amount] placeholder)");
+  }
 
   // G-EMPTY-PROOF: force empty
   const proofPoints = "";
@@ -261,14 +290,17 @@ export function autoClean(post: LinkedInPost): { post: LinkedInPost; logWarnings
   if (/^(thrilled|proud|excited|i'm\s|we're\s|so proud)/i.test(hook.trim())) {
     warnings.push("G-BRO: LinkedIn bro opening — requires manual rewrite");
   }
-  if (/brought\b.*?\bto life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class/i.test(fullPost)) {
+  if (/brought\b.*?\bto life|speaks for itself|game[.-]changer|seamless|innovative|enterprise[.-]grade|world[.-]class|best[.-]in[.-]class|cutting[.-]edge|state[.-]of[.-]the[.-]art|next[.-]level|end[.-]to[.-]end|turnkey|one[.-]stop|elevat(?:e|ing)/i.test(fullPost)) {
     warnings.push("G-CLICHE: agency cliché found — requires manual rewrite");
   }
-  if (/100\/100|quality score|\d+\/\d+\s*score/i.test(fullPost)) {
+  if (/100\/100|quality score|\d+\/\d+\s*score|100%\s*(?:client|satisfaction|delivery|on[- ]time)|flawless|perfect\s+(?:record|track|delivery|execution)/i.test(fullPost)) {
     warnings.push("G-SCORES: invented score found — requires manual rewrite");
   }
   if (/unlimited revision|fixed price|zero overrun|no invoice surprise|no extra cost|no hidden fee|zero surcharge|cost[.-]effective|flat rate|all[.-]inclusive|satisfaction guarantee/i.test(fullPost)) {
     warnings.push("G-SELLING: selling point found — requires manual rewrite");
+  }
+  if (/\bDM me\b|link in (?:the )?comments|visit our|check it out|learn more|start a project|get in touch|reach out|book a (?:call|demo|meeting)|contact us|let'?s (?:chat|talk|connect)/i.test(fullPost)) {
+    warnings.push("G-CTA: call-to-action found — requires manual rewrite");
   }
 
   // Recalculate charCount

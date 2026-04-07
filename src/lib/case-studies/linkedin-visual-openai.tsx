@@ -158,7 +158,7 @@ export async function generateAIBackground(
     return null;
   }
 
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ apiKey, timeout: 120_000 });
 
   // Build a prompt that creates an artistic, abstract background
   const moodDescriptors = ctx.brandTone

@@ -22,6 +22,8 @@ import {
   checkPrice,
   checkCliche,
   checkLength,
+  checkHookLength,
+  checkCTA,
   checkEmptyProof,
   checkEmptyHash,
   runAllGates,
@@ -93,11 +95,9 @@ describe("G-HASHTAGS", () => {
   });
 
   it("passes on # followed by number only (not a hashtag)", () => {
-    // #1 is debatable, but the regex requires \w+ which includes digits
-    // The current implementation would flag #1 — this tests the actual behavior
+    // Fixed: #1 is a ranking, not a hashtag. Regex now requires letter after #.
     const result = checkHashtags("They were #1 in their field");
-    // #1 matches /(?:^|\s)#\w+/ so it will fail
-    expect(result.passed).toBe(false);
+    expect(result.passed).toBe(true);
   });
 });
 
@@ -446,11 +446,11 @@ describe("G-EMPTY-HASH", () => {
 // ─── runAllGates — full pipeline ────────────────────────────────────────────
 
 describe("runAllGates", () => {
-  it("passes all 13 gates on the clean reference post", () => {
+  it("passes all 15 gates on the clean reference post", () => {
     const report = runAllGates(CLEAN_POST);
     expect(report.passed).toBe(true);
     expect(report.failures).toHaveLength(0);
-    expect(report.all).toHaveLength(13);
+    expect(report.all).toHaveLength(15);
   });
 
   it("reports the correct gate name on each failure", () => {
@@ -512,11 +512,14 @@ describe("autoClean", () => {
     expect(cleaned.body).not.toMatch(/[\u{1F525}\u{1F680}]/u);
   });
 
-  it("replaces price amounts with [amount]", () => {
+  it("does NOT auto-clean prices — warns instead (avoids [amount] placeholder)", () => {
     const post = { ...CLEAN_POST, body: "Only \u20AC150 per banner, or $20 per video" };
-    const { post: cleaned } = autoClean(post);
-    expect(cleaned.body).toContain("[amount]");
-    expect(cleaned.body).not.toMatch(/[\u20AC$]\d/);
+    const { post: cleaned, logWarnings } = autoClean(post);
+    // Prices stay in the text (not replaced with [amount])
+    expect(cleaned.body).toContain("\u20AC150");
+    expect(cleaned.body).not.toContain("[amount]");
+    // Warning is logged for manual review
+    expect(logWarnings.some((w) => w.includes("G-PRICE"))).toBe(true);
   });
 
   it("forces proofPoints to empty string", () => {
@@ -609,14 +612,16 @@ describe("enforceGates", () => {
     expect(warnings.some((w) => w.includes("G-CLICHE"))).toBe(true);
   });
 
-  it("replaces price with [amount] during auto-clean", () => {
+  it("warns about price but does not replace with [amount]", () => {
     const dirtyPost = {
       ...CLEAN_POST,
       body: "All for \u20AC8,500 total.",
     };
-    const { post } = enforceGates(dirtyPost);
-    expect(post.body).toContain("[amount]");
-    expect(post.body).not.toContain("\u20AC8,500");
+    const { post, warnings } = enforceGates(dirtyPost);
+    // Price stays (not auto-cleaned) — G-PRICE is now warning-only
+    expect(post.body).toContain("\u20AC8,500");
+    expect(post.body).not.toContain("[amount]");
+    expect(warnings.some((w) => w.includes("G-PRICE"))).toBe(true);
   });
 });
 
@@ -662,13 +667,154 @@ describe("adversarial payloads", () => {
     };
 
     const { post, report, warnings } = enforceGates(llmOutput);
-    // Bullets, emojis, hashtags, price, proofPoints, hashtags field should be cleaned
+    // Bullets, emojis, hashtags, proofPoints, hashtags field should be cleaned
     expect(post.body).not.toContain("\u2022");
     expect(post.body).not.toMatch(/[\u{1F525}]/u);
-    expect(post.body).toContain("[amount]");
+    // Price stays (warning-only, no [amount] placeholder)
+    expect(post.body).toContain("\u20AC500");
+    expect(post.body).not.toContain("[amount]");
     expect(post.proofPoints).toBe("");
     expect(post.hashtags).toBe("");
     // G-SELLING (no hidden fees) cannot be auto-cleaned, should warn
     expect(warnings.some((w) => w.includes("G-SELLING"))).toBe(true);
+    expect(warnings.some((w) => w.includes("G-PRICE"))).toBe(true);
+  });
+});
+
+// ─── G-HOOK-LENGTH (new gate) ──────────────────────────────────────────────
+
+describe("G-HOOK-LENGTH", () => {
+  it("passes on 2-word hook", () => {
+    expect(checkHookLength("Summer Cashback", "Normal body text here.").passed).toBe(true);
+  });
+
+  it("passes on 8-word hook", () => {
+    expect(checkHookLength("This is a creative eight word tagline here", "Body.").passed).toBe(true);
+  });
+
+  it("fails on 1-word hook", () => {
+    const longBody = "For Sony France's April audio campaign, the offline creative was already signed off and the media team needed the digital suite.";
+    expect(checkHookLength("Delivered", longBody).passed).toBe(false);
+  });
+
+  it("fails on 10-word hook", () => {
+    const longBody = "For Sony France's April audio campaign, the offline creative was already signed off and the media team needed the digital suite.";
+    expect(checkHookLength("This is way too long for a creative tagline hook", longBody).passed).toBe(false);
+  });
+
+  it("exempts ultra-short posts (body < 50 chars) — Post 4 style", () => {
+    expect(checkHookLength("LIVE Production in New York for Crocs and Times Square done", "Short.").passed).toBe(true);
+  });
+
+  it("runs in runAllGates", () => {
+    const post = { ...CLEAN_POST, hook: "X" }; // 1-word hook
+    const report = runAllGates(post);
+    expect(report.failures.some((f) => f.gate === "G-HOOK-LENGTH")).toBe(true);
+  });
+});
+
+// ─── G-CTA (new gate) ─────────────────────────────────────────────────────
+
+describe("G-CTA", () => {
+  it("passes on clean post", () => {
+    expect(checkCTA(CLEAN_POST.body).passed).toBe(true);
+  });
+
+  it("fails on DM me", () => {
+    expect(checkCTA("DM me for details").passed).toBe(false);
+  });
+
+  it("fails on link in comments", () => {
+    expect(checkCTA("Link in the comments below").passed).toBe(false);
+  });
+
+  it("fails on link in comments (no 'the')", () => {
+    expect(checkCTA("Link in comments").passed).toBe(false);
+  });
+
+  it("fails on start a project", () => {
+    expect(checkCTA("Want to start a project?").passed).toBe(false);
+  });
+
+  it("fails on book a call", () => {
+    expect(checkCTA("Book a call with us").passed).toBe(false);
+  });
+
+  it("fails on let's chat", () => {
+    expect(checkCTA("Let's chat about your next project").passed).toBe(false);
+  });
+
+  it("fails on reach out", () => {
+    expect(checkCTA("Reach out if interested").passed).toBe(false);
+  });
+
+  it("runs in runAllGates", () => {
+    const post = { ...CLEAN_POST, body: "Great work. DM me for details." };
+    const report = runAllGates(post);
+    expect(report.failures.some((f) => f.gate === "G-CTA")).toBe(true);
+  });
+});
+
+// ─── G-HASHTAGS fix: #1 is not a hashtag ──────────────────────────────────
+
+describe("G-HASHTAGS — ranking exclusion", () => {
+  it("passes on #1 (ranking, not hashtag)", () => {
+    expect(checkHashtags("They were #1 in their field").passed).toBe(true);
+  });
+
+  it("passes on #2, #3 (rankings)", () => {
+    expect(checkHashtags("Ranked #2 globally and #3 in Europe").passed).toBe(true);
+  });
+
+  it("still fails on real hashtags", () => {
+    expect(checkHashtags("Great work #design").passed).toBe(false);
+  });
+});
+
+// ─── Extended G-CLICHE patterns ───────────────────────────────────────────
+
+describe("G-CLICHE — extended patterns", () => {
+  it("fails on cutting-edge", () => {
+    expect(checkCliche("Our cutting-edge approach").passed).toBe(false);
+  });
+
+  it("fails on state-of-the-art", () => {
+    expect(checkCliche("State-of-the-art technology").passed).toBe(false);
+  });
+
+  it("fails on next-level", () => {
+    expect(checkCliche("Next-level creative work").passed).toBe(false);
+  });
+
+  it("fails on elevating", () => {
+    expect(checkCliche("Elevating the brand experience").passed).toBe(false);
+  });
+
+  it("fails on turnkey", () => {
+    expect(checkCliche("A turnkey solution").passed).toBe(false);
+  });
+
+  it("fails on end-to-end", () => {
+    expect(checkCliche("End-to-end delivery").passed).toBe(false);
+  });
+});
+
+// ─── Extended G-SCORES patterns ───────────────────────────────────────────
+
+describe("G-SCORES — extended patterns", () => {
+  it("fails on 100% client satisfaction", () => {
+    expect(checkScores("100% client satisfaction rate").passed).toBe(false);
+  });
+
+  it("fails on flawless", () => {
+    expect(checkScores("Flawless execution on every project").passed).toBe(false);
+  });
+
+  it("fails on perfect delivery", () => {
+    expect(checkScores("Perfect delivery track record").passed).toBe(false);
+  });
+
+  it("fails on 100% on-time", () => {
+    expect(checkScores("100% on-time delivery").passed).toBe(false);
   });
 });
