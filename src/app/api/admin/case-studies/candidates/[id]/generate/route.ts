@@ -22,6 +22,7 @@ import {
   autoSelectVisuals,
   type AutoSelectedVisuals,
 } from "@/lib/case-studies/auto-select-visuals";
+import { enforceGates } from "@/lib/case-studies/linkedin-gates";
 import { generateLinkedInVisual } from "@/lib/case-studies/linkedin-visual";
 import { getClientLogoUrl } from "@/lib/case-studies/client-logos";
 import {
@@ -412,43 +413,26 @@ export async function POST(
         socialData = parsed.data;
       }
       // ── Post-generation quality gates (server-side enforcement) ──
-      const post = socialData.linkedInPost;
-      const fullPost = [post.hook, post.body, post.proofPoints].filter(Boolean).join("\n");
-      const gateFailures: string[] = [];
+      // 13 gates: G-BULLETS, G-HASHTAGS, G-EMOJIS, G-PIPE, G-SCORES,
+      // G-SELLING, G-COMPARE, G-BRO, G-PRICE, G-CLICHE, G-LENGTH,
+      // G-EMPTY-PROOF, G-EMPTY-HASH
+      const { post: cleanedPost, report: gateReport, warnings: gateWarnings } =
+        enforceGates(socialData.linkedInPost);
 
-      // Hook gates
-      if (/fixed price|24 hours|same.day|next.day|unlimited revision|on time|D\+1|turnaround/i.test(post.hook)) gateFailures.push("H3: hook selling point");
-      if (/^(thrilled|proud|excited|i'm |we're |so proud)/i.test(post.hook)) gateFailures.push("H5: LinkedIn bro opening");
-      if (/\w+\s*\|\s*\w+\s*\|\s*\w+/.test(post.hook)) gateFailures.push("H6: pipe format in hook (banned)");
-
-      // Body gates
-      if (fullPost.includes("•") || fullPost.includes("→") || /\n- /g.test(fullPost)) gateFailures.push("G2: bullet points");
-      if (/traditional\s+agenc|other\s+agenc|compared\s+to|typical\s+agenc|unlike most|while others|most agencies/i.test(fullPost)) gateFailures.push("G3: agency comparison");
-      if (/100\/100|quality score|\d+\/\d+\s*score|enterprise.grade|world.class|best.in.class/i.test(fullPost)) gateFailures.push("G4: invented score");
-      if (/unlimited revision|fixed price|zero overrun|no invoice surprise|no extra cost|no hidden fee|zero surcharge|cost.effective|flat rate|all.inclusive|satisfaction guarantee/i.test(fullPost)) gateFailures.push("G5: selling point");
-      if (/(?:^|\s)#\w+/.test(fullPost)) gateFailures.push("G9: hashtag");
-      if (/€[\d,.]+/.test(fullPost)) gateFailures.push("G10: price/amount in post");
-      if (fullPost.length > 1300) gateFailures.push("G7: >1300 chars");
-
-      // Closer gates
-      const lines = fullPost.split("\n").filter(Boolean);
-      const lastLine = lines[lines.length - 1]?.trim() ?? "";
-      if (/on time|on budget|on brand\.|zero overrun|no invoice/i.test(lastLine)) gateFailures.push("C1: closer selling point");
-
-      if (gateFailures.length > 0) {
-        console.warn(`[pipeline] LinkedIn post gate failures: ${gateFailures.join(", ")}. Auto-cleaning...`);
-        // Auto-clean: remove bullets, hashtags, emojis, price mentions, clear proofPoints
-        post.body = post.body
-          .replace(/[•→]\s*/g, "")
-          .replace(/\n- /g, "\n")
-          .replace(/(?:^|\s)#\w+/g, "")
-          .replace(/€[\d,.]+/g, "[amount]")
-          .replace(/\n{3,}/g, "\n\n");
-        post.hook = post.hook
-          .replace(/(?:^|\s)#\w+/g, "")
-          .replace(/€[\d,.]+/g, "[amount]");
-        post.proofPoints = "";
-        post.hashtags = "";
+      if (!gateReport.passed || gateReport.cleaned) {
+        const failedNames = gateReport.failures.map((f) => f.gate).join(", ");
+        console.warn(
+          `[pipeline] LinkedIn gates ${gateReport.cleaned ? "auto-cleaned" : "failed"}: ${failedNames}`
+        );
+        for (const w of gateWarnings) {
+          console.warn(`[pipeline] ${w}`);
+        }
+        // Apply cleaned post back
+        socialData.linkedInPost.hook = cleanedPost.hook;
+        socialData.linkedInPost.body = cleanedPost.body;
+        socialData.linkedInPost.proofPoints = cleanedPost.proofPoints;
+        socialData.linkedInPost.hashtags = cleanedPost.hashtags;
+        socialData.linkedInPost.charCount = cleanedPost.charCount;
       }
 
       await savePipelineStep(id, 3, "social", socialData);

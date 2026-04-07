@@ -66,21 +66,20 @@ describe("LinkedIn prompt — output format", () => {
   });
 });
 
-describe("LinkedIn server gates — still active", () => {
-  it("checks for bullet points", () => {
-    expect(route).toContain('includes("•")');
+describe("LinkedIn server gates — enforceGates module", () => {
+  it("uses enforceGates from linkedin-gates.ts", () => {
+    expect(route).toContain("enforceGates");
+    expect(route).toContain("linkedin-gates");
   });
 
-  it("checks for pipe format in hook", () => {
-    expect(route).toMatch(/pipe format|\\|.*\\|/);
+  it("applies cleaned post back to socialData", () => {
+    expect(route).toContain("cleanedPost.hook");
+    expect(route).toContain("cleanedPost.body");
   });
 
-  it("checks for selling points", () => {
-    expect(route).toMatch(/unlimited revision|fixed price/);
-  });
-
-  it("auto-cleans violations", () => {
-    expect(route).toMatch(/replace/);
+  it("logs gate failures", () => {
+    expect(route).toContain("gateReport");
+    expect(route).toContain("gateWarnings");
   });
 });
 
