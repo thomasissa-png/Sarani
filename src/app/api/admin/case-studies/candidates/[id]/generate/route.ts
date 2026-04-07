@@ -24,6 +24,7 @@ import {
 } from "@/lib/case-studies/auto-select-visuals";
 import { enforceGates } from "@/lib/case-studies/linkedin-gates";
 import { generateLinkedInVisual } from "@/lib/case-studies/linkedin-visual";
+import { generateLinkedInVisualHybrid } from "@/lib/case-studies/linkedin-visual-openai";
 import { getClientLogoUrl } from "@/lib/case-studies/client-logos";
 import {
   getMappingBySpaceName,
@@ -571,7 +572,7 @@ export async function POST(
       if (caseStudyContent.linkedInImage) visualImageUrls.push(caseStudyContent.linkedInImage);
       if (caseStudyContent.emailHeader) visualImageUrls.push(caseStudyContent.emailHeader);
 
-      const pngBuffer = await generateLinkedInVisual({
+      const visualParams = {
         clientName: candidate.clientName,
         projectTitle:
           copyData.caseStudy.headline ?? candidate.projectName ?? `${candidate.clientName} Project`,
@@ -579,7 +580,14 @@ export async function POST(
         accentWord: candidate.clientName,
         clientLogoUrl: getClientLogoUrl(candidate.clientName),
         projectImages: visualImageUrls,
-      });
+      };
+
+      const pngBuffer = process.env.OPENAI_API_KEY
+        ? await generateLinkedInVisualHybrid({
+            ...visualParams,
+            projectType: candidate.projectType,
+          })
+        : await generateLinkedInVisual(visualParams);
 
       linkedInVisualBase64 = pngBuffer.toString("base64");
       await savePipelineStep(id, 5, "linkedin-visual", {

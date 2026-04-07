@@ -9,10 +9,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
+import { clients, caseStudyCandidates, caseStudyOutputs } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { UUID_REGEX, checkRateLimit } from "@/lib/rate-limit";
 import { generateLinkedInVisual } from "@/lib/case-studies/linkedin-visual";
+import { generateLinkedInVisualHybrid } from "@/lib/case-studies/linkedin-visual-openai";
 import { getClientLogoUrl } from "@/lib/case-studies/client-logos";
 
 export async function GET(
@@ -132,17 +133,52 @@ export async function GET(
     const socialContent = socialOutput?.content as Record<string, unknown> | undefined;
     const visualTitle = (socialContent?.visualTitle as string) || undefined;
 
-    // 3. Generate the visual
-    const clientLogoUrl = getClientLogoUrl(candidate.clientName);
+    // 3. Fetch client branding context for AI background
+    let clientIndustry: string | null = null;
+    let clientPrimaryColor: string | null = null;
+    let clientBrandTone: string | null = null;
+    if (candidate.clientId) {
+      const [clientRow] = await db
+        .select({
+          industry: clients.industry,
+          primaryColor: clients.primaryColor,
+          brandTone: clients.brandTone,
+        })
+        .from(clients)
+        .where(eq(clients.id, candidate.clientId))
+        .limit(1);
+      if (clientRow) {
+        clientIndustry = clientRow.industry;
+        clientPrimaryColor = clientRow.primaryColor;
+        clientBrandTone = clientRow.brandTone;
+      }
+    }
 
-    const pngBuffer = await generateLinkedInVisual({
-      clientName: candidate.clientName,
-      projectTitle,
-      visualTitle,
-      accentWord: candidate.clientName,
-      clientLogoUrl,
-      projectImages,
-    });
+    // 4. Generate the visual — hybrid (AI bg + sharp composite) with Satori fallback
+    const clientLogoUrl = getClientLogoUrl(candidate.clientName);
+    const useHybrid = !!process.env.OPENAI_API_KEY;
+
+    const pngBuffer = useHybrid
+      ? await generateLinkedInVisualHybrid({
+          clientName: candidate.clientName,
+          projectTitle,
+          visualTitle,
+          accentWord: candidate.clientName,
+          clientLogoUrl,
+          projectImages,
+          projectType: candidate.projectType,
+          industry: clientIndustry,
+          primaryColor: clientPrimaryColor,
+          brandTone: clientBrandTone,
+        })
+      : await generateLinkedInVisual({
+          clientName: candidate.clientName,
+          projectTitle,
+          visualTitle,
+          accentWord: candidate.clientName,
+          clientLogoUrl,
+          projectImages,
+        });
 
     // 4. Store in DB for caching
     const base64Png = pngBuffer.toString("base64");
