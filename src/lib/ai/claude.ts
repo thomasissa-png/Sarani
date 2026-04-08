@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 const DEFAULT_MAX_TOKENS = 4096;
 const REQUEST_TIMEOUT_MS = 60_000;
+const MAX_RETRIES = 3;
+const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 529]);
 
 type CallClaudeOptions = {
   systemPrompt: string;
@@ -46,55 +48,77 @@ export async function callClaude(
 
   const { systemPrompt, userMessage, model, maxTokens, timeout } = options;
 
-  try {
-    const response = await client.messages.create(
-      {
-        model: model ?? DEFAULT_MODEL,
-        max_tokens: maxTokens ?? DEFAULT_MAX_TOKENS,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
-      },
-      { timeout: timeout ?? REQUEST_TIMEOUT_MS }
-    );
+  let lastError: unknown;
 
-    const textBlock = response.content.find((block) => block.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      throw new Error("No text content in Claude response");
-    }
-
-    return {
-      content: textBlock.text,
-      usage: {
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-      },
-    };
-  } catch (error: unknown) {
-    if (error instanceof Anthropic.APIError) {
-      if (error.status === 429) {
-        throw new Error(
-          "Claude API rate limit exceeded. Please wait a moment and try again."
-        );
-      }
-      if (error.status === 401) {
-        throw new Error(
-          "Invalid ANTHROPIC_API_KEY. Check your .env.local configuration."
-        );
-      }
-      throw new Error(`Claude API error (${error.status}): ${error.message}`);
-    }
-
-    if (
-      error instanceof Error &&
-      error.message.toLowerCase().includes("timeout")
-    ) {
-      throw new Error(
-        "Claude API request timed out. The brief may be too long — try a shorter input."
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await client.messages.create(
+        {
+          model: model ?? DEFAULT_MODEL,
+          max_tokens: maxTokens ?? DEFAULT_MAX_TOKENS,
+          system: systemPrompt,
+          messages: [{ role: "user", content: userMessage }],
+        },
+        { timeout: timeout ?? REQUEST_TIMEOUT_MS }
       );
-    }
 
-    throw error;
+      const textBlock = response.content.find((block) => block.type === "text");
+      if (!textBlock || textBlock.type !== "text") {
+        throw new Error("No text content in Claude response");
+      }
+
+      return {
+        content: textBlock.text,
+        usage: {
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        },
+      };
+    } catch (error: unknown) {
+      lastError = error;
+
+      // Retry on transient errors (429, 500, 502, 503, 529)
+      if (error instanceof Anthropic.APIError && RETRYABLE_STATUS_CODES.has(error.status)) {
+        if (attempt < MAX_RETRIES) {
+          const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+          console.warn(
+            `[claude] API error ${error.status} (attempt ${attempt + 1}/${MAX_RETRIES + 1}) — retrying in ${delay / 1000}s`
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+      }
+
+      // Non-retryable errors — throw immediately
+      if (error instanceof Anthropic.APIError) {
+        if (error.status === 401) {
+          throw new Error(
+            "Invalid ANTHROPIC_API_KEY. Check your .env.local configuration."
+          );
+        }
+        throw new Error(`Claude API error (${error.status}): ${error.message}`);
+      }
+
+      if (
+        error instanceof Error &&
+        error.message.toLowerCase().includes("timeout")
+      ) {
+        throw new Error(
+          "Claude API request timed out. The brief may be too long — try a shorter input."
+        );
+      }
+
+      throw error;
+    }
   }
+
+  // All retries exhausted
+  if (lastError instanceof Anthropic.APIError) {
+    throw new Error(
+      `Claude API error (${lastError.status}) after ${MAX_RETRIES + 1} attempts: ${lastError.message}`
+    );
+  }
+  throw lastError;
 }
 
 /**
