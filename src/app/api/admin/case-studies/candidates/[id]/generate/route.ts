@@ -342,6 +342,21 @@ export async function POST(
       } else {
         copyData = parsed.data;
       }
+      // ── Validate nurturing email: reject internal persona names ──
+      const PERSONA_NAMES = ["sophie", "thomas"];
+      const emailBody = copyData.nurturingEmail.body?.toLowerCase() ?? "";
+      const emailSubject = copyData.nurturingEmail.subject?.toLowerCase() ?? "";
+      for (const name of PERSONA_NAMES) {
+        if (emailBody.startsWith(name) || emailSubject.includes(name)) {
+          console.warn(`[pipeline] Nurturing email contains persona name "${name}" — sanitizing`);
+          // Replace persona name occurrences at start of sentences
+          copyData.nurturingEmail.body = copyData.nurturingEmail.body.replace(
+            new RegExp(`\\b${name}\\b[^.]*\\.\\s*`, "gi"),
+            ""
+          );
+        }
+      }
+
       await savePipelineStep(id, 2, "copywriter", copyData);
     } catch (err) {
       await db
@@ -434,7 +449,7 @@ export async function POST(
       }
 
       // ── If critical gates still fail after auto-clean, retry LLM once ──
-      const criticalGates = ["G-SELLING", "G-PRICE", "G-COMPARE", "G-CTA", "G-SCORES"];
+      const criticalGates = ["G-SELLING", "G-PRICE", "G-COMPARE", "G-CTA", "G-SCORES", "G-HOOK-CREATIVE"];
       const criticalFailures = gateReport.failures.filter((f) => criticalGates.includes(f.gate));
       if (criticalFailures.length > 0) {
         console.warn(`[pipeline] Critical gate failures: ${criticalFailures.map((f) => f.gate).join(", ")} — retrying LLM`);
@@ -480,6 +495,16 @@ Output the corrected JSON with keys: hook, body, proofPoints (""), hashtags ("")
         } catch (fixErr) {
           console.warn("[pipeline] LinkedIn fix retry failed:", fixErr instanceof Error ? fixErr.message : fixErr);
         }
+      }
+
+      // ── HARD BLOCK: if critical gates STILL fail after retry, flag the post ──
+      const postRetryFailures = gateReport.failures.filter((f) => criticalGates.includes(f.gate));
+      if (postRetryFailures.length > 0) {
+        const failedNames = postRetryFailures.map((f) => `${f.gate}: ${f.detail}`).join("; ");
+        console.error(`[pipeline] HARD BLOCK: LinkedIn post has ${postRetryFailures.length} critical gate failures after retry: ${failedNames}`);
+        // Mark the post as non-conforming so the UI can show a warning
+        (socialData as Record<string, unknown>).gateFailures = postRetryFailures.map((f) => f.gate);
+        (socialData as Record<string, unknown>).gateWarning = `Post has ${postRetryFailures.length} quality violations — review required before publishing`;
       }
 
       await savePipelineStep(id, 3, "social", socialData);
@@ -535,15 +560,15 @@ Output the corrected JSON with keys: hook, body, proofPoints (""), hashtags ("")
     if (spFolderUrl) {
       try {
         await updatePipelineStatus(id, "step_4_visuals");
-        // 15s max — step 4 is non-blocking, don't let it stall the pipeline
+        // 30s max — step 4 is non-blocking, but SP can be slow
         const visualsPromise = autoSelectVisuals(spFolderUrl, candidate.clientName);
-        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 15_000));
+        const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 30_000));
         const result = await Promise.race([visualsPromise, timeoutPromise]);
         if (result) {
           selectedVisuals = result;
         } else {
-          console.warn("[pipeline] Step 4 timed out after 15s — continuing without visuals");
-          await savePipelineStep(id, 4, "visual-selector", { skipped: true, reason: "timeout" });
+          console.warn("[pipeline] Step 4 timed out after 30s — continuing without visuals");
+          await savePipelineStep(id, 4, "visual-selector", { skipped: true, reason: "timeout_30s" });
         }
         if (selectedVisuals) {
           await savePipelineStep(id, 4, "visual-selector", {
@@ -582,6 +607,7 @@ Output the corrected JSON with keys: hook, body, proofPoints (""), hashtags ("")
         await savePipelineStep(id, 4, "visual-selector", {
           error: err instanceof Error ? err.message : "Unknown error",
           skipped: true,
+          folderUrl: spFolderUrl?.substring(0, 150) ?? "none",
         });
       }
     } else {

@@ -33,7 +33,7 @@ Your output must be a JSON object with:
 - angle: the storytelling angle (the "why this matters" for enterprise CMOs)
 - keyMessages: 2-5 key messages that support the angle with evidence
 - visualDirection: guidance for visual assets (photo style, mood, composition)
-- emotionalHook: the emotional trigger that makes Sophie stop scrolling
+- emotionalHook: the emotional trigger that makes an enterprise CMO stop scrolling
 - targetAudience: specific segment description (industry, role, pain point)
 - differentiators: 1-5 aspects that make this project uniquely Sarani
 

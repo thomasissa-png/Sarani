@@ -129,8 +129,11 @@ export async function autoSelectVisuals(
         ? decodeURIComponent(idParam)
         : decodeURIComponent(urlObj.pathname);
 
+      // Match multiple SP path formats: English, French, and encoded
       const pathMatch = pathSource.match(/\/Shared\s*Documents\/(.+)/i)
-        ?? pathSource.match(/\/Documents\/(.+)/i);
+        ?? pathSource.match(/\/Documents\s*partag[eé]s\/(.+)/i)
+        ?? pathSource.match(/\/Documents\/(.+)/i)
+        ?? pathSource.match(/\/sites\/[^/]+\/([^?]+)/i);
       if (pathMatch) {
         // Remove trailing file names (AllItems.aspx, Forms, etc.)
         let spPath = pathMatch[1].replace(/\/Forms\/.*$/i, "").replace(/\/AllItems\.aspx$/i, "");

@@ -93,7 +93,7 @@ export function checkScores(fullPost: string): GateResult {
 /** G-SELLING: Zero selling points */
 export function checkSelling(fullPost: string): GateResult {
   const hasSelling =
-    /unlimited revision|fixed price|zero overrun|no invoice surprise|no extra cost|no hidden fee|zero surcharge|cost[.-]effective|flat rate|all[.-]inclusive|satisfaction guarantee/i.test(
+    /unlimited revision|fixed price|one price|single fee|zero overrun|no invoice surprise|no extra cost|no hidden fee|no scope creep|no surprise|no revision fee|no surcharge|zero surcharge|cost[.-]effective|flat rate|all[.-]inclusive|satisfaction guarantee|budget[.-]friendly|transparent pricing|pay only|predictable price/i.test(
       fullPost
     );
   return {
@@ -192,6 +192,35 @@ export function checkHookLength(hook: string, body: string): GateResult {
   };
 }
 
+/** G-HOOK-CREATIVE: Hook must be a creative tagline, NOT a factual statement with numbers/descriptors.
+ * Factual patterns: "27 assets.", "1,500 videos.", "One fixed price.", "$X delivered." */
+export function checkHookCreative(hook: string, body: string): GateResult {
+  // Exempt ultra-short posts (Post 4 style)
+  const isUltraShort = body.trim().length < 50;
+  if (isUltraShort) return { gate: "G-HOOK-CREATIVE", passed: true };
+
+  const h = hook.trim();
+
+  // Pattern 1: Hook starts with or contains a number followed by a deliverable/business word
+  const hasFactualNumber = /\b\d[\d,.]*\s*(?:assets?|videos?|banners?|slides?|formats?|edits?|deliverables?|products?|projects?|days?|hours?|weeks?|months?|languages?|markets?|countries?)\b/i.test(h);
+
+  // Pattern 2: Hook contains pricing/business terms
+  const hasBusinessTerms = /\b(?:fixed price|price|cost|budget|delivered|turnaround|deadline|on[- ]time|production[- ]ready)\b/i.test(h);
+
+  // Pattern 3: Hook is purely factual — just quantities ("X. Y. Z." pattern with numbers)
+  const sentencesWithNumbers = h.split(/[.!?]+/).filter(s => /\d/.test(s.trim())).length;
+  const totalSentences = h.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
+  const mostlyNumbers = totalSentences > 0 && sentencesWithNumbers / totalSentences > 0.5;
+
+  const isTooFactual = hasFactualNumber || hasBusinessTerms || mostlyNumbers;
+
+  return {
+    gate: "G-HOOK-CREATIVE",
+    passed: !isTooFactual,
+    detail: isTooFactual ? `Hook appears factual, not creative: "${h.slice(0, 60)}". Should be poetic (e.g., "One show. One presence.")` : undefined,
+  };
+}
+
 /** G-CTA: Zero call-to-action (DM me, link in comments, start a project, etc.) */
 export function checkCTA(fullPost: string): GateResult {
   const hasCTA =
@@ -223,6 +252,7 @@ export function runAllGates(post: LinkedInPost): GatesReport {
     checkCliche(fullPost),
     checkLength(fullPost),
     checkHookLength(post.hook, post.body),
+    checkHookCreative(post.hook, post.body),
     checkCTA(fullPost),
     checkEmptyProof(post.proofPoints ?? ""),
     checkEmptyHash(post.hashtags ?? ""),
@@ -296,11 +326,14 @@ export function autoClean(post: LinkedInPost): { post: LinkedInPost; logWarnings
   if (/100\/100|quality score|\d+\/\d+\s*score|100%\s*(?:client|satisfaction|delivery|on[- ]time)|flawless|perfect\s+(?:record|track|delivery|execution)/i.test(fullPost)) {
     warnings.push("G-SCORES: invented score found — requires manual rewrite");
   }
-  if (/unlimited revision|fixed price|zero overrun|no invoice surprise|no extra cost|no hidden fee|zero surcharge|cost[.-]effective|flat rate|all[.-]inclusive|satisfaction guarantee/i.test(fullPost)) {
+  if (/unlimited revision|fixed price|one price|single fee|zero overrun|no invoice surprise|no extra cost|no hidden fee|no scope creep|no surprise|no revision fee|no surcharge|zero surcharge|cost[.-]effective|flat rate|all[.-]inclusive|satisfaction guarantee|budget[.-]friendly|transparent pricing|pay only|predictable price/i.test(fullPost)) {
     warnings.push("G-SELLING: selling point found — requires manual rewrite");
   }
   if (/\bDM me\b|link in (?:the )?comments|visit our|check it out|learn more|start a project|get in touch|reach out|book a (?:call|demo|meeting)|contact us|let'?s (?:chat|talk|connect)/i.test(fullPost)) {
     warnings.push("G-CTA: call-to-action found — requires manual rewrite");
+  }
+  if (checkHookCreative(hook, body).passed === false) {
+    warnings.push("G-HOOK-CREATIVE: hook is factual, not creative — requires LLM retry");
   }
 
   // Recalculate charCount

@@ -23,6 +23,7 @@ import {
   checkCliche,
   checkLength,
   checkHookLength,
+  checkHookCreative,
   checkCTA,
   checkEmptyProof,
   checkEmptyHash,
@@ -446,11 +447,11 @@ describe("G-EMPTY-HASH", () => {
 // ─── runAllGates — full pipeline ────────────────────────────────────────────
 
 describe("runAllGates", () => {
-  it("passes all 15 gates on the clean reference post", () => {
+  it("passes all 16 gates on the clean reference post", () => {
     const report = runAllGates(CLEAN_POST);
     expect(report.passed).toBe(true);
     expect(report.failures).toHaveLength(0);
-    expect(report.all).toHaveLength(15);
+    expect(report.all).toHaveLength(16);
   });
 
   it("reports the correct gate name on each failure", () => {
@@ -816,5 +817,74 @@ describe("G-SCORES — extended patterns", () => {
 
   it("fails on 100% on-time", () => {
     expect(checkScores("100% on-time delivery").passed).toBe(false);
+  });
+});
+
+// ─── G-HOOK-CREATIVE (new gate) ─────────────────────────────────────────────
+
+describe("G-HOOK-CREATIVE", () => {
+  const LONG_BODY = "For Sony France's April audio campaign, the offline creative was already signed off. The media team needed the digital suite — social squares, leaderboard units, vertical stories.";
+
+  it("passes on creative taglines from Thomas's real posts", () => {
+    expect(checkHookCreative("One show. One presence.", LONG_BODY).passed).toBe(true);
+    expect(checkHookCreative("Built to perform. Designed to stand out.", LONG_BODY).passed).toBe(true);
+    expect(checkHookCreative("Above the ordinary. Beyond expectation.", LONG_BODY).passed).toBe(true);
+    expect(checkHookCreative("Times Square leaves no room for hesitation.", LONG_BODY).passed).toBe(true);
+    expect(checkHookCreative("Summer Cashback, camera-ready.", LONG_BODY).passed).toBe(true);
+  });
+
+  it("fails on factual hooks with numbers + deliverable words", () => {
+    expect(checkHookCreative("27 assets. One fixed price.", LONG_BODY).passed).toBe(false);
+    expect(checkHookCreative("1,500 videos. Every month.", LONG_BODY).passed).toBe(false);
+    expect(checkHookCreative("13 formats adapted.", LONG_BODY).passed).toBe(false);
+    expect(checkHookCreative("6 products. 9 banners.", LONG_BODY).passed).toBe(false);
+  });
+
+  it("fails on hooks with business/pricing terms", () => {
+    expect(checkHookCreative("One fixed price. No surprises.", LONG_BODY).passed).toBe(false);
+    expect(checkHookCreative("Production-ready. On deadline.", LONG_BODY).passed).toBe(false);
+    expect(checkHookCreative("Delivered on time. Under budget.", LONG_BODY).passed).toBe(false);
+  });
+
+  it("fails on mostly-numeric hooks", () => {
+    expect(checkHookCreative("27 assets. 48 hours.", LONG_BODY).passed).toBe(false);
+  });
+
+  it("exempts ultra-short posts (Post 4 style)", () => {
+    expect(checkHookCreative("27 assets delivered.", "Short.").passed).toBe(true);
+  });
+
+  it("runs in runAllGates and fails on factual hook", () => {
+    const post = { ...CLEAN_POST, hook: "27 banners. One price." };
+    const report = runAllGates(post);
+    expect(report.failures.some((f) => f.gate === "G-HOOK-CREATIVE")).toBe(true);
+  });
+});
+
+// ─── G-SELLING — extended patterns ─────────────────────────────────────────
+
+describe("G-SELLING — extended patterns", () => {
+  it("fails on no scope creep", () => {
+    expect(checkSelling("Delivered with no scope creep.").passed).toBe(false);
+  });
+
+  it("fails on no surprise", () => {
+    expect(checkSelling("No surprise costs or fees.").passed).toBe(false);
+  });
+
+  it("fails on one price", () => {
+    expect(checkSelling("One price for everything.").passed).toBe(false);
+  });
+
+  it("fails on predictable price", () => {
+    expect(checkSelling("Predictable price for enterprise.").passed).toBe(false);
+  });
+
+  it("fails on transparent pricing", () => {
+    expect(checkSelling("Transparent pricing model.").passed).toBe(false);
+  });
+
+  it("fails on no revision fee", () => {
+    expect(checkSelling("No revision fee on any project.").passed).toBe(false);
   });
 });
