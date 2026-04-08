@@ -188,29 +188,41 @@ Square format 1200x1200 pixels.`;
     console.log("[linkedin-visual-openai] Generating AI background for", ctx.clientName);
     const startTime = Date.now();
 
-    const response = await openai.images.generate({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const generateParams: any = {
       model: "gpt-image-1",
       prompt,
       n: 1,
-      size: "1024x1024", // gpt-image-1 supported size, we'll upscale with sharp
+      size: "1024x1024",
       quality: "medium",
-    });
+    };
+
+    const response = await openai.images.generate(generateParams);
 
     const elapsed = Date.now() - startTime;
     console.log(`[linkedin-visual-openai] AI background generated in ${elapsed}ms`);
 
-    const imageData = response.data?.[0];
-    if (!imageData) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const imageData = (response as any).data?.[0];
+    if (!imageData) {
+      console.error("[linkedin-visual-openai] No image data in response:", JSON.stringify(response).slice(0, 200));
+      return null;
+    }
 
-    // gpt-image-1 returns base64 by default
     let imageBuffer: Buffer;
     if (imageData.b64_json) {
       imageBuffer = Buffer.from(imageData.b64_json, "base64");
+      console.log(`[linkedin-visual-openai] Got b64_json image (${imageBuffer.length} bytes)`);
     } else if (imageData.url) {
+      console.log("[linkedin-visual-openai] Got URL, downloading...");
       const res = await fetch(imageData.url, { signal: AbortSignal.timeout(30_000) });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.error(`[linkedin-visual-openai] Failed to download image: ${res.status}`);
+        return null;
+      }
       imageBuffer = Buffer.from(await res.arrayBuffer());
     } else {
+      console.error("[linkedin-visual-openai] No b64_json or url in response data:", JSON.stringify(imageData).slice(0, 200));
       return null;
     }
 
@@ -222,7 +234,12 @@ Square format 1200x1200 pixels.`;
 
     return resized;
   } catch (err) {
-    console.error("[linkedin-visual-openai] AI background generation failed:", err instanceof Error ? err.message : err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    const errStack = err instanceof Error ? err.stack : "";
+    console.error("[linkedin-visual-openai] AI background generation failed:", errMsg);
+    if (errStack) console.error("[linkedin-visual-openai] Stack:", errStack);
+    // Surface the error reason so it's visible in pipeline logs
+    console.error("[linkedin-visual-openai] Falling back to Satori. To debug: check OPENAI_API_KEY validity and model availability.");
     return null;
   }
 }

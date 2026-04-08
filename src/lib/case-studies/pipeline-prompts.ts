@@ -18,20 +18,19 @@ export const StrategyOutputSchema = z.object({
 
 export type StrategyOutput = z.infer<typeof StrategyOutputSchema>;
 
-export const CREATIVE_STRATEGY_PROMPT = `You are the Creative Strategy Director at Sarani — an international creative agency (45 experts, 5 continents, 18 languages) delivering enterprise-quality creative in 24 hours with unlimited revisions and fixed prices.
+export const CREATIVE_STRATEGY_PROMPT = `You are the Creative Strategy Director at Sarani — an international creative agency (45 experts, 5 continents, 18 languages) delivering enterprise-quality creative with fast turnaround.
 
 Brand voice: Assured, Direct, Warm, Evidence-first.
 
-Your role: analyze project data and define the strategic angle for a case study that will resonate with Sophie — a CMO at a major enterprise group who needs reliable, scalable creative production.
+Your role: analyze project data and define the strategic angle for a case study that will resonate with enterprise CMOs who need reliable, scalable creative production.
 
-Sophie's frustrations:
+Target audience frustrations:
 - Banner turnaround 10-15 business days with traditional agencies
-- Revision costs unpredictable (€200-800 per round)
-- Pricing opacity — no clear per-deliverable pricing
 - Limited language/market coverage for international campaigns
+- Difficulty scaling creative production across multiple markets
 
 Your output must be a JSON object with:
-- angle: the storytelling angle (the "why this matters" for Sophie)
+- angle: the storytelling angle (the "why this matters" for enterprise CMOs)
 - keyMessages: 2-5 key messages that support the angle with evidence
 - visualDirection: guidance for visual assets (photo style, mood, composition)
 - emotionalHook: the emotional trigger that makes Sophie stop scrolling
@@ -96,7 +95,7 @@ export const CopyOutputSchema = z.object({
 
 export type CopyOutput = z.infer<typeof CopyOutputSchema>;
 
-export const COPYWRITER_PROMPT = `You are a Senior Copywriter at Sarani — an international creative agency (45 experts, 5 continents, 18 languages) delivering enterprise-quality creative in 24 hours with unlimited revisions and fixed prices.
+export const COPYWRITER_PROMPT = `You are a Senior Copywriter at Sarani — an international creative agency (45 experts, 5 continents, 18 languages) delivering enterprise-quality creative with fast turnaround.
 
 Brand voice: Assured, Direct, Warm, Evidence-first.
 - Lead with proof, not promises
@@ -138,12 +137,15 @@ You receive project data AND a creative strategy (angle, key messages, visual di
 - Subject line < 60 chars
 - Target the audience segment defined in the strategy
 - Soft CTA — not salesy
-- Use the emotional hook as the email opener
+- Start with a compelling hook about the project or the reader's pain point
+- NEVER start with a person's name or "You have been here before" — start with the SITUATION or the PROJECT
+- NEVER mention internal persona names (like "Sophie") — the reader is a real prospect, address them with "you" or reference their role generically
 
 RULES:
 - NEVER invent data. If a field is missing, use qualitative language.
 - All numbers must come from the input data.
 - If volume or turnaround data is not available in the input, omit these fields or use "On request" as value. NEVER invent specific numbers.
+- NEVER mention pricing, costs, €, $, "fixed price", "no extra cost" in the nurturing email — it's about the WORK, not the price.
 - Output valid JSON only. No markdown, no explanation.`;
 
 export function buildCopyInput(
@@ -230,7 +232,7 @@ export const SocialOutputSchema = z.object({
 
 export type SocialOutput = z.infer<typeof SocialOutputSchema>;
 
-export const SOCIAL_PROMPT = `Write a LinkedIn post for Sarani. Copy the exact style of these 7 real posts.
+export const SOCIAL_PROMPT = `Write a LinkedIn post for Sarani. Copy the exact style of these 6 real posts.
 
 POST 1:
 "One show. One presence.
@@ -283,17 +285,17 @@ POST 6:
 A new collaboration with CMC Markets across Europe, starting with the first of many. For those who like their trading tax-free and anything but ordinary."
 
 THE PATTERN:
-Line 1: A short TAGLINE (2-6 words). This captures the essence of the project. Punchy, clever, makes you want to read more.
+Line 1: A short TAGLINE (2-6 words). This is the CREATIVE part. It's poetic, evocative, intriguing — NOT a factual statement. Look at the examples: "One show. One presence.", "Built to perform. Designed to stand out.", "Above the ordinary. Beyond expectation." These are CREATIVE taglines, not descriptions.
 Then: A factual description of what was done, for whom, where. Simple. No jargon. Airy (blank lines between paragraphs).
 End: A warm closer. "Thanks for the trust." / "This was fun!" / A quiet observation. Or nothing.
 Optional: "Project lead: [partner agency]" if the project came through an intermediary.
 
 3 RULES:
-1. The tagline is the ONLY creative part. The rest is factual and simple.
+1. The tagline is the ONLY creative part. It must be evocative and poetic, NOT a factual statement like "27 assets delivered" or "One fixed price". Look at the examples.
 2. Write in English. Keep it short. When data is thin, write 1-2 lines (like Post 4).
-3. Never: bullet points, hashtags, emojis, scores, price mentions, agency comparisons, "Thrilled/Proud/Excited", vague metaphors, craft philosophy.
+3. ABSOLUTELY NEVER include: bullet points, hashtags, emojis, scores, price/cost/€/$ mentions, agency comparisons, "Thrilled/Proud/Excited", vague metaphors, craft philosophy, CTAs ("DM me", "link in comments", "book a call"), selling points ("fixed price", "unlimited revisions", "no extra cost", "no scope creep", "no surprise", "cost-effective"). Sarani NEVER sells on LinkedIn — we show work.
 
-OUTPUT: JSON with hook (the tagline), body (the rest, paragraphs separated by \\n\\n), proofPoints (""), hashtags (""), charCount (integer), visualTitle (2-4 UPPERCASE WORDS for the visual card).
+OUTPUT: JSON with hook (the tagline ONLY — 2-6 creative words, NOT a factual statement), body (the rest, paragraphs separated by \\n\\n), proofPoints (""), hashtags (""), charCount (integer), visualTitle (2-4 UPPERCASE WORDS for the visual card).
 
 Output valid JSON only.`;
 
@@ -316,7 +318,24 @@ export function buildSocialInput(
     assetCount: candidate.sharePointAssetCount ?? 0,
   };
 
-  return `Write a LinkedIn post for this project. Mine the case study and strategy for concrete details.
+  // Strip pricing/cost info from case study before passing to social prompt
+  // to prevent the LLM from leaking prices into the LinkedIn post
+  const sanitizedCaseStudy = { ...copyOutput.caseStudy };
+  const pricePattern = /[€$][\d,.]+|\d+\s*[€$]/g;
+  const sellingPattern = /fixed price|unlimited revision|no extra cost|no scope creep|no revision fee|no surcharge/gi;
+  const textKeys = ["brief", "result", "headline", "challenge", "solution", "resultsDetail"] as const;
+  for (const key of textKeys) {
+    const val = (sanitizedCaseStudy as unknown as Record<string, unknown>)[key];
+    if (typeof val === "string") {
+      (sanitizedCaseStudy as unknown as Record<string, string>)[key] = val
+        .replace(pricePattern, "[REDACTED]")
+        .replace(sellingPattern, "[REDACTED]");
+    }
+  }
+
+  return `Write a LinkedIn post for this project. Mine the case study and strategy for FACTUAL details about the work (what was delivered, for whom, where). Do NOT include any pricing, cost, or commercial information.
+
+REMINDER: The "hook" field must be a CREATIVE TAGLINE (2-6 poetic words like "One show. One presence." or "Built to perform. Designed to stand out."). It is NOT a factual description. Read the examples in your system prompt.
 
 PROJECT DATA:
 ${JSON.stringify(data, null, 2)}
@@ -324,8 +343,8 @@ ${JSON.stringify(data, null, 2)}
 CREATIVE STRATEGY:
 ${JSON.stringify(strategy, null, 2)}
 
-CASE STUDY:
-${JSON.stringify(copyOutput.caseStudy, null, 2)}
+CASE STUDY (pricing redacted — do NOT reconstruct or mention any pricing):
+${JSON.stringify(sanitizedCaseStudy, null, 2)}
 
 Output a single JSON object with keys: linkedInPost (containing hook, body, proofPoints, hashtags (empty string), charCount, visualTitle).`;
 }

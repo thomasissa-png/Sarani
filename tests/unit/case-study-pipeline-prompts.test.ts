@@ -535,7 +535,7 @@ describe("buildSocialInput()", () => {
     const input = buildSocialInput(TIKTOK_CANDIDATE, VALID_STRATEGY_OUTPUT, VALID_COPY_OUTPUT);
     expect(input).toContain("TikTok");
     expect(input).toContain("CREATIVE STRATEGY:");
-    expect(input).toContain("CASE STUDY:");
+    expect(input).toContain("CASE STUDY (pricing redacted");
     expect(input).toContain(VALID_COPY_OUTPUT.caseStudy.headline);
   });
 

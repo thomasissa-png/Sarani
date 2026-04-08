@@ -414,10 +414,8 @@ export async function POST(
         socialData = parsed.data;
       }
       // ── Post-generation quality gates (server-side enforcement) ──
-      // 13 gates: G-BULLETS, G-HASHTAGS, G-EMOJIS, G-PIPE, G-SCORES,
-      // G-SELLING, G-COMPARE, G-BRO, G-PRICE, G-CLICHE, G-LENGTH,
-      // G-EMPTY-PROOF, G-EMPTY-HASH
-      const { post: cleanedPost, report: gateReport, warnings: gateWarnings } =
+      // 15 gates + auto-retry on critical failures
+      let { post: cleanedPost, report: gateReport, warnings: gateWarnings } =
         enforceGates(socialData.linkedInPost);
 
       if (!gateReport.passed || gateReport.cleaned) {
@@ -428,12 +426,60 @@ export async function POST(
         for (const w of gateWarnings) {
           console.warn(`[pipeline] ${w}`);
         }
-        // Apply cleaned post back
         socialData.linkedInPost.hook = cleanedPost.hook;
         socialData.linkedInPost.body = cleanedPost.body;
         socialData.linkedInPost.proofPoints = cleanedPost.proofPoints;
         socialData.linkedInPost.hashtags = cleanedPost.hashtags;
         socialData.linkedInPost.charCount = cleanedPost.charCount;
+      }
+
+      // ── If critical gates still fail after auto-clean, retry LLM once ──
+      const criticalGates = ["G-SELLING", "G-PRICE", "G-COMPARE", "G-CTA", "G-SCORES"];
+      const criticalFailures = gateReport.failures.filter((f) => criticalGates.includes(f.gate));
+      if (criticalFailures.length > 0) {
+        console.warn(`[pipeline] Critical gate failures: ${criticalFailures.map((f) => f.gate).join(", ")} — retrying LLM`);
+        try {
+          const fixPrompt = `The LinkedIn post you generated has quality violations. Fix them and return a corrected JSON.
+
+VIOLATIONS:
+${criticalFailures.map((f) => `- ${f.gate}: ${f.detail}`).join("\n")}
+
+CURRENT POST:
+${JSON.stringify(socialData.linkedInPost, null, 2)}
+
+RULES:
+- Remove ALL pricing/cost mentions (€, $, "fixed price", "no extra cost", "no scope creep")
+- Remove ALL selling points ("unlimited revisions", "no surcharge", etc.)
+- Remove ALL agency comparisons
+- Remove ALL CTAs ("DM me", "book a call", etc.)
+- The hook MUST be a creative tagline (2-6 poetic words), NOT a factual statement
+- Keep the factual project description — just remove the commercial content
+
+Output the corrected JSON with keys: hook, body, proofPoints (""), hashtags (""), charCount, visualTitle.`;
+
+          const fixResult = await callClaudeJSON<SocialOutput["linkedInPost"]>({
+            systemPrompt: SOCIAL_PROMPT,
+            userMessage: fixPrompt,
+            timeout: 60_000,
+          });
+
+          const fixed = fixResult.data;
+          const fixedResult = enforceGates({
+            hook: fixed.hook ?? socialData.linkedInPost.hook,
+            body: fixed.body ?? socialData.linkedInPost.body,
+            proofPoints: fixed.proofPoints ?? "",
+            hashtags: fixed.hashtags ?? "",
+            charCount: fixed.charCount ?? 0,
+            visualTitle: fixed.visualTitle ?? socialData.linkedInPost.visualTitle,
+          });
+
+          socialData.linkedInPost = fixedResult.post;
+          gateReport = fixedResult.report;
+          gateWarnings = fixedResult.warnings;
+          console.log(`[pipeline] LinkedIn post fixed — gates: ${fixedResult.report.passed ? "ALL PASS" : fixedResult.report.failures.map((f) => f.gate).join(", ")}`);
+        } catch (fixErr) {
+          console.warn("[pipeline] LinkedIn fix retry failed:", fixErr instanceof Error ? fixErr.message : fixErr);
+        }
       }
 
       await savePipelineStep(id, 3, "social", socialData);
@@ -603,7 +649,10 @@ export async function POST(
         }
       }
 
-      const pngBuffer = process.env.OPENAI_API_KEY
+      const useHybrid = !!process.env.OPENAI_API_KEY;
+      console.log(`[pipeline] Step 5: Visual mode = ${useHybrid ? "HYBRID (OpenAI + Sharp)" : "SATORI-ONLY"}, OPENAI_API_KEY = ${useHybrid ? "set" : "NOT SET"}`);
+
+      const pngBuffer = useHybrid
         ? await generateLinkedInVisualHybrid({
             ...visualParams,
             projectType: candidate.projectType,
